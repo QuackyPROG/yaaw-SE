@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "default_owner": "UNKNOWN_OWNER",
   "unknown_owner_route": "bounded discovery then reclassify before mutation",
   "artifact_registry": ".agents/artifacts.json",
@@ -16,6 +16,7 @@
     {"pattern":".agents/agents/qa.md","owner":"qa","risk":"HIGH"},
     {"pattern":".agents/agents/release-engineer.md","owner":"release-engineer","risk":"HIGH"},
     {"pattern":".agents/rules/**","owner":"orchestrator","risk":"HIGH"},
+    {"pattern":".agents/skills/prd-creation/**","owner":"orchestrator","risk":"HIGH","notes":"manual-only skill; artifact semantic authority remains HUMAN_PRODUCT_AUTHORITY"},
     {"pattern":".agents/skills/intake-routing/**","owner":"orchestrator","risk":"MEDIUM"},
     {"pattern":".agents/skills/progressive-planning/**","owner":"planner","risk":"MEDIUM"},
     {"pattern":".agents/skills/ticket-graph/**","owner":"planner","risk":"MEDIUM"},
@@ -25,6 +26,7 @@
     {"pattern":".agents/skills/qa-regression/**","owner":"qa","risk":"HIGH"},
     {"pattern":".agents/skills/documentation-impact/**","owner":"orchestrator","risk":"MEDIUM"},
     {"pattern":".agents/skills/architecture-change/**","owner":"planner","risk":"HIGH"},
+    {"pattern":"docs/prd/**","owner":"orchestrator","risk":"HIGH","notes":"mechanical path owner only; semantic intent belongs to HUMAN_PRODUCT_AUTHORITY and changes require manual prd-creation"},
     {"pattern":"docs/architecture/**","owner":"planner","risk":"HIGH"},
     {"pattern":"docs/decisions/**","owner":"planner","risk":"HIGH"},
     {"pattern":"docs/specs/**","owner":"planner","risk":"MEDIUM"},

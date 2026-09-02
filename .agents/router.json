@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "purpose": "Hot domain-agnostic routing policy for scale-adaptive software engineering. Model/runtime choices are intentionally separate from workflow semantics.",
   "catalog": ".agents/catalog.json",
   "ownership": ".agents/ownership.json",
@@ -13,7 +13,19 @@
     "fresh_context_default": true,
     "completed_history_is_immutable": true,
     "silent_scope_expansion_forbidden": true,
-    "no_ad_hoc_durable_artifact_destinations": true
+    "no_ad_hoc_durable_artifact_destinations": true,
+    "observed_truth_and_intent_truth_are_distinct": true,
+    "accepted_product_intent_requires_human_authority": true
+  },
+  "prd_policy": {
+    "skill": "prd-creation",
+    "invocation": "MANUAL_ONLY",
+    "auto_create": false,
+    "absence_is_not_a_blocker": true,
+    "discover_existing_for_product_or_initiative_work": true,
+    "accepted_semantic_owner": "HUMAN_PRODUCT_AUTHORITY",
+    "planner_may_read_not_mutate": true,
+    "engineering_discoveries_default_to_tickets_or_plan_delta": true
   },
   "dispatch": {
     "root_only_delegation": true,
@@ -40,7 +52,7 @@
   },
   "ticket_kinds": ["DISCOVERY", "DECISION", "DELIVERY"],
   "ticket_states": ["DRAFT", "BLOCKED", "READY", "IN_PROGRESS", "VERIFYING", "DONE", "SUPERSEDED", "CANCELLED"],
-  "frontier_rule": "Open tickets are READY only when all blockers are DONE, required decisions/evidence are current, ownership is known, and the ticket is bounded enough for its route.",
+  "frontier_rule": "Open tickets are READY only when all blockers are DONE, required decisions/evidence are current, ownership is known, referenced intent/spec/ADR sources are not superseded, relevant interfaces have not materially invalidated the contract, and the ticket is bounded enough for its route.",
   "levels": {
     "0": {"name":"MICRO","contract_mode":"EPHEMERAL","planner_required":false,"fresh_implementer_required":false,"independent_qa_default":false,"mechanical_scope_gate":true},
     "1": {"name":"BOUNDED","contract_mode":"EPHEMERAL_OR_DURABLE","planner_required":false,"fresh_implementer_required":true,"independent_qa_default":false,"mechanical_scope_gate":true},
@@ -75,8 +87,8 @@
     {"id":"material-scope-expansion","minimum_level":2,"requires_independent_qa":true},
     {"id":"incompatible-new-evidence","minimum_level":2,"requires_plan_delta":true}
   ],
-  "plan_delta": {"planner_only_graph_mutation":true,"completed_history_rewrite_forbidden":true,"actions":["CONTINUE","AMEND_UNRESOLVED","SPLIT","INSERT_PREREQUISITE","ADD_FOLLOWUP","ADD_DISCOVERY","ADD_DECISION","RESEQUENCE","PROMOTE_LEVEL","SUPERSEDE_UNRESOLVED","CORRECT_COMPLETED_WORK"]},
+  "plan_delta": {"planner_only_graph_mutation":true,"completed_history_rewrite_forbidden":true,"accepted_prd_semantics_immutable_without_human_authority":true,"actions":["CONTINUE","AMEND_UNRESOLVED","SPLIT","INSERT_PREREQUISITE","ADD_FOLLOWUP","ADD_DISCOVERY","ADD_DECISION","RESEQUENCE","PROMOTE_LEVEL","SUPERSEDE_UNRESOLVED","CORRECT_COMPLETED_WORK"]},
   "qa_policy": {"self_verify_levels":[0,1],"allowed_skip_state":"QA_NOT_REQUIRED_BY_ROUTE","missing_state":"BLOCKER","independent_qa_levels":[2,3,4],"principle":"A QA skip is an explicit route result, never an inference from missing review."},
-  "human_clarification": {"principle":"Investigate before interrogating humans.","ask_when":["multiple valid product/design outcomes require authority","required external observation/access is unavailable","business priority or approval authority is missing","material ambiguity remains after bounded discovery","safety/legal/provider authorization is required"],"maximum_questions_at_once":1},
-  "anti_hallucination": ["Never invent an agent, skill, repository path, artifact destination, owner, dependency, capability, test result, approval, runtime fact, or architecture fact.","Only registered roles/skills may be invoked by id.","Feature names do not require router entries; route by work shape and ownership.","If ownership/procedure cannot be established, classify UNKNOWN and gather bounded evidence.","If a durable artifact type/destination cannot be resolved from .agents/artifacts.json, stop and report the artifact-contract gap.","If a required registered asset is absent, stop and report the asset gap."]
+  "human_clarification": {"principle":"Investigate before interrogating humans.","ask_when":["multiple valid product/design outcomes require authority","accepted PRD intent appears incompatible with new evidence","required external observation/access is unavailable","business priority or approval authority is missing","material ambiguity remains after bounded discovery","safety/legal/provider authorization is required"],"maximum_questions_at_once":1},
+  "anti_hallucination": ["Never invent an agent, skill, repository path, artifact destination, owner, dependency, capability, test result, approval, runtime fact, architecture fact, or product intent.","Only registered roles/skills may be invoked by id.","prd-creation is manual-only and must never be auto-invoked.","Feature names do not require router entries; route by work shape and ownership.","If ownership/procedure cannot be established, classify UNKNOWN and gather bounded evidence.","If a durable artifact type/destination cannot be resolved from .agents/artifacts.json, stop and report the artifact-contract gap.","If a required registered asset is absent, stop and report the asset gap."]
 }

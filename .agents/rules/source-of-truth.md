@@ -1,14 +1,30 @@
 # Source of Truth
 
-Authority order:
+yaaw-SE keeps **observed truth** and **intent truth** separate because they answer different questions.
 
-1. executable code and verification/tests;
-2. accepted ADRs/architecture contracts;
-3. active spec/initiative/ticket;
-4. canonical scoped documentation;
-5. thread/session context;
-6. assumptions.
+## Observed truth — what is true now
 
-When sources conflict, inspect the higher-authority source and update stale lower-authority artifacts when the change is in scope. Do not make the conflict disappear by choosing whichever text is convenient.
+1. runtime/observable evidence when relevant;
+2. executable tests/verification;
+3. code and current configuration;
+4. accepted architecture facts describing the current system;
+5. canonical scoped documentation;
+6. thread/session context;
+7. assumptions.
+
+## Intent truth — what should become true
+
+1. explicit current human decision;
+2. accepted relevant PRD;
+3. accepted ADR/product decision within its scope;
+4. active spec/initiative map;
+5. current durable tickets;
+6. agent inference.
+
+The stacks do not override each other across categories. If an accepted PRD requires behavior missing from code, code proves the current absence; it does not cancel the requirement.
+
+When same-category sources conflict, inspect the higher-authority source and update stale lower-authority artifacts when the change is in scope. Never make a conflict disappear by choosing whichever source is convenient.
+
+Only explicit human authority may revise accepted PRD intent. Engineering discoveries flow through tickets and PLAN_DELTA unless the desired product outcome itself must change.
 
 `UNKNOWN` is preferable to fabricated certainty.

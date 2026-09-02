@@ -2,6 +2,11 @@
 
 Use this file as the cold-start map after `AGENTS.md`.
 
+## Product intent
+
+- [`workflow/product-intent.md`](workflow/product-intent.md) — observed truth vs intent truth, optional manual PRDs, and how PRDs feed progressive planning.
+- `prd/` — optional human-authority Product Requirements Documents created/revised through the manual `prd-creation` skill.
+
 ## Architecture
 
 - [`architecture/harness.md`](architecture/harness.md) — system architecture and control-plane layers.
@@ -10,6 +15,7 @@ Use this file as the cold-start map after `AGENTS.md`.
 
 ## Workflow
 
+- [`workflow/overview.md`](workflow/overview.md) — end-to-end workflow diagram from intake/optional PRD through planning, execution, QA, commits, and release.
 - [`workflow/complexity-levels.md`](workflow/complexity-levels.md) — L0–L4 routing and promotion.
 - [`workflow/ticket-graph.md`](workflow/ticket-graph.md) — discovery/decision/delivery tickets, dependencies, frontier, fog.
 - [`workflow/plan-deltas.md`](workflow/plan-deltas.md) — controlled mid-implementation replanning.
@@ -20,6 +26,7 @@ Use this file as the cold-start map after `AGENTS.md`.
 
 ## Durable work
 
+- `docs/prd/` — optional accepted/draft product intent.
 - `docs/initiatives/` — L3/L4 maps plus registered plan-delta/evidence/QA overflow locations.
 - `docs/specs/` — durable feature/system specifications.
 - `docs/decisions/` — ADRs.
@@ -34,7 +41,7 @@ Use this file as the cold-start map after `AGENTS.md`.
 - `.agents/ownership.json` — machine-readable path ownership.
 - `.agents/agents/` — role contracts.
 - `.agents/rules/` — invariant engineering rules.
-- `.agents/skills/` — procedures invoked by routes/roles.
+- `.agents/skills/` — procedures invoked by routes/roles, including manual `prd-creation`.
 - `.codex/` — optional Codex runtime adapters; not a second source of workflow truth.
 
 ## Principle
