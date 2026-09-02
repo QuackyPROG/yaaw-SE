@@ -1,31 +1,33 @@
 {
-  "version": 1,
-  "description": "Cold inventory of registered yaaw-SE agents, rules, skills, and validation assets. Load for harness maintenance/audit, not ordinary task routing.",
+  "version": 2,
+  "description": "Cold inventory of registered yaaw-SE agents, rules, skills, artifact contracts, and validation assets. Load for harness maintenance/audit, not ordinary task routing.",
+  "artifact_registry": ".agents/artifacts.json",
   "agents": [
-    {"id":"orchestrator","path":".agents/agents/orchestrator.md","purpose":"Route requests, select minimum safe complexity, identify ownership, manage frontier/dispatch and integration state.","normal_write_scope":["tickets/**","docs/workflow/**","routing metadata"]},
-    {"id":"planner","path":".agents/agents/planner.md","purpose":"Own specs, initiative maps, decision structure, ticket decomposition and PLAN_DELTA graph changes.","normal_write_scope":["docs/specs/**","docs/initiatives/**","docs/decisions/**","planning portions of tickets/**"]},
-    {"id":"discovery","path":".agents/agents/discovery.md","purpose":"Gather bounded evidence and reproduce/diagnose uncertainty without inventing product decisions.","normal_write_scope":["discovery evidence in tickets/specs/initiative artifacts"]},
-    {"id":"implementer","path":".agents/agents/implementer.md","purpose":"Implement exactly one bounded delivery contract and stop on material scope expansion.","normal_write_scope":["contract-declared allowed write scope"]},
-    {"id":"qa","path":".agents/agents/qa.md","purpose":"Fresh independent review of actual diff, contract fidelity, evidence quality and blast radius.","normal_write_scope":["QA result/evidence only"]},
-    {"id":"release-engineer","path":".agents/agents/release-engineer.md","purpose":"Serial integration/delivery after route acceptance and CI/QA admission.","normal_write_scope":["delivery metadata, CI/release configuration when explicitly contracted"]}
+    {"id":"orchestrator","path":".agents/agents/orchestrator.md","artifact_contract":"agents.orchestrator","purpose":"Route requests, select minimum safe complexity, identify ownership, manage frontier/dispatch and integration state.","normal_write_scope":["tickets/**","docs/workflow/**","routing metadata"]},
+    {"id":"planner","path":".agents/agents/planner.md","artifact_contract":"agents.planner","purpose":"Own specs, initiative maps, decision structure, ticket decomposition and PLAN_DELTA graph changes.","normal_write_scope":["docs/specs/**","docs/initiatives/**","docs/decisions/**","planning portions of tickets/**"]},
+    {"id":"discovery","path":".agents/agents/discovery.md","artifact_contract":"agents.discovery","purpose":"Gather bounded evidence and reproduce/diagnose uncertainty without inventing product decisions.","normal_write_scope":["discovery evidence in tickets/specs/initiative artifacts"]},
+    {"id":"implementer","path":".agents/agents/implementer.md","artifact_contract":"agents.implementer","purpose":"Implement exactly one bounded delivery contract and stop on material scope expansion.","normal_write_scope":["contract-declared allowed write scope"]},
+    {"id":"qa","path":".agents/agents/qa.md","artifact_contract":"agents.qa","purpose":"Fresh independent review of actual diff, contract fidelity, evidence quality and blast radius.","normal_write_scope":["QA result/evidence only"]},
+    {"id":"release-engineer","path":".agents/agents/release-engineer.md","artifact_contract":"agents.release-engineer","purpose":"Serial integration/delivery after route acceptance and CI/QA admission.","normal_write_scope":["delivery metadata, CI/release configuration when explicitly contracted"]}
   ],
   "rules": [
     {"id":"source-of-truth","path":".agents/rules/source-of-truth.md"},
     {"id":"scope-and-blast-radius","path":".agents/rules/scope-and-blast-radius.md"},
     {"id":"documentation-and-memory","path":".agents/rules/documentation-and-memory.md"},
+    {"id":"artifact-contracts","path":".agents/rules/artifact-contracts.md"},
     {"id":"quality-and-slop","path":".agents/rules/quality-and-slop.md"},
     {"id":"git-and-delivery","path":".agents/rules/git-and-delivery.md"}
   ],
   "skills": [
-    {"id":"intake-routing","path":".agents/skills/intake-routing/SKILL.md","owner":"orchestrator"},
-    {"id":"progressive-planning","path":".agents/skills/progressive-planning/SKILL.md","owner":"planner"},
-    {"id":"ticket-graph","path":".agents/skills/ticket-graph/SKILL.md","owner":"planner"},
-    {"id":"plan-delta","path":".agents/skills/plan-delta/SKILL.md","owner":"planner"},
-    {"id":"bug-diagnosis","path":".agents/skills/bug-diagnosis/SKILL.md","owner":"discovery"},
-    {"id":"implementation","path":".agents/skills/implementation/SKILL.md","owner":"implementer"},
-    {"id":"qa-regression","path":".agents/skills/qa-regression/SKILL.md","owner":"qa"},
-    {"id":"documentation-impact","path":".agents/skills/documentation-impact/SKILL.md","owner":"orchestrator"},
-    {"id":"architecture-change","path":".agents/skills/architecture-change/SKILL.md","owner":"planner"}
+    {"id":"intake-routing","path":".agents/skills/intake-routing/SKILL.md","owner":"orchestrator","artifact_contract":"skills.intake-routing"},
+    {"id":"progressive-planning","path":".agents/skills/progressive-planning/SKILL.md","owner":"planner","artifact_contract":"skills.progressive-planning"},
+    {"id":"ticket-graph","path":".agents/skills/ticket-graph/SKILL.md","owner":"planner","artifact_contract":"skills.ticket-graph"},
+    {"id":"plan-delta","path":".agents/skills/plan-delta/SKILL.md","owner":"planner","artifact_contract":"skills.plan-delta"},
+    {"id":"bug-diagnosis","path":".agents/skills/bug-diagnosis/SKILL.md","owner":"discovery","artifact_contract":"skills.bug-diagnosis"},
+    {"id":"implementation","path":".agents/skills/implementation/SKILL.md","owner":"implementer","artifact_contract":"skills.implementation"},
+    {"id":"qa-regression","path":".agents/skills/qa-regression/SKILL.md","owner":"qa","artifact_contract":"skills.qa-regression"},
+    {"id":"documentation-impact","path":".agents/skills/documentation-impact/SKILL.md","owner":"orchestrator","artifact_contract":"skills.documentation-impact"},
+    {"id":"architecture-change","path":".agents/skills/architecture-change/SKILL.md","owner":"planner","artifact_contract":"skills.architecture-change"}
   ],
   "validation": [
     {"id":"validate-agent-assets","path":"scripts/validate_agent_assets.py"},

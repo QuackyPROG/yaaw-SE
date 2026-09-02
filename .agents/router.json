@@ -1,8 +1,9 @@
 {
-  "version": 1,
+  "version": 2,
   "purpose": "Hot domain-agnostic routing policy for scale-adaptive software engineering. Model/runtime choices are intentionally separate from workflow semantics.",
   "catalog": ".agents/catalog.json",
   "ownership": ".agents/ownership.json",
+  "artifacts": ".agents/artifacts.json",
   "runtime_profiles": "config/model-profiles.example.json",
   "principles": {
     "cheapest_safe_route": true,
@@ -11,7 +12,8 @@
     "repository_is_canonical_memory": true,
     "fresh_context_default": true,
     "completed_history_is_immutable": true,
-    "silent_scope_expansion_forbidden": true
+    "silent_scope_expansion_forbidden": true,
+    "no_ad_hoc_durable_artifact_destinations": true
   },
   "dispatch": {
     "root_only_delegation": true,
@@ -33,70 +35,18 @@
       "qa": "ALWAYS_FRESH",
       "release-engineer": "FRESH_SERIAL"
     },
-    "reuse_gate": [
-      "same registered role",
-      "same initiative/work identity",
-      "same owner/subsystem boundary",
-      "same or compatible acceptance/contract",
-      "evidence remains current",
-      "no material source-of-truth change",
-      "context remains clean enough to summarize reliably"
-    ],
-    "invalidate_reuse_on": [
-      "scope promotion",
-      "owner/subsystem change",
-      "material acceptance change",
-      "architecture/migration change",
-      "security/provider/trust-boundary change",
-      "stale or contradicted evidence",
-      "incompatible durable contract",
-      "polluted context"
-    ]
+    "reuse_gate": ["same registered role","same initiative/work identity","same owner/subsystem boundary","same or compatible acceptance/contract","evidence remains current","no material source-of-truth change","context remains clean enough to summarize reliably"],
+    "invalidate_reuse_on": ["scope promotion","owner/subsystem change","material acceptance change","architecture/migration change","security/provider/trust-boundary change","stale or contradicted evidence","incompatible durable contract","polluted context"]
   },
   "ticket_kinds": ["DISCOVERY", "DECISION", "DELIVERY"],
   "ticket_states": ["DRAFT", "BLOCKED", "READY", "IN_PROGRESS", "VERIFYING", "DONE", "SUPERSEDED", "CANCELLED"],
   "frontier_rule": "Open tickets are READY only when all blockers are DONE, required decisions/evidence are current, ownership is known, and the ticket is bounded enough for its route.",
   "levels": {
-    "0": {
-      "name": "MICRO",
-      "contract_mode": "EPHEMERAL",
-      "planner_required": false,
-      "fresh_implementer_required": false,
-      "independent_qa_default": false,
-      "mechanical_scope_gate": true
-    },
-    "1": {
-      "name": "BOUNDED",
-      "contract_mode": "EPHEMERAL_OR_DURABLE",
-      "planner_required": false,
-      "fresh_implementer_required": true,
-      "independent_qa_default": false,
-      "mechanical_scope_gate": true
-    },
-    "2": {
-      "name": "PLANNED_FEATURE",
-      "contract_mode": "DURABLE",
-      "planner_required": true,
-      "independent_qa_default": true,
-      "ticket_graph_required": true
-    },
-    "3": {
-      "name": "INITIATIVE",
-      "contract_mode": "DURABLE",
-      "planner_required": true,
-      "independent_qa_default": true,
-      "initiative_map_required": true,
-      "rolling_frontier": true
-    },
-    "4": {
-      "name": "PROGRAM_ARCHITECTURE",
-      "contract_mode": "DURABLE_HIGH_ASSURANCE",
-      "planner_required": true,
-      "independent_qa_default": true,
-      "initiative_map_required": true,
-      "rolling_frontier": true,
-      "rollback_or_compatibility_strategy_required": true
-    }
+    "0": {"name":"MICRO","contract_mode":"EPHEMERAL","planner_required":false,"fresh_implementer_required":false,"independent_qa_default":false,"mechanical_scope_gate":true},
+    "1": {"name":"BOUNDED","contract_mode":"EPHEMERAL_OR_DURABLE","planner_required":false,"fresh_implementer_required":true,"independent_qa_default":false,"mechanical_scope_gate":true},
+    "2": {"name":"PLANNED_FEATURE","contract_mode":"DURABLE","planner_required":true,"independent_qa_default":true,"ticket_graph_required":true},
+    "3": {"name":"INITIATIVE","contract_mode":"DURABLE","planner_required":true,"independent_qa_default":true,"initiative_map_required":true,"rolling_frontier":true},
+    "4": {"name":"PROGRAM_ARCHITECTURE","contract_mode":"DURABLE_HIGH_ASSURANCE","planner_required":true,"independent_qa_default":true,"initiative_map_required":true,"rolling_frontier":true,"rollback_or_compatibility_strategy_required":true}
   },
   "work_shapes": [
     {"id":"QUESTION","minimum_level":0,"default_disposition":"ANSWER_OR_DISCOVER","default_agents":["orchestrator"],"default_skills":["intake-routing"]},
@@ -125,46 +75,8 @@
     {"id":"material-scope-expansion","minimum_level":2,"requires_independent_qa":true},
     {"id":"incompatible-new-evidence","minimum_level":2,"requires_plan_delta":true}
   ],
-  "plan_delta": {
-    "planner_only_graph_mutation": true,
-    "completed_history_rewrite_forbidden": true,
-    "actions": [
-      "CONTINUE",
-      "AMEND_UNRESOLVED",
-      "SPLIT",
-      "INSERT_PREREQUISITE",
-      "ADD_FOLLOWUP",
-      "ADD_DISCOVERY",
-      "ADD_DECISION",
-      "RESEQUENCE",
-      "PROMOTE_LEVEL",
-      "SUPERSEDE_UNRESOLVED",
-      "CORRECT_COMPLETED_WORK"
-    ]
-  },
-  "qa_policy": {
-    "self_verify_levels": [0,1],
-    "allowed_skip_state": "QA_NOT_REQUIRED_BY_ROUTE",
-    "missing_state": "BLOCKER",
-    "independent_qa_levels": [2,3,4],
-    "principle": "A QA skip is an explicit route result, never an inference from missing review."
-  },
-  "human_clarification": {
-    "principle": "Investigate before interrogating humans.",
-    "ask_when": [
-      "multiple valid product/design outcomes require authority",
-      "required external observation/access is unavailable",
-      "business priority or approval authority is missing",
-      "material ambiguity remains after bounded discovery",
-      "safety/legal/provider authorization is required"
-    ],
-    "maximum_questions_at_once": 1
-  },
-  "anti_hallucination": [
-    "Never invent an agent, skill, repository path, owner, dependency, capability, test result, approval, runtime fact, or architecture fact.",
-    "Only registered roles/skills may be invoked by id.",
-    "Feature names do not require router entries; route by work shape and ownership.",
-    "If ownership/procedure cannot be established, classify UNKNOWN and gather bounded evidence.",
-    "If a required registered asset is absent, stop and report the asset gap."
-  ]
+  "plan_delta": {"planner_only_graph_mutation":true,"completed_history_rewrite_forbidden":true,"actions":["CONTINUE","AMEND_UNRESOLVED","SPLIT","INSERT_PREREQUISITE","ADD_FOLLOWUP","ADD_DISCOVERY","ADD_DECISION","RESEQUENCE","PROMOTE_LEVEL","SUPERSEDE_UNRESOLVED","CORRECT_COMPLETED_WORK"]},
+  "qa_policy": {"self_verify_levels":[0,1],"allowed_skip_state":"QA_NOT_REQUIRED_BY_ROUTE","missing_state":"BLOCKER","independent_qa_levels":[2,3,4],"principle":"A QA skip is an explicit route result, never an inference from missing review."},
+  "human_clarification": {"principle":"Investigate before interrogating humans.","ask_when":["multiple valid product/design outcomes require authority","required external observation/access is unavailable","business priority or approval authority is missing","material ambiguity remains after bounded discovery","safety/legal/provider authorization is required"],"maximum_questions_at_once":1},
+  "anti_hallucination": ["Never invent an agent, skill, repository path, artifact destination, owner, dependency, capability, test result, approval, runtime fact, or architecture fact.","Only registered roles/skills may be invoked by id.","Feature names do not require router entries; route by work shape and ownership.","If ownership/procedure cannot be established, classify UNKNOWN and gather bounded evidence.","If a durable artifact type/destination cannot be resolved from .agents/artifacts.json, stop and report the artifact-contract gap.","If a required registered asset is absent, stop and report the asset gap."]
 }

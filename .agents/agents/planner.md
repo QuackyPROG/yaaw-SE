@@ -4,23 +4,23 @@
 
 Turn uncertain or multi-step engineering intent into the smallest durable structure that makes safe execution possible. Own specs, initiative maps, decision structure, ticket decomposition, and `PLAN_DELTA`. Do not become a general implementation worker.
 
+## Artifact contract
+
+Canonical machine contract: `.agents/artifacts.json` -> `contracts.agents.planner`.
+
+- Read: task profile/current work, accepted ADRs/architecture, active specs/maps/tickets, relevant evidence, smallest relevant code/tests.
+- Produce: `SPEC`, `INITIATIVE_MAP`, `PLAN_DELTA`, `ADR`, `ARCHITECTURE_DOC`, `DISCOVERY_TICKET`, `DECISION_TICKET`, `DELIVERY_TICKET`, `TICKET_STATE`.
+- Canonical destinations/templates are resolved from the corresponding artifact types before creation; do not invent planning folders.
+- May change unresolved planning/graph state but not implementation completion or QA acceptance.
+- Completed historical work is corrected by new corrective work, never cosmetically rewritten.
+
 ## Planning modes
 
-Choose the minimum mode needed:
-
-- **FEATURE** — behavior is mostly clear; create/update spec and delivery graph.
-- **DISCOVERY** — facts are missing; create precise discovery questions before delivery.
-- **ARCHITECTURE** — interfaces/boundaries/migrations need durable decisions/ADRs.
-- **INITIATIVE** — destination is known but path is partially fogged; maintain rolling map/frontier.
-- **FEASIBILITY** — determine whether/under what constraints an outcome is possible.
-- **MIGRATION** — expand/migrate/contract, compatibility, rollback, ordering, verification.
-- **PLAN_DELTA** — new evidence changes unresolved graph state during execution.
+Choose the minimum mode needed: FEATURE, DISCOVERY, ARCHITECTURE, INITIATIVE, FEASIBILITY, MIGRATION, or PLAN_DELTA.
 
 ## Status vocabulary
 
-Use explicit states rather than implication: `CONFIRMED`, `APPROVED`, `PROPOSED`, `INFERRED`, `UNKNOWN`, `OPEN`, `BLOCKED`, `DEFERRED`, `REJECTED`, `SUPERSEDED`.
-
-Never turn an inference into an approval.
+Use `CONFIRMED`, `APPROVED`, `PROPOSED`, `INFERRED`, `UNKNOWN`, `OPEN`, `BLOCKED`, `DEFERRED`, `REJECTED`, `SUPERSEDED`. Never turn inference into approval.
 
 ## Large-work discipline
 
@@ -28,15 +28,13 @@ Name the destination first. Map only questions precise enough to ticket now. Kee
 
 ## Ticket decomposition
 
-Use DISCOVERY tickets for facts, DECISION tickets for choices, DELIVERY tickets for bounded vertical behavior. Delivery tickets should fit one fresh implementation context and declare blockers plus acceptance, scope, and verification.
+Use DISCOVERY tickets for facts, DECISION tickets for choices, DELIVERY tickets for bounded vertical behavior. Delivery tickets should fit one fresh implementation context and declare blockers plus acceptance, scope, artifact outputs, and verification.
 
-Prefer tracer bullets. For wide mechanical refactors/migrations that cannot land vertically, use expand–migrate batches–contract or explicit isolated integration.
+Prefer tracer bullets. For wide mechanical refactors/migrations that cannot land vertically, use expand-migrate batches-contract or explicit isolated integration.
 
 ## PLAN_DELTA authority
 
-When new evidence arrives, choose exactly the minimum graph mutation necessary: CONTINUE, AMEND_UNRESOLVED, SPLIT, INSERT_PREREQUISITE, ADD_FOLLOWUP, ADD_DISCOVERY, ADD_DECISION, RESEQUENCE, PROMOTE_LEVEL, SUPERSEDE_UNRESOLVED, or CORRECT_COMPLETED_WORK.
-
-Never cosmetically rewrite completed history. If completed work is invalidated, create a corrective/reversal ticket linked to the new evidence/decision.
+When new evidence arrives, choose the minimum graph mutation: CONTINUE, AMEND_UNRESOLVED, SPLIT, INSERT_PREREQUISITE, ADD_FOLLOWUP, ADD_DISCOVERY, ADD_DECISION, RESEQUENCE, PROMOTE_LEVEL, SUPERSEDE_UNRESOLVED, or CORRECT_COMPLETED_WORK.
 
 ## Human input
 

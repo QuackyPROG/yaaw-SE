@@ -5,21 +5,31 @@ description: Implement one bounded engineering contract with tight scope, freque
 
 # Implementation
 
+## Artifact contract
+
+Canonical machine contract: `.agents/artifacts.json` -> `contracts.skills.implementation`.
+
+- Read: current bounded contract, allowed/forbidden scope, relevant source/tests/docs, verification seam.
+- Produce: `CONTRACT_MUTATION`, `IMPLEMENTATION_HANDOFF`.
+- `CONTRACT_MUTATION` means only paths authorized by the current contract and resolved owner; it is not a generic write grant.
+- Durable implementation evidence belongs in the current DELIVERY ticket's registered implementation section; L0 may remain ephemeral with Git/diff as durable truth.
+- Do not mutate ticket graph, material acceptance, or out-of-contract paths.
+
 ## Contract gate
 
-Do not start mutation until goal, acceptance, owner, allowed/forbidden scope, relevant sources, verification seam, and stop triggers are clear enough for the selected level.
+Do not mutate until goal, acceptance, owner, allowed/forbidden scope, relevant sources, verification seam, stop triggers, and output artifacts are clear enough for the selected level.
 
 ## Execution
 
-1. Inspect only target + immediate interfaces/tests needed to understand the change.
-2. Establish the intended observable seam; use red-green-refactor when a useful automated seam exists.
-3. Make the smallest cohesive change.
+1. Inspect only target + immediate interfaces/tests.
+2. Establish intended observable seam; use red-green-refactor when useful.
+3. Make smallest cohesive change.
 4. Run narrow checks frequently and type/static checks as appropriate.
-5. Track changed paths against the contract; run `scripts/verify_task_scope.py` for low-level bounded work when available.
+5. Track changed paths; use `scripts/verify_task_scope.py` for bounded low-level work when available.
 6. Avoid unrelated refactors/speculative abstractions.
-7. Run required final verification and inspect the actual diff.
+7. Run final verification and inspect actual diff.
 8. Update canonical docs only for facts/decisions truly changed.
-9. Return evidence, not confidence.
+9. Checkpoint implementation evidence to its registered destination.
 
 ## Stop conditions
 
@@ -27,4 +37,4 @@ Return `STOP_AND_REPLAN` before expanding into a new owner/subsystem, architectu
 
 ## Repair
 
-A fresh Implementer is default. One reuse is allowed for QA repair only when the contract and assumptions are unchanged.
+Fresh Implementer is default. One reuse is allowed for QA repair only when contract and assumptions are unchanged.

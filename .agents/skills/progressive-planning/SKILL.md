@@ -5,28 +5,37 @@ description: Plan L2-L4 work at the minimum useful resolution, using specs, init
 
 # Progressive Planning
 
+## Artifact contract
+
+Canonical machine contract: `.agents/artifacts.json` -> `contracts.skills.progressive-planning`.
+
+- Read: task profile, accepted ADRs/architecture, current specs/maps/tickets, relevant evidence, smallest relevant implementation context.
+- Produce: `SPEC`, `INITIATIVE_MAP`, `DISCOVERY_TICKET`, `DECISION_TICKET`, `DELIVERY_TICKET`.
+- Resolve each canonical locator/template from `.agents/artifacts.json` before creating it.
+- Do not invent folders for planning artifacts and do not turn fog into fictional tickets merely to appear complete.
+
 ## Choose scale
 
 - L2: behavior is understandable; create a spec/decision set and tracer-bullet delivery graph.
-- L3: destination is known but the path depends on sequential discoveries/decisions; create an initiative map and current frontier only.
+- L3: destination is known but path depends on sequential discoveries/decisions; create an initiative map and current frontier only.
 - L4: major architecture/migration/trust/destructive risk; add explicit compatibility/rollback/integration strategy and high-assurance gates.
 
 ## Planning sequence
 
-1. Name the **destination**: what observable state means the initiative has reached its intended boundary.
+1. Name the destination.
 2. Record known constraints and accepted decisions without upgrading inference to approval.
-3. Identify precise questions answerable now. Express fact questions as DISCOVERY and choice questions as DECISION.
-4. Put still-imprecise but in-scope future concerns in `Not yet specified`/fog. Do not pre-slice fog into guessed tickets.
-5. Add blocking edges only where a ticket genuinely cannot start/finish without another.
+3. Express fact questions as DISCOVERY and choice questions as DECISION.
+4. Put still-imprecise but in-scope concerns in `Not yet specified`/fog.
+5. Add only genuine blocking edges.
 6. Identify the ready frontier.
 7. Once enough decisions/evidence exist, create DELIVERY tracer bullets sized for fresh contexts.
 8. Define QA/isolation/integration requirements from risk.
-9. Stop planning when the current executable frontier is safe and clear. Future sessions continue from durable artifacts.
+9. Stop when the current executable frontier is safe and clear.
 
 ## Large initiatives
 
-Resolve frontier decisions/evidence progressively. Each resolution may surface new precise tickets, retire fog, or invalidate unresolved future work. Use `plan-delta` rather than rebuilding the whole plan from scratch.
+Each frontier resolution may surface new precise tickets, retire fog, or invalidate unresolved future work. Use `plan-delta` rather than rebuilding the whole plan from scratch.
 
 ## Guardrails
 
-Do not implement during planning unless the contract explicitly calls for a throwaway prototype/probe. Do not invent detailed file paths in long-lived specs unless the path itself is an architectural contract. Prefer stable module/interface language.
+Do not implement during planning unless explicitly contracted for a throwaway prototype/probe. Prefer stable module/interface language over brittle file-path detail in long-lived specs.

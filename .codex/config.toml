@@ -9,6 +9,8 @@ Only the root Orchestrator may spawn child agents. Do not permit recursive child
 
 Repository artifacts are canonical memory. Fresh context is the default. Do not full-history fork children by default; send a bounded context capsule containing work identity, goal, canonical sources, scope, verification and stop conditions. Cross-role communication returns through the root. Checkpoint material decisions/evidence before dependent stages or thread retirement.
 
+Before creating or relocating durable workflow output, resolve the active role/skill contract and artifact type through .agents/artifacts.json, then resolve concrete path ownership through .agents/ownership.json when applicable. Do not invent artifact folders or semantic mutation authority.
+
 If an Implementer/QA/Discovery result materially invalidates the current plan, route STOP_AND_REPLAN to the Planner and use the PLAN_DELTA protocol. Workers may not silently widen scope or rewrite the unresolved ticket graph.
 """
 
@@ -18,7 +20,6 @@ max_concurrent_threads_per_session = 3
 
 [features.multi_agent_v2]
 enabled = true
-# V2 counts the root; four total means one root + at most three children.
 max_concurrent_threads_per_session = 4
 min_wait_timeout_ms = 10000
 default_wait_timeout_ms = 60000
@@ -27,8 +28,8 @@ hide_spawn_agent_metadata = false
 expose_spawn_agent_model_overrides = false
 wait_agent_enabled = true
 root_agent_usage_hint_text = """
-Use registered yaaw-SE roles with semantic task names. Root-only delegation. Fresh workers by default. One writer per worktree. Work the current ticket frontier, not a stale static order. Route material discoveries through STOP_AND_REPLAN -> Planner -> PLAN_DELTA before dependent implementation continues.
+Use registered yaaw-SE roles with semantic task names. Root-only delegation. Fresh workers by default. One writer per worktree. Work the current ticket frontier, not a stale static order. Resolve .agents/artifacts.json before durable workflow output. Route material discoveries through STOP_AND_REPLAN -> Planner -> PLAN_DELTA before dependent implementation continues.
 """
 subagent_usage_hint_text = """
-You are a bounded yaaw-SE child. Read your registered role contract, do not spawn agents, stay within the routed contract, return evidence to the root, and treat repository artifacts as more authoritative than thread memory.
+You are a bounded yaaw-SE child. Read your registered role contract and its Artifact contract, do not spawn agents, stay within the routed contract, return evidence to the root, use .agents/artifacts.json for durable output destinations/authority, and treat repository artifacts as more authoritative than thread memory.
 """
