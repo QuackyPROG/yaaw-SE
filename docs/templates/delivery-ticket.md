@@ -16,6 +16,12 @@ Describe one bounded, preferably vertical, externally verifiable behavior/outcom
 - [ ] ...
 - [ ] ...
 
+## Preservation invariants
+
+What must remain true while delivering this change?
+
+- ...
+
 ## Allowed write scope
 
 - `pattern/**`
@@ -24,14 +30,25 @@ Describe one bounded, preferably vertical, externally verifiable behavior/outcom
 
 - `other-owner/**`
 
+## Expected change surface
+
+Paths/modules/interfaces that are reasonably expected to change. Deviations require explanation before QA admission.
+
+- `expected/**`
+
 ## Canonical sources
 
-- spec/ADR/decision/interface
+- relevant PRD/spec/ADR/decision/interface
+- freshness checked at: <ref/time or state>
 
 ## Verification
 
+Risk-bearing behavior first.
+
 - targeted command/seam:
+- negative/error/retry/concurrency checks when relevant:
 - broader checks when required:
+- real dependency/integration seam when risk justifies it:
 
 ## QA
 
@@ -39,11 +56,25 @@ Describe one bounded, preferably vertical, externally verifiable behavior/outcom
 
 ## Stop and replan triggers
 
-List material scope/assumption conditions specific to this ticket in addition to global policy.
+List material scope/assumption conditions specific to this ticket in addition to global policy, including stale sources or violated preservation invariants.
 
-## Completion evidence
+## Implementation evidence
 
 - changed paths:
+- expected-vs-actual surface deviations + explanation:
+- preservation invariants:
 - commands/results:
-- QA result:
+- material finding confidence (`CONFIRMED` / `SUPPORTED` / `SUSPECTED` / `UNKNOWN`):
+
+## QA
+
+- result:
+- evidence-backed findings:
+- risk coverage:
+
+## Delivery
+
 - commit/ref:
+- commit outcome:
+- CI/provider state:
+- promotion/release state:
