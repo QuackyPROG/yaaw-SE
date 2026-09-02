@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "purpose": "Hot domain-agnostic routing policy for scale-adaptive software engineering. Model/runtime choices are intentionally separate from workflow semantics.",
+  "catalog": ".agents/catalog.json",
+  "ownership": ".agents/ownership.json",
+  "runtime_profiles": "config/model-profiles.example.json",
+  "principles": {
+    "cheapest_safe_route": true,
+    "investigate_before_asking": true,
+    "unknown_is_valid": true,
+    "repository_is_canonical_memory": true,
+    "fresh_context_default": true,
+    "completed_history_is_immutable": true,
+    "silent_scope_expansion_forbidden": true
+  },
+  "dispatch": {
+    "root_only_delegation": true,
+    "recursive_subagents": false,
+    "same_worktree_max_writers": 1,
+    "parallel_read_only_fanout": true,
+    "parallel_mutation_requires_isolated_worktrees": true,
+    "semantic_task_name_required": true,
+    "default_thread_policy": "FRESH",
+    "canonical_memory": "REPOSITORY",
+    "peer_to_peer_default": false,
+    "checkpoint_before_dependent_stage": true,
+    "checkpoint_before_thread_retirement": true,
+    "role_thread_policy": {
+      "orchestrator": "PERSIST_ROOT_WHILE_USEFUL",
+      "planner": "PERSIST_WITHIN_INITIATIVE_WHILE_CURRENT",
+      "discovery": "PERSIST_WHILE_EVIDENCE_SCOPE_CURRENT",
+      "implementer": "FRESH_PER_CONTRACT_ONE_UNCHANGED_REPAIR_REUSE_MAX",
+      "qa": "ALWAYS_FRESH",
+      "release-engineer": "FRESH_SERIAL"
+    },
+    "reuse_gate": [
+      "same registered role",
+      "same initiative/work identity",
+      "same owner/subsystem boundary",
+      "same or compatible acceptance/contract",
+      "evidence remains current",
+      "no material source-of-truth change",
+      "context remains clean enough to summarize reliably"
+    ],
+    "invalidate_reuse_on": [
+      "scope promotion",
+      "owner/subsystem change",
+      "material acceptance change",
+      "architecture/migration change",
+      "security/provider/trust-boundary change",
+      "stale or contradicted evidence",
+      "incompatible durable contract",
+      "polluted context"
+    ]
+  },
+  "ticket_kinds": ["DISCOVERY", "DECISION", "DELIVERY"],
+  "ticket_states": ["DRAFT", "BLOCKED", "READY", "IN_PROGRESS", "VERIFYING", "DONE", "SUPERSEDED", "CANCELLED"],
+  "frontier_rule": "Open tickets are READY only when all blockers are DONE, required decisions/evidence are current, ownership is known, and the ticket is bounded enough for its route.",
+  "levels": {
+    "0": {
+      "name": "MICRO",
+      "contract_mode": "EPHEMERAL",
+      "planner_required": false,
+      "fresh_implementer_required": false,
+      "independent_qa_default": false,
+      "mechanical_scope_gate": true
+    },
+    "1": {
+      "name": "BOUNDED",
+      "contract_mode": "EPHEMERAL_OR_DURABLE",
+      "planner_required": false,
+      "fresh_implementer_required": true,
+      "independent_qa_default": false,
+      "mechanical_scope_gate": true
+    },
+    "2": {
+      "name": "PLANNED_FEATURE",
+      "contract_mode": "DURABLE",
+      "planner_required": true,
+      "independent_qa_default": true,
+      "ticket_graph_required": true
+    },
+    "3": {
+      "name": "INITIATIVE",
+      "contract_mode": "DURABLE",
+      "planner_required": true,
+      "independent_qa_default": true,
+      "initiative_map_required": true,
+      "rolling_frontier": true
+    },
+    "4": {
+      "name": "PROGRAM_ARCHITECTURE",
+      "contract_mode": "DURABLE_HIGH_ASSURANCE",
+      "planner_required": true,
+      "independent_qa_default": true,
+      "initiative_map_required": true,
+      "rolling_frontier": true,
+      "rollback_or_compatibility_strategy_required": true
+    }
+  },
+  "work_shapes": [
+    {"id":"QUESTION","minimum_level":0,"default_disposition":"ANSWER_OR_DISCOVER","default_agents":["orchestrator"],"default_skills":["intake-routing"]},
+    {"id":"BUG","minimum_level":1,"default_disposition":"VERIFY_THEN_FIX","default_agents":["orchestrator","implementer"],"default_skills":["bug-diagnosis","implementation"]},
+    {"id":"FEATURE","minimum_level":1,"default_disposition":"BOUND_OR_PLAN","default_agents":["orchestrator","implementer"],"default_skills":["intake-routing","implementation"]},
+    {"id":"REFACTOR","minimum_level":1,"default_disposition":"BOUND_BLAST_RADIUS","default_agents":["orchestrator","implementer"],"default_skills":["intake-routing","implementation"]},
+    {"id":"DOCUMENTATION","minimum_level":0,"default_disposition":"BOUNDED_CHANGE","default_agents":["orchestrator"],"default_skills":["documentation-impact"]},
+    {"id":"ARCHITECTURE","minimum_level":4,"default_disposition":"PLAN","default_agents":["orchestrator","planner","qa"],"default_skills":["architecture-change","progressive-planning","qa-regression"]},
+    {"id":"MIGRATION","minimum_level":4,"default_disposition":"PLAN","default_agents":["orchestrator","planner","qa"],"default_skills":["architecture-change","progressive-planning","qa-regression"]},
+    {"id":"EXTERNAL_INTEGRATION","minimum_level":2,"default_disposition":"PLAN_OR_PROMOTE_BY_RISK","default_agents":["orchestrator","planner","qa"],"default_skills":["progressive-planning","qa-regression"]},
+    {"id":"SECURITY_TRUST_BOUNDARY","minimum_level":4,"default_disposition":"HIGH_ASSURANCE_PLAN","default_agents":["orchestrator","planner","qa"],"default_skills":["architecture-change","qa-regression"]},
+    {"id":"RELEASE","minimum_level":2,"default_disposition":"VERIFY_AND_DELIVER","default_agents":["orchestrator","release-engineer"],"default_skills":["qa-regression"]},
+    {"id":"AGENT_MAINTENANCE","minimum_level":2,"default_disposition":"PLAN_AND_AUDIT","default_agents":["orchestrator","qa"],"default_skills":["documentation-impact","qa-regression"]},
+    {"id":"UNKNOWN","minimum_level":0,"default_disposition":"DISCOVER_FIRST","default_agents":["orchestrator","discovery"],"default_skills":["intake-routing"]}
+  ],
+  "promotion_triggers": [
+    {"id":"unknown-owner","minimum_level":1,"requires_reclassification":true},
+    {"id":"shared-or-broad-ownership","minimum_level":2,"requires_independent_qa":true},
+    {"id":"multiple-subsystems","minimum_level":2,"requires_independent_qa":true},
+    {"id":"material-interface-or-dependency-change","minimum_level":2,"requires_independent_qa":true},
+    {"id":"architecture","minimum_level":4,"requires_independent_qa":true},
+    {"id":"migration","minimum_level":4,"requires_independent_qa":true},
+    {"id":"security-auth-secrets-privacy-payments-trust","minimum_level":4,"requires_independent_qa":true},
+    {"id":"destructive-or-hard-to-reverse-operation","minimum_level":4,"requires_independent_qa":true},
+    {"id":"ci-cd-release-policy","minimum_level":4,"requires_independent_qa":true},
+    {"id":"material-scope-expansion","minimum_level":2,"requires_independent_qa":true},
+    {"id":"incompatible-new-evidence","minimum_level":2,"requires_plan_delta":true}
+  ],
+  "plan_delta": {
+    "planner_only_graph_mutation": true,
+    "completed_history_rewrite_forbidden": true,
+    "actions": [
+      "CONTINUE",
+      "AMEND_UNRESOLVED",
+      "SPLIT",
+      "INSERT_PREREQUISITE",
+      "ADD_FOLLOWUP",
+      "ADD_DISCOVERY",
+      "ADD_DECISION",
+      "RESEQUENCE",
+      "PROMOTE_LEVEL",
+      "SUPERSEDE_UNRESOLVED",
+      "CORRECT_COMPLETED_WORK"
+    ]
+  },
+  "qa_policy": {
+    "self_verify_levels": [0,1],
+    "allowed_skip_state": "QA_NOT_REQUIRED_BY_ROUTE",
+    "missing_state": "BLOCKER",
+    "independent_qa_levels": [2,3,4],
+    "principle": "A QA skip is an explicit route result, never an inference from missing review."
+  },
+  "human_clarification": {
+    "principle": "Investigate before interrogating humans.",
+    "ask_when": [
+      "multiple valid product/design outcomes require authority",
+      "required external observation/access is unavailable",
+      "business priority or approval authority is missing",
+      "material ambiguity remains after bounded discovery",
+      "safety/legal/provider authorization is required"
+    ],
+    "maximum_questions_at_once": 1
+  },
+  "anti_hallucination": [
+    "Never invent an agent, skill, repository path, owner, dependency, capability, test result, approval, runtime fact, or architecture fact.",
+    "Only registered roles/skills may be invoked by id.",
+    "Feature names do not require router entries; route by work shape and ownership.",
+    "If ownership/procedure cannot be established, classify UNKNOWN and gather bounded evidence.",
+    "If a required registered asset is absent, stop and report the asset gap."
+  ]
+}

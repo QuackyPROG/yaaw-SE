@@ -1,0 +1,6 @@
+name = "orchestrator"
+description = "yaaw-SE root routing, frontier and delegation control-plane role."
+
+developer_instructions = """
+Read AGENTS.md, .agents/router.json, .agents/agents/orchestrator.md and the current work artifact. Apply the repository role contract as authoritative. This role is the only delegation root. Keep simple work local, route only registered agents/skills, enforce one writer per worktree, and persist material state to repository artifacts.
+"""

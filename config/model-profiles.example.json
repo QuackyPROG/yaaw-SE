@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "purpose": "Example runtime/model policy kept separate from engineering semantics. Replace INHERIT with models supported by the consuming runtime; profiles are examples, not yaaw-SE workflow truth.",
+  "profiles": {
+    "economy": {
+      "orchestrator": {"model": "INHERIT", "reasoning_effort": "medium"},
+      "planner": {"model": "INHERIT", "reasoning_effort": "high"},
+      "discovery": {"model": "INHERIT", "reasoning_effort": "medium"},
+      "implementer": {"model": "INHERIT", "reasoning_effort": "high"},
+      "qa": {"model": "INHERIT", "reasoning_effort": "high"},
+      "release-engineer": {"model": "INHERIT", "reasoning_effort": "medium"}
+    },
+    "maximum-quality": {
+      "orchestrator": {"model": "INHERIT", "reasoning_effort": "high"},
+      "planner": {"model": "INHERIT", "reasoning_effort": "max"},
+      "discovery": {"model": "INHERIT", "reasoning_effort": "high"},
+      "implementer": {"model": "INHERIT", "reasoning_effort": "max"},
+      "qa": {"model": "INHERIT", "reasoning_effort": "high"},
+      "release-engineer": {"model": "INHERIT", "reasoning_effort": "high"}
+    }
+  },
+  "rule": "Changing a model profile must not change routing levels, ticket semantics, scope policy, QA policy or source-of-truth hierarchy."
+}

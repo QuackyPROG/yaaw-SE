@@ -1,0 +1,23 @@
+name: Agent Harness
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate registered agent assets
+        run: python scripts/validate_agent_assets.py
+      - name: Validate Codex runtime adapter
+        run: python scripts/validate_codex_runtime.py
+      - name: Verify scope checker fixtures
+        run: python scripts/verify_task_scope.py --self-test
