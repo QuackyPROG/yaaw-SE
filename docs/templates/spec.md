@@ -1,8 +1,15 @@
+---yaaw-json
+{
+  "schema": "yaaw.spec/v1",
+  "id": "SPEC-<slug>",
+  "status": "PROPOSED",
+  "owner": "<domain/subsystem>",
+  "initiative": null,
+  "prd_ref": null,
+  "revision": 1
+}
+---
 # <Spec title>
-
-**Status:** PROPOSED | APPROVED | SUPERSEDED
-**Owner:** <domain/subsystem>
-**Related initiative:** <optional>
 
 ## Problem
 
@@ -36,16 +43,17 @@ Describe observable behavior/state after completion.
 
 Describe stable module/API/data interactions without overfitting to transient file paths.
 
+## Non-functional requirements / risks
+
+Record relevant performance, reliability, security, compatibility, observability, privacy, or operational constraints. Use `NONE` only after considering them.
+
 ## Verification decisions
 
 - highest useful behavior seam:
-- existing prior-art tests/checks:
+- prior-art tests/checks:
 - required negative/error behavior:
+- integration/runtime evidence where required:
 
 ## Delivery strategy
 
-Reference the delivery ticket graph; do not duplicate every ticket body here.
-
-## Further notes
-
-...
+Reference the delivery graph; do not duplicate ticket bodies here.

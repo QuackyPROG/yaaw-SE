@@ -1,10 +1,17 @@
+---yaaw-json
+{
+  "schema": "yaaw.prd/v1",
+  "id": "PRD-<slug>",
+  "status": "DRAFT",
+  "semantic_authority": "HUMAN_PRODUCT_AUTHORITY",
+  "intent_revision": 1,
+  "created": "YYYY-MM-DD",
+  "last_intent_revision": "YYYY-MM-DD",
+  "supersedes": null,
+  "approval_ref": null
+}
+---
 # Product Requirements Document: <Product / Initiative>
-
-**Status:** DRAFT | ACCEPTED | SUPERSEDED
-**Product authority:** <human / team with decision authority>
-**Created:** <date>
-**Last intent revision:** <date>
-**Supersedes:** <path or none>
 
 ## Problem / opportunity
 
@@ -28,8 +35,6 @@ Describe the destination in observable product terms. Avoid prescribing implemen
 
 ## Product invariants
 
-Truths the finished product must preserve even as engineering plans change.
-
 - ...
 
 ## Requirements
@@ -41,8 +46,6 @@ Truths the finished product must preserve even as engineering plans change.
 - Priority / rationale:
 
 ## Constraints
-
-Only durable product/business/regulatory/platform constraints that genuinely limit the solution space.
 
 - ...
 
@@ -56,16 +59,14 @@ Only durable product/business/regulatory/platform constraints that genuinely lim
 
 ## Open product decisions
 
-Use explicit states: `OPEN`, `APPROVED`, `REJECTED`, `DEFERRED`, `UNKNOWN`.
+Use `OPEN`, `APPROVED`, `REJECTED`, `DEFERRED`, or `UNKNOWN`.
 
 - ...
 
 ## Assumptions
 
-Do not present assumptions as accepted truth.
-
 - ...
 
 ## Change policy
 
-This PRD owns desired product intent, not the engineering route. Engineering discoveries become DISCOVERY/DECISION/DELIVERY tickets and PLAN_DELTA changes unless they require a human-approved change to product intent.
+This PRD owns desired product intent, not the engineering route. `ACCEPTED` requires explicit human product authority and an approval reference. Engineering discoveries become tickets and PLAN_DELTA changes unless product intent itself must be revised.

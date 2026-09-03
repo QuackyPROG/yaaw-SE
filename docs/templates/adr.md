@@ -1,8 +1,15 @@
+---yaaw-json
+{
+  "schema": "yaaw.adr/v1",
+  "id": "ADR-<NNN>",
+  "status": "PROPOSED",
+  "decision_owner": "<authority>",
+  "date": "YYYY-MM-DD",
+  "supersedes": null,
+  "approval_ref": null
+}
+---
 # ADR-<NNN>: <Decision title>
-
-**Status:** PROPOSED | ACCEPTED | SUPERSEDED
-**Date:** YYYY-MM-DD
-**Decision owner:** <authority>
 
 ## Context
 
@@ -19,12 +26,24 @@ What is being chosen?
 - advantages:
 - disadvantages:
 
+## Compatibility / migration
+
+- compatibility window:
+- migration sequence:
+- rollback/recovery:
+- irreversible consequences:
+
+## Operational impact
+
+- observability/SLO impact:
+- deployment impact:
+- ownership impact:
+- security/trust impact:
+
 ## Consequences
 
 - positive:
 - negative/tradeoffs:
-- migration/compatibility:
-- ownership impact:
 - verification impact:
 
 ## References

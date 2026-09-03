@@ -1,7 +1,15 @@
+---yaaw-json
+{
+  "schema": "yaaw.initiative-map/v1",
+  "id": "INIT-<slug>",
+  "level": 3,
+  "status": "ACTIVE",
+  "spec_ref": null,
+  "prd_ref": null,
+  "revision": 1
+}
+---
 # <Initiative name>
-
-**Level:** L3 | L4
-**Status:** ACTIVE | BLOCKED | DONE | SUPERSEDED
 
 ## Destination
 
@@ -17,7 +25,7 @@ One or two lines describing the boundary that means this initiative is complete.
 
 ## Current frontier
 
-List or link only ready unblocked work; the tracker remains authoritative for detailed states.
+List/link only controller-computed READY work; ticket state remains authoritative.
 
 ## Not yet specified / fog
 
@@ -31,4 +39,9 @@ Work deliberately beyond this destination.
 
 - isolation needs:
 - required gates:
-- rollback/compatibility when L4:
+- rollback/compatibility:
+- post-integration QA when required:
+
+## Recovery / resumption
+
+Record the durable state needed for a fresh Orchestrator to resume after interruption; never rely on chat history.

@@ -1,8 +1,15 @@
+---yaaw-json
+{
+  "schema": "yaaw.plan-delta/v1",
+  "id": "DELTA-<timestamp>-<slug>",
+  "initiative": "INIT-<slug>",
+  "triggering_work": "<ticket-id>",
+  "date": "YYYY-MM-DD",
+  "action": "CONTINUE",
+  "human_authority_required": false
+}
+---
 # PLAN_DELTA: <short title>
-
-**Initiative / parent:** <id>
-**Triggering work:** <ticket>
-**Date:** YYYY-MM-DD
 
 ## Trigger evidence
 
@@ -14,7 +21,7 @@ What was previously believed/accepted and why was it reasonable then?
 
 ## Delta decision
 
-`CONTINUE | AMEND_UNRESOLVED | SPLIT | INSERT_PREREQUISITE | ADD_FOLLOWUP | ADD_DISCOVERY | ADD_DECISION | RESEQUENCE | PROMOTE_LEVEL | SUPERSEDE_UNRESOLVED | CORRECT_COMPLETED_WORK`
+The machine `action` field is authoritative and must be one registered PLAN_DELTA action.
 
 ## Graph changes
 
@@ -25,7 +32,7 @@ What was previously believed/accepted and why was it reasonable then?
 
 ## Completed work impact
 
-`NONE` or link the corrective/reversal ticket. Never rewrite completion history.
+`NONE` or link corrective/reversal work. Never rewrite completion history.
 
 ## Verification / QA changes
 
@@ -33,4 +40,4 @@ What was previously believed/accepted and why was it reasonable then?
 
 ## Human authority required
 
-`NO` or the exact decision/approval still blocking dependent work.
+If metadata sets this to `true`, name the exact decision/approval still blocking dependent work.

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/prd.schema.json",
+  "title": "yaaw-SE PRD metadata",
+  "type": "object",
+  "required": ["schema", "id", "status", "semantic_authority", "intent_revision"],
+  "properties": {
+    "schema": {"const": "yaaw.prd/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["DRAFT", "ACCEPTED", "SUPERSEDED"]},
+    "semantic_authority": {"const": "HUMAN_PRODUCT_AUTHORITY"},
+    "intent_revision": {"type": "integer", "minimum": 1},
+    "created": {"type": "string"},
+    "last_intent_revision": {"type": "string"},
+    "supersedes": {"type": ["string", "null"]},
+    "approval_ref": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}
