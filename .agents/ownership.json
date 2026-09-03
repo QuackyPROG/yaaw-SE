@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "default_owner": "UNKNOWN_OWNER",
   "unknown_owner_route": "bounded discovery then reclassify before mutation",
   "artifact_registry": ".agents/artifacts.json",
@@ -9,6 +9,8 @@
     {"pattern":".agents/catalog.json","owner":"orchestrator","risk":"HIGH","notes":"agent asset inventory"},
     {"pattern":".agents/ownership.json","owner":"orchestrator","risk":"HIGH","notes":"path ownership architecture"},
     {"pattern":".agents/artifacts.json","owner":"orchestrator","co_owner":"planner","risk":"HIGH","notes":"artifact addressing and mutation authority"},
+    {"pattern":".agents/authority.json","owner":"orchestrator","co_owner":"qa","risk":"HIGH","notes":"field-level semantic mutation authority"},
+    {"pattern":".agents/schemas/**","owner":"orchestrator","co_owner":"qa","risk":"HIGH","notes":"machine contracts; schema changes require semantic validation"},
     {"pattern":".agents/agents/orchestrator.md","owner":"orchestrator","risk":"HIGH"},
     {"pattern":".agents/agents/planner.md","owner":"planner","risk":"HIGH"},
     {"pattern":".agents/agents/discovery.md","owner":"discovery","risk":"HIGH"},
@@ -36,11 +38,16 @@
     {"pattern":"docs/index.md","owner":"orchestrator","risk":"MEDIUM"},
     {"pattern":"docs/ownership.md","owner":"orchestrator","risk":"HIGH"},
     {"pattern":"docs/domain-packs.md","owner":"orchestrator","risk":"MEDIUM"},
-    {"pattern":"tickets/**","owner":"orchestrator","co_owner":"planner","risk":"MEDIUM","notes":"artifact registry refines section-level mutation authority for discovery/implementation/QA/release evidence"},
-    {"pattern":".codex/**","owner":"orchestrator","risk":"HIGH"},
-    {"pattern":"config/**","owner":"orchestrator","risk":"MEDIUM"},
+    {"pattern":"tickets/**","owner":"orchestrator","co_owner":"planner","risk":"MEDIUM","notes":"artifact registry refines field/section mutation authority for discovery/implementation/QA/release evidence"},
+    {"pattern":"scripts/yaaw/**","owner":"orchestrator","co_owner":"qa","risk":"HIGH","notes":"deterministic workflow controller; semantic changes require independent harness QA"},
+    {"pattern":"scripts/yaaw_cli.py","owner":"orchestrator","co_owner":"qa","risk":"HIGH"},
     {"pattern":"scripts/validate_*","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
     {"pattern":"scripts/verify_*","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
-    {"pattern":".github/workflows/**","owner":"release-engineer","risk":"HIGH"}
+    {"pattern":"tests/harness/**","owner":"qa","co_owner":"orchestrator","risk":"HIGH","notes":"deterministic harness regression suite"},
+    {"pattern":"examples/**","owner":"orchestrator","co_owner":"qa","risk":"MEDIUM","notes":"executable/reference harness examples"},
+    {"pattern":"evals/**","owner":"qa","co_owner":"orchestrator","risk":"HIGH","notes":"adversarial and long-horizon harness evaluation assets"},
+    {"pattern":".codex/**","owner":"orchestrator","risk":"HIGH"},
+    {"pattern":"config/**","owner":"orchestrator","risk":"MEDIUM"},
+    {"pattern":".github/workflows/**","owner":"release-engineer","co_owner":"qa","risk":"HIGH"}
   ]
 }
