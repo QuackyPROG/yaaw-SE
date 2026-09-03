@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/approval.schema.json",
+  "title": "yaaw-SE Approval Record",
+  "type": "object",
+  "required": ["authority", "action", "target", "reference", "timestamp"],
+  "properties": {
+    "authority": {"type": "string", "minLength": 1},
+    "action": {"type": "string", "minLength": 1},
+    "target": {"type": "string", "minLength": 1},
+    "reference": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "additionalProperties": false
+}

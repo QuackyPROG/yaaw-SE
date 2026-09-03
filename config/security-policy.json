@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "trust": {
+    "instruction_sources": ["CONTROL_TRUSTED", "PROJECT_POLICY_TRUSTED"],
+    "data_only_sources": ["PROJECT_CONTENT_UNTRUSTED", "EXTERNAL_CONTENT_UNTRUSTED", "TOOL_OUTPUT_UNTRUSTED"]
+  },
+  "roles": {
+    "orchestrator": {"max_command_risk": "REPOSITORY_SIDE_EFFECT", "network": true, "production": false, "mutate_repo": true, "mutate_product_code": false},
+    "planner": {"max_command_risk": "LOCAL_MUTATION", "network": true, "production": false, "mutate_repo": false, "mutate_product_code": false},
+    "discovery": {"max_command_risk": "NETWORK_SIDE_EFFECT", "network": true, "production": false, "mutate_repo": false, "mutate_product_code": false},
+    "implementer": {"max_command_risk": "DEPENDENCY_MUTATION", "network": false, "production": false, "mutate_repo": false, "mutate_product_code": true},
+    "qa": {"max_command_risk": "LOCAL_MUTATION", "network": false, "production": false, "mutate_repo": false, "mutate_product_code": false},
+    "release-engineer": {"max_command_risk": "REPOSITORY_SIDE_EFFECT", "network": true, "production": false, "mutate_repo": true, "mutate_product_code": false}
+  },
+  "destructive_operations": {"default": "DENY", "requires_explicit_elevated_authority": true},
+  "secrets": {"durable_artifacts_must_not_contain_secret_values": true, "redact_tool_output_before_persistence": true}
+}
