@@ -1,0 +1,16 @@
+{
+  "schema": "yaaw.delivery-policy/v1",
+  "stages": ["IMPLEMENTED", "VERIFIED", "ACCEPTED", "COMMITTED", "INTEGRATED", "DEPLOYED"],
+  "environments": [
+    {"id": "LOCAL", "requires_provider_observation": false, "requires_rollback": false},
+    {"id": "CI", "requires_provider_observation": true, "requires_rollback": false},
+    {"id": "STAGING", "promotion_authority": "HUMAN_RELEASE_AUTHORITY", "requires_provider_observation": true, "requires_rollback": true},
+    {"id": "PRODUCTION", "promotion_authority": "HUMAN_RELEASE_AUTHORITY", "requires_provider_observation": true, "requires_rollback": true}
+  ],
+  "rules": {
+    "missing_check_is_never_waived": true,
+    "deployment_state_requires_observation": true,
+    "high_assurance_requires_post_integration_qa_when_materially_integrated": true,
+    "release_engineer_is_not_required_for_trivial_local_delivery": true
+  }
+}

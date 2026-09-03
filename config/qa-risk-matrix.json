@@ -1,0 +1,17 @@
+{
+  "schema": "yaaw.qa-risk-matrix/v1",
+  "default_verification_ids": [],
+  "risks": {
+    "local-pure": {"verification_ids": ["unit"]},
+    "api-contract": {"verification_ids": ["unit", "integration"]},
+    "auth": {"verification_ids": ["unit", "negative-auth", "integration"], "integration_qa": true},
+    "trust-boundary": {"verification_ids": ["negative-auth", "integration"], "integration_qa": true},
+    "payments": {"verification_ids": ["integration", "idempotency-retry"], "integration_qa": true, "rollback_required": true, "real_dependency_preferred": true},
+    "migration": {"verification_ids": ["migration-forward", "migration-postcondition", "migration-recovery"], "integration_qa": true, "rollback_required": true},
+    "concurrency": {"verification_ids": ["concurrency-ordering"]},
+    "destructive": {"verification_ids": ["recovery"], "integration_qa": true, "rollback_required": true},
+    "provider-integration": {"verification_ids": ["provider-sandbox"], "integration_qa": true, "real_dependency_preferred": true},
+    "privacy": {"verification_ids": ["privacy-negative", "integration"], "integration_qa": true},
+    "compatibility": {"verification_ids": ["compatibility"]}
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/policy-exception.schema.json",
+  "title": "yaaw-SE Policy Exception",
+  "type": "object",
+  "required": ["policy", "authority", "reference", "expires_at", "reason"],
+  "properties": {
+    "policy": {"type": "string", "minLength": 1},
+    "authority": {"type": "string", "minLength": 1},
+    "reference": {"type": "string", "minLength": 1},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "reason": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

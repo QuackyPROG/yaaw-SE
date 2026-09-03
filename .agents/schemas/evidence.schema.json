@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/evidence.schema.json",
+  "title": "yaaw-SE Executable Evidence",
+  "type": "object",
+  "required": ["verification_id", "command", "exit_code", "environment", "commit", "timestamp", "source_fingerprints"],
+  "properties": {
+    "verification_id": {"type": "string", "minLength": 1},
+    "command": {"type": "string", "minLength": 1},
+    "exit_code": {"type": "integer"},
+    "environment": {"type": "string", "minLength": 1},
+    "commit": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "source_fingerprints": {"type": "object", "additionalProperties": {"type": "string"}},
+    "evidence_kind": {"type": "string"}
+  },
+  "additionalProperties": false
+}
