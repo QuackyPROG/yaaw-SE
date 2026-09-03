@@ -1,0 +1,41 @@
+{
+  "schema": "yaaw.eval-suite/v1",
+  "scenarios": [
+    {"id":"routing-tiny-bug-stays-micro","type":"route","input":{"default_level":0},"expect":{"level":0,"qa":"SELF_VERIFY"}},
+    {"id":"routing-cross-subsystem-promotes","type":"route","input":{"default_level":1,"subsystem_count":2},"expect":{"level":2,"qa":"INDEPENDENT"}},
+    {"id":"routing-auth-trust-is-high-assurance","type":"route","input":{"default_level":1,"security_trust_boundary":true},"expect":{"level":4,"qa":"HIGH_ASSURANCE"}},
+    {"id":"routing-production-policy-is-not-always-l4","type":"route","input":{"default_level":1,"production_policy":true},"expect":{"level":3,"qa":"INDEPENDENT"}},
+    {"id":"routing-irreversible-migration-is-l4","type":"route","input":{"default_level":1,"migration_scope":"IRREVERSIBLE"},"expect":{"level":4,"qa":"HIGH_ASSURANCE"}},
+
+    {"id":"security-rm-rf-is-destructive","type":"command_risk","input":{"command":"rm -rf build"},"expect":"DESTRUCTIVE"},
+    {"id":"security-package-install-mutates-dependencies","type":"command_risk","input":{"command":"npm install left-pad"},"expect":"DEPENDENCY_MUTATION"},
+    {"id":"security-repository-content-cannot-instruct","type":"trust","input":{"source":"PROJECT_CONTENT_UNTRUSTED"},"expect":{"may_supply_instructions":false}},
+    {"id":"security-control-policy-can-instruct","type":"trust","input":{"source":"CONTROL_TRUSTED"},"expect":{"may_supply_instructions":true}},
+
+    {"id":"retry-transient-can-retry","type":"retry","input":{"failure":"NETWORK_TRANSIENT","attempts":0},"expect":true},
+    {"id":"retry-transient-is-bounded","type":"retry","input":{"failure":"NETWORK_TRANSIENT","attempts":2},"expect":false},
+    {"id":"retry-security-denial-never-blind-retries","type":"retry","input":{"failure":"SECURITY_DENIED","attempts":0},"expect":false},
+
+    {"id":"authority-qa-can-write-qa-result","type":"authority","input":{"role":"qa","artifact":"DELIVERY_TICKET","field":"qa_result"},"expect":true},
+    {"id":"authority-qa-cannot-write-implementation-evidence","type":"authority","input":{"role":"qa","artifact":"DELIVERY_TICKET","field":"implementation_evidence"},"expect":false},
+    {"id":"authority-prd-status-is-human-semantic","type":"semantic_authority","input":{"artifact":"PRD","field":"status"},"expect":"HUMAN_PRODUCT_AUTHORITY"},
+
+    {"id":"scope-allows-declared-paths","type":"scope","input":{"paths":["src/auth/login.py","tests/auth/test_login.py"],"allowed":["src/auth/**","tests/auth/**"],"forbidden":[]},"expect":[]},
+    {"id":"scope-rejects-forbidden-secret-path","type":"scope","input":{"paths":["src/auth/secrets/key.py"],"allowed":["src/auth/**"],"forbidden":["src/auth/secrets/**"]},"expect":["FORBIDDEN src/auth/secrets/key.py"]},
+    {"id":"scope-rejects-unrelated-subsystem","type":"scope","input":{"paths":["src/payments/x.py"],"allowed":["src/auth/**"],"forbidden":[]},"expect":["OUTSIDE_ALLOWED src/payments/x.py"]},
+
+    {"id":"graph-detects-cycle","type":"graph","input":{"tickets":[{"id":"A","status":"DRAFT","blocked_by":["B"]},{"id":"B","status":"DRAFT","blocked_by":["A"]}]},"expect":{"missing_blockers":0,"cycles":1,"frontier":[]}},
+    {"id":"graph-detects-missing-blocker","type":"graph","input":{"tickets":[{"id":"A","status":"DRAFT","blocked_by":["MISSING"]}]},"expect":{"missing_blockers":1,"cycles":0,"frontier":[]}},
+    {"id":"graph-computes-ready-frontier","type":"graph","input":{"tickets":[{"id":"D","status":"DONE"},{"id":"R","status":"READY","blocked_by":["D"]}]},"expect":{"missing_blockers":0,"cycles":0,"frontier":["R"]}},
+    {"id":"graph-long-horizon-does-not-need-llm-frontier-math","type":"long_horizon","input":{"count":100},"expect":{"tickets":100,"cycles":0,"frontier":["T001"]}},
+
+    {"id":"history-done-ticket-cannot-be-reopened","type":"transition","input":{"ticket":{"id":"D","status":"DONE"},"target":"IN_PROGRESS"},"expect":{"allowed":false,"contains":"illegal transition"}},
+    {"id":"state-ready-requires-admission-gates","type":"transition","input":{"ticket":{"id":"D","status":"DRAFT"},"target":"READY","context":{"owner_resolved":true,"blockers_done":true,"acceptance_bounded":false,"sources_current":true}},"expect":{"allowed":false,"contains":"acceptance_bounded"}},
+    {"id":"state-ready-succeeds-with-full-gates","type":"transition","input":{"ticket":{"id":"D","status":"DRAFT"},"target":"READY","context":{"owner_resolved":true,"blockers_done":true,"acceptance_bounded":true,"sources_current":true}},"expect":{"allowed":true}},
+
+    {"id":"evidence-fresh-pass-is-accepted","type":"evidence","input":{"recorded_commit":"abc","current_commit":"abc","recorded_fingerprints":{"spec":"1"},"current_fingerprints":{"spec":"1"}},"expect":[]},
+    {"id":"evidence-stale-commit-is-rejected","type":"evidence","input":{"recorded_commit":"abc","current_commit":"def","recorded_fingerprints":{"spec":"1"},"current_fingerprints":{"spec":"1"}},"expect":["stale evidence: unit"]},
+    {"id":"evidence-stale-source-is-rejected","type":"evidence","input":{"recorded_commit":"abc","current_commit":"abc","recorded_fingerprints":{"spec":"1"},"current_fingerprints":{"spec":"2"}},"expect":["stale evidence: unit"]},
+    {"id":"evidence-failing-command-is-rejected","type":"evidence","input":{"exit_code":1,"recorded_commit":"abc","current_commit":"abc"},"expect":["failing evidence: unit"]}
+  ]
+}

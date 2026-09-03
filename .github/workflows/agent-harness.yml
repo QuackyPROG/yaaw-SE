@@ -33,5 +33,7 @@ jobs:
         run: python scripts/yaaw_cli.py policy-lint
       - name: Run harness unit tests
         run: python -m unittest discover -s tests/harness -p 'test_*.py'
+      - name: Run adversarial harness evaluations
+        run: python scripts/run_evals.py
       - name: Verify scope checker fixtures
         run: python scripts/verify_task_scope.py --self-test
