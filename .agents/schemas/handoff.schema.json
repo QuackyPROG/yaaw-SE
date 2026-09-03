@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/handoff.schema.json",
+  "title": "yaaw-SE Agent Handoff",
+  "type": "object",
+  "required": ["schema", "role", "work_id", "goal", "sources", "allowed_write", "forbidden_write", "verification", "stop_triggers", "expected_return"],
+  "properties": {
+    "schema": {"const": "yaaw.handoff/v1"},
+    "role": {"type": "string"},
+    "work_id": {"type": "string"},
+    "goal": {"type": "string"},
+    "sources": {"type": "array", "items": {"type": "string"}},
+    "allowed_write": {"type": "array", "items": {"type": "string"}},
+    "forbidden_write": {"type": "array", "items": {"type": "string"}},
+    "verification": {"type": "array", "items": {"type": "string"}},
+    "stop_triggers": {"type": "array", "items": {"type": "string"}},
+    "expected_return": {"type": "array", "items": {"type": "string"}},
+    "source_fingerprints": {"type": "object", "additionalProperties": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

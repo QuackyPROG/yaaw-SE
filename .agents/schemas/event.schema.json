@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/event.schema.json",
+  "title": "yaaw-SE Workflow Event",
+  "type": "object",
+  "required": ["schema", "event", "work_id", "actor", "timestamp"],
+  "properties": {
+    "schema": {"const": "yaaw.event/v1"},
+    "event": {"type": "string", "minLength": 1},
+    "work_id": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "from": {"type": "string"},
+    "to": {"type": "string"},
+    "reason": {"type": "string"}
+  },
+  "additionalProperties": true
+}
