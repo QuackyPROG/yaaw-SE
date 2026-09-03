@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "description": "Cold inventory of registered yaaw-SE agents, rules, skills, artifact contracts, and validation assets. Load for harness maintenance/audit, not ordinary task routing.",
   "artifact_registry": ".agents/artifacts.json",
   "agents": [
@@ -22,7 +22,7 @@
     {"id":"prd-creation","path":".agents/skills/prd-creation/SKILL.md","owner":"orchestrator","artifact_contract":"skills.prd-creation","invocation":"MANUAL_ONLY"},
     {"id":"intake-routing","path":".agents/skills/intake-routing/SKILL.md","owner":"orchestrator","artifact_contract":"skills.intake-routing"},
     {"id":"progressive-planning","path":".agents/skills/progressive-planning/SKILL.md","owner":"planner","artifact_contract":"skills.progressive-planning"},
-    {"id":"ticket-graph","path":".agents/skills/ticket-graph/SKILL.md","owner":"planner","artifact_contract":"skills.ticket-graph"},
+    {"id":"ticket-graph","path":".agents/skills/ticket-graph/SKILL.md","owner":"planner","artifact_contract":"skills.ticket-graph","status":"DEPRECATED_COMPATIBILITY_SHIM"},
     {"id":"plan-delta","path":".agents/skills/plan-delta/SKILL.md","owner":"planner","artifact_contract":"skills.plan-delta"},
     {"id":"bug-diagnosis","path":".agents/skills/bug-diagnosis/SKILL.md","owner":"discovery","artifact_contract":"skills.bug-diagnosis"},
     {"id":"implementation","path":".agents/skills/implementation/SKILL.md","owner":"implementer","artifact_contract":"skills.implementation"},
@@ -32,6 +32,10 @@
   ],
   "validation": [
     {"id":"validate-agent-assets","path":"scripts/validate_agent_assets.py"},
+    {"id":"validate-semantics","path":"scripts/validate_semantics.py"},
+    {"id":"validate-schemas","path":"scripts/validate_schemas.py"},
+    {"id":"validate-schema-versions","path":"scripts/validate_schema_versions.py"},
+    {"id":"validate-workflow-state","path":"scripts/validate_workflow_state.py"},
     {"id":"validate-codex-runtime","path":"scripts/validate_codex_runtime.py"},
     {"id":"verify-task-scope","path":"scripts/verify_task_scope.py"}
   ]
