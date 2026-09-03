@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/repository-map.schema.json",
+  "title": "yaaw-SE Repository Map",
+  "type": "object",
+  "required": ["schema", "subsystems"],
+  "properties": {
+    "schema": {"const": "yaaw.repository-map/v1"},
+    "subsystems": {"type": "array", "items": {"type": "object", "required": ["id", "paths"], "properties": {"id": {"type": "string"}, "paths": {"type": "array", "items": {"type": "string"}}, "interfaces": {"type": "array", "items": {"type": "string"}}, "tests": {"type": "array", "items": {"type": "string"}}, "docs": {"type": "array", "items": {"type": "string"}}}}}
+  },
+  "additionalProperties": false
+}

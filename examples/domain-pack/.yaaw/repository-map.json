@@ -1,0 +1,7 @@
+{
+  "schema": "yaaw.repository-map/v1",
+  "subsystems": [
+    {"id": "auth", "paths": ["src/auth/**"], "interfaces": ["SessionService"], "tests": ["tests/auth/**"], "docs": ["docs/auth/**"]},
+    {"id": "payments", "paths": ["src/payments/**"], "interfaces": ["PaymentGateway"], "tests": ["tests/payments/**"], "docs": ["docs/payments/**"]}
+  ]
+}
