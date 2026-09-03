@@ -1,10 +1,19 @@
-# <ID>: <Decision title>
-
-**Kind:** DECISION
-**Status:** DRAFT | BLOCKED | READY | IN_PROGRESS | VERIFYING | DONE | SUPERSEDED | CANCELLED
-**Parent:** <initiative/spec optional>
-**Blocked by:** <ids/titles or none>
-**Decision owner / authority:** <owner or human>
+---yaaw-json
+{
+  "schema": "yaaw.ticket/v1",
+  "id": "DEC-000",
+  "kind": "DECISION",
+  "status": "DRAFT",
+  "level": 2,
+  "parent": null,
+  "owner": "planner",
+  "blocked_by": [],
+  "acceptance": ["A delegated authority selects or explicitly defers one option and records consequences"],
+  "qa": {"required": false},
+  "source_fingerprints": {}
+}
+---
+# DEC-000: Decision title
 
 ## Question
 
@@ -16,7 +25,7 @@ State one precise choice that must be made.
 
 ## Evidence
 
-- links to discovery/architecture/product facts
+- discovery/architecture/product facts with provenance:
 
 ## Options
 
@@ -25,11 +34,13 @@ State one precise choice that must be made.
 
 ## Resolution
 
-**State:** PROPOSED | APPROVED | REJECTED | DEFERRED
-
-Chosen direction and rationale. For architecture-level decisions, create/link an ADR.
+- state: `PROPOSED` | `APPROVED` | `REJECTED` | `DEFERRED`
+- authority:
+- approval/reference when human authority is required:
+- chosen direction and rationale:
 
 ## Consequences
 
 - tickets unblocked/invalidated:
+- compatibility/rollback impact:
 - new risks/verification:
