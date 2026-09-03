@@ -13,7 +13,7 @@ from scripts.yaaw.ownership import resolve
 
 TICKET = """---yaaw-json
 {"schema":"yaaw.ticket/v1","id":"DEL-1","kind":"DELIVERY","status":"READY","level":1,"owner":"auth","blocked_by":[],"acceptance":["returns 200 for valid session"],"allowed_write":["src/auth/**"],"forbidden_write":[],"qa":{"required":false}}
----yaaw-json
+---
 # DEL-1
 
 ## What to deliver
