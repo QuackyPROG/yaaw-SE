@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "budgets": {
+    "max_agent_dispatches": 12,
+    "max_repairs_per_contract": 2,
+    "max_plan_deltas_per_ticket": 3,
+    "max_tool_failures": 5,
+    "max_same_failure_signature": 2
+  },
+  "lease": {
+    "default_ttl_seconds": 3600,
+    "one_mutating_holder_per_worktree": true
+  },
+  "freshness": {
+    "reject_changed_sources_before_dispatch": true,
+    "require_materiality_review_after_fingerprint_change": true
+  }
+}

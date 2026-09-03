@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "principle": "physical write capability does not imply semantic authority",
+  "artifacts": {
+    "PRD": {
+      "semantic_authority": "HUMAN_PRODUCT_AUTHORITY",
+      "fallback_mutators": [],
+      "fields": {
+        "draft_content": {"mutators": ["orchestrator"], "semantic_authority": "HUMAN_PRODUCT_AUTHORITY"},
+        "status": {"mutators": ["orchestrator"], "semantic_authority": "HUMAN_PRODUCT_AUTHORITY", "approval_required": true}
+      }
+    },
+    "DELIVERY_TICKET": {
+      "fallback_mutators": [],
+      "fields": {
+        "identity": {"mutators": ["planner", "orchestrator"]},
+        "acceptance": {"mutators": ["planner"]},
+        "blockers": {"mutators": ["planner", "orchestrator"]},
+        "scope": {"mutators": ["planner", "orchestrator"]},
+        "implementation_evidence": {"mutators": ["implementer"]},
+        "qa_result": {"mutators": ["qa"]},
+        "delivery": {"mutators": ["release-engineer", "orchestrator"]},
+        "status": {"mutators": ["orchestrator", "planner", "implementer", "qa", "release-engineer"]}
+      }
+    },
+    "DISCOVERY_TICKET": {
+      "fallback_mutators": [],
+      "fields": {
+        "question": {"mutators": ["planner", "orchestrator"]},
+        "evidence": {"mutators": ["discovery"]},
+        "status": {"mutators": ["orchestrator", "planner", "discovery"]}
+      }
+    },
+    "DECISION_TICKET": {
+      "fallback_mutators": [],
+      "fields": {
+        "question": {"mutators": ["planner", "orchestrator"]},
+        "options": {"mutators": ["planner"]},
+        "resolution": {"mutators": ["planner"], "semantic_authority": "DELEGATED_DECISION_AUTHORITY"},
+        "status": {"mutators": ["orchestrator", "planner"]}
+      }
+    },
+    "QA_REPORT": {"fallback_mutators": ["qa"], "fields": {}},
+    "IMPLEMENTATION_HANDOFF": {"fallback_mutators": ["implementer"], "fields": {}},
+    "DELIVERY_RECORD": {"fallback_mutators": ["release-engineer", "orchestrator"], "fields": {}}
+  }
+}
