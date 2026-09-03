@@ -1,50 +1,25 @@
----
-name: implementation
-description: Implement one bounded engineering contract with preservation invariants, expected change-surface control, targeted verification, explicit stop-and-replan triggers and a diff-based handoff.
----
+# implementation
 
-# Implementation
+## Purpose
+
+Procedure for one controller-admitted DELIVERY contract.
 
 ## Artifact contract
 
-Canonical machine contract: `.agents/artifacts.json` -> `contracts.skills.implementation`.
+Resolve `.agents/artifacts.json` and `.agents/authority.json`. Procedure may produce `CONTRACT_MUTATION` and `IMPLEMENTATION_HANDOFF`; field/path permissions remain authoritative.
 
-- Read: current bounded contract, relevant PRD/ADR/spec sources, allowed/forbidden and expected change surface, preservation invariants, relevant source/tests/docs, verification seam.
-- Produce: `CONTRACT_MUTATION`, `IMPLEMENTATION_HANDOFF`.
-- `CONTRACT_MUTATION` means only paths authorized by the current contract and resolved owner; it is not a generic write grant.
-- Durable implementation evidence belongs in the current DELIVERY ticket's registered implementation section; L0 may remain ephemeral with Git/diff as durable truth.
-- Do not mutate PRD semantics, ticket graph, material acceptance, or out-of-contract paths.
+## Algorithm
 
-## Contract gate
-
-Do not mutate until goal, acceptance, owner, allowed/forbidden scope, **expected change surface**, **preservation invariants**, relevant sources, verification seam, stop triggers, and output artifacts are clear enough for the selected level.
-
-Re-check contract freshness before editing: blockers still complete, referenced PRD/spec/ADR not superseded, ownership unchanged, and relevant interfaces not materially invalidated since planning.
-
-## Execution
-
-1. Inspect only target + immediate interfaces/tests.
-2. Establish intended observable seam; use red-green-refactor when useful.
-3. Make the smallest cohesive change that satisfies acceptance while preserving declared invariants.
-4. Run narrow checks frequently and type/static checks as appropriate.
-5. Track changed paths; use `scripts/verify_task_scope.py` for bounded low-level work when available.
-6. Continuously compare actual paths/behavior with the expected change surface; explain bounded deviations rather than normalizing scope creep.
-7. Avoid unrelated refactors/speculative abstractions.
-8. Run final verification and inspect actual diff.
-9. Confirm preservation invariants still hold.
-10. Update canonical docs only for facts/decisions truly changed.
-11. Checkpoint implementation evidence to its registered destination.
-
-## Evidence qualification
-
-Do not present suspicion as proof. Label important implementation findings as `CONFIRMED`, `SUPPORTED`, `SUSPECTED`, or `UNKNOWN`, with the reproduction/test/static/runtime evidence that justifies the label.
-
-## Stop conditions
-
-Return `STOP_AND_REPLAN` before expanding into a new owner/subsystem, architecture/migration decision, unapproved dependency/provider/trust boundary, destructive operation, materially different acceptance, violated preservation invariant, stale contract source, or unexpectedly broad blast radius.
-
-If the desired product outcome itself appears wrong or impossible, escalate to human product authority; do not rewrite an accepted PRD.
+1. Validate the structured handoff and current source fingerprints before editing.
+2. Inspect the smallest implementation neighborhood: target seam, callers/contracts, relevant tests and canonical docs.
+3. Re-run the all-local scope gate before mutation when the worktree is not clean; unexpected existing writes are a blocker.
+4. Implement the smallest cohesive behavior that satisfies observable acceptance; do not introduce speculative abstraction or unrelated cleanup.
+5. Run the narrowest risk-bearing verification first, then domain-pack checks required by changed paths/risk tags.
+6. Inspect committed/staged/unstaged/untracked changed paths against allowed/forbidden scope and compare actual versus expected surface.
+7. Verify preservation invariants and document deviations with evidence.
+8. If a stop trigger becomes true, stop immediately and return `STOP_AND_REPLAN` with the minimum discriminating evidence.
+9. Otherwise return structured changed paths, behavior, verification records (command/environment/commit/exit result), remaining risks and documentation impact.
 
 ## Repair
 
-Fresh Implementer is default. One reuse is allowed for QA repair only when contract, sources, invariants, and assumptions are unchanged.
+A repair is a new bounded attempt by default. Reuse the same Implementer context at most once only when the contract and source fingerprints are unchanged and QA findings are precise. Controller budgets terminate repeated failure signatures.

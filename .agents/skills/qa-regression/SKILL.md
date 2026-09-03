@@ -1,48 +1,23 @@
----
-name: qa-regression
-description: Independently review the actual diff against accepted intent and risk, verify evidence and blast radius, and return PASS, REPAIR_REQUIRED or STOP_AND_REPLAN.
----
+# qa-regression
 
-# QA Regression
+## Purpose
+
+Risk-first independent review procedure for a completed implementation/integrated diff.
 
 ## Artifact contract
 
-Canonical machine contract: `.agents/artifacts.json` -> `contracts.skills.qa-regression`.
+Resolve `.agents/artifacts.json` and `.agents/authority.json`. Produces `QA_REPORT`; never repairs product code in the same context.
 
-- Read: actual diff, originating contract, relevant PRD/spec/decision/map, preservation invariants, verification evidence, `.agents/ownership.json`, `.agents/artifacts.json`, affected canonical docs.
-- Produce: `QA_REPORT`.
-- Primary destination is the current DELIVERY ticket `#QA`; use only the registered overflow locator for large evidence and link it from the ticket.
-- Never repair product code in the same QA context, alter accepted PRD intent, or manufacture a pass from missing evidence.
+## Review order
 
-## Fixed point
+1. Establish exact base/head diff and changed/untracked surface.
+2. Load originating acceptance, accepted intent/decisions, preservation invariants, risk tags and domain verification contracts.
+3. Test highest-consequence transitions first: authorization, payments, data loss, secrets/privacy, destructive writes, migrations, compatibility, concurrency, retries/idempotency, external side effects, recovery and irreversible state.
+4. Evaluate contract fidelity, preservation, ownership/scope, standards, evidence provenance/freshness and durable documentation.
+5. Prefer real integration seams when mocks can hide material risk.
+6. Record findings with stable QA IDs, severity and evidence; distinguish confirmed defects from residual uncertainty.
+7. Return `PASS`, `REPAIR_REQUIRED`, or `STOP_AND_REPLAN`.
 
-Start from explicit base/head or equivalent actual diff. Do not review only an Implementer summary.
+## High assurance
 
-## Risk first
-
-Spend review effort in proportion to consequence and failure likelihood. Prioritize state transitions involving authorization, money, secrets/privacy, destructive writes, migrations, concurrency, retries/idempotency, external side effects, compatibility, recovery, and irreversible behavior before low-risk polish.
-
-Test counts and coverage percentages are supporting signals, not substitutes for risk coverage.
-
-## Review axes
-
-### Intent / contract
-Verify accepted observable behavior, relevant PRD invariants, omissions, unintended extra behavior, scope and acceptance fidelity.
-
-### Preservation
-Verify every declared preservation invariant still holds. A fix that breaks a protected property is not acceptable merely because the new acceptance criterion passes.
-
-### Standards
-Verify correctness, edge/error handling, lifecycle, interface quality, semantic duplication, maintainability, test quality, repository conventions and documentation consistency.
-
-### Scope
-Compare every changed path and meaningful behavioral side effect to allowed/forbidden rules **and expected change surface**. Unexplained drift blocks PASS. Plan-invalidating expansion is `STOP_AND_REPLAN`; bounded defects are `REPAIR_REQUIRED`.
-
-### Evidence
-Re-run or add focused checks when necessary. Distinguish `not run`, `failed`, `passed`, and `not applicable`. Classify material findings as `CONFIRMED`, `SUPPORTED`, `SUSPECTED`, or `UNKNOWN`; include reproduction, test, runtime, or static proof sufficient for the label.
-
-Prefer real dependency/integration validation when mocks can reproduce only the implementation's own assumptions and the risk justifies the cost.
-
-## Result
-
-Return PASS, REPAIR_REQUIRED with prioritized evidence-backed findings, or STOP_AND_REPLAN with contradictory/stale-source evidence; checkpoint the registered QA_REPORT before downstream delivery.
+L4/critical work needs orthogonal executable evidence appropriate to its risk matrix and may require integration-stage QA. A fresh LLM thread by itself does not satisfy high-assurance independence.
