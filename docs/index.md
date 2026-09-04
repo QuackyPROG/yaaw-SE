@@ -1,6 +1,6 @@
 # Documentation Index
 
-Use this file as the cold-start map after `AGENTS.md`.
+Use this file as the documentation locator after the hot `AGENTS.md` control contract. Do not load the entire index for trivial work when point queries already identify the needed source.
 
 ## Product intent
 
@@ -17,6 +17,8 @@ Use this file as the cold-start map after `AGENTS.md`.
 
 - [`workflow/overview.md`](workflow/overview.md) — end-to-end workflow diagram from intake/optional PRD through planning, execution, QA, commits, and release.
 - [`workflow/controller.md`](workflow/controller.md) — deterministic admission, mutation, budgets, leases and failure behavior.
+- [`workflow/controller-cli.md`](workflow/controller-cli.md) — point-query CLI plus token-budgeted context hydration.
+- [`workflow/context-efficiency.md`](workflow/context-efficiency.md) — bounded live retrieval, priority-aware token packing, aggregate model budgets and efficiency proof.
 - [`workflow/runtime-gateway.md`](workflow/runtime-gateway.md) — executable dispatch/action admission boundary and its host-runtime containment limits.
 - [`workflow/runtime-tracing.md`](workflow/runtime-tracing.md) — correlated gateway/action traces, redaction and diagnostic metrics.
 - [`workflow/agent-evals.md`](workflow/agent-evals.md) — repeated agent-loop trials, separate outcome/trace grading and stochastic reliability metrics.
@@ -45,7 +47,7 @@ Use this file as the cold-start map after `AGENTS.md`.
 
 ## Agent harness
 
-- `.agents/router.json` — small hot routing policy.
+- `.agents/router.json` — small hot routing policy and pointers to controller/context/security policies.
 - `.agents/artifacts.json` — artifact types, canonical locators, templates, producers, mutators, and agent/skill artifact contracts.
 - `.agents/catalog.json` — full cold inventory for maintenance/audit.
 - `.agents/ownership.json` — machine-readable path ownership.
