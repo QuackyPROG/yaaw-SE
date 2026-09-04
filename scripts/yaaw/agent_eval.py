@@ -185,6 +185,12 @@ def validate_manifest(manifest: dict) -> None:
     for section in ("outcome_grader", "trace_grader", "thresholds"):
         if not isinstance(manifest.get(section), dict):
             raise AgentEvalError(f"manifest requires object {section}")
+    thresholds = manifest["thresholds"]
+    for field in ("max_policy_violations", "max_replans", "max_total_tokens", "max_total_duration_ms"):
+        if field in thresholds and (not isinstance(thresholds[field], int) or thresholds[field] < 0):
+            raise AgentEvalError(f"threshold {field} must be a non-negative integer")
+    if "max_total_cost_usd" in thresholds and (not isinstance(thresholds["max_total_cost_usd"], (int, float)) or thresholds["max_total_cost_usd"] < 0):
+        raise AgentEvalError("threshold max_total_cost_usd must be non-negative")
 
 
 def grade_outcome(result: AdapterResult, spec: dict) -> Grade:
@@ -238,6 +244,23 @@ def _event_count(trace: tuple[dict, ...], names: set[str]) -> int:
     return sum(1 for item in trace if str(item.get("event", "")) in names)
 
 
+def _thresholds_met(report: dict, thresholds: dict) -> bool:
+    checks = [
+        report["pass_rate"] >= float(thresholds.get("min_pass_rate", 0.0)),
+        report["trace_pass_rate"] >= float(thresholds.get("min_trace_pass_rate", 0.0)),
+        report["policy_violations"] <= int(thresholds.get("max_policy_violations", 0)),
+    ]
+    if "max_replans" in thresholds:
+        checks.append(report["replans"] <= int(thresholds["max_replans"]))
+    if "max_total_tokens" in thresholds:
+        checks.append(report["total_tokens"] <= int(thresholds["max_total_tokens"]))
+    if "max_total_cost_usd" in thresholds:
+        checks.append(report["total_cost_usd"] <= float(thresholds["max_total_cost_usd"]))
+    if "max_total_duration_ms" in thresholds:
+        checks.append(report["total_duration_ms"] <= int(thresholds["max_total_duration_ms"]))
+    return all(checks)
+
+
 def run_trials(manifest: dict, adapter: RuntimeAdapter) -> dict:
     validate_manifest(manifest)
     adapter.identity.validate()
@@ -269,6 +292,9 @@ def run_trials(manifest: dict, adapter: RuntimeAdapter) -> dict:
     trace_passed = sum(1 for trial in trials if trial.trace_passed)
     ks = sorted(set(int(k) for k in manifest.get("k", [1])))
     evidence_class = "OBSERVED" if adapter.identity.external else "SIMULATED"
+    total_tokens = sum(trial.tokens for trial in trials)
+    total_cost = round(sum(trial.cost_usd for trial in trials), 6)
+    total_duration = sum(trial.duration_ms for trial in trials)
     report = {
         "schema": "yaaw.agent-eval-report/v1",
         "manifest_id": manifest["id"],
@@ -285,17 +311,20 @@ def run_trials(manifest: dict, adapter: RuntimeAdapter) -> dict:
         "pass_power_k": {str(k): pass_power_k(attempts, passed, k) for k in ks},
         "policy_violations": sum(trial.policy_violations for trial in trials),
         "replans": sum(trial.replans for trial in trials),
-        "total_tokens": sum(trial.tokens for trial in trials),
-        "total_cost_usd": round(sum(trial.cost_usd for trial in trials), 6),
-        "total_duration_ms": sum(trial.duration_ms for trial in trials),
+        "total_tokens": total_tokens,
+        "total_cost_usd": total_cost,
+        "total_duration_ms": total_duration,
+        "efficiency": {
+            "tokens_per_attempt": round(total_tokens / attempts, 3),
+            "cost_per_attempt_usd": round(total_cost / attempts, 6),
+            "duration_per_attempt_ms": round(total_duration / attempts, 3),
+            "tokens_per_passing_trial": round(total_tokens / passed, 3) if passed else None,
+            "cost_per_passing_trial_usd": round(total_cost / passed, 6) if passed else None,
+            "duration_per_passing_trial_ms": round(total_duration / passed, 3) if passed else None,
+        },
         "trials": [trial.to_dict() for trial in trials],
     }
-    thresholds = manifest["thresholds"]
-    report["thresholds_met"] = (
-        report["pass_rate"] >= float(thresholds.get("min_pass_rate", 0.0))
-        and report["trace_pass_rate"] >= float(thresholds.get("min_trace_pass_rate", 0.0))
-        and report["policy_violations"] <= int(thresholds.get("max_policy_violations", 0))
-    )
+    report["thresholds_met"] = _thresholds_met(report, manifest["thresholds"])
     return report
 
 
