@@ -9,6 +9,11 @@
     "max_total_llm_calls": 24,
     "max_total_llm_tokens": 240000
   },
+  "budget_state": {
+    "path": ".yaaw/runtime/budgets.json",
+    "atomic_replace": true,
+    "survives_controller_restart": true
+  },
   "mutation": {
     "atomic_replace": true,
     "operation_id_required_for_write": true,
