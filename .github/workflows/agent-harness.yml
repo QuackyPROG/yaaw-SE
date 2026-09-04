@@ -39,5 +39,7 @@ jobs:
         run: python -m unittest discover -s tests/harness -p 'test_*.py'
       - name: Run adversarial harness evaluations
         run: python scripts/run_evals.py
+      - name: Run deterministic agent-loop evaluation fixture
+        run: python scripts/run_agent_evals.py --manifest evals/agent-loop-fixture.json --adapter fake
       - name: Verify scope checker fixtures
         run: python scripts/verify_task_scope.py --self-test
