@@ -17,11 +17,17 @@ The generic harness has executable coverage for:
 - an executable runtime gateway that, when used as the adapter's mutation boundary, derives its scope ceiling from the admitted ticket rather than caller-supplied globs and requires affected paths for filesystem/dependency/artifact/product mutations;
 - correlated, redacted gateway/action traces and diagnostic metrics;
 - capability-aware runtime profiles and fail-closed fallback;
+- role/level token-budget policy with reserved output, retrieval and per-evidence allowances;
+- bounded live repository retrieval from declared ticket surfaces through ownership, repository-map, symbol, test and targeted-history hooks;
+- priority-aware context packing that preserves mandatory contract fields, evicts optional evidence to compact references, and fails closed when the contract itself cannot fit;
+- aggregate model-call/token reservation backpressure so individually valid calls cannot create an unbounded initiative-level token loop;
 - provider-neutral runtime invocation plus a registered generic command adapter contract;
 - deterministic adversarial scenarios and repeated agent-loop evaluation machinery;
-- workload provenance/comparison rules that preserve `NOT_RUN`, `BLOCKED`, `FAILED`, and `OBSERVED` and refuse to classify synthetic or manifest-mismatched results as empirical evidence.
+- resource-aware agent-eval thresholds for tokens, cost, latency and replans in addition to quality/trace/safety thresholds;
+- workload provenance/comparison rules that preserve `NOT_RUN`, `BLOCKED`, `FAILED`, and `OBSERVED`, refuse to classify synthetic or manifest-mismatched results as empirical evidence, and require quality non-regression before reporting token-efficiency improvement;
+- a pinned external-workload manifest builder that computes exact baseline/governed manifest fingerprints without manufacturing execution evidence.
 
-These guarantees mean the implementation has code/tests for the named invariant. They do not mean every consuming runtime can enforce every OS/provider boundary.
+These guarantees mean the implementation has code/tests for the named invariant. They do not mean every consuming runtime can enforce every OS/provider boundary, nor do heuristic pre-dispatch token estimates equal exact provider billing tokens.
 
 ## Evidence classes
 
@@ -31,7 +37,7 @@ Do not collapse evaluator correctness into model capability.
 - **OBSERVED / UNPROVEN** — an identified runtime may have actually executed, but the workload or immutable provenance is insufficient for an external empirical claim.
 - **OBSERVED / EMPIRICAL** — requires a pinned external repository/ref/commit, explicit runtime/provider/model identity, and an agent-eval report whose manifest ID and SHA-256 fingerprint match the workload's expected evaluation configuration.
 
-The repository currently contains **no committed external `EMPIRICAL` workload result**. A green Agent Harness therefore proves repository conformance, not external model success.
+The repository currently contains **no committed external `EMPIRICAL` workload result**. A green Agent Harness therefore proves repository conformance, not external model success or a universal token-savings percentage.
 
 ## Agent judgment
 
@@ -55,6 +61,7 @@ The following depend on the selected runtime/provider/project and must be observ
 - OS/filesystem syscall containment and sandbox isolation beyond declared-path checks;
 - network egress enforcement, credential isolation and production-provider permissions;
 - access to specific models or distinct QA model families;
+- exact provider/model tokenization, billing and context-window semantics beyond the conservative harness estimate;
 - real deployment/provider state;
 - project-native build/test/security/observability quality;
 - CODEOWNERS/ruleset/branch-protection APIs and external tracker freshness.
@@ -65,4 +72,4 @@ If a mandatory runtime capability is unavailable, the correct high-assurance res
 
 The harness is suitable for continued dogfooding, supervised real repository work and controlled automation where the consuming domain pack and runtime enforce the required boundaries. High-impact systems—financial transactions, healthcare/safety-critical software, irreversible migrations, production IAM/secrets and similar work—still require project-specific controls and human authority appropriate to the domain.
 
-A stronger maturity label should be earned from broader observed external workload evidence and non-bypassable runtime/provider containment, not added because CI or prompts sound confident.
+A stronger maturity label should be earned from broader observed external workload evidence and non-bypassable runtime/provider containment, not added because CI, prompts or synthetic token savings look good.
