@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"RTP-04","kind":"DELIVERY","status":"IN_PROGRESS","level":3,"parent":"INIT-RUNTIME-PROOF","owner":"qa","blocked_by":["RTP-03"],"acceptance":["External workload manifests and portability contracts can compare plain-runtime baseline versus yaaw-SE-governed runs across unrelated repositories without provider-specific workflow assumptions.","Evidence schemas distinguish NOT_RUN/UNPROVEN from observed results and require immutable workload/runtime/commit fingerprints for empirical claims."],"qa":{"required":true,"profile":"INDEPENDENT"},"allowed_write":["evals/**","examples/**","scripts/**","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["fabricated external repository results","implicit credential/network access"],"expected_change_surface":["evals/**","examples/**","scripts/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"rtp03":"f70108256049eabb86772585ca55e7930b605ec3","rtp03_ci":"33889727104","implementation_base":"97b0df0a0103b01189500815d46b40214adb27b0"},"risk":["external-evidence","runtime-portability"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"RTP-04","kind":"DELIVERY","status":"DONE","level":3,"parent":"INIT-RUNTIME-PROOF","owner":"qa","blocked_by":["RTP-03"],"acceptance":["External workload manifests and portability contracts can compare plain-runtime baseline versus yaaw-SE-governed runs across unrelated repositories without provider-specific workflow assumptions.","Evidence schemas distinguish NOT_RUN/UNPROVEN from observed results and require immutable workload/runtime/commit fingerprints for empirical claims."],"qa":{"required":true,"profile":"INDEPENDENT"},"allowed_write":["evals/**","examples/**","scripts/**","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["fabricated external repository results","implicit credential/network access"],"expected_change_surface":["evals/**","examples/**","scripts/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"rtp03":"f70108256049eabb86772585ca55e7930b605ec3","rtp03_ci":"33889727104","implementation":"7a92adc0aef40d8d5f9aebf2feeb1c13218154d3","implementation_ci":"33891024080"},"risk":["external-evidence","runtime-portability"],"side_effects":["repository"]}
 ---
 # RTP-04: External workload and portability framework
 
@@ -30,19 +30,19 @@ Workload/comparison schemas and runner code, generic command adapter registratio
 RTP-03 trial runner, runtime adapter registry/schema, evidence/trust/maturity policies.
 
 ## Stop and replan triggers
-No trigger fired in implementation. The generic adapter remains a protocol contract and explicitly requires an external gateway-enforcing wrapper rather than weakening yaaw-SE semantics.
+No trigger fired. The generic adapter remains a protocol contract and explicitly requires an external gateway-enforcing wrapper rather than weakening yaaw-SE semantics.
 
 ## Implementation evidence
-Candidate adds `yaaw.workload/v1`, pinned provenance/fingerprints, `yaaw.workload-evidence/v1` and comparison classification, a synthetic baseline/governed fixture, the registered `generic-command` adapter contract, static adapter validation, comparison tests and a CI comparison step. Synthetic improvements are forced to remain `UNPROVEN`. Exact-SHA CI pending.
+`7a92adc0aef40d8d5f9aebf2feeb1c13218154d3` adds pinned workload provenance and fingerprints, explicit evidence statuses/proof classification, baseline/governed delta reporting, the second registered generic-command adapter, schemas, local synthetic fixtures, focused tests and CI validation. The synthetic governed improvement remains `UNPROVEN` by construction.
 
 ## QA disposition
-INDEPENDENT required; candidate is not DONE until the full Agent Harness is green on its exact SHA.
+INDEPENDENT satisfied by exact-SHA full Agent Harness, including the new generic-runtime validator and synthetic workload comparison.
 
 ## QA result
-Pending exact-SHA CI.
+PASS — Agent Harness run `33891024080` completed successfully for exact implementation SHA `7a92adc0…`.
 
 ## Verification
-Run schema/runtime-adapter validation, harness unit tests, deterministic agent evals, the synthetic workload comparison and the full Agent Harness.
+All repository-defined schema/semantic/runtime/state/policy/unit/eval/comparison/scope gates passed in run `33891024080`.
 
 ## Delivery
-IN_PROGRESS — implementation candidate is being validated. No external workload or provider result has been invented.
+DONE — portability/provenance machinery is on `main`; no external workload or provider success is claimed.
