@@ -1,7 +1,9 @@
 """Deterministic admission and recovery layer around LLM engineering judgments."""
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from .budgets import Budget
 from .graph import TicketGraph
@@ -15,6 +17,17 @@ class AdmissionError(RuntimeError):
     pass
 
 
+def _repository_path(root: Path, value: object, field: str) -> Path:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"controller policy requires non-empty {field}")
+    path = (root / value).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"controller policy {field} escapes repository root: {value}") from exc
+    return path
+
+
 @dataclass
 class Controller:
     graph: TicketGraph
@@ -22,6 +35,36 @@ class Controller:
     leases: LeaseStore
     snapshot_store: SnapshotStore | None = None
     failure_signatures: dict[str, int] = field(default_factory=dict)
+
+    @classmethod
+    def from_repository(
+        cls,
+        graph: TicketGraph,
+        *,
+        root: Path = Path("."),
+        policy_path: Path | None = None,
+    ) -> "Controller":
+        """Build the normal runtime controller from repository policy.
+
+        This is the preferred factory for real runtimes. It binds dispatch/model
+        budgets to the persisted `.yaaw/runtime` budget state so restarting a host or
+        reconstructing the root Orchestrator cannot reset aggregate token/call usage.
+        """
+        root = root.resolve()
+        resolved_policy = (policy_path or (root / "config" / "controller-policy.json")).resolve()
+        try:
+            resolved_policy.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(f"controller policy path escapes repository root: {resolved_policy}") from exc
+        policy = json.loads(resolved_policy.read_text(encoding="utf-8"))
+        lease_path = _repository_path(root, policy.get("lease", {}).get("root"), "lease.root")
+        snapshot_path = _repository_path(root, policy.get("recovery", {}).get("snapshot"), "recovery.snapshot")
+        return cls(
+            graph=graph,
+            budget=Budget.from_policy(resolved_policy, root=root),
+            leases=LeaseStore(lease_path),
+            snapshot_store=SnapshotStore(snapshot_path),
+        )
 
     def preflight_dispatch(self, ticket_id: str, *, sources_current: bool = True) -> Ticket:
         """Validate dispatch invariants without consuming budget or acquiring a lease."""
