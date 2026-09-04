@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -61,6 +62,32 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(ctl.budget.used["max_total_llm_calls"], 1)
         # The failed budget admission must not strand the temporary lease.
         ctl.leases.acquire("wt-b", "agent-b", "DEL-1")
+
+    def test_repository_controller_preserves_model_budget_across_reconstruction(self):
+        t = Ticket("DEL-1", TicketKind.DELIVERY, TicketState.READY, 1, "core", acceptance=("observable",))
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "config").mkdir()
+            (root / "config/controller-policy.json").write_text(json.dumps({
+                "budgets": {
+                    "max_agent_dispatches": 2,
+                    "max_total_llm_tokens": 1000,
+                    "max_total_llm_calls": 2,
+                },
+                "budget_state": {"path": ".yaaw/runtime/budgets.json"},
+                "lease": {"root": ".yaaw/runtime/leases"},
+                "recovery": {"snapshot": ".yaaw/runtime/controller-snapshot.json"},
+            }), encoding="utf-8")
+            first = Controller.from_repository(TicketGraph([t]), root=root)
+            first.reserve_llm_tokens(300, 100)
+            second = Controller.from_repository(TicketGraph([t]), root=root)
+            self.assertEqual(second.budget.used["max_total_llm_tokens"], 400)
+            self.assertEqual(second.budget.used["max_total_llm_calls"], 1)
+            with self.assertRaises(AdmissionError):
+                second.admit_agent_invocation("DEL-1", "agent", "wt", input_tokens=700, reserved_output_tokens=1, role="implementer")
+            third = Controller.from_repository(TicketGraph([t]), root=root)
+            self.assertEqual(third.budget.used["max_total_llm_tokens"], 400)
+            self.assertEqual(third.budget.used["max_total_llm_calls"], 1)
 
 
 if __name__ == "__main__":
