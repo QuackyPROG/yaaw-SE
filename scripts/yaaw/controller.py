@@ -41,14 +41,16 @@ class Controller:
             raise AdmissionError(f"ticket {ticket_id} has stale source fingerprints")
         return ticket
 
-    def reserve_llm_tokens(self, input_tokens: int, reserved_output_tokens: int = 0) -> dict[str, int]:
-        """Reserve model capacity before invocation.
+    def _record_dispatch_snapshot(self, ticket_id: str, role: str | None, worktree: str, base_sha: str | None) -> None:
+        if self.snapshot_store is None:
+            return
+        prior = self.snapshot_store.load()
+        attempts = (prior.dispatch_attempt if prior else 0) + 1
+        signatures = dict((prior.failure_signatures if prior else None) or self.failure_signatures)
+        self.snapshot_store.save(RuntimeSnapshot(ticket_id, role, worktree, base_sha, attempts, signatures))
 
-        Runtimes should reserve the packed input estimate plus the configured output
-        allowance before starting a model call. Exact observed usage remains telemetry;
-        reservations provide deterministic pre-call backpressure without depending on
-        a provider-specific tokenizer.
-        """
+    def reserve_llm_tokens(self, input_tokens: int, reserved_output_tokens: int = 0) -> dict[str, int]:
+        """Reserve model capacity before an invocation without claiming a child lease."""
         if input_tokens < 0 or reserved_output_tokens < 0:
             raise ValueError("LLM token reservations cannot be negative")
         total = input_tokens + reserved_output_tokens
@@ -60,15 +62,52 @@ class Controller:
         except RuntimeError as exc:
             raise AdmissionError(str(exc)) from exc
 
+    def admit_agent_invocation(
+        self,
+        ticket_id: str,
+        holder: str,
+        worktree: str,
+        *,
+        input_tokens: int,
+        reserved_output_tokens: int,
+        sources_current: bool = True,
+        base_sha: str | None = None,
+        role: str | None = None,
+    ) -> Ticket:
+        """Atomically admit a child-agent dispatch and its model budget.
+
+        This is the preferred runtime boundary for an LLM child invocation. The
+        writer/worktree lease is acquired before budget mutation; if any dispatch or
+        model budget would be exceeded, the lease is released and no budget counter
+        changes. A runtime therefore cannot accidentally admit the child first and
+        discover an exhausted token budget afterward.
+        """
+        if input_tokens < 0 or reserved_output_tokens < 0:
+            raise ValueError("LLM token reservations cannot be negative")
+        ticket = self.preflight_dispatch(ticket_id, sources_current=sources_current)
+        self.leases.acquire(worktree, holder, ticket_id)
+        try:
+            self.budget.consume_many({
+                "max_agent_dispatches": 1,
+                "max_total_llm_tokens": input_tokens + reserved_output_tokens,
+                "max_total_llm_calls": 1,
+            })
+        except RuntimeError as exc:
+            self.leases.release(worktree, holder)
+            raise AdmissionError(str(exc)) from exc
+        self._record_dispatch_snapshot(ticket_id, role, worktree, base_sha)
+        return ticket
+
     def admit_dispatch(self, ticket_id: str, holder: str, worktree: str, sources_current: bool = True, base_sha: str | None = None, role: str | None = None) -> Ticket:
+        """Admit a non-model dispatch/action reservation.
+
+        Model-backed child runtimes should use `admit_agent_invocation` so dispatch
+        and context/output token budgets are one admission operation.
+        """
         ticket = self.preflight_dispatch(ticket_id, sources_current=sources_current)
         self.budget.consume("max_agent_dispatches")
         self.leases.acquire(worktree, holder, ticket_id)
-        if self.snapshot_store is not None:
-            prior = self.snapshot_store.load()
-            attempts = (prior.dispatch_attempt if prior else 0) + 1
-            signatures = dict((prior.failure_signatures if prior else None) or self.failure_signatures)
-            self.snapshot_store.save(RuntimeSnapshot(ticket_id, role, worktree, base_sha, attempts, signatures))
+        self._record_dispatch_snapshot(ticket_id, role, worktree, base_sha)
         return ticket
 
     def release_dispatch(self, worktree: str, holder: str, *, clear_snapshot: bool = True) -> None:
