@@ -28,7 +28,9 @@ The effective input budget is:
 max_window_tokens - reserved_output_tokens
 ```
 
-The controller also exposes aggregate `max_total_llm_tokens` and `max_total_llm_calls` backpressure. A runtime should reserve the packed input estimate plus configured output allowance before invoking a model. This prevents a sequence of individually valid calls from becoming an unbounded initiative-level spend.
+The controller also exposes aggregate `max_total_llm_tokens` and `max_total_llm_calls` backpressure. Normal runtimes construct the controller through `Controller.from_repository`, which binds `config/controller-policy.json` to `.yaaw/runtime/budgets.json`, leases and the recovery snapshot. Budget state is atomically replaced and reloaded when the controller is reconstructed, so a process/thread restart cannot reset aggregate model-call or token consumption. Model-backed child dispatch uses `Controller.admit_agent_invocation` to reserve the packed input estimate, configured output allowance, dispatch count and writer lease as one admission operation.
+
+This prevents both a sequence of individually valid calls and a restart loop from becoming an unbounded initiative-level spend.
 
 ## Retrieval pipeline
 
