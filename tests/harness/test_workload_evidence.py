@@ -26,7 +26,7 @@ def workload(kind="SYNTHETIC"):
     }
 
 
-def report(lane="baseline", evidence_class="SIMULATED", external=False, pass_rate=0.5, manifest_match=True):
+def report(lane="baseline", evidence_class="SIMULATED", external=False, pass_rate=0.5, manifest_match=True, tokens=10, cost=0.01, duration=100):
     manifest_id = "BASE" if lane == "baseline" else "GOV"
     manifest_fp = BASE_FP if lane == "baseline" else GOV_FP
     if not manifest_match:
@@ -41,9 +41,9 @@ def report(lane="baseline", evidence_class="SIMULATED", external=False, pass_rat
         "trace_pass_rate": 1.0,
         "policy_violations": 0,
         "replans": 0,
-        "total_tokens": 10,
-        "total_cost_usd": 0.01,
-        "total_duration_ms": 100,
+        "total_tokens": tokens,
+        "total_cost_usd": cost,
+        "total_duration_ms": duration,
     }
 
 
@@ -82,14 +82,28 @@ class WorkloadEvidenceTests(unittest.TestCase):
         self.assertEqual(comparison["baseline_status"], "BLOCKED")
         self.assertEqual(comparison["governed_status"], "NOT_RUN")
         self.assertIsNone(comparison["deltas"])
+        self.assertIsNone(comparison["relative"])
         self.assertEqual(comparison["proof_class"], "UNPROVEN")
 
-    def test_observed_comparison_reports_governed_minus_baseline(self):
-        base = evidence_record(workload(), "baseline", "OBSERVED", report=report("baseline", pass_rate=0.5))
-        governed = evidence_record(workload(), "governed", "OBSERVED", report=report("governed", pass_rate=0.75))
+    def test_observed_comparison_reports_quality_and_resource_reduction(self):
+        base = evidence_record(workload(), "baseline", "OBSERVED", report=report("baseline", pass_rate=0.5, tokens=100, cost=0.02, duration=200))
+        governed = evidence_record(workload(), "governed", "OBSERVED", report=report("governed", pass_rate=0.75, tokens=60, cost=0.01, duration=150))
         comparison = compare_evidence(base, governed)
         self.assertEqual(comparison["deltas"]["pass_rate"], 0.25)
+        self.assertEqual(comparison["relative"]["token_reduction_ratio"], 0.4)
+        self.assertEqual(comparison["relative"]["cost_reduction_ratio"], 0.5)
+        self.assertEqual(comparison["relative"]["duration_reduction_ratio"], 0.25)
+        self.assertTrue(comparison["relative"]["quality_non_regression"])
+        self.assertTrue(comparison["relative"]["token_efficiency_improved"])
         self.assertEqual(comparison["proof_class"], "UNPROVEN")
+
+    def test_efficiency_claim_fails_when_quality_regresses(self):
+        base = evidence_record(workload(), "baseline", "OBSERVED", report=report("baseline", pass_rate=1.0, tokens=100))
+        governed = evidence_record(workload(), "governed", "OBSERVED", report=report("governed", pass_rate=0.5, tokens=40))
+        comparison = compare_evidence(base, governed)
+        self.assertEqual(comparison["relative"]["token_reduction_ratio"], 0.6)
+        self.assertFalse(comparison["relative"]["quality_non_regression"])
+        self.assertFalse(comparison["relative"]["token_efficiency_improved"])
 
     def test_observed_requires_report_and_failed_requires_reason(self):
         with self.assertRaises(WorkloadEvidenceError):
