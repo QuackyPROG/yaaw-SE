@@ -4,11 +4,9 @@
 # RTP-05: Runtime-proof integration audit
 
 ## What to deliver
-
 Perform the whole-system audit after RTP-01 through RTP-04. Close contradictions, validate the exact implementation SHA and update maturity documentation to state precisely what is machine-enforced, runtime-dependent, CI-simulated and empirically observed.
 
 ## Acceptance criteria
-
 - [ ] Complete diff is reviewed for duplicated policy, bypass paths, stale assumptions and accidental provider coupling.
 - [ ] Full schema/semantic/state/policy/unit/eval/scope CI passes on the exact candidate.
 - [ ] Maturity docs distinguish executable enforcement from provider containment and observed external workload evidence.
@@ -16,9 +14,34 @@ Perform the whole-system audit after RTP-01 through RTP-04. Close contradictions
 - [ ] No external benchmark success is invented to satisfy closeout.
 
 ## Preservation invariants
-
 Completed prior hardening history remains immutable.
 
-## Verification
+## Allowed write scope
+Whole harness surfaces only as needed for final audit corrections and durable closeout evidence.
 
+## Forbidden write scope
+No external empirical-success claim without observed evidence; no completion before exact-SHA green CI.
+
+## Expected change surface
+Potentially all harness policy/code/test/docs surfaces, but only for audit corrections and status reconciliation.
+
+## Canonical sources
+RTP-01 through RTP-04 artifacts, complete Git history/diff, Agent Harness CI and maturity documentation.
+
+## Stop and replan triggers
+Any unresolved executable bypass, stale evidence, contradictory maturity claim, or failed exact-SHA CI.
+
+## Implementation evidence
+Pending RTP-04 completion.
+
+## QA disposition
+HIGH_ASSURANCE required; pending.
+
+## QA result
+Pending.
+
+## Verification
 Exact-SHA Agent Harness evidence plus final main-branch CI after closeout.
+
+## Delivery
+Blocked by RTP-04.

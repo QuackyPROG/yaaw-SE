@@ -4,11 +4,9 @@
 # RTP-03: Model-in-the-loop evaluation framework
 
 ## What to deliver
-
 Add an executable end-to-end trial runner that can invoke a registered command/provider adapter, collect gateway traces and grade both task outcome and workflow conformance over repeated trials.
 
 ## Acceptance criteria
-
 - [ ] Runtime adapter protocol separates invocation from workflow semantics.
 - [ ] Trial manifests pin workload, runtime/model identity, attempt count and grader expectations.
 - [ ] Reports include pass@1, pass@k, pass^k, policy violations, replans, cost/token/latency fields and trial-level evidence.
@@ -16,6 +14,35 @@ Add an executable end-to-end trial runner that can invoke a registered command/p
 - [ ] CI exercises the entire runner with a deterministic fake adapter; real-provider runs are opt-in and reported as observed external evidence only.
 - [ ] Missing provider/model metadata prevents empirical-proof claims.
 
-## Verification
+## Preservation invariants
+Deterministic harness conformance remains separate from stochastic agent quality; fake adapters never count as external empirical evidence.
 
+## Allowed write scope
+Evaluation/runtime adapter code, eval assets, config/schemas, tests/docs and this initiative's durable artifacts.
+
+## Forbidden write scope
+No default-CI network/model calls and no fabricated trial/model output.
+
+## Expected change surface
+`evals/**`, evaluator/adapter modules, schemas/config, focused tests and evaluation documentation.
+
+## Canonical sources
+RTP-01 gateway, RTP-02 traces, existing deterministic eval runner and runtime-adapter registry.
+
+## Stop and replan triggers
+Trial execution requires credentials in default CI; trace/outcome grading cannot be separated; or adapter semantics begin altering workflow authority.
+
+## Implementation evidence
+Pending RTP-02 completion.
+
+## QA disposition
+HIGH_ASSURANCE required; pending.
+
+## QA result
+Pending.
+
+## Verification
 Run deterministic end-to-end eval fixtures plus full Agent Harness.
+
+## Delivery
+Blocked by RTP-02.

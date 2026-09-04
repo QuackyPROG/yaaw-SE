@@ -4,17 +4,44 @@
 # RTP-02: Automatic correlated traces
 
 ## What to deliver
-
 Instrument the runtime gateway and controller-facing actions with append-only, correlated traces suitable for replay, grading and metrics.
 
 ## Acceptance criteria
-
 - [ ] Stable run/trace/span identifiers correlate dispatch, policy decisions, action attempts and outcomes.
 - [ ] Sensitive details are redacted before persistence.
 - [ ] Trace records include actor/role, work identity, action kind, decision, denial reason, duration and optional token/cost metadata.
 - [ ] Metrics summarize actual trace events including denied actions, scope drift, plan churn, QA outcomes and human intervention.
 - [ ] Tests prove malformed events fail validation and secret-like values are redacted.
 
-## Verification
+## Preservation invariants
+Telemetry is runtime evidence only; it cannot mutate product intent or workflow authority.
 
+## Allowed write scope
+Runtime event/metrics modules, reporting script, tests, workflow docs/config and this initiative's durable artifacts.
+
+## Forbidden write scope
+Never persist unredacted secrets and never grant semantic authority based on telemetry.
+
+## Expected change surface
+`scripts/yaaw/events.py`, `scripts/yaaw/metrics.py`, gateway instrumentation, reporting/tests/docs.
+
+## Canonical sources
+RTP-01 gateway behavior, existing event/metrics modules, event schema and root trust/secrets policy.
+
+## Stop and replan triggers
+Required trace fields would expose secrets, trace persistence conflicts with runtime isolation, or correlation semantics cannot survive recovery/retry safely.
+
+## Implementation evidence
+Pending RTP-01 completion.
+
+## QA disposition
+INDEPENDENT required; pending.
+
+## QA result
+Pending.
+
+## Verification
 Run focused trace/metrics tests and the full Agent Harness.
+
+## Delivery
+Blocked by RTP-01.

@@ -4,11 +4,9 @@
 # RTP-01: Hard runtime gateway
 
 ## What to deliver
-
 Create an executable runtime gateway that is the canonical admission surface for mutating dispatch and action execution. It must compose existing deterministic policy instead of duplicating it in prompts.
 
 ## Acceptance criteria
-
 - [ ] Gateway models an admitted action with work/ticket identity, actor/role, worktree, command/action, declared effects, scope and required capabilities.
 - [ ] Mutating dispatch is controller-admitted before execution authorization.
 - [ ] Command/action authorization uses inferred risk and orthogonal network/repository/production capabilities.
@@ -17,9 +15,34 @@ Create an executable runtime gateway that is the canonical admission surface for
 - [ ] Regression tests cover under-declared commands, unknown ticket/owner, stale source, lease collision, scope escape and missing capabilities.
 
 ## Preservation invariants
-
 Do not embed provider-specific model identity or create an alternate workflow state machine.
 
-## Verification
+## Allowed write scope
+`scripts/yaaw/**`, `scripts/yaaw_cli.py`, `config/**`, `tests/harness/**`, `docs/workflow/**`, `.agents/**`, and this initiative's durable artifacts.
 
+## Forbidden write scope
+No production/provider execution and no fabricated provider capability/evidence.
+
+## Expected change surface
+Runtime admission/security modules, focused tests, policy/config/docs needed to expose the gateway.
+
+## Canonical sources
+`AGENTS.md`, `.agents/router.json`, existing controller/security/authority/ownership/scope code, and this initiative map.
+
+## Stop and replan triggers
+Controller/security semantics would need incompatible duplication; runtime cannot enforce a required boundary; or implementation requires provider-specific workflow authority.
+
+## Implementation evidence
+Pending implementation.
+
+## QA disposition
+HIGH_ASSURANCE required; pending.
+
+## QA result
+Pending.
+
+## Verification
 Run the complete Agent Harness plus focused gateway/security/controller tests.
+
+## Delivery
+Pending verified implementation.
