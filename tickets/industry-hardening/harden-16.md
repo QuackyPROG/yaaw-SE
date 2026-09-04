@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"HARDEN-16","kind":"DELIVERY","status":"DRAFT","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-15"],"acceptance":["Integrate repository-native ownership/ruleset/CODEOWNERS signals, domain-pack installation/update semantics, external tracker/provider adapters, and cross-repository coordinated change-set contracts."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**",".agents/schemas/**","config/**","examples/**","tests/harness/**","docs/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["scripts/yaaw/**",".agents/schemas/**","config/**","examples/**","tests/harness/**","docs/**"],"source_fingerprints":{},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"HARDEN-16","kind":"DELIVERY","status":"READY","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-15"],"acceptance":["Integrate repository-native ownership/ruleset/CODEOWNERS signals, domain-pack installation/update semantics, external tracker/provider adapters, and cross-repository coordinated change-set contracts."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**",".agents/schemas/**","config/**","examples/**","tests/harness/**","docs/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["scripts/yaaw/**",".agents/schemas/**","config/**","examples/**","tests/harness/**","docs/**"],"source_fingerprints":{"blocked_by_harden_15":"8a072812138d8e8b54fa130ef4d0787dd1a354fa"},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
 ---
 # HARDEN-16: Repository and multi-repo integration policy
 
@@ -33,6 +33,7 @@ Integrate repository-native ownership/ruleset/CODEOWNERS signals, domain-pack in
 ## Canonical sources
 
 - initiative map and ADR-001.
+- `HARDEN-15` completed at `8a072812138d8e8b54fa130ef4d0787dd1a354fa`.
 
 ## Verification
 
@@ -52,7 +53,7 @@ Pending.
 
 ## QA result
 
-Pending.
+Pending independent/high-assurance evidence.
 
 ## Delivery
 

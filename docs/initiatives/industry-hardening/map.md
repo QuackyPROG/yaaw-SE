@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 2
+  "revision": 3
 }
 ---
 # Industry Hardening
@@ -30,12 +30,13 @@ Turn yaaw-SE from an instruction-heavy engineering methodology into a self-hosti
 - Role files own identity/authority; skills own procedure.
 - Fresh QA reduces anchoring but high assurance additionally requires orthogonal executable evidence.
 - Runtime/model profiles are capability-based and fail closed; operating modes may strengthen gates but cannot alter authority semantics.
+- Mutating controller operations are explicit, atomic/idempotent where retry is possible, and repository state remains authoritative over ephemeral snapshots.
 
 ## Current frontier
 
 Controller-visible ready work:
 
-- `HARDEN-15` — atomic controller mutation, idempotency and recovery lifecycle.
+- `HARDEN-16` — repository and multi-repo integration policy.
 
 ## Not yet specified / fog
 
