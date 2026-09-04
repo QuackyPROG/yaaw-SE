@@ -79,9 +79,10 @@ Mirror observable criteria in machine metadata above.
 ## QA result
 
 - result: `PASS` | `REPAIR_REQUIRED` | `STOP_AND_REPLAN`
-- finding IDs:
+- stable finding IDs: `QA-<ticket>-<signature>`; preserve identity across repair cycles
+- failure signature(s) for repeated repair/livelock detection:
 - orthogonal evidence:
-- residual risks:
+- residual risk IDs: `RR-<ticket>-<signature>` with disposition/owner when accepted
 
 ## Delivery
 

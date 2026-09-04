@@ -1,6 +1,6 @@
 {
-  "schema":"yaaw.eval-suite/v1",
-  "scenarios":[
+  "schema": "yaaw.eval-suite/v1",
+  "scenarios": [
     {"id":"routing-tiny-bug-stays-micro","type":"route","input":{"default_level":0},"expect":{"level":0,"qa":"SELF_VERIFY"}},
     {"id":"routing-cross-subsystem-promotes","type":"route","input":{"default_level":1,"subsystem_count":2},"expect":{"level":2,"qa":"INDEPENDENT"}},
     {"id":"routing-auth-trust-is-high-assurance","type":"route","input":{"default_level":1,"security_trust_boundary":true},"expect":{"level":4,"qa":"HIGH_ASSURANCE"}},
@@ -30,7 +30,9 @@
     {"id":"evidence-stale-commit-is-rejected","type":"evidence","input":{"recorded_commit":"abc","current_commit":"def","recorded_fingerprints":{"spec":"1"},"current_fingerprints":{"spec":"1"}},"expect":["stale evidence: unit"]},
     {"id":"evidence-stale-source-is-rejected","type":"evidence","input":{"recorded_commit":"abc","current_commit":"abc","recorded_fingerprints":{"spec":"1"},"current_fingerprints":{"spec":"2"}},"expect":["stale evidence: unit"]},
     {"id":"evidence-failing-command-is-rejected","type":"evidence","input":{"exit_code":1,"recorded_commit":"abc","current_commit":"abc"},"expect":["failing evidence: unit"]},
-    {"id":"recovery-reconstructs-active-ticket-without-chat","type":"recovery","input":{"tickets":[{"id":"ACTIVE","status":"IN_PROGRESS","acceptance":["observable"]}]},"expect":{"active_work":"ACTIVE","source":"REPOSITORY"}},
-    {"id":"repeated-failure-signature-forces-replan","type":"failure_signature","input":{"attempts":3,"limit":2,"signature":"same-test"},"expect":{"count":3,"outcome":"STOP_AND_REPLAN"}}
+    {"id":"failure-signature-forces-replan","type":"failure_signature_replan","input":{"limit":2,"count":3,"signature":"same-test"},"expect":{"allowed":false}},
+    {"id":"recovery-ignores-stale-snapshot","type":"recovery","input":{"tickets":[{"id":"DONE","status":"DONE"},{"id":"NEXT","status":"READY","blocked_by":["DONE"]}],"snapshot":{"active_work":"DONE","active_role":"implementer","worktree":"/tmp/w","base_sha":"abc","dispatch_attempt":1,"failure_signatures":{}}},"expect":{"active_work":null,"source":"repository","stale_snapshot":true,"frontier":["NEXT"]}},
+    {"id":"planning-rejects-works-correctly","type":"planning_lint","input":{"acceptance":["works correctly"]},"expect":["acceptance[1] is non-observable/horizontal: works correctly"]},
+    {"id":"retrieval-plan-is-provider-neutral","type":"retrieval_plan","input":{"path":"src/auth/login.py"},"expect":["ownership","repository_map","symbol_search","test_map","history"]}
   ]
 }

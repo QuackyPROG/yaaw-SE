@@ -1,4 +1,4 @@
-"""Deterministic policy lint for obviously unsafe or contradictory workflow configuration."""
+"""Deterministic policy lint for obviously unsafe, vague or contradictory workflow configuration."""
 from __future__ import annotations
 
 import json
@@ -7,6 +7,7 @@ from pathlib import Path
 from .artifacts import validate_ticket_tree
 from .graph import TicketGraph
 from .ownership import validate_rules
+from .planning_quality import plan_issues
 from .query import load_ownership_rules
 
 
@@ -35,6 +36,6 @@ def lint_repository_policy(ownership_path: Path, artifacts_path: Path, tickets_r
                 errors.append(f"{ticket.id}: dangerously broad allowed_write")
             if ticket.status.value == "READY" and ticket.owner == "UNKNOWN_OWNER":
                 errors.append(f"{ticket.id}: READY with UNKNOWN_OWNER")
-            if ticket.status.value == "READY" and not ticket.acceptance:
-                errors.append(f"{ticket.id}: READY without machine acceptance")
+            if ticket.status.value in {"READY", "IN_PROGRESS", "VERIFYING"}:
+                errors.extend(f"{ticket.id}: {issue}" for issue in plan_issues(dict(ticket.metadata)))
     return sorted(set(errors))
