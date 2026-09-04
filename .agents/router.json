@@ -8,6 +8,7 @@
   "domain_pack": ".yaaw/domain-pack.json",
   "runtime_profiles": "config/model-profiles.example.json",
   "controller_policy": "config/controller-policy.json",
+  "context_budget_policy": "config/context-budget.json",
   "security_policy": "config/security-policy.json",
   "principles": {
     "cheapest_safe_route": true,
@@ -16,6 +17,7 @@
     "unknown_is_valid": true,
     "repository_is_canonical_memory": true,
     "fresh_context_default": true,
+    "token_budgeted_context": true,
     "completed_history_is_immutable": true,
     "silent_scope_expansion_forbidden": true,
     "no_ad_hoc_durable_artifact_destinations": true,
