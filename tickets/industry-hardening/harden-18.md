@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"HARDEN-18","kind":"DELIVERY","status":"DRAFT","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-17"],"acceptance":["Provide executable L0-L4 examples, STOP_AND_REPLAN/QA repair/stale-source/unknown-owner examples, complete controller/security/recovery docs, and precise maturity claims."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["examples/**","docs/**","README.md","tests/harness/**","evals/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["examples/**","docs/**","README.md","tests/harness/**","evals/**"],"source_fingerprints":{},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"HARDEN-18","kind":"DELIVERY","status":"READY","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-17"],"acceptance":["Provide executable L0-L4 examples, STOP_AND_REPLAN/QA repair/stale-source/unknown-owner examples, complete controller/security/recovery docs, and precise maturity claims."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["examples/**","docs/**","README.md","tests/harness/**","evals/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["examples/**","docs/**","README.md","tests/harness/**","evals/**"],"source_fingerprints":{"blocked_by_harden_17":"398aa16ff686c9738ebe22326e934e67512c22f2"},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
 ---
 # HARDEN-18: Complete examples, failure cases and public maturity documentation
 
@@ -33,6 +33,7 @@ Provide executable L0-L4 examples, STOP_AND_REPLAN/QA repair/stale-source/unknow
 ## Canonical sources
 
 - initiative map and full hardening history.
+- `HARDEN-17` implementation through `398aa16ff686c9738ebe22326e934e67512c22f2` with hosted CI run `33847519555` green.
 
 ## Verification
 
@@ -52,7 +53,7 @@ Pending.
 
 ## QA result
 
-Pending.
+Pending independent/high-assurance evidence.
 
 ## Delivery
 
