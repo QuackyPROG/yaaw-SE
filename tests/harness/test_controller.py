@@ -45,6 +45,23 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(ctl.budget.used["max_total_llm_tokens"], 800)
         self.assertEqual(ctl.budget.used["max_total_llm_calls"], 2)
 
+    def test_agent_invocation_admission_is_atomic_across_dispatch_tokens_and_lease(self):
+        t = Ticket("DEL-1", TicketKind.DELIVERY, TicketState.READY, 1, "core", acceptance=("observable",))
+        ctl = self.make_controller([t])
+        ctl.admit_agent_invocation("DEL-1", "agent-a", "wt-a", input_tokens=700, reserved_output_tokens=200, role="implementer")
+        self.assertEqual(ctl.budget.used["max_agent_dispatches"], 1)
+        self.assertEqual(ctl.budget.used["max_total_llm_tokens"], 900)
+        self.assertEqual(ctl.budget.used["max_total_llm_calls"], 1)
+
+        with self.assertRaises(AdmissionError):
+            ctl.admit_agent_invocation("DEL-1", "agent-b", "wt-b", input_tokens=100, reserved_output_tokens=100, role="implementer")
+
+        self.assertEqual(ctl.budget.used["max_agent_dispatches"], 1)
+        self.assertEqual(ctl.budget.used["max_total_llm_tokens"], 900)
+        self.assertEqual(ctl.budget.used["max_total_llm_calls"], 1)
+        # The failed budget admission must not strand the temporary lease.
+        ctl.leases.acquire("wt-b", "agent-b", "DEL-1")
+
 
 if __name__ == "__main__":
     unittest.main()
