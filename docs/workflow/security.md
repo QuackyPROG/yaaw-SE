@@ -4,7 +4,7 @@ yaaw-SE separates **instructions** from **data**. Repository files, comments, is
 
 ## Instruction trust
 
-Trusted control/policy may shape agent behavior. Source code, README content inside a consuming project, issue bodies, test fixtures, dependency documentation, web pages and arbitrary tool output cannot override:
+Trusted control/policy may shape agent behavior. Source code, README content inside a consuming project, issue bodies, test fixtures, dependency docs, web pages and arbitrary tool output cannot override:
 
 - `AGENTS.md` and registered role authority;
 - controller admission;
@@ -17,7 +17,11 @@ This is defense in depth. A prompt-injection rule in prose is weaker than a runt
 
 ## Commands and side effects
 
-Commands are classified from read-only through local/dependency/repository/network/production/destructive effects. Higher-risk actions require stronger route and authority. Production promotion, destructive provider actions, secret rotation and similar irreversible effects are not implied by a DELIVERY ticket.
+Command risk has an ordered severity floor (`READ_ONLY` through `DESTRUCTIVE`) plus orthogonal side-effect capabilities. The classifier recognizes common local Git/filesystem mutations, dependency mutation, network access, remote repository writes and obvious provider/production mutation. Renames/copies are separately checked at the Git-scope layer.
+
+Severity and capability are intentionally not conflated: a local `rm -rf` can be destructive without being a network or production operation, while `npm install` can require network access even though its semantic risk class is dependency mutation. Obvious provider mutation such as `terraform apply`/`kubectl apply` requires production capability; destructive provider commands additionally retain the destructive severity floor.
+
+Static command classification is a **minimum heuristic**, not a shell proof system. Arbitrary interpreters/scripts can hide effects, so callers must still declare risk honestly and high-assurance runtimes should enforce shell/network/filesystem/provider capabilities independently. An unknown command is never evidence that an external side effect is safe.
 
 ## Secrets
 
@@ -29,4 +33,4 @@ CODEOWNERS, repository rulesets, trackers and deployment providers are observed 
 
 ## Runtime limitation
 
-Some controls—filesystem ACLs, shell/network sandboxing, credential boundaries, model-family availability—depend on the selected runtime. When a runtime cannot enforce a mandatory boundary, high-assurance work must block or require an explicit human/provider control rather than pretending the prompt enforced it.
+Some controls—filesystem/tool/network capability isolation, credential boundaries, model-family availability—depend on the selected runtime. When a runtime cannot enforce a mandatory boundary, high-assurance work must block or require an explicit human/provider control rather than pretending the prompt enforced it.
