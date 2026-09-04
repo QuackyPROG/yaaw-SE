@@ -1,6 +1,6 @@
 ---
 name: architecture-change
-description: Plan and govern high-blast-radius architecture, migration, trust-boundary and repository-structure changes with explicit invariants, compatibility, rollback, sequencing and QA.
+description: Use for architecture, migration, trust-boundary, or repository changes needing compatibility and rollback planning.
 ---
 
 # Architecture Change

@@ -1,3 +1,8 @@
+---
+name: progressive-planning
+description: Use for L2-L4 work to turn accepted intent and evidence into a bounded READY frontier without overplanning.
+---
+
 # progressive-planning
 
 ## Purpose

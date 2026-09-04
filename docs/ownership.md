@@ -20,7 +20,6 @@ Ownership is explicit so agents can retrieve the correct context and fail closed
 | `.agents/rules/**` | Orchestrator | Invariant policy; affected role + QA review |
 | `.agents/skills/intake-routing/**` | Orchestrator | Routing procedure |
 | `.agents/skills/progressive-planning/**` | Planner | Planning/wayfinding procedure |
-| `.agents/skills/ticket-graph/**` | Planner | Ticket decomposition/graph procedure |
 | `.agents/skills/plan-delta/**` | Planner | Replanning procedure |
 | `.agents/skills/bug-diagnosis/**` | Discovery | Diagnosis evidence procedure |
 | `.agents/skills/implementation/**` | Implementer | Bounded delivery procedure |

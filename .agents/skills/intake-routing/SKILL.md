@@ -1,3 +1,8 @@
+---
+name: intake-routing
+description: Use at task intake to resolve ownership and risk and choose the cheapest safe L0-L4 route.
+---
+
 # intake-routing
 
 ## Purpose

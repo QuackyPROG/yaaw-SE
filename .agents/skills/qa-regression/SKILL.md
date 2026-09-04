@@ -1,3 +1,8 @@
+---
+name: qa-regression
+description: Use after implementation for fresh risk-first review of the actual diff, evidence, and regression risk.
+---
+
 # qa-regression
 
 ## Purpose

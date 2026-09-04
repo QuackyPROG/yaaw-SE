@@ -1,6 +1,6 @@
 ---
 name: prd-creation
-description: Manually create or revise a Product Requirements Document that captures human product intent above engineering planning without freezing implementation or replacing progressive tickets.
+description: Manual only. Use when the human asks to create, revise, accept, or supersede product intent in a PRD.
 ---
 
 # PRD Creation

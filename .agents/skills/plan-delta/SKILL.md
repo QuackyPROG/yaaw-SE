@@ -1,6 +1,6 @@
 ---
 name: plan-delta
-description: Safely change an active unresolved ticket graph when implementation, discovery or QA produces material new evidence, without silently widening scope or rewriting completed history.
+description: Use when new evidence requires changing unresolved work without rewriting valid completed history.
 ---
 
 # Plan Delta

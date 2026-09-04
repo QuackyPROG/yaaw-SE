@@ -23,7 +23,6 @@
     {"pattern":".agents/skills/prd-creation/**","owner":"orchestrator","risk":"HIGH","notes":"manual-only skill; artifact semantic authority remains HUMAN_PRODUCT_AUTHORITY"},
     {"pattern":".agents/skills/intake-routing/**","owner":"orchestrator","risk":"MEDIUM"},
     {"pattern":".agents/skills/progressive-planning/**","owner":"planner","risk":"MEDIUM"},
-    {"pattern":".agents/skills/ticket-graph/**","owner":"planner","risk":"MEDIUM"},
     {"pattern":".agents/skills/plan-delta/**","owner":"planner","risk":"HIGH"},
     {"pattern":".agents/skills/bug-diagnosis/**","owner":"discovery","risk":"MEDIUM"},
     {"pattern":".agents/skills/implementation/**","owner":"implementer","risk":"MEDIUM"},

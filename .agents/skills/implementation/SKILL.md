@@ -1,3 +1,8 @@
+---
+name: implementation
+description: Use for one admitted DELIVERY ticket to implement, verify, and stop before material scope expansion.
+---
+
 # implementation
 
 ## Purpose

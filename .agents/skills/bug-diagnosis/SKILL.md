@@ -1,6 +1,6 @@
 ---
 name: bug-diagnosis
-description: Diagnose difficult bugs and regressions by building a reproducing feedback loop, minimizing the failure, testing hypotheses, instrumenting evidence, fixing the cause and protecting it with regression verification.
+description: Use for difficult bugs or regressions needing reproduction, causal diagnosis, and regression verification.
 ---
 
 # Bug Diagnosis

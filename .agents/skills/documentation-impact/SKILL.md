@@ -1,6 +1,6 @@
 ---
 name: documentation-impact
-description: Decide which durable repository artifact owns a changed fact and update the minimum canonical documentation without creating duplicated memory.
+description: Use when a changed fact may require updating its canonical repository documentation or durable artifact.
 ---
 
 # Documentation Impact
