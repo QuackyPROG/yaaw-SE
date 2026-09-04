@@ -14,6 +14,8 @@ class RepositorySignalTests(unittest.TestCase):
 
 class DomainPackLifecycleTests(unittest.TestCase):
     def pack(self,v,minimum=4): return DomainPack({"schema":"yaaw.domain-pack/v1","name":"demo","pack_version":v,"requires_yaaw":{"min_harness_version":minimum,"max_harness_version":None}},"memory")
+    def test_legacy_v1_without_pack_version_remains_compatible(self):
+        legacy=DomainPack({"schema":"yaaw.domain-pack/v1","name":"legacy","requires_yaaw":{"min_harness_version":1}},"memory"); self.assertEqual(legacy.version,"0.0.0"); self.assertEqual(plan_install(legacy,None,harness_version=4).lock.pack_version,"0.0.0")
     def test_install_update_and_downgrade(self):
         first=plan_install(self.pack("1.0.0"),None,harness_version=4); self.assertEqual(first.action,"INSTALL"); update=plan_install(self.pack("2.0.0"),first.lock,harness_version=4); self.assertEqual(update.action,"UPDATE")
         with self.assertRaises(DomainPackError): plan_install(self.pack("1.0.0"),update.lock,harness_version=4)

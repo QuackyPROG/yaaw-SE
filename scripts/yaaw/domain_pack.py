@@ -14,7 +14,7 @@ class DomainPack:
     @property
     def name(self): return str(self.data["name"])
     @property
-    def version(self): return str(self.data["pack_version"])
+    def version(self): return str(self.data.get("pack_version","0.0.0"))
 @dataclass(frozen=True)
 class DomainPackLock:
     schema: str; name: str; pack_version: str; digest: str; source: str; harness_version: int
@@ -27,7 +27,6 @@ def _semver(value):
     except ValueError as exc: raise DomainPackError(f"invalid pack version {value!r}; expected MAJOR.MINOR.PATCH") from exc
     if len(parts)!=3 or any(p<0 for p in parts): raise DomainPackError(f"invalid pack version {value!r}; expected MAJOR.MINOR.PATCH")
     return parts
-
 def _digest(data): return "sha256:"+hashlib.sha256(json.dumps(data,sort_keys=True,separators=(",",":")).encode()).hexdigest()
 def _atomic_json(path,data):
     path.parent.mkdir(parents=True,exist_ok=True); fd,tmp=tempfile.mkstemp(prefix=path.name+".",dir=path.parent)
@@ -39,8 +38,10 @@ def _atomic_json(path,data):
 def validate_pack(data,source="<memory>"):
     if data.get("schema")!="yaaw.domain-pack/v1": raise DomainPackError(f"{source}: unsupported or missing domain-pack schema")
     if not isinstance(data.get("name"),str) or not data["name"].strip(): raise DomainPackError(f"{source}: pack name is required")
-    if not isinstance(data.get("pack_version"),str): raise DomainPackError(f"{source}: pack_version is required")
-    _semver(data["pack_version"]); requires=data.get("requires_yaaw",{})
+    if "pack_version" in data:
+        if not isinstance(data.get("pack_version"),str): raise DomainPackError(f"{source}: pack_version must be a string")
+        _semver(data["pack_version"])
+    requires=data.get("requires_yaaw",{})
     if not isinstance(requires,dict): raise DomainPackError(f"{source}: requires_yaaw must be an object")
     owners={}
     for rule in data.get("ownership",[]):

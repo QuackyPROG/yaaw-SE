@@ -4,13 +4,13 @@ yaaw-SE separates generic engineering control from repository-specific facts. A 
 
 ## Contract
 
-A v1 pack uses `schema: yaaw.domain-pack/v1`, a semantic `pack_version`, and an explicit harness compatibility range. It may define repository maps, ownership/co-ownership, risk floors, verification contracts, optional specialists, release environments, branch policy and model-profile preference.
+A v1 pack uses `schema: yaaw.domain-pack/v1` and an explicit harness compatibility range. New packs should declare semantic `pack_version: MAJOR.MINOR.PATCH`. For backward compatibility, an existing v1 pack that predates `pack_version` remains valid and is treated as legacy version `0.0.0`; changing the mandatory v1 shape would require a new schema ID rather than silently breaking old packs.
 
-See [`examples/domain-pack/.yaaw/domain-pack.json`](../examples/domain-pack/.yaaw/domain-pack.json).
+It may define repository maps, ownership/co-ownership, risk floors, verification contracts, optional specialists, release environments, branch policy and model-profile preference. See [`examples/domain-pack/.yaaw/domain-pack.json`](../examples/domain-pack/.yaaw/domain-pack.json).
 
 ## Install / update lifecycle
 
-`yaaw domain-pack <source>` is a dry-run install/update plan. `--write` atomically creates or updates `.yaaw/domain-pack.json` and `.yaaw/domain-pack.lock.json`. The lock records the exact content digest, source, pack version and harness version used for admission.
+`yaaw domain-pack <source>` is a dry-run install/update plan. `--write` atomically creates or updates `.yaaw/domain-pack.json` and `.yaaw/domain-pack.lock.json`. The lock records the exact content digest, source, effective pack version and harness version used for admission.
 
 - incompatible harness versions fail closed;
 - identical digest is a `NOOP`;
@@ -18,7 +18,7 @@ See [`examples/domain-pack/.yaaw/domain-pack.json`](../examples/domain-pack/.yaa
 - downgrade requires `--allow-downgrade`;
 - replacing a differently named installed pack requires `--allow-replace`.
 
-This prevents silent domain-policy drift during harness or pack upgrades.
+Legacy `0.0.0` is a compatibility bridge, not a recommended version for new packs. Explicitly version a legacy pack before relying on meaningful downgrade/update ordering.
 
 ## Layering
 
