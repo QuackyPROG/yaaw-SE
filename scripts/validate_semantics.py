@@ -23,6 +23,7 @@ def validate() -> list[str]:
     catalog = load_json(".agents/catalog.json")
     router = load_json(".agents/router.json")
     artifacts = load_json(".agents/artifacts.json")
+    authority = load_json(".agents/authority.json")
     ownership = load_json(".agents/ownership.json")
 
     agents = {a["id"] for a in catalog.get("agents", [])}
@@ -56,6 +57,21 @@ def validate() -> list[str]:
                 errors.append(f"{role} may_mutate unknown artifact {artifact_id}")
             elif role not in artifact.get("allowed_mutators", []):
                 errors.append(f"{role} may_mutate {artifact_id} but artifact disallows role")
+
+    # Field authority may narrow an artifact's physical writer set, never expand it.
+    for artifact_id, auth_spec in authority.get("artifacts", {}).items():
+        artifact = artifact_types.get(artifact_id)
+        if artifact is None:
+            errors.append(f"authority policy references unknown artifact {artifact_id}")
+            continue
+        physical_mutators = set(artifact.get("allowed_mutators", []))
+        fallback = set(auth_spec.get("fallback_mutators", []))
+        for role in sorted(fallback - physical_mutators):
+            errors.append(f"authority fallback grants {role} on {artifact_id} beyond artifact allowed_mutators")
+        for field, field_spec in auth_spec.get("fields", {}).items():
+            field_mutators = set(field_spec.get("mutators", []))
+            for role in sorted(field_mutators - physical_mutators):
+                errors.append(f"authority field grants {role} on {artifact_id}.{field} beyond artifact allowed_mutators")
 
     expected_sections = {
         "DISCOVERY_EVIDENCE": ("docs/templates/discovery-ticket.md", "Evidence"),

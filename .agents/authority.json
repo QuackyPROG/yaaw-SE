@@ -42,6 +42,6 @@
     },
     "QA_REPORT": {"fallback_mutators": ["qa"], "fields": {}},
     "IMPLEMENTATION_HANDOFF": {"fallback_mutators": ["implementer"], "fields": {}},
-    "DELIVERY_RECORD": {"fallback_mutators": ["release-engineer", "orchestrator"], "fields": {}}
+    "DELIVERY_RECORD": {"fallback_mutators": ["release-engineer"], "fields": {}}
   }
 }
