@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 2
+  "revision": 3
 }
 ---
 # Runtime Enforcement and Empirical Proof
@@ -32,15 +32,15 @@ Close the remaining maturity gap between yaaw-SE's deterministic control-plane d
 
 ## Ladder
 
-1. `RTP-01` — hard runtime gateway and bypass-resistant admission.
-2. `RTP-02` — correlated automatic traces and metrics from gateway decisions.
-3. `RTP-03` — model-in-the-loop evaluation runner and stochastic metrics.
-4. `RTP-04` — external workload/portability framework and baseline comparison evidence contracts.
-5. `RTP-05` — whole-system audit, maturity reconciliation and exact-SHA closeout.
+1. `RTP-01` — DONE: hard runtime gateway and bypass-resistant admission.
+2. `RTP-02` — READY: correlated automatic traces and metrics from gateway decisions.
+3. `RTP-03` — blocked: model-in-the-loop evaluation runner and stochastic metrics.
+4. `RTP-04` — blocked: external workload/portability framework and baseline comparison evidence contracts.
+5. `RTP-05` — blocked: whole-system audit, maturity reconciliation and exact-SHA closeout.
 
 ## Frontier
 
-`RTP-01` is IN_PROGRESS with an implementation candidate. `RTP-02` through `RTP-05` remain blocked until preceding exact-SHA verification is green.
+`RTP-02` is the only READY ticket. RTP-01 exact implementation SHA `68405b4652ea3a547a48fb9939e3cf130ba5cbae` passed Agent Harness run `33888436897`.
 
 ## Proof rule
 
@@ -48,4 +48,4 @@ Implementation of benchmark/runtime machinery is not itself empirical proof. Rea
 
 ## Recovery note
 
-Initial plan commit `76cf00ac` failed workflow-state validation because the new tickets omitted mandatory durable sections. `12d7c47a` corrected those artifacts without weakening validation. That failed run remains part of the evidence/history rather than being rewritten away.
+Initial plan commit `76cf00ac` failed workflow-state validation because the new tickets omitted mandatory durable sections. `12d7c47a` corrected those artifacts and its run `33888043601` passed. Failed history remains preserved rather than rewritten away.

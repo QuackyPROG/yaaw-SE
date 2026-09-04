@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"RTP-02","kind":"DELIVERY","status":"BLOCKED","level":3,"parent":"INIT-RUNTIME-PROOF","owner":"orchestrator","blocked_by":["RTP-01"],"acceptance":["Gateway dispatch/action decisions emit correlated structured traces with run, work, actor, action, decision, latency and redacted detail fields.","Metrics are derived from real emitted events and preserve the rule that telemetry is evidence rather than product authority."],"qa":{"required":true,"profile":"INDEPENDENT"},"allowed_write":["scripts/yaaw/**","scripts/report_metrics.py","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["persisting secret values","using telemetry as semantic authority"],"expected_change_surface":["scripts/yaaw/**","scripts/report_metrics.py","tests/harness/**","docs/workflow/**"],"source_fingerprints":{},"risk":["observability","privacy"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"RTP-02","kind":"DELIVERY","status":"READY","level":3,"parent":"INIT-RUNTIME-PROOF","owner":"orchestrator","blocked_by":["RTP-01"],"acceptance":["Gateway dispatch/action decisions emit correlated structured traces with run, work, actor, action, decision, latency and redacted detail fields.","Metrics are derived from real emitted events and preserve the rule that telemetry is evidence rather than product authority."],"qa":{"required":true,"profile":"INDEPENDENT"},"allowed_write":["scripts/yaaw/**","scripts/report_metrics.py","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["persisting secret values","using telemetry as semantic authority"],"expected_change_surface":["scripts/yaaw/**","scripts/report_metrics.py","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"rtp01":"68405b4652ea3a547a48fb9939e3cf130ba5cbae","rtp01_ci":"33888436897"},"risk":["observability","privacy"],"side_effects":["repository"]}
 ---
 # RTP-02: Automatic correlated traces
 
@@ -32,7 +32,7 @@ RTP-01 gateway behavior, existing event/metrics modules, event schema and root t
 Required trace fields would expose secrets, trace persistence conflicts with runtime isolation, or correlation semantics cannot survive recovery/retry safely.
 
 ## Implementation evidence
-Pending RTP-01 completion.
+READY after exact RTP-01 CI `33888436897`.
 
 ## QA disposition
 INDEPENDENT required; pending.
@@ -44,4 +44,4 @@ Pending.
 Run focused trace/metrics tests and the full Agent Harness.
 
 ## Delivery
-Blocked by RTP-01.
+READY — predecessor RTP-01 is DONE and exact-SHA CI is green.
