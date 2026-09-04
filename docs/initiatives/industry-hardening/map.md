@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 5
+  "revision": 6
 }
 ---
 # Industry Hardening
@@ -33,12 +33,13 @@ Turn yaaw-SE from an instruction-heavy engineering methodology into a self-hosti
 - Mutating controller operations are explicit, atomic/idempotent where retry is possible, and repository state remains authoritative over ephemeral snapshots.
 - Repository host, tracker and provider data are evidence-only inputs; domain-pack lifecycle and cross-repository coordination are typed and compatibility-checked.
 - QA findings/residual risks use stable identities; retrieval is provider-neutral/evidence-only; archive manifests preserve stable source paths; metrics diagnose rather than decide product intent.
+- Public maturity claims distinguish machine-enforced, agent-judgment and runtime-dependent behavior; executable examples are CI fixtures rather than proof-by-documentation.
 
 ## Current frontier
 
 Controller-visible ready work:
 
-- `HARDEN-18` — complete executable examples, failure cases and public maturity documentation.
+- `HARDEN-19` — final whole-branch integration audit and non-destructive main promotion.
 
 ## Not yet specified / fog
 
