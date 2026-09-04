@@ -16,7 +16,7 @@ yaaw-SE separates evaluator conformance from evidence about actual model/runtime
 
 - workload identity and task;
 - `SYNTHETIC` or `EXTERNAL` provenance;
-- repository/ref/commit fingerprint source;
+- repository/ref/immutable commit;
 - allowed write scope;
 - verification seams;
 - baseline and yaaw-SE-governed agent-eval manifest paths;
@@ -24,15 +24,43 @@ yaaw-SE separates evaluator conformance from evidence about actual model/runtime
 
 External workloads require a pinned hexadecimal commit id. A moving branch name alone is not empirical provenance. A runtime report with the right workload name but a different evaluation-manifest fingerprint remains `UNPROVEN`.
 
+The helper below removes manual fingerprint bookkeeping without weakening provenance:
+
+```text
+python scripts/create_external_workload.py \
+  --id EXT-001 \
+  --repository owner/repo \
+  --ref main \
+  --commit <immutable-commit-sha> \
+  --task "bounded observable task" \
+  --allowed-scope src/auth/** \
+  --verification "pytest tests/auth" \
+  --baseline-manifest evals/external/base.json \
+  --governed-manifest evals/external/governed.json \
+  --output evals/workloads/ext-001.json
+```
+
+The builder loads and validates both eval manifests, records their exact IDs and computes the required SHA-256 fingerprints. It does not execute a model and cannot manufacture an empirical result.
+
 ## Runtime invocation
 
 `config/runtime-adapters.json` registers both the project-local Codex adapter and a provider-neutral `generic-command` adapter contract. The generic adapter uses JSON over stdin/stdout and requires explicit runtime/provider/model identity. It is an invocation boundary, not permission to bypass yaaw-SE: the external wrapper is required to enforce the runtime gateway and return correlated gateway/action trace evidence.
 
 Default CI never invokes an external runtime. It validates the generic adapter contract and uses deterministic fixtures.
 
-## Comparison
+## Comparison and efficiency
 
-`scripts/run_workload_compare.py` consumes baseline and governed agent-eval reports and preserves both lanes in `yaaw.workload-comparison/v1`. Deltas are governed minus baseline for pass rate, trace pass rate, policy violations, replans, token use, cost and duration.
+`scripts/run_workload_compare.py` consumes baseline and governed agent-eval reports and preserves both lanes in `yaaw.workload-comparison/v1`. Raw deltas are governed minus baseline for pass rate, trace pass rate, policy violations, replans, token use, cost and duration.
+
+The comparison additionally calculates:
+
+- quality non-regression;
+- token reduction ratio;
+- cost reduction ratio;
+- duration reduction ratio;
+- whether token efficiency is non-regressing or improved.
+
+An efficiency claim is valid only when the governed lane does not regress pass rate/trace pass rate or increase policy violations. Cutting token use while lowering quality is explicitly **not** an efficiency success.
 
 A positive synthetic delta remains `UNPROVEN`. A comparison is `EMPIRICAL` only when both lanes independently qualify as empirical evidence for the same pinned external workload. CI additionally asserts that the synthetic fixture's report fingerprints match their manifests and that the comparison remains `UNPROVEN`.
 
@@ -44,4 +72,28 @@ Synthetic CI conformance:
 python scripts/run_workload_compare.py --workload evals/workloads/synthetic-local.json --simulate
 ```
 
-External reports are produced separately through the opt-in command adapter in `scripts/run_agent_evals.py`, which records the exact manifest fingerprint in the report. Those reports can then be supplied to the comparison runner with `--baseline-report`, `--governed-report`, and `OBSERVED` statuses. Credential/network access is never implicit.
+Observed external lane:
+
+```text
+python scripts/run_agent_evals.py \
+  --manifest evals/external/base.json \
+  --adapter command \
+  --runtime-id <runtime> \
+  --provider <provider> \
+  --model <model> \
+  --report .yaaw/runtime/base-report.json \
+  -- <external-runtime-command>
+```
+
+Run the governed manifest the same way, then compare:
+
+```text
+python scripts/run_workload_compare.py \
+  --workload evals/workloads/ext-001.json \
+  --baseline-status OBSERVED \
+  --governed-status OBSERVED \
+  --baseline-report .yaaw/runtime/base-report.json \
+  --governed-report .yaaw/runtime/governed-report.json
+```
+
+Credential/network access is never implicit. If an external runtime or repository is unavailable, record `BLOCKED` or `NOT_RUN` rather than pretending proof exists.
