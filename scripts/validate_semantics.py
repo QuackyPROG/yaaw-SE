@@ -124,6 +124,20 @@ def validate() -> list[str]:
         if not schema.get("$id"):
             errors.append(f"{schema_path.relative_to(ROOT)} lacks $id")
 
+    # The workflow overview must not place a coherent material commit before the
+    # conditional Release Engineer admission; that would contradict the role contract.
+    overview = (ROOT / "docs/workflow/overview.md").read_text(encoding="utf-8")
+    delivery_doc = (ROOT / "docs/workflow/delivery.md").read_text(encoding="utf-8")
+    release_role = (ROOT / ".agents/agents/release-engineer.md").read_text(encoding="utf-8")
+    if "Release / integration semantics?" not in overview or "REL --> COMMIT" not in overview:
+        errors.append("workflow overview does not model conditional Release Engineer admission before material commit/integration")
+    if "QR -->|PASS| COMMIT" in overview or "COMMIT --> MSG" in overview:
+        errors.append("workflow overview retains pre-Release-Engineer material commit ordering")
+    if "release_engineer_required" not in delivery_doc:
+        errors.append("delivery docs do not describe executable conditional Release Engineer policy")
+    if "Do not add ceremony to trivial local work" not in release_role:
+        errors.append("Release Engineer role lost trivial-local-work exclusion")
+
     return sorted(set(errors))
 
 

@@ -53,7 +53,7 @@ flowchart TD
     WORK0 --> V0[Targeted self-verification]
 
     V --> DIFF[Inspect actual diff<br/>expected vs actual surface<br/>preservation invariants]
-    V0 --> DONE0[Ship / record as required]
+    V0 --> DONE0[Finish locally / record as route requires]
 
     DIFF --> SURPRISE{Material surprise?}
     SURPRISE -->|no| QAQ{Independent QA required?}
@@ -71,23 +71,27 @@ flowchart TD
     ACT -->|resequence / promote| TG
     ACT -->|correct completed work| TG
 
-    QAQ -->|no, route explicitly allows| COMMIT[Coherent verified commit]
+    QAQ -->|no, route explicitly allows| DELIV{Release / integration semantics?}
     QAQ -->|yes| QA[Fresh independent QA]
 
     QA --> QR{QA result}
-    QR -->|PASS| COMMIT
+    QR -->|PASS| DELIV
     QR -->|REPAIR_REQUIRED| REPAIR[Eligible Implementer repair<br/>fresh by default]
     REPAIR --> V
     QR -->|STOP_AND_REPLAN| STOP
 
-    COMMIT --> MSG[Ticket-linked commit<br/>what changed + why + verification]
-    MSG --> REL[Release Engineer]
-    REL --> CI[Configured CI / integration gates]
+    DELIV -->|no: local verified outcome| LOCALCOMMIT[Coherent verified local commit / record]
+    LOCALCOMMIT --> NEXT
+
+    DELIV -->|yes| REL[Release Engineer<br/>serial integration admission]
+    REL --> COMMIT[Coherent ticket-linked commit<br/>or integration result]
+    COMMIT --> CI[Configured CI / integration gates]
     CI --> PROMOTE{Promotion authority satisfied?}
-    PROMOTE -->|yes| SHIP[Delivered / promoted]
+    PROMOTE -->|yes| SHIP[Delivered / promoted<br/>observed state recorded]
     PROMOTE -->|no| HOLD[Hold with explicit blocker]
 
     SHIP --> NEXT{More ready work?}
+    HOLD --> NEXT
     NEXT -->|yes| FRONTIER
     NEXT -->|no| COMPLETE[Route complete]
 
@@ -105,7 +109,9 @@ flowchart TD
 | Discovery | Evidence about what is true | Product decisions |
 | Implementer | One bounded delivery contract | Silent scope expansion or graph changes |
 | QA | Fresh risk-based review of actual diff and evidence | Same-context repair |
-| Release Engineer | Coherent commit/integration/CI/promotion record | Missing QA, product code, or invented deployment state |
+| Release Engineer | Conditional serial integration; coherent ticket-linked commit/integration result; CI/provider/promotion evidence when delivery semantics materially exist | Trivial local ceremony, missing QA, product-code repair, or invented deployment state |
+
+For a simple local verified outcome where `release_engineer_required(...)` is false, the route may finalize a coherent local commit/record without invoking Release Engineer. When multi-branch integration, required CI, non-local environment, promotion, rollback, or provider observation materially exists, Release Engineer owns that serial delivery stage.
 
 ## The planning rule
 
@@ -141,4 +147,4 @@ Missing code can prove that a requirement is not implemented yet. It cannot sile
 
 ## The commit rule
 
-A commit is one coherent verified outcome: independently understandable, reviewable, and reasonably revertible. Prefer ticket-aligned commits when the boundary is clean. Avoid both one-commit-per-keystroke noise and giant unrelated initiative commits.
+A commit is one coherent verified outcome: independently understandable, reviewable, and reasonably revertible. Prefer ticket-aligned commits when the boundary is clean. Avoid both one-commit-per-keystroke noise and giant unrelated initiative commits. Commit ownership follows delivery semantics: trivial local outcomes need no Release Engineer ceremony; material integration/release outcomes do.
