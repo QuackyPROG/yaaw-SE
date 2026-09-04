@@ -1,0 +1,39 @@
+{
+  "schema": "yaaw.workflow-examples/v1",
+  "cases": [
+    {
+      "id": "L0-TYPO",
+      "description": "A local typo with no risk signal stays in the root context and does not require a durable ticket by default.",
+      "route": {"default_level": 0, "uncertainty": 0, "subsystem_count": 1},
+      "expect": {"level": 0, "qa": "SELF_VERIFY", "durable_ticket": false}
+    },
+    {
+      "id": "L1-BOUNDED",
+      "description": "One bounded implementation contract uses a fresh implementer and self-verification by default.",
+      "route": {"default_level": 1, "uncertainty": 0, "subsystem_count": 1},
+      "artifact": "artifacts/l1-delivery.md",
+      "expect": {"level": 1, "qa": "SELF_VERIFY", "frontier": ["EX-L1"]}
+    },
+    {
+      "id": "L2-CROSS-SUBSYSTEM",
+      "description": "A change spanning two subsystems promotes to planned-feature control and independent QA.",
+      "route": {"default_level": 1, "uncertainty": 0, "subsystem_count": 2},
+      "artifact": "artifacts/l2-delivery.md",
+      "expect": {"level": 2, "qa": "INDEPENDENT", "frontier": ["EX-L2"]}
+    },
+    {
+      "id": "L3-INITIATIVE",
+      "description": "A multi-stage initiative stays at L3 when it needs rolling planning but does not cross an L4 consequence floor.",
+      "route": {"default_level": 3, "uncertainty": 1, "subsystem_count": 1},
+      "artifact": "artifacts/l3-delivery.md",
+      "expect": {"level": 3, "qa": "INDEPENDENT", "frontier": ["EX-L3"]}
+    },
+    {
+      "id": "L4-TRUST-BOUNDARY",
+      "description": "Security/trust-boundary work is high assurance even when the code change is small.",
+      "route": {"default_level": 1, "security_trust_boundary": true},
+      "artifact": "artifacts/l4-delivery.md",
+      "expect": {"level": 4, "qa": "HIGH_ASSURANCE", "frontier": ["EX-L4"]}
+    }
+  ]
+}

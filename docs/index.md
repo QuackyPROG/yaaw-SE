@@ -16,6 +16,11 @@ Use this file as the cold-start map after `AGENTS.md`.
 ## Workflow
 
 - [`workflow/overview.md`](workflow/overview.md) — end-to-end workflow diagram from intake/optional PRD through planning, execution, QA, commits, and release.
+- [`workflow/controller.md`](workflow/controller.md) — deterministic admission, mutation, budgets, leases and failure behavior.
+- [`workflow/security.md`](workflow/security.md) — instruction trust, command/side-effect policy, secrets and runtime boundaries.
+- [`workflow/recovery.md`](workflow/recovery.md) — repository-first crash recovery, leases, idempotency and migration behavior.
+- [`workflow/maturity.md`](workflow/maturity.md) — what is machine-enforced, agent judgment, runtime-dependent, and the current maturity claim.
+- [`workflow/examples.md`](workflow/examples.md) — CI-executed L0–L4 and failure-path fixtures.
 - [`workflow/complexity-levels.md`](workflow/complexity-levels.md) — L0–L4 routing and promotion.
 - [`workflow/ticket-graph.md`](workflow/ticket-graph.md) — discovery/decision/delivery tickets, dependencies, frontier, fog.
 - [`workflow/plan-deltas.md`](workflow/plan-deltas.md) — controlled mid-implementation replanning.
@@ -23,6 +28,7 @@ Use this file as the cold-start map after `AGENTS.md`.
 - [`workflow/thread-lifecycle.md`](workflow/thread-lifecycle.md) — fresh/persistent contexts and concurrency.
 - [`workflow/verification-and-qa.md`](workflow/verification-and-qa.md) — verification seams and independent QA.
 - [`workflow/delivery.md`](workflow/delivery.md) — integration, CI, and promotion handoff.
+- [`workflow/quality-retrieval-lifecycle.md`](workflow/quality-retrieval-lifecycle.md) — stable QA identities, retrieval hooks, artifact lifecycle and diagnostic metrics.
 
 ## Durable work
 
