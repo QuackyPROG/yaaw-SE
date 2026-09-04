@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
@@ -20,6 +20,14 @@ class Lease:
     mode: str
     created_at: float
     expires_at: float
+
+
+@dataclass(frozen=True)
+class ReclaimDecision:
+    resource: str
+    reclaimable: bool
+    reason: str
+    lease: Lease | None
 
 
 class LeaseStore:
@@ -46,11 +54,12 @@ class LeaseStore:
             raise LeaseError(f"resource {resource!r} already leased by {current.holder} for {current.work_id}") from exc
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(asdict(lease), fh, sort_keys=True)
+            fh.flush()
+            os.fsync(fh.fileno())
         return lease
 
     def read(self, resource: str) -> Lease:
-        data = json.loads(self._path(resource).read_text(encoding="utf-8"))
-        return Lease(**data)
+        return Lease(**json.loads(self._path(resource).read_text(encoding="utf-8")))
 
     def release(self, resource: str, holder: str) -> None:
         path = self._path(resource)
@@ -59,12 +68,31 @@ class LeaseStore:
             raise LeaseError(f"lease for {resource!r} belongs to {lease.holder}, not {holder}")
         path.unlink()
 
-    def reclaim_expired(self, resource: str) -> bool:
+    def inspect_reclaim(self, resource: str, active_work_ids: set[str], *, now: float | None = None) -> ReclaimDecision:
         path = self._path(resource)
         if not path.exists():
-            return False
+            return ReclaimDecision(resource, False, "NO_LEASE", None)
         lease = self.read(resource)
-        if lease.expires_at > time.time():
+        current_time = time.time() if now is None else now
+        if lease.expires_at <= current_time:
+            return ReclaimDecision(resource, True, "EXPIRED", lease)
+        if lease.work_id not in active_work_ids:
+            return ReclaimDecision(resource, True, "ORPHANED_WORK", lease)
+        return ReclaimDecision(resource, False, "ACTIVE", lease)
+
+    def reclaim_stale(self, resource: str, active_work_ids: set[str], *, write: bool = False, now: float | None = None) -> ReclaimDecision:
+        decision = self.inspect_reclaim(resource, active_work_ids, now=now)
+        if not decision.reclaimable or not write or decision.lease is None:
+            return decision
+        current = self.read(resource)
+        if current != decision.lease:
+            raise LeaseError(f"lease for {resource!r} changed during reclamation; retry inspection")
+        self._path(resource).unlink()
+        return decision
+
+    def reclaim_expired(self, resource: str) -> bool:
+        decision = self.inspect_reclaim(resource, set(), now=time.time())
+        if decision.reason != "EXPIRED":
             return False
-        path.unlink()
+        self.reclaim_stale(resource, set(), write=True)
         return True

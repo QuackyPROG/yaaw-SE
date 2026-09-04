@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "budgets": {
     "max_agent_dispatches": 12,
     "max_repairs_per_contract": 2,
@@ -7,9 +7,24 @@
     "max_tool_failures": 5,
     "max_same_failure_signature": 2
   },
+  "mutation": {
+    "atomic_replace": true,
+    "operation_id_required_for_write": true,
+    "idempotency_store": ".yaaw/runtime/idempotency.json",
+    "inspection_is_non_mutating_by_default": true
+  },
   "lease": {
+    "root": ".yaaw/runtime/leases",
     "default_ttl_seconds": 3600,
-    "one_mutating_holder_per_worktree": true
+    "one_mutating_holder_per_worktree": true,
+    "orphan_reclaim_requires_inactive_durable_work": true,
+    "reclaim_is_dry_run_by_default": true
+  },
+  "recovery": {
+    "snapshot": ".yaaw/runtime/controller-snapshot.json",
+    "durable_ticket_state_is_authoritative": true,
+    "snapshot_may_not_override_contradictory_repository_state": true,
+    "multiple_active_tickets_require_explicit_reconciliation": true
   },
   "freshness": {
     "reject_changed_sources_before_dispatch": true,
