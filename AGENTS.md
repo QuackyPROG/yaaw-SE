@@ -1,7 +1,7 @@
 # yaaw-SE Agent Guide
 
 ## Purpose
-	yaaw-SE is a domain-agnostic software-engineering harness. LLMs make engineering judgments; the **deterministic controller** enforces machine-knowable invariants: graph legality, ownership/authority, scope, freshness, leases, budgets, evidence and delivery admission.
+yaaw-SE is a domain-agnostic software-engineering harness. LLMs make engineering judgments; the **deterministic controller** enforces machine-knowable invariants: graph legality, ownership/authority, scope, freshness, leases, budgets, evidence and delivery admission.
 
 This is the hot control contract, not an encyclopedia. Durable detail lives in `docs/`, `.agents/`, `config/`, tickets and accepted project artifacts.
 
