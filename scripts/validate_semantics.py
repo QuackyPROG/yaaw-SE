@@ -113,23 +113,11 @@ def validate() -> list[str]:
         co = entry.get("co_owners")
         if co is None and entry.get("co_owner"):
             co = [entry["co_owner"]]
-        rules.append(OwnershipRule(
-            pattern=entry["pattern"],
-            owner=entry["owner"],
-            co_owners=tuple(co or []),
-            deny=bool(entry.get("deny", False)),
-        ))
+        rules.append(OwnershipRule(pattern=entry["pattern"], owner=entry["owner"], co_owners=tuple(co or []), deny=bool(entry.get("deny", False))))
     errors.extend(validate_rules(rules))
     for critical_path in (
-        "AGENTS.md",
-        "README.md",
-        ".gitignore",
-        "scripts/yaaw/controller.py",
-        "scripts/yaaw/security.py",
-        "scripts/run_evals.py",
-        "scripts/report_metrics.py",
-        ".agents/schemas/ticket.schema.json",
-        "tests/harness/test_graph.py",
+        "AGENTS.md", "README.md", ".gitignore", "scripts/yaaw/controller.py", "scripts/yaaw/security.py",
+        "scripts/run_evals.py", "scripts/report_metrics.py", ".agents/schemas/ticket.schema.json", "tests/harness/test_graph.py",
     ):
         if resolve(critical_path, rules, ownership.get("default_owner", "UNKNOWN_OWNER")).owner == "UNKNOWN_OWNER":
             errors.append(f"core harness path has UNKNOWN_OWNER: {critical_path}")
@@ -145,8 +133,6 @@ def validate() -> list[str]:
         if not schema.get("$id"):
             errors.append(f"{schema_path.relative_to(ROOT)} lacks $id")
 
-    # The workflow overview must not place a coherent material commit before the
-    # conditional Release Engineer admission; that would contradict the role contract.
     overview = (ROOT / "docs/workflow/overview.md").read_text(encoding="utf-8")
     delivery_doc = (ROOT / "docs/workflow/delivery.md").read_text(encoding="utf-8")
     release_role = (ROOT / ".agents/agents/release-engineer.md").read_text(encoding="utf-8")
@@ -158,6 +144,13 @@ def validate() -> list[str]:
         errors.append("delivery docs do not describe executable conditional Release Engineer policy")
     if "Do not add ceremony to trivial local work" not in release_role:
         errors.append("Release Engineer role lost trivial-local-work exclusion")
+
+    # Cold-start root policy must point agents at executable enforcement rather than
+    # relying on pre-hardening prompt semantics.
+    root_policy = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    for required_phrase in (".agents/authority.json", "deterministic controller", "controller admission", "untrusted data", "release_engineer_required"):
+        if required_phrase not in root_policy:
+            errors.append(f"AGENTS.md cold-start contract missing {required_phrase!r}")
 
     return sorted(set(errors))
 
