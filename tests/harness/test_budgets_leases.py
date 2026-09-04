@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,6 +22,34 @@ class BudgetLeaseTests(unittest.TestCase):
         self.assertEqual(budget.used, {})
         budget.consume_many({"tokens": 50, "calls": 1})
         self.assertEqual(budget.used, {"tokens": 50, "calls": 1})
+
+    def test_persistent_budget_survives_new_controller_object(self):
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td) / "runtime" / "budgets.json"
+            first = Budget({"tokens": 100, "calls": 2}, state_path=state)
+            first.consume_many({"tokens": 60, "calls": 1})
+            second = Budget({"tokens": 100, "calls": 2}, state_path=state)
+            self.assertEqual(second.used, {"tokens": 60, "calls": 1})
+            with self.assertRaises(BudgetExceeded):
+                second.consume_many({"tokens": 50, "calls": 1})
+            third = Budget({"tokens": 100, "calls": 2}, state_path=state)
+            self.assertEqual(third.used, {"tokens": 60, "calls": 1})
+
+    def test_budget_from_policy_resolves_repository_runtime_state(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            config = root / "config"
+            config.mkdir()
+            policy = config / "controller-policy.json"
+            policy.write_text(json.dumps({
+                "budgets": {"max_total_llm_tokens": 1000},
+                "budget_state": {"path": ".yaaw/runtime/budgets.json"},
+            }), encoding="utf-8")
+            budget = Budget.from_policy(policy, root=root)
+            budget.consume("max_total_llm_tokens", 400)
+            reloaded = Budget.from_policy(policy, root=root)
+            self.assertEqual(reloaded.used["max_total_llm_tokens"], 400)
+            self.assertEqual(reloaded.remaining("max_total_llm_tokens"), 600)
 
     def test_single_writer_lease(self):
         with tempfile.TemporaryDirectory() as tmp:
