@@ -10,9 +10,23 @@
     "work_id": {"type": "string", "minLength": 1},
     "actor": {"type": "string", "minLength": 1},
     "timestamp": {"type": "string", "format": "date-time"},
+    "run_id": {"type": "string", "minLength": 1},
+    "trace_id": {"type": "string", "minLength": 1},
+    "span_id": {"type": "string", "minLength": 1},
+    "parent_span_id": {"type": "string", "minLength": 1},
+    "decision": {"type": "string"},
+    "duration_ms": {"type": "integer", "minimum": 0},
+    "tokens": {"type": "integer", "minimum": 0},
+    "cost_usd": {"type": "number", "minimum": 0},
     "from": {"type": "string"},
     "to": {"type": "string"},
     "reason": {"type": "string"}
   },
+  "allOf": [
+    {
+      "if": {"anyOf": [{"required": ["run_id"]}, {"required": ["trace_id"]}, {"required": ["span_id"]}]},
+      "then": {"required": ["run_id", "trace_id", "span_id"]}
+    }
+  ],
   "additionalProperties": true
 }

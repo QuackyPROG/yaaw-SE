@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"RTP-02","kind":"DELIVERY","status":"READY","level":3,"parent":"INIT-RUNTIME-PROOF","owner":"orchestrator","blocked_by":["RTP-01"],"acceptance":["Gateway dispatch/action decisions emit correlated structured traces with run, work, actor, action, decision, latency and redacted detail fields.","Metrics are derived from real emitted events and preserve the rule that telemetry is evidence rather than product authority."],"qa":{"required":true,"profile":"INDEPENDENT"},"allowed_write":["scripts/yaaw/**","scripts/report_metrics.py","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["persisting secret values","using telemetry as semantic authority"],"expected_change_surface":["scripts/yaaw/**","scripts/report_metrics.py","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"rtp01":"68405b4652ea3a547a48fb9939e3cf130ba5cbae","rtp01_ci":"33888436897"},"risk":["observability","privacy"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"RTP-02","kind":"DELIVERY","status":"IN_PROGRESS","level":3,"parent":"INIT-RUNTIME-PROOF","owner":"orchestrator","blocked_by":["RTP-01"],"acceptance":["Gateway dispatch/action decisions emit correlated structured traces with run, work, actor, action, decision, latency and redacted detail fields.","Metrics are derived from real emitted events and preserve the rule that telemetry is evidence rather than product authority."],"qa":{"required":true,"profile":"INDEPENDENT"},"allowed_write":["scripts/yaaw/**","scripts/report_metrics.py","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["persisting secret values","using telemetry as semantic authority"],"expected_change_surface":["scripts/yaaw/**","scripts/report_metrics.py","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"rtp01":"68405b4652ea3a547a48fb9939e3cf130ba5cbae","rtp01_ci":"33888436897","frontier_commit":"4cc0cba08ee04aa765eb171648d8706a3c6a9587"},"risk":["observability","privacy"],"side_effects":["repository"]}
 ---
 # RTP-02: Automatic correlated traces
 
@@ -32,16 +32,16 @@ RTP-01 gateway behavior, existing event/metrics modules, event schema and root t
 Required trace fields would expose secrets, trace persistence conflicts with runtime isolation, or correlation semantics cannot survive recovery/retry safely.
 
 ## Implementation evidence
-READY after exact RTP-01 CI `33888436897`.
+Candidate adds trace contexts, recursive redaction/validation, gateway lifecycle events, action latency/error spans and extended diagnostic metrics. Exact-SHA CI pending.
 
 ## QA disposition
-INDEPENDENT required; pending.
+INDEPENDENT required; candidate is not DONE until full Agent Harness is green.
 
 ## QA result
-Pending.
+Pending exact-SHA CI.
 
 ## Verification
 Run focused trace/metrics tests and the full Agent Harness.
 
 ## Delivery
-READY — predecessor RTP-01 is DONE and exact-SHA CI is green.
+IN_PROGRESS — candidate being validated; telemetry remains ephemeral evidence only.

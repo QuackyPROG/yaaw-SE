@@ -8,12 +8,14 @@ this module when the host runtime supports an enforceable wrapper.
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Callable, TypeVar
 
 from .authority import AuthorityPolicy
 from .controller import AdmissionError, Controller
+from .events import TraceContext, append_trace_event
 from .ownership import OwnershipRule, resolve
 from .security import CommandRisk, RoleCapabilities, SecurityError, authorize_command, command_effects, redact_secrets
 
@@ -92,12 +94,17 @@ class RuntimeGateway:
         ownership_rules: list[OwnershipRule],
         default_owner: str,
         role_capabilities: dict[str, RoleCapabilities],
+        *,
+        event_path: Path | None = None,
+        trace: TraceContext | None = None,
     ) -> None:
         self.controller = controller
         self.authority = authority
         self.ownership_rules = ownership_rules
         self.default_owner = default_owner
         self.role_capabilities = role_capabilities
+        self.event_path = event_path
+        self.trace = trace or (TraceContext.new() if event_path is not None else None)
 
     @classmethod
     def from_repository(
@@ -107,6 +114,9 @@ class RuntimeGateway:
         authority_path: Path = Path(".agents/authority.json"),
         ownership_path: Path = Path(".agents/ownership.json"),
         security_path: Path = Path("config/security-policy.json"),
+        event_path: Path | None = Path(".yaaw/runtime/events.jsonl"),
+        run_id: str | None = None,
+        trace_id: str | None = None,
     ) -> "RuntimeGateway":
         from .query import load_ownership_rules
 
@@ -115,7 +125,30 @@ class RuntimeGateway:
         role_caps: dict[str, RoleCapabilities] = {}
         for role in security.get("roles", {}):
             role_caps[role] = load_role_capabilities(security_path, role)
-        return cls(controller, AuthorityPolicy.load(authority_path), rules, default_owner, role_caps)
+        trace = TraceContext.new(run_id=run_id, trace_id=trace_id) if event_path is not None else None
+        return cls(
+            controller,
+            AuthorityPolicy.load(authority_path),
+            rules,
+            default_owner,
+            role_caps,
+            event_path=event_path,
+            trace=trace,
+        )
+
+    def _emit(self, event: str, request: ActionRequest, **details) -> dict | None:
+        if self.event_path is None or self.trace is None:
+            return None
+        return append_trace_event(
+            self.event_path,
+            event,
+            request.ticket_id,
+            request.role,
+            self.trace,
+            holder=request.holder,
+            worktree=request.worktree,
+            **details,
+        )
 
     def _requires_dispatch(self, request: ActionRequest) -> tuple[bool, CommandRisk]:
         effects = command_effects(request.command or "")
@@ -189,7 +222,25 @@ class RuntimeGateway:
 
     def admit(self, request: ActionRequest) -> AdmissionDecision:
         inspected = self.inspect(request)
-        if not inspected.allowed or not inspected.requires_dispatch:
+        if not inspected.allowed:
+            self._emit(
+                "GATEWAY_DENIED",
+                request,
+                decision="DENY",
+                reasons=list(inspected.reasons),
+                effective_risk=inspected.effective_risk,
+                command=inspected.redacted_command,
+            )
+            return inspected
+        if not inspected.requires_dispatch:
+            self._emit(
+                "GATEWAY_ALLOWED",
+                request,
+                decision="ALLOW",
+                reserved=False,
+                effective_risk=inspected.effective_risk,
+                command=inspected.redacted_command,
+            )
             return inspected
         try:
             self.controller.admit_dispatch(
@@ -201,7 +252,7 @@ class RuntimeGateway:
                 role=request.role,
             )
         except (AdmissionError, RuntimeError) as exc:
-            return AdmissionDecision(
+            decision = AdmissionDecision(
                 False,
                 "DENIED",
                 (str(exc),),
@@ -210,7 +261,16 @@ class RuntimeGateway:
                 False,
                 inspected.redacted_command,
             )
-        return AdmissionDecision(
+            self._emit(
+                "GATEWAY_DENIED",
+                request,
+                decision="DENY",
+                reasons=list(decision.reasons),
+                effective_risk=decision.effective_risk,
+                command=decision.redacted_command,
+            )
+            return decision
+        decision = AdmissionDecision(
             True,
             "ALLOW",
             (),
@@ -219,24 +279,75 @@ class RuntimeGateway:
             True,
             inspected.redacted_command,
         )
+        self._emit(
+            "GATEWAY_ALLOWED",
+            request,
+            decision="ALLOW",
+            reserved=True,
+            effective_risk=decision.effective_risk,
+            command=decision.redacted_command,
+        )
+        return decision
 
     def release(self, request: ActionRequest, decision: AdmissionDecision) -> None:
         if decision.reserved:
             self.controller.release_dispatch(request.worktree, request.holder)
 
     def run(self, request: ActionRequest, runner: Callable[[ActionRequest], T]) -> T:
-        """Authorize, reserve, execute through the injected runtime runner, then release.
-
-        Runtime adapters should expose their mutating execution capability through this
-        method (or an equivalent wrapper around ``admit``/``release``). The injected
-        runner is the provider/OS boundary; tests can replace it with a deterministic
-        fake without weakening admission semantics.
-        """
+        """Authorize, reserve, execute through the injected runtime runner, then release."""
         decision = self.admit(request)
         if not decision.allowed:
             detail = "; ".join(decision.reasons) or "runtime gateway denied action"
             raise GatewayDenied(detail)
+        action_span = self.trace.span_id() if self.trace is not None else None
+        if self.event_path is not None and self.trace is not None:
+            append_trace_event(
+                self.event_path,
+                "ACTION_START",
+                request.ticket_id,
+                request.role,
+                self.trace,
+                span_id=action_span,
+                holder=request.holder,
+                worktree=request.worktree,
+                effective_risk=decision.effective_risk,
+                command=decision.redacted_command,
+            )
+        started = time.perf_counter()
         try:
-            return runner(request)
+            result = runner(request)
+        except Exception as exc:
+            duration_ms = max(0, int((time.perf_counter() - started) * 1000))
+            if self.event_path is not None and self.trace is not None:
+                append_trace_event(
+                    self.event_path,
+                    "ACTION_ERROR",
+                    request.ticket_id,
+                    request.role,
+                    self.trace,
+                    parent_span_id=action_span,
+                    holder=request.holder,
+                    worktree=request.worktree,
+                    duration_ms=duration_ms,
+                    error_type=type(exc).__name__,
+                    error=str(exc),
+                )
+            raise
+        else:
+            duration_ms = max(0, int((time.perf_counter() - started) * 1000))
+            if self.event_path is not None and self.trace is not None:
+                append_trace_event(
+                    self.event_path,
+                    "ACTION_RESULT",
+                    request.ticket_id,
+                    request.role,
+                    self.trace,
+                    parent_span_id=action_span,
+                    holder=request.holder,
+                    worktree=request.worktree,
+                    duration_ms=duration_ms,
+                    result="SUCCESS",
+                )
+            return result
         finally:
             self.release(request, decision)

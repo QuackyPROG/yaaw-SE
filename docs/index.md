@@ -18,6 +18,7 @@ Use this file as the cold-start map after `AGENTS.md`.
 - [`workflow/overview.md`](workflow/overview.md) — end-to-end workflow diagram from intake/optional PRD through planning, execution, QA, commits, and release.
 - [`workflow/controller.md`](workflow/controller.md) — deterministic admission, mutation, budgets, leases and failure behavior.
 - [`workflow/runtime-gateway.md`](workflow/runtime-gateway.md) — executable dispatch/action admission boundary and its host-runtime containment limits.
+- [`workflow/runtime-tracing.md`](workflow/runtime-tracing.md) — correlated gateway/action traces, redaction and diagnostic metrics.
 - [`workflow/security.md`](workflow/security.md) — instruction trust, command/side-effect policy, secrets and runtime boundaries.
 - [`workflow/recovery.md`](workflow/recovery.md) — repository-first crash recovery, leases, idempotency and migration behavior.
 - [`workflow/maturity.md`](workflow/maturity.md) — what is machine-enforced, agent judgment, runtime-dependent, and the current maturity claim.
