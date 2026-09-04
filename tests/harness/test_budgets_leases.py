@@ -14,6 +14,14 @@ class BudgetLeaseTests(unittest.TestCase):
         with self.assertRaises(BudgetExceeded):
             budget.consume("repair")
 
+    def test_multi_budget_reservation_is_atomic(self):
+        budget = Budget({"tokens": 100, "calls": 1})
+        with self.assertRaises(BudgetExceeded):
+            budget.consume_many({"tokens": 50, "calls": 2})
+        self.assertEqual(budget.used, {})
+        budget.consume_many({"tokens": 50, "calls": 1})
+        self.assertEqual(budget.used, {"tokens": 50, "calls": 1})
+
     def test_single_writer_lease(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = LeaseStore(Path(tmp))
