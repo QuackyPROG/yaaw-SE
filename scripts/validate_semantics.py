@@ -121,8 +121,13 @@ def validate() -> list[str]:
         ))
     errors.extend(validate_rules(rules))
     for critical_path in (
+        "AGENTS.md",
+        "README.md",
+        ".gitignore",
         "scripts/yaaw/controller.py",
         "scripts/yaaw/security.py",
+        "scripts/run_evals.py",
+        "scripts/report_metrics.py",
         ".agents/schemas/ticket.schema.json",
         "tests/harness/test_graph.py",
     ):
