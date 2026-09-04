@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/context-budget.schema.json",
+  "type": "object",
+  "required": ["schema", "estimator", "roles", "level_multipliers"],
+  "properties": {
+    "schema": {"const": "yaaw.context-budget/v1"},
+    "estimator": {
+      "type": "object",
+      "required": ["strategy", "bytes_per_token", "safety_factor"],
+      "properties": {
+        "strategy": {"const": "UTF8_HEURISTIC"},
+        "bytes_per_token": {"type": "number", "exclusiveMinimum": 0},
+        "safety_factor": {"type": "number", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "roles": {
+      "type": "object",
+      "required": ["default"],
+      "additionalProperties": {
+        "type": "object",
+        "required": ["max_window_tokens", "reserved_output_tokens", "max_retrieval_tokens", "max_single_evidence_tokens"],
+        "properties": {
+          "max_window_tokens": {"type": "integer", "minimum": 1},
+          "reserved_output_tokens": {"type": "integer", "minimum": 0},
+          "max_retrieval_tokens": {"type": "integer", "minimum": 0},
+          "max_single_evidence_tokens": {"type": "integer", "minimum": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "level_multipliers": {
+      "type": "object",
+      "required": ["0", "1", "2", "3", "4"],
+      "properties": {
+        "0": {"type": "number", "exclusiveMinimum": 0},
+        "1": {"type": "number", "exclusiveMinimum": 0},
+        "2": {"type": "number", "exclusiveMinimum": 0},
+        "3": {"type": "number", "exclusiveMinimum": 0},
+        "4": {"type": "number", "exclusiveMinimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "purpose": {"type": "string"}
+  },
+  "additionalProperties": false
+}
