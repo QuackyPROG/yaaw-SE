@@ -3,10 +3,10 @@
   "schema": "yaaw.initiative-map/v1",
   "id": "INIT-INDUSTRY-HARDENING",
   "level": 4,
-  "status": "ACTIVE",
+  "status": "COMPLETE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 8
+  "revision": 9
 }
 ---
 # Industry Hardening
@@ -15,15 +15,11 @@
 
 Turn yaaw-SE from an instruction-heavy engineering methodology into a self-hosting, machine-enforced autonomous engineering harness whose workflow state, authority, security, evidence, delivery and failure modes are deterministic where they can be.
 
-## Constraints / standing notes
+## Completion state
 
-- Preserve L0-L4 cheapest-safe routing, DISCOVERY/DECISION/DELIVERY, fog/frontier, STOP_AND_REPLAN, PLAN_DELTA, immutable completed history, observed-vs-intent truth and manual-only PRDs.
-- Do not add agents merely to compensate for missing deterministic machinery.
-- `main` remains untouched until the exact HARDEN-19 VERIFYING candidate passes the final integration gate.
-- Every coherent phase/correction is a separate commit.
-- Completed work is reconstructed only from actual repository commits and CI evidence.
+The planned HARDEN-01 through HARDEN-19 ladder is complete. `HARDEN-19` passed the final whole-branch audit and the verified candidate was fast-forwarded to `main` without force.
 
-## Decisions so far
+## Preserved design decisions
 
 - [`ADR-001`](../../decisions/001-deterministic-control-plane.md): engineering judgment remains with agents; workflow invariants move into deterministic controller machinery.
 - Domain packs extend project-specific facts without silently weakening generic invariants.
@@ -34,41 +30,27 @@ Turn yaaw-SE from an instruction-heavy engineering methodology into a self-hosti
 - Repository host, tracker and provider data are evidence-only inputs; domain-pack lifecycle and cross-repository coordination are typed and compatibility-checked.
 - QA findings/residual risks use stable identities; retrieval is provider-neutral/evidence-only; archive manifests preserve stable source paths; metrics diagnose rather than decide product intent.
 - Public maturity claims distinguish machine-enforced, agent-judgment and runtime-dependent behavior; executable examples are CI fixtures rather than proof-by-documentation.
-- Final audit added semantic guards for conditional Release Engineer ordering, authority-subset consistency, self-hosting ownership, cold-start controller/security authority, rename/copy endpoint scope, and explicit command side-effect capabilities.
+- Final audit added guards for conditional Release Engineer ordering, authority-subset consistency, self-hosting ownership, cold-start controller/security authority, rename/copy endpoint scope and explicit command side-effect capabilities.
 
-## Current frontier
+## Frontier
 
-Controller-visible work:
+No remaining work in this initiative.
 
-- `HARDEN-19` — VERIFYING final whole-branch integration audit and non-destructive main promotion.
+New defects, maturity gaps or feature requests discovered later must be opened as new durable work. Completed hardening tickets are not reopened or rewritten.
 
-## Final audit checkpoint
+## Final evidence
 
-- live main: `82c65e03af90e8c9b2d23e4810e41760f9fd0b37`
-- audited implementation head: `1ac72ddbfbaf881154e7ba24428a902b50e44ea5`
-- relation: ahead-only, 33 commits ahead, 0 behind, merge base equals live main
-- latest implementation CI `33849395459`: SUCCESS
-- scope correction CI `33848872419`: SUCCESS
-- audit corrections remain explicit commits; no history rewrite/force update.
-- next gate: CI on the exact VERIFYING status/evidence candidate, then live-main freshness and fast-forward promotion.
+- original main base: `82c65e03af90e8c9b2d23e4810e41760f9fd0b37`
+- final verified candidate: `bec6d49c1772fcaaca69165bc80d38dab15515f5`
+- exact candidate CI `33849554370`: SUCCESS
+- main promotion: non-force fast-forward to `bec6d49c1772fcaaca69165bc80d38dab15515f5`
+- post-promotion main CI `33849613261`: SUCCESS
+- no branch divergence existed at promotion: candidate was 34 commits ahead, 0 behind, merge base equal to original main.
 
-## Not yet specified / fog
+## Maturity boundary
 
-No speculative specialist agents are authorized. Dependency-change or data-migration specialist procedures are added only if dogfooding/evals show the generic architecture/change/implementation procedures are insufficient.
+Completion means the industry-hardening initiative met its repository-defined acceptance gates. It does not erase the explicit Beta/self-hosting maturity boundaries documented in `docs/workflow/maturity.md`, nor does it grant production authority that a consuming repository has not delegated.
 
-## Out of scope
+## Recovery / historical record
 
-- Product-specific engineering rules that belong in a consuming repository's domain pack.
-- Production promotion authority not explicitly delegated by a consuming project.
-- Replacing project-native tests, CI, observability or security tooling with generic harness checks.
-
-## Integration / QA strategy
-
-- One coherent phase/correction per commit.
-- CI runs structural, semantic, schema, migration, state, policy, unit, adversarial eval and scope checks.
-- L4 changes require high-assurance review evidence.
-- Final promotion requires an audit of `main...feat/industry-hardening`, green CI at the exact final VERIFYING SHA and no stale source/branch state.
-
-## Recovery / resumption
-
-A fresh Orchestrator resumes by reading this map, computing ticket state/frontier, inspecting the current branch SHA/CI, and loading only the current ticket plus referenced sources. Chat history is not required for correctness.
+This map and the DONE ticket graph are the durable completion record. Chat history is not required to establish what was implemented, corrected, verified or promoted.
