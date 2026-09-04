@@ -25,6 +25,7 @@ def validate() -> list[str]:
     artifacts = load_json(".agents/artifacts.json")
     authority = load_json(".agents/authority.json")
     ownership = load_json(".agents/ownership.json")
+    controller_policy = load_json("config/controller-policy.json")
 
     agents = {a["id"] for a in catalog.get("agents", [])}
     skills = {s["id"]: s for s in catalog.get("skills", [])}
@@ -52,6 +53,18 @@ def validate() -> list[str]:
         errors.append("registered context budget policy does not exist")
     if router.get("principles", {}).get("token_budgeted_context") is not True:
         errors.append("router must require token_budgeted_context")
+
+    budget_state = controller_policy.get("budget_state", {})
+    if budget_state.get("path") != ".yaaw/runtime/budgets.json":
+        errors.append("controller policy must persist aggregate usage at .yaaw/runtime/budgets.json")
+    if budget_state.get("atomic_replace") is not True:
+        errors.append("controller policy must require atomic budget-state replacement")
+    if budget_state.get("survives_controller_restart") is not True:
+        errors.append("controller policy must require budget state to survive controller restart")
+    controller_budgets = controller_policy.get("budgets", {})
+    for required_budget in ("max_agent_dispatches", "max_total_llm_calls", "max_total_llm_tokens"):
+        if not isinstance(controller_budgets.get(required_budget), int) or controller_budgets[required_budget] < 1:
+            errors.append(f"controller policy requires positive {required_budget}")
 
     artifact_types = {a["id"]: a for a in artifacts.get("artifact_types", [])}
     contracts = artifacts.get("contracts", {}).get("agents", {})
@@ -125,12 +138,12 @@ def validate() -> list[str]:
     errors.extend(validate_rules(rules))
     for critical_path in (
         "AGENTS.md", "README.md", ".gitignore",
-        "scripts/yaaw/controller.py", "scripts/yaaw/security.py", "scripts/yaaw/runtime_gateway.py",
+        "scripts/yaaw/controller.py", "scripts/yaaw/budgets.py", "scripts/yaaw/security.py", "scripts/yaaw/runtime_gateway.py",
         "scripts/yaaw/context.py", "scripts/yaaw/retrieval.py", "scripts/yaaw/token_budget.py",
         "scripts/yaaw/workload_evidence.py", "scripts/yaaw/workload_manifest.py",
         "scripts/run_evals.py", "scripts/run_agent_evals.py", "scripts/run_workload_compare.py",
         "scripts/create_external_workload.py", "scripts/report_metrics.py",
-        "config/runtime-adapters.json", "config/generic-command-runtime.json", "config/context-budget.json",
+        "config/controller-policy.json", "config/runtime-adapters.json", "config/generic-command-runtime.json", "config/context-budget.json",
         ".agents/schemas/ticket.schema.json", ".agents/schemas/context-budget.schema.json", "tests/harness/test_graph.py",
     ):
         if resolve(critical_path, rules, ownership.get("default_owner", "UNKNOWN_OWNER")).owner == "UNKNOWN_OWNER":
@@ -190,8 +203,13 @@ def validate() -> list[str]:
         if required_phrase not in retrieval_source:
             errors.append(f"retrieval runtime lost bounded-live-retrieval invariant {required_phrase!r}")
 
+    budget_source = (ROOT / "scripts/yaaw/budgets.py").read_text(encoding="utf-8")
+    for required_phrase in ("from_policy", "yaaw.budget-state/v1", "os.replace", "state_path"):
+        if required_phrase not in budget_source:
+            errors.append(f"budget subsystem lost persisted aggregate-state invariant {required_phrase!r}")
+
     controller_source = (ROOT / "scripts/yaaw/controller.py").read_text(encoding="utf-8")
-    for required_phrase in ("reserve_llm_tokens", "max_total_llm_tokens", "max_total_llm_calls"):
+    for required_phrase in ("from_repository", "admit_agent_invocation", "reserve_llm_tokens", "max_total_llm_tokens", "max_total_llm_calls"):
         if required_phrase not in controller_source:
             errors.append(f"controller lost aggregate model budget invariant {required_phrase!r}")
 
