@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "description": "Cold inventory of registered yaaw-SE agents, rules, skills, artifact contracts, and validation assets. Load for harness maintenance/audit, not ordinary task routing.",
   "artifact_registry": ".agents/artifacts.json",
   "agents": [
@@ -36,6 +36,7 @@
     {"id":"validate-schemas","path":"scripts/validate_schemas.py"},
     {"id":"validate-schema-versions","path":"scripts/validate_schema_versions.py"},
     {"id":"validate-workflow-state","path":"scripts/validate_workflow_state.py"},
+    {"id":"validate-runtime-adapters","path":"scripts/validate_runtime_adapters.py"},
     {"id":"validate-codex-runtime","path":"scripts/validate_codex_runtime.py"},
     {"id":"verify-task-scope","path":"scripts/verify_task_scope.py"}
   ]

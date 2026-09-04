@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/operating-modes.schema.json",
+  "type": "object",
+  "required": ["schema", "modes", "invariants"],
+  "properties": {
+    "schema": {"const": "yaaw.operating-modes/v1"},
+    "modes": {"type": "object", "required": ["lightweight", "standard", "strict"], "additionalProperties": {"type": "object", "required": ["durable_from_level", "qa_floor", "fresh_implementer_from_level", "allow_optional_release_engineer_skip", "network_default"], "properties": {"durable_from_level": {"type": "integer", "minimum": 0, "maximum": 4}, "qa_floor": {"enum": ["SELF_VERIFY", "INDEPENDENT", "HIGH_ASSURANCE"]}, "fresh_implementer_from_level": {"type": "integer", "minimum": 0, "maximum": 4}, "allow_optional_release_engineer_skip": {"type": "boolean"}, "network_default": {"enum": ["DOMAIN_POLICY", "DENY_UNLESS_ALLOWED"]}}, "additionalProperties": false}},
+    "invariants": {"type": "object"}
+  },
+  "additionalProperties": false
+}

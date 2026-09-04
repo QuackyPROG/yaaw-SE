@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate JSON Schemas plus structured core templates and example domain packs."""
+"""Validate JSON Schemas plus structured core templates and machine-readable config fixtures."""
 from __future__ import annotations
 
 import json
@@ -26,6 +26,9 @@ TEMPLATE_SCHEMAS = {
 JSON_INSTANCE_SCHEMAS = {
     "examples/domain-pack/.yaaw/domain-pack.json": "domain-pack.schema.json",
     "examples/domain-pack/.yaaw/repository-map.json": "repository-map.schema.json",
+    "config/model-profiles.example.json": "model-profiles.schema.json",
+    "config/operating-modes.json": "operating-modes.schema.json",
+    "config/runtime-adapters.json": "runtime-adapters.schema.json",
 }
 
 
@@ -58,6 +61,7 @@ def validate() -> list[str]:
 
     for rel_path, schema_name in JSON_INSTANCE_SCHEMAS.items():
         if schema_name not in schemas:
+            errors.append(f"{rel_path}: schema {schema_name} is not loadable")
             continue
         try:
             instance = json.loads((ROOT / rel_path).read_text(encoding="utf-8"))

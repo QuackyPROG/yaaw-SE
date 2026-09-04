@@ -25,6 +25,8 @@ jobs:
         run: python scripts/validate_schemas.py
       - name: Require current durable artifact schemas
         run: python scripts/validate_schema_versions.py
+      - name: Validate runtime adapter registry
+        run: python scripts/validate_runtime_adapters.py
       - name: Validate Codex runtime adapter
         run: python scripts/validate_codex_runtime.py
       - name: Validate workflow graph and artifact documents
