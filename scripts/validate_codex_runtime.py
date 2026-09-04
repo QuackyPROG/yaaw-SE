@@ -34,9 +34,11 @@ def main() -> None:
         "controller admission",
         "untrusted data",
         "yaaw_cli.py context",
+        "Controller.from_repository",
         "Controller.admit_agent_invocation",
         "max_total_llm_tokens",
         "config/context-budget.json",
+        "survive controller/runtime reconstruction",
     ):
         require(phrase in instructions, f"Codex root instructions missing invariant: {phrase}")
 
@@ -51,7 +53,7 @@ def main() -> None:
         require("Do not spawn" in data.get("developer_instructions", "") or name == "orchestrator", f"child adapter {name} must forbid recursive delegation")
         seen.add(name)
     require(seen == expected, f"Codex role adapters mismatch: expected {sorted(expected)}, got {sorted(seen)}")
-    print("OK: Codex adapter is root-only, bounded, model-neutral, controller/token-admitted, trust-aware and aligned with registered roles")
+    print("OK: Codex adapter is root-only, bounded, model-neutral, persisted-controller/token-admitted, trust-aware and aligned with registered roles")
 
 
 if __name__ == "__main__":
