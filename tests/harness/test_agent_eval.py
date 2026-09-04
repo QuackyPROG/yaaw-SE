@@ -59,7 +59,27 @@ class AgentEvalTests(unittest.TestCase):
         self.assertAlmostEqual(report["pass_at_k"]["2"], 1.0)
         self.assertAlmostEqual(report["pass_power_k"]["2"], 0.5)
         self.assertEqual(report["policy_violations"], 0)
+        self.assertEqual(report["efficiency"]["tokens_per_attempt"], 102.5)
         self.assertTrue(report["thresholds_met"])
+
+    def test_resource_threshold_can_fail_otherwise_green_trials(self):
+        manifest = self.manifest()
+        manifest["attempts"] = 2
+        manifest["k"] = [1, 2]
+        manifest["outcome_grader"] = {"expected_exit_code": 0, "output_contains": ["fixture success"]}
+        manifest["thresholds"] = {
+            "min_pass_rate": 1.0,
+            "min_trace_pass_rate": 1.0,
+            "max_policy_violations": 0,
+            "max_total_tokens": 100,
+            "max_total_cost_usd": 0.0,
+            "max_total_duration_ms": 1000,
+            "max_replans": 0,
+        }
+        report = run_trials(manifest, FakeRuntimeAdapter([True]))
+        self.assertEqual(report["pass_rate"], 1.0)
+        self.assertGreater(report["total_tokens"], 100)
+        self.assertFalse(report["thresholds_met"])
 
     def test_trace_violation_can_fail_trial_even_when_outcome_passes(self):
         class BadTraceAdapter:
