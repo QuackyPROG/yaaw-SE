@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"HARDEN-17","kind":"DELIVERY","status":"DRAFT","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-16"],"acceptance":["Add QA finding identities/residual-risk/failure-signature conventions, stronger acceptance/plan lint, retrieval/index hooks, artifact indexing/archive policy, and measurable drift/escape metrics."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**","config/**","docs/workflow/**","docs/templates/**","tests/harness/**","evals/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["scripts/yaaw/**","config/**","docs/workflow/**","docs/templates/**","tests/harness/**","evals/**"],"source_fingerprints":{},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"HARDEN-17","kind":"DELIVERY","status":"READY","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-16"],"acceptance":["Add QA finding identities/residual-risk/failure-signature conventions, stronger acceptance/plan lint, retrieval/index hooks, artifact indexing/archive policy, and measurable drift/escape metrics."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**","config/**","docs/workflow/**","docs/templates/**","tests/harness/**","evals/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["scripts/yaaw/**","config/**","docs/workflow/**","docs/templates/**","tests/harness/**","evals/**"],"source_fingerprints":{"blocked_by_harden_16":"16ba25f30088c5ea783d3f486fc589a09586525e"},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
 ---
 # HARDEN-17: Planning, QA, retrieval and lifecycle hardening
 
@@ -36,6 +36,7 @@ Add QA finding identities/residual-risk/failure-signature conventions, stronger 
 ## Canonical sources
 
 - initiative map and ADR-001.
+- `HARDEN-16` completed through `16ba25f30088c5ea783d3f486fc589a09586525e`.
 
 ## Verification
 
@@ -55,7 +56,7 @@ Pending.
 
 ## QA result
 
-Pending.
+Pending independent/high-assurance evidence.
 
 ## Delivery
 

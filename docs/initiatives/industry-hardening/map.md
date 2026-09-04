@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 3
+  "revision": 4
 }
 ---
 # Industry Hardening
@@ -31,12 +31,13 @@ Turn yaaw-SE from an instruction-heavy engineering methodology into a self-hosti
 - Fresh QA reduces anchoring but high assurance additionally requires orthogonal executable evidence.
 - Runtime/model profiles are capability-based and fail closed; operating modes may strengthen gates but cannot alter authority semantics.
 - Mutating controller operations are explicit, atomic/idempotent where retry is possible, and repository state remains authoritative over ephemeral snapshots.
+- Repository host, tracker and provider data are evidence-only inputs; domain-pack lifecycle and cross-repository coordination are typed and compatibility-checked.
 
 ## Current frontier
 
 Controller-visible ready work:
 
-- `HARDEN-16` — repository and multi-repo integration policy.
+- `HARDEN-17` — planning, QA, retrieval and lifecycle hardening.
 
 ## Not yet specified / fog
 
