@@ -1,0 +1,1 @@
+{"schema":"yaaw.external-observation/v1","adapter":"github-issues","entity_kind":"TRACKER","stable_id":"I_kwExample42","observed_state":"OPEN","observed_at":"2026-09-04T00:00:00Z","source_ref":"github:QuackyPROG/example#42","freshness_token":"etag:example","authority":"EVIDENCE_ONLY"}
