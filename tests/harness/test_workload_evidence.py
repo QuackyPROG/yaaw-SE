@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from scripts.yaaw.workload_evidence import WorkloadEvidenceError, compare_evidence, evidence_record, validate_workload
+from scripts.yaaw.workload_manifest import build_external_workload
 
 BASE_FP = "a" * 64
 GOV_FP = "b" * 64
@@ -104,6 +108,45 @@ class WorkloadEvidenceTests(unittest.TestCase):
         self.assertEqual(comparison["relative"]["token_reduction_ratio"], 0.6)
         self.assertFalse(comparison["relative"]["quality_non_regression"])
         self.assertFalse(comparison["relative"]["token_efficiency_improved"])
+
+    def test_external_workload_builder_pins_manifest_identity_and_fingerprints(self):
+        manifest = {
+            "schema": "yaaw.agent-eval/v1",
+            "id": "BASE",
+            "task": "bounded task",
+            "attempts": 1,
+            "k": [1],
+            "outcome_grader": {},
+            "trace_grader": {},
+            "thresholds": {},
+        }
+        governed_manifest = dict(manifest)
+        governed_manifest["id"] = "GOV"
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            evals = root / "evals"
+            evals.mkdir()
+            base_path = evals / "base.json"
+            governed_path = evals / "governed.json"
+            base_path.write_text(json.dumps(manifest), encoding="utf-8")
+            governed_path.write_text(json.dumps(governed_manifest), encoding="utf-8")
+            value = build_external_workload(
+                root=root,
+                workload_id="EXT-1",
+                repository="owner/repo",
+                ref="main",
+                commit="c" * 40,
+                task="bounded task",
+                allowed_scope=["src/**"],
+                verification=["pytest"],
+                baseline_manifest_path=base_path,
+                governed_manifest_path=governed_path,
+            )
+            self.assertEqual(value["baseline_manifest_id"], "BASE")
+            self.assertEqual(value["governed_manifest_id"], "GOV")
+            self.assertEqual(len(value["baseline_manifest_fingerprint"]), 64)
+            self.assertEqual(len(value["governed_manifest_fingerprint"]), 64)
+            self.assertEqual(value["provenance"]["commit"], "c" * 40)
 
     def test_observed_requires_report_and_failed_requires_reason(self):
         with self.assertRaises(WorkloadEvidenceError):
