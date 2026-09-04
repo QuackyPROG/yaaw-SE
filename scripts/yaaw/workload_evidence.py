@@ -18,17 +18,31 @@ def _nonempty(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _fingerprint(value: object) -> str:
+def fingerprint(value: object) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
+
+def _sha256(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(ch in "0123456789abcdefABCDEF" for ch in value)
 
 
 def validate_workload(workload: dict) -> None:
     if not isinstance(workload, dict) or workload.get("schema") != "yaaw.workload/v1":
         raise WorkloadEvidenceError("unsupported workload manifest schema")
-    for field in ("id", "task", "baseline_manifest", "governed_manifest"):
+    for field in (
+        "id",
+        "task",
+        "baseline_manifest",
+        "governed_manifest",
+        "baseline_manifest_id",
+        "governed_manifest_id",
+    ):
         if not _nonempty(workload.get(field)):
             raise WorkloadEvidenceError(f"workload requires non-empty {field}")
+    for field in ("baseline_manifest_fingerprint", "governed_manifest_fingerprint"):
+        if not _sha256(workload.get(field)):
+            raise WorkloadEvidenceError(f"workload {field} must be a SHA-256 hex digest")
     provenance = workload.get("provenance")
     if not isinstance(provenance, dict) or provenance.get("kind") not in PROVENANCE_KINDS:
         raise WorkloadEvidenceError("workload provenance.kind must be SYNTHETIC or EXTERNAL")
@@ -72,8 +86,17 @@ def _runtime_identity(report: dict | None) -> dict | None:
     }
 
 
-def _empirical_eligible(workload: dict, report: dict | None) -> bool:
-    if not report or report.get("evidence_class") != "OBSERVED":
+def _manifest_matches(workload: dict, lane: str, report: dict | None) -> bool:
+    if not report:
+        return False
+    return (
+        report.get("manifest_id") == workload.get(f"{lane}_manifest_id")
+        and report.get("manifest_fingerprint") == workload.get(f"{lane}_manifest_fingerprint")
+    )
+
+
+def _empirical_eligible(workload: dict, lane: str, report: dict | None) -> bool:
+    if not report or report.get("evidence_class") != "OBSERVED" or not _manifest_matches(workload, lane, report):
         return False
     provenance = workload["provenance"]
     identity = _runtime_identity(report)
@@ -103,22 +126,23 @@ def evidence_record(
         raise WorkloadEvidenceError(f"{status} evidence requires a reason")
 
     identity = _runtime_identity(report)
-    proof_class = "EMPIRICAL" if status == "OBSERVED" and _empirical_eligible(workload, report) else "UNPROVEN"
-    record = {
+    manifest_match = _manifest_matches(workload, lane, report) if report else None
+    proof_class = "EMPIRICAL" if status == "OBSERVED" and _empirical_eligible(workload, lane, report) else "UNPROVEN"
+    return {
         "schema": "yaaw.workload-evidence/v1",
         "workload_id": workload["id"],
         "lane": lane,
         "status": status,
         "proof_class": proof_class,
-        "workload_fingerprint": _fingerprint(workload),
+        "manifest_match": manifest_match,
+        "workload_fingerprint": fingerprint(workload),
         "repository": dict(workload["provenance"]),
         "runtime": identity,
-        "runtime_fingerprint": _fingerprint(identity) if identity else None,
-        "report_fingerprint": _fingerprint(report) if report else None,
+        "runtime_fingerprint": fingerprint(identity) if identity else None,
+        "report_fingerprint": fingerprint(report) if report else None,
         "reason": reason,
         "report": report,
     }
-    return record
 
 
 def compare_evidence(baseline: dict, governed: dict) -> dict:

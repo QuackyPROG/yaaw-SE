@@ -3,7 +3,7 @@
   "$id": "https://yaaw.dev/schemas/workload.schema.json",
   "title": "yaaw-SE External Workload Manifest",
   "type": "object",
-  "required": ["schema", "id", "provenance", "task", "allowed_scope", "verification", "baseline_manifest", "governed_manifest"],
+  "required": ["schema", "id", "provenance", "task", "allowed_scope", "verification", "baseline_manifest", "governed_manifest", "baseline_manifest_id", "governed_manifest_id", "baseline_manifest_fingerprint", "governed_manifest_fingerprint"],
   "properties": {
     "schema": {"const": "yaaw.workload/v1"},
     "id": {"type": "string", "minLength": 1},
@@ -22,7 +22,11 @@
     "allowed_scope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "verification": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
     "baseline_manifest": {"type": "string", "minLength": 1},
-    "governed_manifest": {"type": "string", "minLength": 1}
+    "governed_manifest": {"type": "string", "minLength": 1},
+    "baseline_manifest_id": {"type": "string", "minLength": 1},
+    "governed_manifest_id": {"type": "string", "minLength": 1},
+    "baseline_manifest_fingerprint": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+    "governed_manifest_fingerprint": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}
   },
   "additionalProperties": false
 }

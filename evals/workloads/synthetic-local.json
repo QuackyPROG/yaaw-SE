@@ -11,5 +11,9 @@
   "allowed_scope": ["evals/**", "tests/harness/**"],
   "verification": ["python scripts/run_workload_compare.py --workload evals/workloads/synthetic-local.json --simulate"],
   "baseline_manifest": "evals/workloads/synthetic-baseline.json",
-  "governed_manifest": "evals/workloads/synthetic-governed.json"
+  "governed_manifest": "evals/workloads/synthetic-governed.json",
+  "baseline_manifest_id": "SYNTHETIC-BASELINE",
+  "governed_manifest_id": "SYNTHETIC-GOVERNED",
+  "baseline_manifest_fingerprint": "5a129198b9ba1de0ad9c5dbf906cc16d7d1b3338638409e84d7c0376fbe07299",
+  "governed_manifest_fingerprint": "226242669c2a15e4d8afa6b27d05e6e90804b9d9680dd161397ebd64e656676a"
 }

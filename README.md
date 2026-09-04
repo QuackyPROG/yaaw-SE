@@ -4,7 +4,7 @@
 
 It still looks like a pile of Markdown, JSON, and a suspicious amount of policy for something called *yet another workflow*.
 
-Underneath that, the current harness has a deterministic ticket/state controller, machine-readable artifact and authority contracts, risk-aware routing, bounded mutations, fresh QA, recovery/idempotency rules, adversarial evals, domain-pack integration, and repository-native memory. The agents keep the engineering judgment; software enforces the workflow invariants it can actually know.
+Underneath that, the harness has a deterministic ticket/state controller, machine-readable artifact and authority contracts, risk-aware routing, ticket-bound runtime admission, correlated traces, repeated agent-loop evals, workload provenance/comparison, bounded mutations, fresh QA, recovery/idempotency rules, domain-pack integration, and repository-native memory. Agents keep the engineering judgment; software enforces the workflow invariants it can actually know.
 
 It also still tries very hard **not** to form a committee for a typo.
 
@@ -22,7 +22,11 @@ Material work becomes `DISCOVERY`, `DECISION`, and `DELIVERY` tickets. Unknown f
 
 Current maturity: **Beta / self-hosting control plane**.
 
-Machine-enforced invariants include structured state/graph validation, ownership/authority checks, scope and lease controls, source/evidence freshness, bounded retries/replans, idempotent mutations, runtime capability floors, and CI/adversarial conformance tests. Engineering correctness, architecture quality and subtle risk discovery still require agent judgment. Filesystem/network isolation, model availability, provider state and production authority remain runtime/project-dependent.
+Machine-enforced invariants include structured state/graph validation, ownership/authority checks, ticket-derived mutation scope, leases, source/evidence freshness, bounded retries/replans, idempotent mutations, runtime capability floors, an executable gateway for adapters that physically route mutation through it, correlated traces, deterministic adversarial tests, and repeated agent-eval/workload comparison machinery.
+
+The distinction matters: default CI uses deterministic fake runtimes and synthetic workloads. Those runs validate the harness and evaluator but remain `UNPROVEN` for model capability. An external result only becomes empirical when repository/ref/commit, runtime/provider/model, and the exact evaluation-manifest fingerprint are all pinned and observed. **This repository currently contains no committed external empirical workload result.**
+
+Engineering correctness, architecture quality and subtle risk discovery still require agent judgment. Host-level shell/tool bypass prevention, authenticated role binding, OS/filesystem sandboxing, network isolation, provider state and production authority remain runtime/project-dependent.
 
 So: useful for supervised real repositories and controlled automation; **not blanket production autonomy** and not a substitute for a project's own tests, security, observability, deployment or human approval controls.
 
@@ -31,6 +35,9 @@ See [`docs/workflow/maturity.md`](docs/workflow/maturity.md) for the exact bound
 ## See the whole thing
 
 - **[End-to-end workflow →](docs/workflow/overview.md)**
+- **[Executable runtime gateway →](docs/workflow/runtime-gateway.md)**
+- **[Agent-loop evaluation →](docs/workflow/agent-evals.md)**
+- **[Empirical evidence boundary →](docs/workflow/empirical-evidence.md)**
 - **[Executable L0–L4/failure examples →](docs/workflow/examples.md)**
 - **[Deterministic controller →](docs/workflow/controller.md)**
 - **[Security/trust model →](docs/workflow/security.md)**

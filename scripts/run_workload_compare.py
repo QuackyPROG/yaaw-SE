@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from yaaw.agent_eval import FakeRuntimeAdapter, load_manifest, run_trials
-from yaaw.workload_evidence import compare_evidence, evidence_record, load_report, load_workload
+from yaaw.workload_evidence import compare_evidence, evidence_record, fingerprint, load_report, load_workload
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,7 +24,9 @@ def _simulate(manifest_ref: str) -> dict:
     sequence = manifest.get("fixture", {}).get("sequence")
     if not isinstance(sequence, list) or not sequence or any(not isinstance(v, bool) for v in sequence):
         raise ValueError(f"simulation manifest {manifest_ref} requires fixture.sequence")
-    return run_trials(manifest, FakeRuntimeAdapter(sequence))
+    report = run_trials(manifest, FakeRuntimeAdapter(sequence))
+    report["manifest_fingerprint"] = fingerprint(manifest)
+    return report
 
 
 def main() -> int:
@@ -61,6 +63,13 @@ def main() -> int:
         path = Path(args.report)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(rendered + "\n", encoding="utf-8")
+    if args.simulate:
+        if baseline.get("manifest_match") is not True or governed.get("manifest_match") is not True:
+            print("ERROR: synthetic workload manifest fingerprint mismatch")
+            return 2
+        if comparison.get("proof_class") != "UNPROVEN":
+            print("ERROR: synthetic comparison must remain UNPROVEN")
+            return 2
     return 0
 
 

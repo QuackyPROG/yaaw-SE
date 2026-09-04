@@ -14,9 +14,10 @@ from scripts.yaaw.security import CommandRisk, RoleCapabilities
 
 
 class RuntimeGatewayTests(unittest.TestCase):
-    def make_gateway(self, *, owner="implementer", ticket_status=TicketState.READY):
+    def make_gateway(self, *, owner="implementer", ticket_status=TicketState.READY, allowed_write=None):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
+        effective_allowed = ["src/auth/**", "tests/auth/**"] if allowed_write is None else list(allowed_write)
         ticket = Ticket(
             "DEL-1",
             TicketKind.DELIVERY,
@@ -24,6 +25,10 @@ class RuntimeGatewayTests(unittest.TestCase):
             2,
             owner,
             acceptance=("observable outcome",),
+            metadata={
+                "allowed_write": effective_allowed,
+                "forbidden_write": ["src/secret/**"],
+            },
         )
         controller = Controller(
             TicketGraph([ticket]),
@@ -46,6 +51,7 @@ class RuntimeGatewayTests(unittest.TestCase):
         rules = [
             OwnershipRule("src/auth/**", "implementer"),
             OwnershipRule("tests/auth/**", "qa", co_owners=("implementer",)),
+            OwnershipRule("src/payments/**", "implementer"),
             OwnershipRule("src/secret/**", "security", deny=True),
         ]
         caps = {
@@ -102,13 +108,72 @@ class RuntimeGatewayTests(unittest.TestCase):
         gateway, root = self.make_gateway()
         outside = self.request(
             str(Path(root) / "wt1"),
-            paths=("src/payments/pay.py",),
+            paths=("unowned/pay.py",),
             allowed_paths=("src/auth/**",),
         )
         decision = gateway.inspect(outside)
         self.assertFalse(decision.allowed)
-        self.assertIn("OUTSIDE_ALLOWED src/payments/pay.py", decision.reasons)
+        self.assertIn("OUTSIDE_ALLOWED unowned/pay.py", decision.reasons)
         self.assertTrue(any("unresolved ownership" in reason for reason in decision.reasons))
+
+    def test_caller_scope_cannot_widen_ticket_contract(self):
+        gateway, root = self.make_gateway()
+        widened = self.request(
+            str(Path(root) / "wt"),
+            paths=("src/payments/pay.py",),
+            allowed_paths=("**",),
+        )
+        decision = gateway.inspect(widened)
+        self.assertFalse(decision.allowed)
+        self.assertIn("OUTSIDE_ALLOWED src/payments/pay.py", decision.reasons)
+
+    def test_request_scope_can_narrow_ticket_contract(self):
+        gateway, root = self.make_gateway()
+        narrowed = self.request(
+            str(Path(root) / "wt"),
+            paths=("tests/auth/test_login.py",),
+            allowed_paths=("src/auth/**",),
+            product_mutation=False,
+        )
+        decision = gateway.inspect(narrowed)
+        self.assertFalse(decision.allowed)
+        self.assertIn("OUTSIDE_ALLOWED tests/auth/test_login.py", decision.reasons)
+
+    def test_ticket_without_durable_scope_fails_closed(self):
+        gateway, root = self.make_gateway(allowed_write=[])
+        decision = gateway.inspect(self.request(str(Path(root) / "wt")))
+        self.assertFalse(decision.allowed)
+        self.assertTrue(any("missing durable allowed_write scope" in reason for reason in decision.reasons))
+
+    def test_mutating_command_requires_explicit_affected_paths(self):
+        gateway, root = self.make_gateway()
+        decision = gateway.inspect(
+            self.request(
+                str(Path(root) / "wt"),
+                command="sed -i 's/a/b/' src/auth/login.py",
+                declared_risk=CommandRisk.LOCAL_MUTATION,
+                paths=(),
+                allowed_paths=(),
+                product_mutation=False,
+            )
+        )
+        self.assertFalse(decision.allowed)
+        self.assertTrue(any("requires explicit affected paths" in reason for reason in decision.reasons))
+
+    def test_artifact_mutation_requires_explicit_affected_paths(self):
+        gateway, root = self.make_gateway()
+        decision = gateway.inspect(
+            self.request(
+                str(Path(root) / "wt"),
+                artifact="DELIVERY_TICKET",
+                field="implementation_evidence",
+                paths=(),
+                allowed_paths=(),
+                product_mutation=False,
+            )
+        )
+        self.assertFalse(decision.allowed)
+        self.assertTrue(any("artifact mutation requires explicit affected paths" in reason for reason in decision.reasons))
 
     def test_ticket_owner_must_match_resolved_path_owner(self):
         gateway, root = self.make_gateway(owner="qa")

@@ -18,7 +18,15 @@ from scripts.yaaw.security import CommandRisk, RoleCapabilities
 
 class RuntimeTracingTests(unittest.TestCase):
     def make_gateway(self, root: Path) -> RuntimeGateway:
-        ticket = Ticket("DEL-1", TicketKind.DELIVERY, TicketState.READY, 2, "implementer", acceptance=("observable",))
+        ticket = Ticket(
+            "DEL-1",
+            TicketKind.DELIVERY,
+            TicketState.READY,
+            2,
+            "implementer",
+            acceptance=("observable",),
+            metadata={"allowed_write": ["src/**"], "forbidden_write": []},
+        )
         controller = Controller(TicketGraph([ticket]), Budget({"max_agent_dispatches": 4}), LeaseStore(root / "leases"))
         authority = AuthorityPolicy({"artifacts": {}})
         rules = [OwnershipRule("src/**", "implementer")]

@@ -16,6 +16,7 @@ from typing import Callable, TypeVar
 from .authority import AuthorityPolicy
 from .controller import AdmissionError, Controller
 from .events import TraceContext, append_trace_event
+from .model import Ticket
 from .ownership import OwnershipRule, resolve
 from .security import CommandRisk, RoleCapabilities, SecurityError, authorize_command, command_effects, redact_secrets
 
@@ -34,6 +35,25 @@ def _matches_scope(path: str, allowed: tuple[str, ...], forbidden: tuple[str, ..
     if not allowed or not any(matches(path, pattern) for pattern in allowed):
         return [f"OUTSIDE_ALLOWED {path}"]
     return []
+
+
+def _ticket_scope(ticket: Ticket) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Return the durable ticket scope ceiling.
+
+    Caller-supplied ActionRequest scope may narrow this ceiling but can never replace
+    or widen it. The ticket is canonical contract memory.
+    """
+    metadata = ticket.metadata if isinstance(ticket.metadata, dict) else dict(ticket.metadata)
+    allowed = metadata.get("allowed_write", [])
+    forbidden = metadata.get("forbidden_write", [])
+    if not isinstance(allowed, list):
+        allowed = []
+    if not isinstance(forbidden, list):
+        forbidden = []
+    return (
+        tuple(str(value) for value in allowed if isinstance(value, str) and value.strip()),
+        tuple(str(value) for value in forbidden if isinstance(value, str) and value.strip()),
+    )
 
 
 def load_role_capabilities(path: Path, role: str) -> RoleCapabilities:
@@ -167,9 +187,14 @@ class RuntimeGateway:
         redacted = redact_secrets(request.command) if request.command else None
 
         ticket = None
+        contract_allowed: tuple[str, ...] = ()
+        contract_forbidden: tuple[str, ...] = ()
         if requires_dispatch:
             try:
                 ticket = self.controller.preflight_dispatch(request.ticket_id, sources_current=request.sources_current)
+                contract_allowed, contract_forbidden = _ticket_scope(ticket)
+                if not contract_allowed:
+                    reasons.append(f"ticket {ticket.id} is missing durable allowed_write scope")
             except AdmissionError as exc:
                 reasons.append(str(exc))
 
@@ -191,11 +216,32 @@ class RuntimeGateway:
             except PermissionError as exc:
                 reasons.append(str(exc))
 
+        local_path_mutation = effective_risk in {
+            CommandRisk.LOCAL_MUTATION,
+            CommandRisk.DEPENDENCY_MUTATION,
+            CommandRisk.DESTRUCTIVE,
+        }
+        if request.command and local_path_mutation and not request.paths:
+            reasons.append("filesystem/dependency mutation command requires explicit affected paths")
+        if request.artifact and not request.paths:
+            reasons.append("artifact mutation requires explicit affected paths")
+        if request.product_mutation and not request.paths:
+            reasons.append("product mutation requires explicit affected paths")
+
         if request.paths:
-            if not request.allowed_paths:
-                reasons.append("path mutation/access request is missing an allowed scope")
+            if ticket is None:
+                reasons.append("path mutation/access requires an admitted ticket contract")
             for path in request.paths:
-                reasons.extend(_matches_scope(path, request.allowed_paths, request.forbidden_paths))
+                # Durable ticket scope is authoritative. Request scope is optional and
+                # can only add a narrower second check; it can never widen the ticket.
+                reasons.extend(_matches_scope(path, contract_allowed, contract_forbidden))
+                if request.allowed_paths:
+                    reasons.extend(_matches_scope(path, request.allowed_paths, request.forbidden_paths))
+                elif request.forbidden_paths:
+                    from .ownership import matches
+
+                    if any(matches(path, pattern) for pattern in request.forbidden_paths):
+                        reasons.append(f"FORBIDDEN {path}")
                 ownership = resolve(path, self.ownership_rules, self.default_owner)
                 if ownership.deny:
                     reasons.append(f"ownership denies path {path}")

@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 9
+  "revision": 10
 }
 ---
 # Runtime Enforcement and Empirical Proof
@@ -36,16 +36,20 @@ Close the remaining maturity gap between yaaw-SE's deterministic control-plane d
 2. `RTP-02` — DONE: correlated automatic traces and metrics from gateway decisions.
 3. `RTP-03` — DONE: model/runtime agent-loop evaluation runner and stochastic metrics.
 4. `RTP-04` — DONE: external workload/portability framework and baseline comparison evidence contracts.
-5. `RTP-05` — READY: whole-system audit, maturity reconciliation and exact-SHA closeout.
+5. `RTP-05` — IN_PROGRESS: whole-system audit, maturity reconciliation and exact-SHA closeout.
 
 ## Frontier
 
-`RTP-05` is the only READY ticket. RTP-04 exact implementation SHA `7a92adc0aef40d8d5f9aebf2feeb1c13218154d3` passed Agent Harness run `33891024080`, including the generic-runtime validator and synthetic workload comparison. That comparison remains `UNPROVEN`; no external benchmark evidence has been recorded.
+RTP-05 final-audit corrections are ready for exact-SHA validation. The audit identified and corrected a caller-scope widening path, mutation-without-path declaration gap, and an empirical-evidence manifest-binding gap. Initiative status remains ACTIVE until the corrected candidate passes the complete Agent Harness.
 
 ## Proof rule
 
-Implementation of benchmark/runtime machinery is not itself empirical proof. Real-provider or external-repository claims require observed run records with immutable configuration, model/runtime identity, workload identity, commit fingerprints and grader results. Missing observations are reported as `NOT_RUN`/`UNPROVEN`, never inferred from CI conformance.
+Implementation of benchmark/runtime machinery is not itself empirical proof. Real-provider or external-repository claims require observed run records with immutable configuration, model/runtime identity, workload identity, commit fingerprints and exact evaluation-manifest fingerprints. Missing observations are reported as `NOT_RUN`/`UNPROVEN`, never inferred from CI conformance.
+
+## Current maturity boundary
+
+The repository still claims **Beta / self-hosting control plane**. No committed external `EMPIRICAL` workload result exists. Gateway code can enforce deterministic admission when a runtime physically routes mutation through it, but host-level bypass prevention, authenticated runtime-role binding, OS/filesystem sandboxing, egress/credentials and production-provider authority remain properties of the consuming runtime/provider.
 
 ## Recovery note
 
-Initial plan commit `76cf00ac` failed workflow-state validation because the new tickets omitted mandatory durable sections. `12d7c47a` corrected those artifacts and its run `33888043601` passed. Failed history remains preserved rather than rewritten away.
+Initial plan commit `76cf00ac` failed workflow-state validation because the new tickets omitted mandatory durable sections. `12d7c47a` corrected those artifacts and its run `33888043601` passed. Failed history and later audit corrections remain preserved rather than rewritten away.

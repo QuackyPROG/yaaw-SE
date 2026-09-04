@@ -116,8 +116,11 @@ def validate() -> list[str]:
         rules.append(OwnershipRule(pattern=entry["pattern"], owner=entry["owner"], co_owners=tuple(co or []), deny=bool(entry.get("deny", False))))
     errors.extend(validate_rules(rules))
     for critical_path in (
-        "AGENTS.md", "README.md", ".gitignore", "scripts/yaaw/controller.py", "scripts/yaaw/security.py",
-        "scripts/run_evals.py", "scripts/report_metrics.py", ".agents/schemas/ticket.schema.json", "tests/harness/test_graph.py",
+        "AGENTS.md", "README.md", ".gitignore",
+        "scripts/yaaw/controller.py", "scripts/yaaw/security.py", "scripts/yaaw/runtime_gateway.py", "scripts/yaaw/workload_evidence.py",
+        "scripts/run_evals.py", "scripts/run_agent_evals.py", "scripts/run_workload_compare.py", "scripts/report_metrics.py",
+        "config/runtime-adapters.json", "config/generic-command-runtime.json",
+        ".agents/schemas/ticket.schema.json", "tests/harness/test_graph.py",
     ):
         if resolve(critical_path, rules, ownership.get("default_owner", "UNKNOWN_OWNER")).owner == "UNKNOWN_OWNER":
             errors.append(f"core harness path has UNKNOWN_OWNER: {critical_path}")
@@ -146,11 +149,29 @@ def validate() -> list[str]:
         errors.append("Release Engineer role lost trivial-local-work exclusion")
 
     # Cold-start root policy must point agents at executable enforcement rather than
-    # relying on pre-hardening prompt semantics.
+    # relying on prompt semantics or treating simulated evaluation as empirical proof.
     root_policy = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-    for required_phrase in (".agents/authority.json", "deterministic controller", "controller admission", "untrusted data", "release_engineer_required"):
+    for required_phrase in (
+        ".agents/authority.json",
+        "deterministic controller",
+        "controller admission",
+        "untrusted data",
+        "release_engineer_required",
+        "RuntimeGateway",
+        "UNPROVEN",
+    ):
         if required_phrase not in root_policy:
             errors.append(f"AGENTS.md cold-start contract missing {required_phrase!r}")
+
+    gateway_source = (ROOT / "scripts/yaaw/runtime_gateway.py").read_text(encoding="utf-8")
+    for required_phrase in ("_ticket_scope", "missing durable allowed_write scope", "requires explicit affected paths"):
+        if required_phrase not in gateway_source:
+            errors.append(f"runtime gateway lost ticket-bound scope invariant {required_phrase!r}")
+
+    evidence_source = (ROOT / "scripts/yaaw/workload_evidence.py").read_text(encoding="utf-8")
+    for required_phrase in ("manifest_fingerprint", "_manifest_matches", '"EMPIRICAL"'):
+        if required_phrase not in evidence_source:
+            errors.append(f"workload evidence lost empirical provenance invariant {required_phrase!r}")
 
     return sorted(set(errors))
 

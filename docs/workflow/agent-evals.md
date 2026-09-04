@@ -33,10 +33,12 @@ Reports also retain pass rate, outcome/trace pass rates, policy-violation count,
 
 The command adapter receives a JSON request on stdin and must emit a final JSON result line containing task exit status, output, trace and optional resource data. Default CI never invokes the command adapter and therefore never needs provider credentials or network access.
 
+`scripts/run_agent_evals.py` also fingerprints the exact parsed evaluation manifest into every emitted report. External workload evidence can therefore prove that the observed report used the exact grader/threshold configuration pinned by the workload rather than merely sharing the same manifest name.
+
 `OBSERVED` means an identified external runtime was actually invoked by the evaluator. It does **not** by itself mean the workload is representative, production-safe, independently certified, or sufficient for a stronger maturity claim.
 
 ## CI fixture
 
-`evals/agent-loop-fixture.json` intentionally contains a deterministic success/failure sequence. The Agent Harness executes it end to end through `scripts/run_agent_evals.py --adapter fake`. This proves the evaluator, graders, stochastic math and thresholds work together; it is not evidence of model capability.
+`evals/agent-loop-fixture.json` intentionally contains a deterministic success/failure sequence. The Agent Harness executes it end to end through `scripts/run_agent_evals.py --adapter fake`. This proves the evaluator, graders, stochastic math, manifest fingerprinting and thresholds work together; it is not evidence of model capability.
 
-Real model/provider trials should be stored as explicit observed evidence with immutable runtime/model/workload/commit fingerprints under the external workload/evidence protocol. Never convert a simulated CI report into empirical proof.
+Real model/provider trials should be stored as explicit observed evidence with immutable runtime/model/workload/commit and evaluation-manifest fingerprints under the external workload/evidence protocol. Never convert a simulated CI report into empirical proof.

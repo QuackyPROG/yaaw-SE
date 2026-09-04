@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from yaaw.agent_eval import AdapterIdentity, CommandRuntimeAdapter, FakeRuntimeAdapter, load_manifest, run_trials
+from yaaw.workload_evidence import fingerprint
 
 
 def main() -> int:
@@ -46,6 +47,7 @@ def main() -> int:
         )
 
     report = run_trials(manifest, adapter)
+    report["manifest_fingerprint"] = fingerprint(manifest)
     rendered = json.dumps(report, indent=2, sort_keys=True)
     print(rendered)
     if args.report:
