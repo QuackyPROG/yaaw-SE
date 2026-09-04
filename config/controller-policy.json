@@ -1,11 +1,13 @@
 {
-  "version": 2,
+  "version": 3,
   "budgets": {
     "max_agent_dispatches": 12,
     "max_repairs_per_contract": 2,
     "max_plan_deltas_per_ticket": 3,
     "max_tool_failures": 5,
-    "max_same_failure_signature": 2
+    "max_same_failure_signature": 2,
+    "max_total_llm_calls": 24,
+    "max_total_llm_tokens": 240000
   },
   "mutation": {
     "atomic_replace": true,
