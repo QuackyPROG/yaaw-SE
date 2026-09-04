@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"HARDEN-15","kind":"DELIVERY","status":"DRAFT","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-14"],"acceptance":["Add explicit mutation commands and idempotent state operations, lease reclamation, bounded repair/failure signatures, migration command UX, and resumable controller lifecycle."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**","scripts/yaaw_cli.py","config/**","tests/harness/**","docs/workflow/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["scripts/yaaw/**","scripts/yaaw_cli.py","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"HARDEN-15","kind":"DELIVERY","status":"READY","level":4,"parent":"INIT-INDUSTRY-HARDENING","owner":"orchestrator","blocked_by":["HARDEN-14"],"acceptance":["Add explicit mutation commands and idempotent state operations, lease reclamation, bounded repair/failure signatures, migration command UX, and resumable controller lifecycle."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**","scripts/yaaw_cli.py","config/**","tests/harness/**","docs/workflow/**"],"forbidden_write":["main promotion before final green CI"],"expected_change_surface":["scripts/yaaw/**","scripts/yaaw_cli.py","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"blocked_by_harden_14":"423a6c40189c6d7eab7d3e73532fa9ef40b56ac8"},"risk":["agent-harness-control-plane"],"side_effects":["repository"]}
 ---
 # HARDEN-15: Atomic controller mutation, idempotency and recovery lifecycle
 
@@ -35,6 +35,7 @@ Add explicit mutation commands and idempotent state operations, lease reclamatio
 ## Canonical sources
 
 - initiative map and ADR-001.
+- `HARDEN-14` completed at `423a6c40189c6d7eab7d3e73532fa9ef40b56ac8`.
 
 ## Verification
 
@@ -54,7 +55,7 @@ Pending.
 
 ## QA result
 
-Pending independent QA.
+Pending independent/high-assurance evidence.
 
 ## Delivery
 

@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 1
+  "revision": 2
 }
 ---
 # Industry Hardening
@@ -29,12 +29,13 @@ Turn yaaw-SE from an instruction-heavy engineering methodology into a self-hosti
 - Domain packs extend project-specific facts without silently weakening generic invariants.
 - Role files own identity/authority; skills own procedure.
 - Fresh QA reduces anchoring but high assurance additionally requires orthogonal executable evidence.
+- Runtime/model profiles are capability-based and fail closed; operating modes may strengthen gates but cannot alter authority semantics.
 
 ## Current frontier
 
 Controller-visible ready work:
 
-- `HARDEN-14` — runtime profiles, adapter conformance and operating modes.
+- `HARDEN-15` — atomic controller mutation, idempotency and recovery lifecycle.
 
 ## Not yet specified / fog
 

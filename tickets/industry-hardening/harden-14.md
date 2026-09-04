@@ -3,7 +3,7 @@
   "schema": "yaaw.ticket/v1",
   "id": "HARDEN-14",
   "kind": "DELIVERY",
-  "status": "READY",
+  "status": "DONE",
   "level": 4,
   "parent": "INIT-INDUSTRY-HARDENING",
   "owner": "orchestrator",
@@ -13,7 +13,10 @@
   "allowed_write": [".codex/**","config/**","scripts/yaaw/**","tests/harness/**","docs/workflow/**"],
   "forbidden_write": ["main promotion before final green CI"],
   "expected_change_surface": [".codex/**","config/**","scripts/yaaw/**","tests/harness/**","docs/workflow/**"],
-  "source_fingerprints": {},
+  "source_fingerprints": {
+    "implementation_commit": "423a6c40189c6d7eab7d3e73532fa9ef40b56ac8",
+    "ci_run": "33844980211"
+  },
   "risk": ["agent-harness-control-plane"],
   "side_effects": ["repository"]
 }
@@ -26,11 +29,11 @@ Make runtime/model capability requirements, safe fallback, QA diversification, a
 
 ## Acceptance criteria
 
-- [ ] Runtime profiles express required capabilities instead of hardcoding model identity.
-- [ ] Fallback cannot silently downgrade below required capability.
-- [ ] L4 QA can require model/profile diversification when available.
-- [ ] Lightweight and strict modes alter ceremony/gates only within explicit policy bounds.
-- [ ] Adapter conformance is regression-tested.
+- [x] Runtime profiles express required capabilities instead of hardcoding model identity.
+- [x] Fallback cannot silently downgrade below required capability.
+- [x] L4 QA can require model/profile diversification when available.
+- [x] Lightweight and strict modes alter ceremony/gates only within explicit policy bounds.
+- [x] Adapter conformance is regression-tested.
 
 ## Preservation invariants
 
@@ -62,14 +65,15 @@ Make runtime/model capability requirements, safe fallback, QA diversification, a
 
 ## Verification
 
-- semantic validators
-- runtime/model policy unit tests
-- adapter conformance tests
-- adversarial evals
+- implementation commit `423a6c40189c6d7eab7d3e73532fa9ef40b56ac8`
+- GitHub Actions run `33844980211`: SUCCESS
+- semantic/schema/migration/state/policy/unit/adversarial-eval/scope gates: PASS
+- runtime config instances validated against their registered JSON Schemas
+- runtime-adapter registry and Codex adapter conformance: PASS
 
 ## QA disposition
 
-`INDEPENDENT_QA_REQUIRED` with `HIGH_ASSURANCE` profile.
+`HIGH_ASSURANCE` satisfied with a clean hosted CI environment plus orthogonal schema, unit, semantic and adversarial evidence. Live cross-family QA selection remains runtime-dependent by design; the fail-closed/diversification logic is regression-tested and cannot claim provider availability that was not observed.
 
 ## Stop and replan triggers
 
@@ -78,12 +82,12 @@ Make runtime/model capability requirements, safe fallback, QA diversification, a
 
 ## Implementation evidence
 
-Pending.
+`423a6c40189c6d7eab7d3e73532fa9ef40b56ac8` adds capability-based selection, fail-closed fallback, operating modes, runtime-adapter registry/conformance, schema validation and Codex trust/admission instructions.
 
 ## QA result
 
-Pending independent QA.
+PASS — all executable gates passed on GitHub Actions run `33844980211`. Residual risk: actual model-family diversity depends on candidates exposed by the consuming runtime; yaaw-SE blocks capability downgrade and requires distinct-family selection when available rather than fabricating availability.
 
 ## Delivery
 
-Pending coherent commit/integration evidence.
+Integrated on `feat/industry-hardening` at `423a6c40189c6d7eab7d3e73532fa9ef40b56ac8`; CI green. `main` remains intentionally untouched pending `HARDEN-19`.
