@@ -1,0 +1,21 @@
+---yaaw-json
+{"schema":"yaaw.ticket/v1","id":"RTP-03","kind":"DELIVERY","status":"BLOCKED","level":4,"parent":"INIT-RUNTIME-PROOF","owner":"qa","blocked_by":["RTP-02"],"acceptance":["A provider-neutral evaluation runner executes repeated end-to-end agent trials through a registered runtime adapter and grades both outcome and trace invariants.","Reports compute stochastic reliability and safety/cost metrics without treating deterministic fake-adapter CI as real-provider proof."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["evals/**","scripts/**","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["network/model calls from default CI","fabricated model results"],"expected_change_surface":["evals/**","scripts/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{},"risk":["agent-evaluation","stochastic-system"],"side_effects":["repository"]}
+---
+# RTP-03: Model-in-the-loop evaluation framework
+
+## What to deliver
+
+Add an executable end-to-end trial runner that can invoke a registered command/provider adapter, collect gateway traces and grade both task outcome and workflow conformance over repeated trials.
+
+## Acceptance criteria
+
+- [ ] Runtime adapter protocol separates invocation from workflow semantics.
+- [ ] Trial manifests pin workload, runtime/model identity, attempt count and grader expectations.
+- [ ] Reports include pass@1, pass@k, pass^k, policy violations, replans, cost/token/latency fields and trial-level evidence.
+- [ ] Outcome graders and trace graders are distinct.
+- [ ] CI exercises the entire runner with a deterministic fake adapter; real-provider runs are opt-in and reported as observed external evidence only.
+- [ ] Missing provider/model metadata prevents empirical-proof claims.
+
+## Verification
+
+Run deterministic end-to-end eval fixtures plus full Agent Harness.

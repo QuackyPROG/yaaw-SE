@@ -1,0 +1,25 @@
+---yaaw-json
+{"schema":"yaaw.ticket/v1","id":"RTP-01","kind":"DELIVERY","status":"READY","level":4,"parent":"INIT-RUNTIME-PROOF","owner":"orchestrator","blocked_by":[],"acceptance":["Mutating dispatches and command/tool side effects can be admitted through one executable gateway that composes ticket/controller, authority, lease, scope and security policy and fails closed when required context/capability is absent.","Tests prove denied/bypass paths cannot be converted into successful mutation decisions merely by declaring lower risk or omitting admission context."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**","scripts/yaaw_cli.py","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["production/provider execution","fabricated provider capability"],"expected_change_surface":["scripts/yaaw/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"main_base":"b2983793ba1e50415c99951f8d8a62a777fa9830"},"risk":["agent-harness-control-plane","security-boundary"],"side_effects":["repository"]}
+---
+# RTP-01: Hard runtime gateway
+
+## What to deliver
+
+Create an executable runtime gateway that is the canonical admission surface for mutating dispatch and action execution. It must compose existing deterministic policy instead of duplicating it in prompts.
+
+## Acceptance criteria
+
+- [ ] Gateway models an admitted action with work/ticket identity, actor/role, worktree, command/action, declared effects, scope and required capabilities.
+- [ ] Mutating dispatch is controller-admitted before execution authorization.
+- [ ] Command/action authorization uses inferred risk and orthogonal network/repository/production capabilities.
+- [ ] Scope/ownership/authority requirements fail closed when required information is absent.
+- [ ] Dry-run decision objects explain denial without executing side effects.
+- [ ] Regression tests cover under-declared commands, unknown ticket/owner, stale source, lease collision, scope escape and missing capabilities.
+
+## Preservation invariants
+
+Do not embed provider-specific model identity or create an alternate workflow state machine.
+
+## Verification
+
+Run the complete Agent Harness plus focused gateway/security/controller tests.
