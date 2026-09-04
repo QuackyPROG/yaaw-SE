@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"RTP-03","kind":"DELIVERY","status":"BLOCKED","level":4,"parent":"INIT-RUNTIME-PROOF","owner":"qa","blocked_by":["RTP-02"],"acceptance":["A provider-neutral evaluation runner executes repeated end-to-end agent trials through a registered runtime adapter and grades both outcome and trace invariants.","Reports compute stochastic reliability and safety/cost metrics without treating deterministic fake-adapter CI as real-provider proof."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["evals/**","scripts/**","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["network/model calls from default CI","fabricated model results"],"expected_change_surface":["evals/**","scripts/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{},"risk":["agent-evaluation","stochastic-system"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"RTP-03","kind":"DELIVERY","status":"READY","level":4,"parent":"INIT-RUNTIME-PROOF","owner":"qa","blocked_by":["RTP-02"],"acceptance":["A provider-neutral evaluation runner executes repeated end-to-end agent trials through a registered runtime adapter and grades both outcome and trace invariants.","Reports compute stochastic reliability and safety/cost metrics without treating deterministic fake-adapter CI as real-provider proof."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["evals/**","scripts/**","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["network/model calls from default CI","fabricated model results"],"expected_change_surface":["evals/**","scripts/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"rtp02":"d0b85f201fa743602a1285a163290e7ecc10cee6","rtp02_ci":"33888918032"},"risk":["agent-evaluation","stochastic-system"],"side_effects":["repository"]}
 ---
 # RTP-03: Model-in-the-loop evaluation framework
 
@@ -33,7 +33,7 @@ RTP-01 gateway, RTP-02 traces, existing deterministic eval runner and runtime-ad
 Trial execution requires credentials in default CI; trace/outcome grading cannot be separated; or adapter semantics begin altering workflow authority.
 
 ## Implementation evidence
-Pending RTP-02 completion.
+READY after exact RTP-02 validation run `33888918032`.
 
 ## QA disposition
 HIGH_ASSURANCE required; pending.
@@ -45,4 +45,4 @@ Pending.
 Run deterministic end-to-end eval fixtures plus full Agent Harness.
 
 ## Delivery
-Blocked by RTP-02.
+READY — predecessor RTP-02 is DONE and exact-SHA validation is green.
