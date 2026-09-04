@@ -13,7 +13,7 @@ class ControllerTests(unittest.TestCase):
     def make_controller(self, tickets):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
-        return Controller(TicketGraph(tickets), Budget({"max_agent_dispatches": 2, "max_same_failure_signature": 2}), LeaseStore(Path(tmp.name)))
+        return Controller(TicketGraph(tickets), Budget({"max_agent_dispatches": 2, "max_same_failure_signature": 2, "max_total_llm_tokens": 1000, "max_total_llm_calls": 2}), LeaseStore(Path(tmp.name)))
 
     def test_admission_rejects_unknown_owner(self):
         t = Ticket("DEL-1", TicketKind.DELIVERY, TicketState.READY, 1, "UNKNOWN_OWNER", acceptance=("observable",))
@@ -34,6 +34,16 @@ class ControllerTests(unittest.TestCase):
         ctl.register_failure("same")
         with self.assertRaises(AdmissionError):
             ctl.register_failure("same")
+
+    def test_llm_reservation_blocks_before_aggregate_budget_overrun(self):
+        t = Ticket("DEL-1", TicketKind.DELIVERY, TicketState.READY, 1, "core", acceptance=("observable",))
+        ctl = self.make_controller([t])
+        ctl.reserve_llm_tokens(300, 100)
+        ctl.reserve_llm_tokens(300, 100)
+        with self.assertRaises(AdmissionError):
+            ctl.reserve_llm_tokens(100, 100)
+        self.assertEqual(ctl.budget.used["max_total_llm_tokens"], 800)
+        self.assertEqual(ctl.budget.used["max_total_llm_calls"], 2)
 
 
 if __name__ == "__main__":
