@@ -31,13 +31,16 @@ def main() -> int:
     runner = (ROOT / "scripts/run_agent_evals.py").read_text(encoding="utf-8")
     implementation = (ROOT / "scripts/yaaw/agent_eval.py").read_text(encoding="utf-8")
     controller = (ROOT / "scripts/yaaw/controller.py").read_text(encoding="utf-8")
+    budgets = (ROOT / "scripts/yaaw/budgets.py").read_text(encoding="utf-8")
     context = (ROOT / "scripts/yaaw/context.py").read_text(encoding="utf-8")
     require('choices=["fake", "command"]' in runner, "agent eval runner must expose explicit command adapter")
     require("class CommandRuntimeAdapter" in implementation, "generic command invocation implementation missing")
     require("external=true identity" in implementation, "command runtime must fail closed without external identity")
+    require("def from_repository" in controller, "controller must reconstruct runtime state from repository policy")
     require("def admit_agent_invocation" in controller, "controller must expose atomic model dispatch/token admission")
+    require("def from_policy" in budgets and "yaaw.budget-state/v1" in budgets, "aggregate model budgets must survive wrapper/controller reconstruction")
     require("def from_repository" in context and "context_budget" in context, "context builder must expose token-budgeted repository handoffs")
-    print("OK: generic command adapter requires an external gateway/token-admission wrapper and token-budgeted handoff")
+    print("OK: generic command adapter requires an external gateway/persisted-token-admission wrapper and token-budgeted handoff")
     return 0
 
 
