@@ -41,6 +41,25 @@ class Controller:
             raise AdmissionError(f"ticket {ticket_id} has stale source fingerprints")
         return ticket
 
+    def reserve_llm_tokens(self, input_tokens: int, reserved_output_tokens: int = 0) -> dict[str, int]:
+        """Reserve model capacity before invocation.
+
+        Runtimes should reserve the packed input estimate plus the configured output
+        allowance before starting a model call. Exact observed usage remains telemetry;
+        reservations provide deterministic pre-call backpressure without depending on
+        a provider-specific tokenizer.
+        """
+        if input_tokens < 0 or reserved_output_tokens < 0:
+            raise ValueError("LLM token reservations cannot be negative")
+        total = input_tokens + reserved_output_tokens
+        try:
+            return self.budget.consume_many({
+                "max_total_llm_tokens": total,
+                "max_total_llm_calls": 1,
+            })
+        except RuntimeError as exc:
+            raise AdmissionError(str(exc)) from exc
+
     def admit_dispatch(self, ticket_id: str, holder: str, worktree: str, sources_current: bool = True, base_sha: str | None = None, role: str | None = None) -> Ticket:
         ticket = self.preflight_dispatch(ticket_id, sources_current=sources_current)
         self.budget.consume("max_agent_dispatches")
