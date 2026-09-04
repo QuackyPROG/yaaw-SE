@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 7
+  "revision": 8
 }
 ---
 # Runtime Enforcement and Empirical Proof
@@ -35,12 +35,12 @@ Close the remaining maturity gap between yaaw-SE's deterministic control-plane d
 1. `RTP-01` — DONE: hard runtime gateway and bypass-resistant admission.
 2. `RTP-02` — DONE: correlated automatic traces and metrics from gateway decisions.
 3. `RTP-03` — DONE: model/runtime agent-loop evaluation runner and stochastic metrics.
-4. `RTP-04` — READY: external workload/portability framework and baseline comparison evidence contracts.
+4. `RTP-04` — IN_PROGRESS: external workload/portability framework and baseline comparison evidence contracts.
 5. `RTP-05` — blocked: whole-system audit, maturity reconciliation and exact-SHA closeout.
 
 ## Frontier
 
-`RTP-04` is the only READY ticket. RTP-03 exact implementation SHA `f70108256049eabb86772585ca55e7930b605ec3` passed Agent Harness run `33889727104`, including the deterministic agent-loop fixture. That fixture is SIMULATED evaluator conformance, not empirical model proof.
+`RTP-04` has an implementation candidate under exact-SHA validation. RTP-03 exact implementation SHA `f70108256049eabb86772585ca55e7930b605ec3` passed Agent Harness run `33889727104`, including the deterministic agent-loop fixture. That fixture is SIMULATED evaluator conformance, not empirical model proof.
 
 ## Proof rule
 

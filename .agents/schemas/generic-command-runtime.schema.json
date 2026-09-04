@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/generic-command-runtime.schema.json",
+  "title": "yaaw-SE Generic Command Runtime Adapter",
+  "type": "object",
+  "required": ["schema", "transport", "request_schema", "response_schema", "identity_required", "gateway_boundary", "trace_contract"],
+  "properties": {
+    "schema": {"const": "yaaw.generic-command-runtime/v1"},
+    "transport": {"const": "STDIO_JSON"},
+    "request_schema": {"const": "yaaw.agent-eval-request/v1"},
+    "response_schema": {"const": "yaaw.agent-eval-result/v1"},
+    "identity_required": {
+      "type": "array",
+      "const": ["runtime_id", "provider", "model", "external=true"]
+    },
+    "gateway_boundary": {"const": "EXTERNAL_WRAPPER_MUST_ENFORCE_YAAW_GATEWAY"},
+    "trace_contract": {
+      "type": "object",
+      "required": ["required_events", "correlation_fields"],
+      "properties": {
+        "required_events": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "correlation_fields": {"type": "array", "const": ["run_id", "trace_id", "span_id"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

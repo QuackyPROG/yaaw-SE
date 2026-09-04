@@ -31,6 +31,8 @@ jobs:
         run: python scripts/validate_runtime_adapters.py
       - name: Validate Codex runtime adapter
         run: python scripts/validate_codex_runtime.py
+      - name: Validate generic command runtime adapter
+        run: python scripts/validate_generic_command_runtime.py
       - name: Validate workflow graph and artifact documents
         run: python scripts/validate_workflow_state.py
       - name: Lint deterministic repository policy
@@ -41,5 +43,7 @@ jobs:
         run: python scripts/run_evals.py
       - name: Run deterministic agent-loop evaluation fixture
         run: python scripts/run_agent_evals.py --manifest evals/agent-loop-fixture.json --adapter fake
+      - name: Run synthetic workload comparison fixture
+        run: python scripts/run_workload_compare.py --workload evals/workloads/synthetic-local.json --simulate
       - name: Verify scope checker fixtures
         run: python scripts/verify_task_scope.py --self-test

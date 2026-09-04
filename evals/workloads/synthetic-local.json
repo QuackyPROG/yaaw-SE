@@ -1,0 +1,15 @@
+{
+  "schema": "yaaw.workload/v1",
+  "id": "SYNTHETIC-LOCAL-COMPARISON",
+  "provenance": {
+    "kind": "SYNTHETIC",
+    "repository": "local-fixture",
+    "ref": "fixture",
+    "commit": "synthetic-fixture-v1"
+  },
+  "task": "Exercise baseline-vs-governed comparison, provenance classification and failure-preserving reporting without making network or model calls.",
+  "allowed_scope": ["evals/**", "tests/harness/**"],
+  "verification": ["python scripts/run_workload_compare.py --workload evals/workloads/synthetic-local.json --simulate"],
+  "baseline_manifest": "evals/workloads/synthetic-baseline.json",
+  "governed_manifest": "evals/workloads/synthetic-governed.json"
+}

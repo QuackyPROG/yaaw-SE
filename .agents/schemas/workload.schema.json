@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yaaw.dev/schemas/workload.schema.json",
+  "title": "yaaw-SE External Workload Manifest",
+  "type": "object",
+  "required": ["schema", "id", "provenance", "task", "allowed_scope", "verification", "baseline_manifest", "governed_manifest"],
+  "properties": {
+    "schema": {"const": "yaaw.workload/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "provenance": {
+      "type": "object",
+      "required": ["kind", "repository", "ref", "commit"],
+      "properties": {
+        "kind": {"enum": ["SYNTHETIC", "EXTERNAL"]},
+        "repository": {"type": "string", "minLength": 1},
+        "ref": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "task": {"type": "string", "minLength": 1},
+    "allowed_scope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "verification": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "baseline_manifest": {"type": "string", "minLength": 1},
+    "governed_manifest": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
