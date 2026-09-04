@@ -3,7 +3,7 @@
   "$id": "https://yaaw.dev/schemas/generic-command-runtime.schema.json",
   "title": "yaaw-SE Generic Command Runtime Adapter",
   "type": "object",
-  "required": ["schema", "transport", "request_schema", "response_schema", "identity_required", "gateway_boundary", "trace_contract"],
+  "required": ["schema", "transport", "request_schema", "response_schema", "identity_required", "gateway_boundary", "model_admission_boundary", "context_contract", "trace_contract"],
   "properties": {
     "schema": {"const": "yaaw.generic-command-runtime/v1"},
     "transport": {"const": "STDIO_JSON"},
@@ -14,6 +14,8 @@
       "const": ["runtime_id", "provider", "model", "external=true"]
     },
     "gateway_boundary": {"const": "EXTERNAL_WRAPPER_MUST_ENFORCE_YAAW_GATEWAY"},
+    "model_admission_boundary": {"const": "EXTERNAL_WRAPPER_MUST_ENFORCE_TOKEN_BUDGET_ADMISSION"},
+    "context_contract": {"const": "YAAW_HANDOFF_V1_FROM_TOKEN_BUDGETED_CONTEXT_BUILDER"},
     "trace_contract": {
       "type": "object",
       "required": ["required_events", "correlation_fields"],
