@@ -23,7 +23,8 @@ class Controller:
     snapshot_store: SnapshotStore | None = None
     failure_signatures: dict[str, int] = field(default_factory=dict)
 
-    def admit_dispatch(self, ticket_id: str, holder: str, worktree: str, sources_current: bool = True, base_sha: str | None = None, role: str | None = None) -> Ticket:
+    def preflight_dispatch(self, ticket_id: str, *, sources_current: bool = True) -> Ticket:
+        """Validate dispatch invariants without consuming budget or acquiring a lease."""
         ticket = self.graph.tickets.get(ticket_id)
         if ticket is None:
             raise AdmissionError(f"unknown ticket {ticket_id}")
@@ -38,6 +39,10 @@ class Controller:
             raise AdmissionError(f"ticket {ticket_id} has no observable acceptance criteria")
         if not sources_current:
             raise AdmissionError(f"ticket {ticket_id} has stale source fingerprints")
+        return ticket
+
+    def admit_dispatch(self, ticket_id: str, holder: str, worktree: str, sources_current: bool = True, base_sha: str | None = None, role: str | None = None) -> Ticket:
+        ticket = self.preflight_dispatch(ticket_id, sources_current=sources_current)
         self.budget.consume("max_agent_dispatches")
         self.leases.acquire(worktree, holder, ticket_id)
         if self.snapshot_store is not None:

@@ -1,5 +1,5 @@
 ---yaaw-json
-{"schema":"yaaw.ticket/v1","id":"RTP-01","kind":"DELIVERY","status":"READY","level":4,"parent":"INIT-RUNTIME-PROOF","owner":"orchestrator","blocked_by":[],"acceptance":["Mutating dispatches and command/tool side effects can be admitted through one executable gateway that composes ticket/controller, authority, lease, scope and security policy and fails closed when required context/capability is absent.","Tests prove denied/bypass paths cannot be converted into successful mutation decisions merely by declaring lower risk or omitting admission context."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**","scripts/yaaw_cli.py","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["production/provider execution","fabricated provider capability"],"expected_change_surface":["scripts/yaaw/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"main_base":"b2983793ba1e50415c99951f8d8a62a777fa9830"},"risk":["agent-harness-control-plane","security-boundary"],"side_effects":["repository"]}
+{"schema":"yaaw.ticket/v1","id":"RTP-01","kind":"DELIVERY","status":"IN_PROGRESS","level":4,"parent":"INIT-RUNTIME-PROOF","owner":"orchestrator","blocked_by":[],"acceptance":["Mutating dispatches and command/tool side effects can be admitted through one executable gateway that composes ticket/controller, authority, lease, scope and security policy and fails closed when required context/capability is absent.","Tests prove denied/bypass paths cannot be converted into successful mutation decisions merely by declaring lower risk or omitting admission context."],"qa":{"required":true,"profile":"HIGH_ASSURANCE"},"allowed_write":["scripts/yaaw/**","scripts/yaaw_cli.py","config/**","tests/harness/**","docs/workflow/**",".agents/**","tickets/runtime-proof/**","docs/initiatives/runtime-proof/**"],"forbidden_write":["production/provider execution","fabricated provider capability"],"expected_change_surface":["scripts/yaaw/**","config/**","tests/harness/**","docs/workflow/**"],"source_fingerprints":{"main_base":"b2983793ba1e50415c99951f8d8a62a777fa9830","plan_fix":"12d7c47ab36c71ab9bd76c92911490b4974d25f6"},"risk":["agent-harness-control-plane","security-boundary"],"side_effects":["repository"]}
 ---
 # RTP-01: Hard runtime gateway
 
@@ -33,16 +33,16 @@ Runtime admission/security modules, focused tests, policy/config/docs needed to 
 Controller/security semantics would need incompatible duplication; runtime cannot enforce a required boundary; or implementation requires provider-specific workflow authority.
 
 ## Implementation evidence
-Pending implementation.
+Implementation candidate adds controller preflight plus `scripts/yaaw/runtime_gateway.py`, focused gateway tests and explicit documentation of gateway-enforced versus instruction-only host runtimes. CI evidence pending.
 
 ## QA disposition
-HIGH_ASSURANCE required; pending.
+HIGH_ASSURANCE required; candidate is not DONE until full Agent Harness is green.
 
 ## QA result
-Pending.
+Pending exact-SHA CI.
 
 ## Verification
 Run the complete Agent Harness plus focused gateway/security/controller tests.
 
 ## Delivery
-Pending verified implementation.
+IN_PROGRESS — implementation candidate being validated; no provider/production execution performed.

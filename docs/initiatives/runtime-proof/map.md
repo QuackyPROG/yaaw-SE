@@ -6,7 +6,7 @@
   "status": "ACTIVE",
   "spec_ref": null,
   "prd_ref": null,
-  "revision": 1
+  "revision": 2
 }
 ---
 # Runtime Enforcement and Empirical Proof
@@ -40,8 +40,12 @@ Close the remaining maturity gap between yaaw-SE's deterministic control-plane d
 
 ## Frontier
 
-`RTP-01` is READY. Later tickets remain blocked so each phase can consume evidence from the preceding one.
+`RTP-01` is IN_PROGRESS with an implementation candidate. `RTP-02` through `RTP-05` remain blocked until preceding exact-SHA verification is green.
 
 ## Proof rule
 
 Implementation of benchmark/runtime machinery is not itself empirical proof. Real-provider or external-repository claims require observed run records with immutable configuration, model/runtime identity, workload identity, commit fingerprints and grader results. Missing observations are reported as `NOT_RUN`/`UNPROVEN`, never inferred from CI conformance.
+
+## Recovery note
+
+Initial plan commit `76cf00ac` failed workflow-state validation because the new tickets omitted mandatory durable sections. `12d7c47a` corrected those artifacts without weakening validation. That failed run remains part of the evidence/history rather than being rewritten away.
