@@ -66,8 +66,14 @@ def evaluate(scenario: dict) -> tuple[bool, object, object]:
             except AdmissionError: allowed=False
             actual={"allowed":allowed}
     elif kind=="recovery":
-        from yaaw.recovery import RuntimeSnapshot, reconstruct
-        graph=TicketGraph(_ticket(t) for t in inp.get("tickets",[])); snapshot=RuntimeSnapshot(**inp["snapshot"]) if inp.get("snapshot") else None; state=reconstruct(graph,snapshot); actual={"active_work":state.active_work,"source":state.source,"stale_snapshot":state.stale_snapshot,"frontier":list(state.frontier)}
+        from yaaw.recovery import RuntimeSnapshot, reconstruct_state
+        graph=TicketGraph(_ticket(t) for t in inp.get("tickets",[])); snapshot=RuntimeSnapshot(**inp["snapshot"]) if inp.get("snapshot") else None
+        try:
+            state=reconstruct_state(graph,snapshot); actual={"blocked":False,"active_work":state.active_work,"source":state.source}
+        except RuntimeError as exc:
+            actual={"blocked":True,"contains":str(exc)}
+        if isinstance(expected,dict) and expected.get("blocked") and "contains" in expected:
+            return actual.get("blocked") is True and expected["contains"] in actual.get("contains",""),actual,expected
     else: raise ValueError(f"unknown eval scenario type {kind!r}")
     return actual==expected,actual,expected
 
@@ -86,7 +92,7 @@ def main() -> int:
     for result in report["results"]:
         marker="PASS" if result["passed"] else "FAIL"; print(f"{marker}: {result['id']}")
         if not result["passed"]:
-            print(f"  expected={result['expected']!r}"); print(f"  actual={result['actual']!r}");
+            print(f"  expected={result['expected']!r}"); print(f"  actual={result['actual']!r}")
             if result["error"]: print(f"  error={result['error']}")
     print(f"{report['passed']}/{report['total']} scenarios passed")
     if args.report: Path(args.report).write_text(json.dumps(report,indent=2,sort_keys=True)+"\n",encoding="utf-8")
