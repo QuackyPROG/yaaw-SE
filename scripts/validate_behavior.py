@@ -105,7 +105,7 @@ def main() -> int:
         "specs/SPEC-001.md",
         "tickets/TASK-001.md",
         "reviews/TASK-001-R1.md",
-        "evidence/EVIDENCE-TASK-001-1.json",
+        "evidence/EVIDENCE-TASK-001-V1.json",
     ):
         if not (fresh_root / relative).is_file():
             errors.append(f"fresh-context fixture missing {relative}")
