@@ -1,1 +1,0 @@
-{"schema":"yaaw.external-adapters/v1","adapters":{"github-issues":{"kind":"TRACKER","stable_identity_field":"node_id","observed_state_only":true,"semantic_authority":"EVIDENCE_ONLY"},"deployment-provider":{"kind":"PROVIDER","stable_identity_field":"deployment_id","observed_state_only":true,"semantic_authority":"EVIDENCE_ONLY"}}}
