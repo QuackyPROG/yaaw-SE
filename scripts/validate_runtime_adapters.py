@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED = {"root_only_delegation", "fresh_child_context", "bounded_parallelism", "model_neutral", "controller_admission", "trust_boundary_instructions"}
+REQUIRED = {"root_only_delegation", "fresh_child_context", "bounded_parallelism", "model_neutral", "controller_admission", "token_budget_admission", "trust_boundary_instructions"}
 
 
 def main() -> int:

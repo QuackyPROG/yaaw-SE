@@ -26,7 +26,20 @@ def main() -> None:
     require(v2.get("enabled") is True, "project-local Multi-Agent V2 adapter must be enabled")
     require(v2.get("max_concurrent_threads_per_session") <= 4, "V2 total thread cap must remain <= 4 (root + children)")
     instructions = config.get("developer_instructions", "")
-    for phrase in ("Only the root Orchestrator may spawn", "one mutating agent", "STOP_AND_REPLAN", ".agents/artifacts.json", "controller admission", "untrusted data"):
+    for phrase in (
+        "Only the root Orchestrator may spawn",
+        "one mutating agent",
+        "STOP_AND_REPLAN",
+        ".agents/artifacts.json",
+        "controller admission",
+        "untrusted data",
+        "yaaw_cli.py context",
+        "Controller.from_repository",
+        "Controller.admit_agent_invocation",
+        "max_total_llm_tokens",
+        "config/context-budget.json",
+        "survive controller/runtime reconstruction",
+    ):
         require(phrase in instructions, f"Codex root instructions missing invariant: {phrase}")
 
     expected = {"orchestrator", "planner", "discovery", "implementer", "qa", "release-engineer"}
@@ -40,7 +53,7 @@ def main() -> None:
         require("Do not spawn" in data.get("developer_instructions", "") or name == "orchestrator", f"child adapter {name} must forbid recursive delegation")
         seen.add(name)
     require(seen == expected, f"Codex role adapters mismatch: expected {sorted(expected)}, got {sorted(seen)}")
-    print("OK: Codex adapter is root-only, bounded, model-neutral, controller-admitted, trust-aware and aligned with registered roles")
+    print("OK: Codex adapter is root-only, bounded, model-neutral, persisted-controller/token-admitted, trust-aware and aligned with registered roles")
 
 
 if __name__ == "__main__":

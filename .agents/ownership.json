@@ -45,6 +45,7 @@
     {"pattern":"scripts/run_evals.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH","notes":"adversarial conformance runner"},
     {"pattern":"scripts/run_agent_evals.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH","notes":"repeated agent-loop trial runner; simulated CI does not establish empirical model proof"},
     {"pattern":"scripts/run_workload_compare.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH","notes":"baseline/governed workload comparison; proof classification must preserve observation provenance"},
+    {"pattern":"scripts/create_external_workload.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH","notes":"build pinned external workload manifests; does not execute or manufacture empirical evidence"},
     {"pattern":"scripts/report_metrics.py","owner":"orchestrator","co_owner":"qa","risk":"MEDIUM","notes":"diagnostic metric reporting only; metrics do not define intent"},
     {"pattern":"scripts/validate_*","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
     {"pattern":"scripts/verify_*","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},

@@ -5,6 +5,8 @@
   "response_schema": "yaaw.agent-eval-result/v1",
   "identity_required": ["runtime_id", "provider", "model", "external=true"],
   "gateway_boundary": "EXTERNAL_WRAPPER_MUST_ENFORCE_YAAW_GATEWAY",
+  "model_admission_boundary": "EXTERNAL_WRAPPER_MUST_ENFORCE_TOKEN_BUDGET_ADMISSION",
+  "context_contract": "YAAW_HANDOFF_V1_FROM_TOKEN_BUDGETED_CONTEXT_BUILDER",
   "trace_contract": {
     "required_events": ["GATEWAY_ALLOWED", "ACTION_RESULT"],
     "correlation_fields": ["run_id", "trace_id", "span_id"]

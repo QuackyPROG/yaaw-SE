@@ -145,6 +145,12 @@ def evidence_record(
     }
 
 
+def _reduction(baseline: float, governed: float) -> float | None:
+    if baseline <= 0:
+        return None
+    return round((baseline - governed) / baseline, 6)
+
+
 def compare_evidence(baseline: dict, governed: dict) -> dict:
     if baseline.get("schema") != "yaaw.workload-evidence/v1" or governed.get("schema") != "yaaw.workload-evidence/v1":
         raise WorkloadEvidenceError("comparison requires workload evidence records")
@@ -154,6 +160,7 @@ def compare_evidence(baseline: dict, governed: dict) -> dict:
         raise WorkloadEvidenceError("comparison requires baseline and governed lanes")
 
     deltas = None
+    relative = None
     if baseline.get("status") == "OBSERVED" and governed.get("status") == "OBSERVED":
         b_report = baseline.get("report") or {}
         g_report = governed.get("report") or {}
@@ -162,6 +169,22 @@ def compare_evidence(baseline: dict, governed: dict) -> dict:
             deltas[field] = round(float(g_report.get(field, 0.0)) - float(b_report.get(field, 0.0)), 6)
         for field in ("policy_violations", "replans", "total_tokens", "total_cost_usd", "total_duration_ms"):
             deltas[field] = round(float(g_report.get(field, 0.0)) - float(b_report.get(field, 0.0)), 6)
+        quality_non_regression = (
+            float(g_report.get("pass_rate", 0.0)) >= float(b_report.get("pass_rate", 0.0))
+            and float(g_report.get("trace_pass_rate", 0.0)) >= float(b_report.get("trace_pass_rate", 0.0))
+            and int(g_report.get("policy_violations", 0)) <= int(b_report.get("policy_violations", 0))
+        )
+        token_reduction = _reduction(float(b_report.get("total_tokens", 0.0)), float(g_report.get("total_tokens", 0.0)))
+        cost_reduction = _reduction(float(b_report.get("total_cost_usd", 0.0)), float(g_report.get("total_cost_usd", 0.0)))
+        duration_reduction = _reduction(float(b_report.get("total_duration_ms", 0.0)), float(g_report.get("total_duration_ms", 0.0)))
+        relative = {
+            "quality_non_regression": quality_non_regression,
+            "token_reduction_ratio": token_reduction,
+            "cost_reduction_ratio": cost_reduction,
+            "duration_reduction_ratio": duration_reduction,
+            "token_efficiency_non_regression": bool(quality_non_regression and token_reduction is not None and token_reduction >= 0),
+            "token_efficiency_improved": bool(quality_non_regression and token_reduction is not None and token_reduction > 0),
+        }
 
     proof_class = "EMPIRICAL" if baseline.get("proof_class") == governed.get("proof_class") == "EMPIRICAL" else "UNPROVEN"
     return {
@@ -171,6 +194,7 @@ def compare_evidence(baseline: dict, governed: dict) -> dict:
         "baseline_status": baseline["status"],
         "governed_status": governed["status"],
         "deltas": deltas,
+        "relative": relative,
         "baseline": baseline,
         "governed": governed,
     }

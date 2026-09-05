@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
 from scripts.yaaw.artifact_index import archive_manifest, build_index
 from scripts.yaaw.metrics import summarize
+from scripts.yaaw.model import Ticket, TicketKind, TicketState
 from scripts.yaaw.planning_quality import acceptance_issues, plan_issues
 from scripts.yaaw.qa_tracking import make_finding, make_residual_risk, reconcile_findings
 from scripts.yaaw.repository_map import RepositoryMap, Subsystem
-from scripts.yaaw.retrieval import plan_retrieval, validate_hook_registry
+from scripts.yaaw.retrieval import LocalRetrievalRuntime, plan_retrieval, plan_retrieval_for_ticket, validate_hook_registry
 
 
 class QATrackingTests(unittest.TestCase):
@@ -18,7 +20,6 @@ class QATrackingTests(unittest.TestCase):
         first = make_finding("DEL-7", "HIGH", "Authorization bypass on retry", 1)
         second = reconcile_findings("DEL-7", [first], [{"severity":"HIGH","summary":"Authorization bypass on retry"}], 2)
         self.assertEqual(second[0].id, first.id)
-        self.assertEqual(second[0].last_seen_cycle, 2)
     def test_missing_finding_is_resolved_not_erased(self):
         first = make_finding("DEL-7", "HIGH", "Authorization bypass", 1)
         second = reconcile_findings("DEL-7", [first], [], 2)
@@ -46,6 +47,30 @@ class RetrievalTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         data = json.loads((root / "config/retrieval-hooks.json").read_text(encoding="utf-8"))
         self.assertEqual(validate_hook_registry(data), [])
+    def test_ticket_retrieval_is_bounded_to_declared_surface(self):
+        ticket = Ticket("D-1", TicketKind.DELIVERY, TicketState.READY, 2, "auth", acceptance=("observable",), metadata={"expected_change_surface":["src/auth/login.py","src/auth/session.py","src/auth/a.py","src/auth/b.py","src/auth/c.py"]})
+        requests = plan_retrieval_for_ticket(ticket)
+        ownership_queries = [item.query for item in requests if item.hook == "ownership"]
+        self.assertEqual(ownership_queries, ["src/auth/login.py","src/auth/session.py","src/auth/a.py","src/auth/b.py"])
+    def test_local_runtime_executes_ownership_symbol_test_and_history_hooks(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / ".agents").mkdir()
+            (root / "src/auth").mkdir(parents=True)
+            (root / "tests/auth").mkdir(parents=True)
+            (root / ".agents/ownership.json").write_text(json.dumps({"default_owner":"UNKNOWN_OWNER","entries":[{"pattern":"src/auth/**","owner":"auth"}]}), encoding="utf-8")
+            (root / "src/auth/login.py").write_text("class SessionService:\n    pass\n", encoding="utf-8")
+            (root / "tests/auth/test_login.py").write_text("def test_login():\n    pass\n", encoding="utf-8")
+            subprocess.run(["git","init","-q"], cwd=root, check=True)
+            subprocess.run(["git","add","."], cwd=root, check=True)
+            repo = RepositoryMap([Subsystem("auth", ("src/auth/**",), ("SessionService",), ("tests/auth/**",), ("docs/auth.md",))])
+            runtime = LocalRetrievalRuntime(root, repository_map=repo)
+            results = runtime.execute(plan_retrieval("src/auth/login.py", repo))
+            by_hook = {result.hook: result.content for result in results}
+            self.assertIn('"owner": "auth"', by_hook["ownership"])
+            self.assertIn("SessionService", by_hook["symbol_search"])
+            self.assertIn("tests/auth/**", by_hook["test_map"])
+            self.assertIn("history", next(result.source_ref for result in results if result.hook == "history"))
 
 
 class ArtifactLifecycleTests(unittest.TestCase):

@@ -5,7 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 from .artifacts import validate_ticket_tree
 from .change_set import ChangeSet
-from .context import from_ticket
+from .context import from_repository
 from .domain_pack import install_pack
 from .graph import TicketGraph
 from .leases import LeaseStore
@@ -42,7 +42,10 @@ def cmd_blocked(args):
 def cmd_owner(args):
     rules,default=load_ownership_rules(Path(args.ownership)); from .ownership import resolve; r=resolve(args.path,rules,default); print(json.dumps({"path":args.path,"owner":r.owner,"co_owners":list(r.co_owners),"pattern":r.pattern,"deny":r.deny,"source":r.source},indent=2,sort_keys=True)); return 0
 def cmd_artifact(args): print(json.dumps(artifact_contract(Path(args.artifacts),args.id),indent=2,sort_keys=True)); return 0
-def cmd_context(args): print(from_ticket(ticket_or_error(_graph(args),args.id),args.role).render(max_chars=args.max_chars)); return 0
+def cmd_context(args):
+    ticket=ticket_or_error(_graph(args),args.id)
+    capsule=from_repository(ticket,args.role,root=Path(args.repo_root),budget_policy_path=Path(args.budget_policy) if args.budget_policy else None,retrieval=not args.no_retrieval,max_input_tokens=args.max_input_tokens)
+    print(capsule.render(max_chars=args.max_chars if args.max_chars and args.max_chars>0 else None)); return 0
 def _transition_context(args): return TransitionContext(owner_resolved=args.owner_resolved,blockers_done=args.blockers_done,acceptance_bounded=args.acceptance_bounded,sources_current=args.sources_current,implementation_evidence=args.implementation_evidence,verification_complete=args.verification_complete,qa_satisfied=args.qa_satisfied,delivery_satisfied=args.delivery_satisfied)
 def cmd_transition(args):
     t=ticket_or_error(_graph(args),args.id)
@@ -79,7 +82,7 @@ def cmd_policy_lint(args):
 def build_parser():
     p=argparse.ArgumentParser(prog="yaaw",description="yaaw-SE deterministic workflow utilities"); p.add_argument("--tickets",default="tickets"); p.add_argument("--ownership",default=".agents/ownership.json"); p.add_argument("--artifacts",default=".agents/artifacts.json"); p.add_argument("--idempotency-store",default=".yaaw/runtime/idempotency.json"); p.add_argument("--leases",default=".yaaw/runtime/leases"); p.add_argument("--snapshot",default=".yaaw/runtime/controller-snapshot.json"); s=p.add_subparsers(dest="command",required=True)
     s.add_parser("validate").set_defaults(func=cmd_validate); s.add_parser("frontier").set_defaults(func=cmd_frontier); s.add_parser("status").set_defaults(func=cmd_status)
-    q=s.add_parser("ticket"); q.add_argument("id"); q.set_defaults(func=cmd_ticket); s.add_parser("blocked").set_defaults(func=cmd_blocked); q=s.add_parser("owner"); q.add_argument("path"); q.set_defaults(func=cmd_owner); q=s.add_parser("artifact"); q.add_argument("id"); q.set_defaults(func=cmd_artifact); q=s.add_parser("context"); q.add_argument("id"); q.add_argument("--role",required=True); q.add_argument("--max-chars",type=int,default=16000); q.set_defaults(func=cmd_context)
+    q=s.add_parser("ticket"); q.add_argument("id"); q.set_defaults(func=cmd_ticket); s.add_parser("blocked").set_defaults(func=cmd_blocked); q=s.add_parser("owner"); q.add_argument("path"); q.set_defaults(func=cmd_owner); q=s.add_parser("artifact"); q.add_argument("id"); q.set_defaults(func=cmd_artifact); q=s.add_parser("context"); q.add_argument("id"); q.add_argument("--role",required=True); q.add_argument("--repo-root",default="."); q.add_argument("--budget-policy"); q.add_argument("--max-input-tokens",type=int); q.add_argument("--max-chars",type=int,default=0,help="optional legacy hard character cap; token budgeting is primary"); q.add_argument("--no-retrieval",action="store_true",help="diagnostic only: build contract without live repository retrieval"); q.set_defaults(func=cmd_context)
     q=s.add_parser("transition"); q.add_argument("id"); q.add_argument("--to",required=True,choices=[x.value for x in TicketState]); q.add_argument("--write",action="store_true"); q.add_argument("--operation-id"); [q.add_argument("--"+f.replace("_","-"),action="store_true") for f in ("owner_resolved","blockers_done","acceptance_bounded","sources_current","implementation_evidence","verification_complete","qa_satisfied","delivery_satisfied")]; q.set_defaults(func=cmd_transition)
     q=s.add_parser("lease-reclaim"); q.add_argument("resource"); q.add_argument("--write",action="store_true"); q.set_defaults(func=cmd_lease_reclaim); s.add_parser("recover").set_defaults(func=cmd_recover); q=s.add_parser("migrate"); q.add_argument("paths",nargs="*"); q.add_argument("--root",default="."); q.add_argument("--write",action="store_true"); q.set_defaults(func=cmd_migrate)
     q=s.add_parser("domain-pack",help="plan install/update by default; --write applies it"); q.add_argument("source"); q.add_argument("--destination",default=".yaaw/domain-pack.json"); q.add_argument("--lock",default=".yaaw/domain-pack.lock.json"); q.add_argument("--harness-version",type=int); q.add_argument("--write",action="store_true"); q.add_argument("--allow-downgrade",action="store_true"); q.add_argument("--allow-replace",action="store_true"); q.set_defaults(func=cmd_domain_pack)

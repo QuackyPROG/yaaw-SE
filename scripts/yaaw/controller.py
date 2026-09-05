@@ -1,7 +1,9 @@
 """Deterministic admission and recovery layer around LLM engineering judgments."""
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from .budgets import Budget
 from .graph import TicketGraph
@@ -15,6 +17,17 @@ class AdmissionError(RuntimeError):
     pass
 
 
+def _repository_path(root: Path, value: object, field: str) -> Path:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"controller policy requires non-empty {field}")
+    path = (root / value).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"controller policy {field} escapes repository root: {value}") from exc
+    return path
+
+
 @dataclass
 class Controller:
     graph: TicketGraph
@@ -22,6 +35,36 @@ class Controller:
     leases: LeaseStore
     snapshot_store: SnapshotStore | None = None
     failure_signatures: dict[str, int] = field(default_factory=dict)
+
+    @classmethod
+    def from_repository(
+        cls,
+        graph: TicketGraph,
+        *,
+        root: Path = Path("."),
+        policy_path: Path | None = None,
+    ) -> "Controller":
+        """Build the normal runtime controller from repository policy.
+
+        This is the preferred factory for real runtimes. It binds dispatch/model
+        budgets to the persisted `.yaaw/runtime` budget state so restarting a host or
+        reconstructing the root Orchestrator cannot reset aggregate token/call usage.
+        """
+        root = root.resolve()
+        resolved_policy = (policy_path or (root / "config" / "controller-policy.json")).resolve()
+        try:
+            resolved_policy.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(f"controller policy path escapes repository root: {resolved_policy}") from exc
+        policy = json.loads(resolved_policy.read_text(encoding="utf-8"))
+        lease_path = _repository_path(root, policy.get("lease", {}).get("root"), "lease.root")
+        snapshot_path = _repository_path(root, policy.get("recovery", {}).get("snapshot"), "recovery.snapshot")
+        return cls(
+            graph=graph,
+            budget=Budget.from_policy(resolved_policy, root=root),
+            leases=LeaseStore(lease_path),
+            snapshot_store=SnapshotStore(snapshot_path),
+        )
 
     def preflight_dispatch(self, ticket_id: str, *, sources_current: bool = True) -> Ticket:
         """Validate dispatch invariants without consuming budget or acquiring a lease."""
@@ -41,15 +84,73 @@ class Controller:
             raise AdmissionError(f"ticket {ticket_id} has stale source fingerprints")
         return ticket
 
+    def _record_dispatch_snapshot(self, ticket_id: str, role: str | None, worktree: str, base_sha: str | None) -> None:
+        if self.snapshot_store is None:
+            return
+        prior = self.snapshot_store.load()
+        attempts = (prior.dispatch_attempt if prior else 0) + 1
+        signatures = dict((prior.failure_signatures if prior else None) or self.failure_signatures)
+        self.snapshot_store.save(RuntimeSnapshot(ticket_id, role, worktree, base_sha, attempts, signatures))
+
+    def reserve_llm_tokens(self, input_tokens: int, reserved_output_tokens: int = 0) -> dict[str, int]:
+        """Reserve model capacity before an invocation without claiming a child lease."""
+        if input_tokens < 0 or reserved_output_tokens < 0:
+            raise ValueError("LLM token reservations cannot be negative")
+        total = input_tokens + reserved_output_tokens
+        try:
+            return self.budget.consume_many({
+                "max_total_llm_tokens": total,
+                "max_total_llm_calls": 1,
+            })
+        except RuntimeError as exc:
+            raise AdmissionError(str(exc)) from exc
+
+    def admit_agent_invocation(
+        self,
+        ticket_id: str,
+        holder: str,
+        worktree: str,
+        *,
+        input_tokens: int,
+        reserved_output_tokens: int,
+        sources_current: bool = True,
+        base_sha: str | None = None,
+        role: str | None = None,
+    ) -> Ticket:
+        """Atomically admit a child-agent dispatch and its model budget.
+
+        This is the preferred runtime boundary for an LLM child invocation. The
+        writer/worktree lease is acquired before budget mutation; if any dispatch or
+        model budget would be exceeded, the lease is released and no budget counter
+        changes. A runtime therefore cannot accidentally admit the child first and
+        discover an exhausted token budget afterward.
+        """
+        if input_tokens < 0 or reserved_output_tokens < 0:
+            raise ValueError("LLM token reservations cannot be negative")
+        ticket = self.preflight_dispatch(ticket_id, sources_current=sources_current)
+        self.leases.acquire(worktree, holder, ticket_id)
+        try:
+            self.budget.consume_many({
+                "max_agent_dispatches": 1,
+                "max_total_llm_tokens": input_tokens + reserved_output_tokens,
+                "max_total_llm_calls": 1,
+            })
+        except RuntimeError as exc:
+            self.leases.release(worktree, holder)
+            raise AdmissionError(str(exc)) from exc
+        self._record_dispatch_snapshot(ticket_id, role, worktree, base_sha)
+        return ticket
+
     def admit_dispatch(self, ticket_id: str, holder: str, worktree: str, sources_current: bool = True, base_sha: str | None = None, role: str | None = None) -> Ticket:
+        """Admit a non-model dispatch/action reservation.
+
+        Model-backed child runtimes should use `admit_agent_invocation` so dispatch
+        and context/output token budgets are one admission operation.
+        """
         ticket = self.preflight_dispatch(ticket_id, sources_current=sources_current)
         self.budget.consume("max_agent_dispatches")
         self.leases.acquire(worktree, holder, ticket_id)
-        if self.snapshot_store is not None:
-            prior = self.snapshot_store.load()
-            attempts = (prior.dispatch_attempt if prior else 0) + 1
-            signatures = dict((prior.failure_signatures if prior else None) or self.failure_signatures)
-            self.snapshot_store.save(RuntimeSnapshot(ticket_id, role, worktree, base_sha, attempts, signatures))
+        self._record_dispatch_snapshot(ticket_id, role, worktree, base_sha)
         return ticket
 
     def release_dispatch(self, worktree: str, holder: str, *, clear_snapshot: bool = True) -> None:

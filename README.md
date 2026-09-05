@@ -4,7 +4,7 @@
 
 It still looks like a pile of Markdown, JSON, and a suspicious amount of policy for something called *yet another workflow*.
 
-Underneath that, the harness has a deterministic ticket/state controller, machine-readable artifact and authority contracts, risk-aware routing, ticket-bound runtime admission, correlated traces, repeated agent-loop evals, workload provenance/comparison, bounded mutations, fresh QA, recovery/idempotency rules, domain-pack integration, and repository-native memory. Agents keep the engineering judgment; software enforces the workflow invariants it can actually know.
+Underneath that, the harness has a deterministic ticket/state controller, machine-readable artifact and authority contracts, risk-aware routing, **token-budgeted live context retrieval**, ticket-bound runtime admission, correlated traces, repeated agent-loop evals, workload provenance/comparison, bounded mutations, fresh QA, recovery/idempotency rules, domain-pack integration, and repository-native memory. Agents keep the engineering judgment; software enforces the workflow invariants it can actually know.
 
 It also still tries very hard **not** to form a committee for a typo.
 
@@ -14,19 +14,22 @@ It also still tries very hard **not** to form a committee for a typo.
 small task   -> cheapest safe route -> verify -> finish
 large task   -> map known territory -> work frontier -> discover -> replan -> verify
 bad surprise -> STOP_AND_REPLAN, not "while I'm here..."
+context      -> retrieve only what matters -> pack to budget -> dispatch
 ```
 
 Material work becomes `DISCOVERY`, `DECISION`, and `DELIVERY` tickets. Unknown future territory stays fog until evidence makes it precise enough to plan. PRDs remain optional/manual and human-authority: they define what the product should become; engineering planning is not allowed to silently rewrite that intent.
+
+Child agents do not receive transcript dumps by default. `yaaw context` builds a bounded handoff from the durable ticket, retrieves ownership/subsystem/symbol/test/history evidence from the declared work surface, preserves mandatory contract fields, and evicts optional evidence to compact references when a role/level token budget fills. Aggregate model-call/token reservations prevent many individually valid calls from becoming an unbounded initiative-level spend.
 
 ## What is real vs. aspirational
 
 Current maturity: **Beta / self-hosting control plane**.
 
-Machine-enforced invariants include structured state/graph validation, ownership/authority checks, ticket-derived mutation scope, leases, source/evidence freshness, bounded retries/replans, idempotent mutations, runtime capability floors, an executable gateway for adapters that physically route mutation through it, correlated traces, deterministic adversarial tests, and repeated agent-eval/workload comparison machinery.
+Machine-enforced invariants include structured state/graph validation, ownership/authority checks, ticket-derived mutation scope, leases, source/evidence freshness, bounded retries/replans, idempotent mutations, runtime capability floors, role/level context budgets, priority-aware context packing, aggregate model-token backpressure, an executable gateway for adapters that physically route mutation through it, correlated traces, deterministic adversarial tests, and resource-aware repeated agent-eval/workload comparison machinery.
 
-The distinction matters: default CI uses deterministic fake runtimes and synthetic workloads. Those runs validate the harness and evaluator but remain `UNPROVEN` for model capability. An external result only becomes empirical when repository/ref/commit, runtime/provider/model, and the exact evaluation-manifest fingerprint are all pinned and observed. **This repository currently contains no committed external empirical workload result.**
+The distinction matters: default CI uses deterministic fake runtimes and synthetic workloads. Those runs validate the harness and evaluator but remain `UNPROVEN` for model capability. An external result only becomes empirical when repository/ref/commit, runtime/provider/model, and the exact evaluation-manifest fingerprint are all pinned and observed. Efficiency improvement additionally requires quality non-regression. **This repository currently contains no committed external empirical workload result.**
 
-Engineering correctness, architecture quality and subtle risk discovery still require agent judgment. Host-level shell/tool bypass prevention, authenticated role binding, OS/filesystem sandboxing, network isolation, provider state and production authority remain runtime/project-dependent.
+Engineering correctness, architecture quality and subtle risk discovery still require agent judgment. Host-level shell/tool bypass prevention, authenticated role binding, OS/filesystem sandboxing, network isolation, exact provider tokenization/billing, provider state and production authority remain runtime/project-dependent.
 
 So: useful for supervised real repositories and controlled automation; **not blanket production autonomy** and not a substitute for a project's own tests, security, observability, deployment or human approval controls.
 
@@ -35,6 +38,7 @@ See [`docs/workflow/maturity.md`](docs/workflow/maturity.md) for the exact bound
 ## See the whole thing
 
 - **[End-to-end workflow →](docs/workflow/overview.md)**
+- **[Context/token efficiency →](docs/workflow/context-efficiency.md)**
 - **[Executable runtime gateway →](docs/workflow/runtime-gateway.md)**
 - **[Agent-loop evaluation →](docs/workflow/agent-evals.md)**
 - **[Empirical evidence boundary →](docs/workflow/empirical-evidence.md)**
@@ -43,7 +47,7 @@ See [`docs/workflow/maturity.md`](docs/workflow/maturity.md) for the exact bound
 - **[Security/trust model →](docs/workflow/security.md)**
 - **[Recovery/resumption →](docs/workflow/recovery.md)**
 
-For the control-plane contract, start with [`AGENTS.md`](AGENTS.md). For the documentation map, see [`docs/index.md`](docs/index.md).
+For the hot control-plane contract, start with [`AGENTS.md`](AGENTS.md). Use [`docs/index.md`](docs/index.md) when you need to locate deeper documentation; trivial routes should prefer point queries over loading the whole documentation map.
 
 ## Bring your repository
 

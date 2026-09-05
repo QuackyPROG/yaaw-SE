@@ -25,6 +25,7 @@ def validate() -> list[str]:
     artifacts = load_json(".agents/artifacts.json")
     authority = load_json(".agents/authority.json")
     ownership = load_json(".agents/ownership.json")
+    controller_policy = load_json("config/controller-policy.json")
 
     agents = {a["id"] for a in catalog.get("agents", [])}
     skills = {s["id"]: s for s in catalog.get("skills", [])}
@@ -44,6 +45,26 @@ def validate() -> list[str]:
                 errors.append(f"route {shape['id']} references unknown skill {skill_id}")
         if int(shape.get("default_level", shape.get("minimum_level", 0))) >= 2 and "qa" not in default_agents:
             errors.append(f"route {shape['id']} defaults to L2+ but omits qa from default_agents")
+
+    context_budget_ref = router.get("context_budget_policy")
+    if context_budget_ref != "config/context-budget.json":
+        errors.append("router must register config/context-budget.json as context_budget_policy")
+    elif not (ROOT / context_budget_ref).exists():
+        errors.append("registered context budget policy does not exist")
+    if router.get("principles", {}).get("token_budgeted_context") is not True:
+        errors.append("router must require token_budgeted_context")
+
+    budget_state = controller_policy.get("budget_state", {})
+    if budget_state.get("path") != ".yaaw/runtime/budgets.json":
+        errors.append("controller policy must persist aggregate usage at .yaaw/runtime/budgets.json")
+    if budget_state.get("atomic_replace") is not True:
+        errors.append("controller policy must require atomic budget-state replacement")
+    if budget_state.get("survives_controller_restart") is not True:
+        errors.append("controller policy must require budget state to survive controller restart")
+    controller_budgets = controller_policy.get("budgets", {})
+    for required_budget in ("max_agent_dispatches", "max_total_llm_calls", "max_total_llm_tokens"):
+        if not isinstance(controller_budgets.get(required_budget), int) or controller_budgets[required_budget] < 1:
+            errors.append(f"controller policy requires positive {required_budget}")
 
     artifact_types = {a["id"]: a for a in artifacts.get("artifact_types", [])}
     contracts = artifacts.get("contracts", {}).get("agents", {})
@@ -117,10 +138,13 @@ def validate() -> list[str]:
     errors.extend(validate_rules(rules))
     for critical_path in (
         "AGENTS.md", "README.md", ".gitignore",
-        "scripts/yaaw/controller.py", "scripts/yaaw/security.py", "scripts/yaaw/runtime_gateway.py", "scripts/yaaw/workload_evidence.py",
-        "scripts/run_evals.py", "scripts/run_agent_evals.py", "scripts/run_workload_compare.py", "scripts/report_metrics.py",
-        "config/runtime-adapters.json", "config/generic-command-runtime.json",
-        ".agents/schemas/ticket.schema.json", "tests/harness/test_graph.py",
+        "scripts/yaaw/controller.py", "scripts/yaaw/budgets.py", "scripts/yaaw/security.py", "scripts/yaaw/runtime_gateway.py",
+        "scripts/yaaw/context.py", "scripts/yaaw/retrieval.py", "scripts/yaaw/token_budget.py",
+        "scripts/yaaw/workload_evidence.py", "scripts/yaaw/workload_manifest.py",
+        "scripts/run_evals.py", "scripts/run_agent_evals.py", "scripts/run_workload_compare.py",
+        "scripts/create_external_workload.py", "scripts/report_metrics.py",
+        "config/controller-policy.json", "config/runtime-adapters.json", "config/generic-command-runtime.json", "config/context-budget.json",
+        ".agents/schemas/ticket.schema.json", ".agents/schemas/context-budget.schema.json", "tests/harness/test_graph.py",
     ):
         if resolve(critical_path, rules, ownership.get("default_owner", "UNKNOWN_OWNER")).owner == "UNKNOWN_OWNER":
             errors.append(f"core harness path has UNKNOWN_OWNER: {critical_path}")
@@ -148,8 +172,7 @@ def validate() -> list[str]:
     if "Do not add ceremony to trivial local work" not in release_role:
         errors.append("Release Engineer role lost trivial-local-work exclusion")
 
-    # Cold-start root policy must point agents at executable enforcement rather than
-    # relying on prompt semantics or treating simulated evaluation as empirical proof.
+    # Cold-start root policy must point agents at executable enforcement and bounded context.
     root_policy = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     for required_phrase in (
         ".agents/authority.json",
@@ -159,6 +182,8 @@ def validate() -> list[str]:
         "release_engineer_required",
         "RuntimeGateway",
         "UNPROVEN",
+        "config/context-budget.json",
+        "yaaw context",
     ):
         if required_phrase not in root_policy:
             errors.append(f"AGENTS.md cold-start contract missing {required_phrase!r}")
@@ -168,10 +193,35 @@ def validate() -> list[str]:
         if required_phrase not in gateway_source:
             errors.append(f"runtime gateway lost ticket-bound scope invariant {required_phrase!r}")
 
+    context_source = (ROOT / "scripts/yaaw/context.py").read_text(encoding="utf-8")
+    for required_phrase in ("_pack_retrieval", "ContextBudgetExceeded", "from_repository", "omitted_retrieval"):
+        if required_phrase not in context_source:
+            errors.append(f"context builder lost token-packing invariant {required_phrase!r}")
+
+    retrieval_source = (ROOT / "scripts/yaaw/retrieval.py").read_text(encoding="utf-8")
+    for required_phrase in ("LocalRetrievalRuntime", "plan_retrieval_for_ticket", "git", "max_chars_per_result"):
+        if required_phrase not in retrieval_source:
+            errors.append(f"retrieval runtime lost bounded-live-retrieval invariant {required_phrase!r}")
+
+    budget_source = (ROOT / "scripts/yaaw/budgets.py").read_text(encoding="utf-8")
+    for required_phrase in ("from_policy", "yaaw.budget-state/v1", "os.replace", "state_path"):
+        if required_phrase not in budget_source:
+            errors.append(f"budget subsystem lost persisted aggregate-state invariant {required_phrase!r}")
+
+    controller_source = (ROOT / "scripts/yaaw/controller.py").read_text(encoding="utf-8")
+    for required_phrase in ("from_repository", "admit_agent_invocation", "reserve_llm_tokens", "max_total_llm_tokens", "max_total_llm_calls"):
+        if required_phrase not in controller_source:
+            errors.append(f"controller lost aggregate model budget invariant {required_phrase!r}")
+
+    eval_source = (ROOT / "scripts/yaaw/agent_eval.py").read_text(encoding="utf-8")
+    for required_phrase in ("max_total_tokens", "tokens_per_passing_trial", "max_total_cost_usd", "max_total_duration_ms"):
+        if required_phrase not in eval_source:
+            errors.append(f"agent eval lost resource threshold invariant {required_phrase!r}")
+
     evidence_source = (ROOT / "scripts/yaaw/workload_evidence.py").read_text(encoding="utf-8")
-    for required_phrase in ("manifest_fingerprint", "_manifest_matches", '"EMPIRICAL"'):
+    for required_phrase in ("manifest_fingerprint", "_manifest_matches", '"EMPIRICAL"', "token_reduction_ratio", "quality_non_regression"):
         if required_phrase not in evidence_source:
-            errors.append(f"workload evidence lost empirical provenance invariant {required_phrase!r}")
+            errors.append(f"workload evidence lost empirical/efficiency invariant {required_phrase!r}")
 
     return sorted(set(errors))
 

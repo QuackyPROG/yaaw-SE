@@ -21,6 +21,8 @@ def main() -> int:
     require(config.get("response_schema") == "yaaw.agent-eval-result/v1", "response protocol mismatch")
     require(config.get("identity_required") == ["runtime_id", "provider", "model", "external=true"], "external runtime identity must be explicit")
     require(config.get("gateway_boundary") == "EXTERNAL_WRAPPER_MUST_ENFORCE_YAAW_GATEWAY", "generic command wrapper must not bypass gateway enforcement")
+    require(config.get("model_admission_boundary") == "EXTERNAL_WRAPPER_MUST_ENFORCE_TOKEN_BUDGET_ADMISSION", "generic command wrapper must enforce model token-budget admission")
+    require(config.get("context_contract") == "YAAW_HANDOFF_V1_FROM_TOKEN_BUDGETED_CONTEXT_BUILDER", "generic command wrapper must consume a token-budgeted yaaw handoff")
     trace = config.get("trace_contract", {})
     require({"run_id", "trace_id", "span_id"}.issubset(set(trace.get("correlation_fields", []))), "trace correlation contract incomplete")
     required_events = set(trace.get("required_events", []))
@@ -28,10 +30,17 @@ def main() -> int:
 
     runner = (ROOT / "scripts/run_agent_evals.py").read_text(encoding="utf-8")
     implementation = (ROOT / "scripts/yaaw/agent_eval.py").read_text(encoding="utf-8")
+    controller = (ROOT / "scripts/yaaw/controller.py").read_text(encoding="utf-8")
+    budgets = (ROOT / "scripts/yaaw/budgets.py").read_text(encoding="utf-8")
+    context = (ROOT / "scripts/yaaw/context.py").read_text(encoding="utf-8")
     require('choices=["fake", "command"]' in runner, "agent eval runner must expose explicit command adapter")
     require("class CommandRuntimeAdapter" in implementation, "generic command invocation implementation missing")
     require("external=true identity" in implementation, "command runtime must fail closed without external identity")
-    print("OK: generic command adapter uses the provider-neutral eval protocol and requires an external gateway-enforcing wrapper")
+    require("def from_repository" in controller, "controller must reconstruct runtime state from repository policy")
+    require("def admit_agent_invocation" in controller, "controller must expose atomic model dispatch/token admission")
+    require("def from_policy" in budgets and "yaaw.budget-state/v1" in budgets, "aggregate model budgets must survive wrapper/controller reconstruction")
+    require("def from_repository" in context and "context_budget" in context, "context builder must expose token-budgeted repository handoffs")
+    print("OK: generic command adapter requires an external gateway/persisted-token-admission wrapper and token-budgeted handoff")
     return 0
 
 
