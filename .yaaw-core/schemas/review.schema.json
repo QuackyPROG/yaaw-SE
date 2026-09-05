@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"yaaw.review/v1",
+  "type":"object",
+  "required":["schema","ticket","round","result","reviewed_state","findings"],
+  "properties":{
+    "schema":{"const":"yaaw.review/v1"},
+    "ticket":{"pattern":"^TASK-[0-9]+$"},
+    "round":{"type":"integer","minimum":1},
+    "result":{"enum":["PASS","REPAIR","REPLAN","BLOCKED"]},
+    "reviewed_state":{"type":"string","minLength":1},
+    "findings":{"type":"array","items":{"type":"object","required":["id","severity","summary"],"properties":{"id":{"pattern":"^F-[0-9]+$"},"severity":{"enum":["LOW","MEDIUM","HIGH","CRITICAL"]},"summary":{"type":"string"}}}}
+  },
+  "additionalProperties":true
+}

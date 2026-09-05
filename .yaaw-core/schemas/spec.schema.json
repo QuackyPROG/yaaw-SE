@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"yaaw.spec/v1",
+  "type":"object",
+  "required":["schema","id","goal","decision_ids","acceptance_conditions"],
+  "properties":{
+    "schema":{"const":"yaaw.spec/v1"},
+    "id":{"pattern":"^SPEC-[0-9]+$"},
+    "goal":{"type":"string","minLength":1},
+    "decision_ids":{"type":"array","items":{"pattern":"^ENG-[0-9]+$"}},
+    "acceptance_conditions":{"type":"array","items":{"type":"string"},"minItems":1}
+  },
+  "additionalProperties":true
+}

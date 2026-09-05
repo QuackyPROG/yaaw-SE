@@ -1,0 +1,14 @@
+{
+  "yaaw-orchestrator":{"role":"orchestrator","workflow_id":"orchestration.route"},
+  "yaaw-prd":{"role":"prd","workflow_id":"prd.route"},
+  "yaaw-revise-prd":{"role":"prd","workflow_id":"prd.revise"},
+  "yaaw-refine-prd":{"role":"prd","workflow_id":"prd.refine"},
+  "yaaw-planner":{"role":"planner","workflow_id":"planning.route"},
+  "yaaw-planning-review":{"role":"planner","workflow_id":"planning.readiness-review"},
+  "yaaw-create-spec":{"role":"planner","workflow_id":"planning.create-spec"},
+  "yaaw-create-ticket":{"role":"planner","workflow_id":"planning.create-tickets"},
+  "yaaw-create-tickets":{"role":"planner","workflow_id":"planning.create-tickets"},
+  "yaaw-implement":{"role":"implementer","workflow_id":"implementation.implement-ticket"},
+  "yaaw-repair":{"role":"implementer","workflow_id":"implementation.repair-ticket"},
+  "yaaw-review":{"role":"reviewer","workflow_id":"review.review-ticket"}
+}

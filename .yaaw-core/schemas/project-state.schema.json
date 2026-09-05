@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"yaaw.project-state/v1",
+  "type":"object",
+  "required":["schema","phase","product","planning","tickets"],
+  "properties":{
+    "schema":{"const":"yaaw.project-state/v1"},
+    "phase":{"enum":["product","planning","implementation","complete","blocked"]},
+    "product":{"type":"object","required":["artifact","status"],"properties":{"artifact":{"type":"string"},"status":{"enum":["missing","draft","ready","blocked"]}}},
+    "planning":{"type":"object","required":["artifact","status"],"properties":{"artifact":{"type":"string"},"status":{"enum":["missing","discovery","questions","ready","blocked"]},"active_spec":{"type":["string","null"]}}},
+    "active_ticket":{"type":["string","null"]},
+    "tickets":{"type":"object","additionalProperties":{"enum":["DRAFT","READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","REPLAN_REQUIRED","BLOCKED","PASS","CANCELLED"]}},
+    "last_observed_commit":{"type":["string","null"]},
+    "last_workflow":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}

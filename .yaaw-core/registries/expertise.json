@@ -1,0 +1,6 @@
+{
+  "frontend-design":{"path":".yaaw-core/expertise/frontend-design/MODULE.md","signals":["UI","layout","component","responsive","interaction","accessibility"],"usable_by":["planner","implementer","reviewer"]},
+  "security":{"path":".yaaw-core/expertise/security/MODULE.md","signals":["auth","authorization","secret","input","permission","security"],"usable_by":["planner","implementer","reviewer"]},
+  "testing":{"path":".yaaw-core/expertise/testing/MODULE.md","signals":["test","verification","regression","acceptance"],"usable_by":["planner","implementer","reviewer"]},
+  "python":{"path":".yaaw-core/expertise/python/MODULE.md","signals":["Python","pyproject.toml","pytest","ruff"],"usable_by":["planner","implementer","reviewer"]}
+}

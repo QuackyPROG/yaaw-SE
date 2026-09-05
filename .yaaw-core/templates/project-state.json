@@ -1,0 +1,10 @@
+{
+  "schema": "yaaw.project-state/v1",
+  "phase": "product",
+  "product": {"artifact": ".yaaw/product.md", "status": "missing"},
+  "planning": {"artifact": ".yaaw/engineering.md", "status": "missing", "active_spec": null},
+  "active_ticket": null,
+  "tickets": {},
+  "last_observed_commit": null,
+  "last_workflow": null
+}

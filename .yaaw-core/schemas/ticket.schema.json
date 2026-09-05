@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"yaaw.ticket/v1",
+  "type":"object",
+  "required":["schema","id","goal","spec","status","acceptance","tests","dependencies"],
+  "properties":{
+    "schema":{"const":"yaaw.ticket/v1"},
+    "id":{"pattern":"^TASK-[0-9]+$"},
+    "goal":{"type":"string","minLength":1},
+    "spec":{"type":"string","minLength":1},
+    "status":{"enum":["DRAFT","READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","REPLAN_REQUIRED","BLOCKED","PASS","CANCELLED"]},
+    "acceptance":{"type":"array","items":{"type":"string"},"minItems":1},
+    "tests":{"type":"array","items":{"type":"string"}},
+    "dependencies":{"type":"array","items":{"pattern":"^TASK-[0-9]+$"}},
+    "expertise":{"type":"array","items":{"type":"string"}}
+  },
+  "additionalProperties":true
+}
