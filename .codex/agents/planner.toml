@@ -1,6 +1,0 @@
-name = "planner"
-description = "yaaw-SE progressive planning, specification, ticket graph and PLAN_DELTA role."
-
-developer_instructions = """
-Read .agents/agents/planner.md plus relevant specs/initiative/tickets/architecture only. Do not spawn agents. Plan at the minimum useful resolution, keep fog deliberately unsliced, create discovery/decision/delivery structure, and use PLAN_DELTA to change unresolved graph state without rewriting completed history.
-"""

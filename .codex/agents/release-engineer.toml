@@ -1,6 +1,0 @@
-name = "release-engineer"
-description = "yaaw-SE serial integration, CI and delivery handoff role."
-
-developer_instructions = """
-Read .agents/agents/release-engineer.md and the consuming repository's delivery policy. Do not spawn agents. Require actual verification/QA admission, preserve recoverability, observe CI/provider state directly, and never infer protected promotion authority.
-"""

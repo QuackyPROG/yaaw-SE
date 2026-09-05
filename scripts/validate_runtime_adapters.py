@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate runtime adapters against the generic role/capability contract."""
+"""Validate runtime adapters against the generic authority-role/capability contract."""
 from __future__ import annotations
 
 import json
@@ -12,12 +12,12 @@ REQUIRED = {"root_only_delegation", "fresh_child_context", "bounded_parallelism"
 def main() -> int:
     registry = json.loads((ROOT / "config/runtime-adapters.json").read_text(encoding="utf-8"))
     catalog = json.loads((ROOT / ".agents/catalog.json").read_text(encoding="utf-8"))
-    roles = {item["id"] for item in catalog.get("agents", [])}
+    roles = {item["id"] for item in catalog.get("authority_roles", [])}
     errors = []
     for adapter_id, spec in registry.get("adapters", {}).items():
         declared_roles = set(spec.get("roles", []))
         if declared_roles != roles:
-            errors.append(f"{adapter_id}: role set mismatch: {sorted(declared_roles)} != {sorted(roles)}")
+            errors.append(f"{adapter_id}: authority-role set mismatch: {sorted(declared_roles)} != {sorted(roles)}")
         missing = REQUIRED - set(spec.get("capabilities", []))
         if missing:
             errors.append(f"{adapter_id}: missing generic capabilities {sorted(missing)}")

@@ -1,10 +1,10 @@
 {
-  "version": 5,
+  "version": 6,
   "default_owner": "UNKNOWN_OWNER",
   "unknown_owner_route": "bounded discovery then reclassify before mutation",
   "artifact_registry": ".agents/artifacts.json",
   "entries": [
-    {"pattern":"AGENTS.md","owner":"orchestrator","risk":"HIGH","notes":"root navigation/policy"},
+    {"pattern":"AGENTS.md","owner":"orchestrator","risk":"HIGH","notes":"host bootstrap/navigation policy; not a named-agent definition"},
     {"pattern":"README.md","owner":"orchestrator","co_owner":"qa","risk":"MEDIUM"},
     {"pattern":".gitignore","owner":"orchestrator","risk":"LOW"},
     {"pattern":".agents/router.json","owner":"orchestrator","risk":"HIGH"},
@@ -13,12 +13,6 @@
     {"pattern":".agents/artifacts.json","owner":"orchestrator","co_owner":"planner","risk":"HIGH"},
     {"pattern":".agents/authority.json","owner":"orchestrator","co_owner":"qa","risk":"HIGH"},
     {"pattern":".agents/schemas/**","owner":"orchestrator","co_owner":"qa","risk":"HIGH"},
-    {"pattern":".agents/agents/orchestrator.md","owner":"orchestrator","risk":"HIGH"},
-    {"pattern":".agents/agents/planner.md","owner":"planner","risk":"HIGH"},
-    {"pattern":".agents/agents/discovery.md","owner":"discovery","risk":"HIGH"},
-    {"pattern":".agents/agents/implementer.md","owner":"implementer","risk":"HIGH"},
-    {"pattern":".agents/agents/qa.md","owner":"qa","risk":"HIGH"},
-    {"pattern":".agents/agents/release-engineer.md","owner":"release-engineer","risk":"HIGH"},
     {"pattern":".agents/rules/**","owner":"orchestrator","risk":"HIGH"},
     {"pattern":".agents/skills/yaaw-prd/**","owner":"orchestrator","risk":"HIGH"},
     {"pattern":".agents/skills/yaaw-orchestrator/**","owner":"orchestrator","risk":"HIGH"},
@@ -47,7 +41,7 @@
     {"pattern":"scripts/yaaw/**","owner":"orchestrator","co_owner":"qa","risk":"HIGH"},
     {"pattern":"scripts/yaaw_cli.py","owner":"orchestrator","co_owner":"qa","risk":"HIGH"},
     {"pattern":"scripts/run_evals.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
-    {"pattern":"scripts/run_agent_evals.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
+    {"pattern":"scripts/run_agent_evals.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH","notes":"legacy evaluator filename; evaluates model-loop behavior, not registered named agents"},
     {"pattern":"scripts/run_workload_compare.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
     {"pattern":"scripts/create_external_workload.py","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
     {"pattern":"scripts/report_metrics.py","owner":"orchestrator","co_owner":"qa","risk":"MEDIUM"},
@@ -56,7 +50,7 @@
     {"pattern":"tests/harness/**","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
     {"pattern":"examples/**","owner":"orchestrator","co_owner":"qa","risk":"MEDIUM"},
     {"pattern":"evals/**","owner":"qa","co_owner":"orchestrator","risk":"HIGH"},
-    {"pattern":".codex/**","owner":"orchestrator","risk":"HIGH"},
+    {"pattern":".codex/**","owner":"orchestrator","risk":"HIGH","notes":"host adapter and generic fresh-context transport; no named role profiles"},
     {"pattern":"config/**","owner":"orchestrator","risk":"MEDIUM"},
     {"pattern":".github/workflows/**","owner":"release-engineer","co_owner":"qa","risk":"HIGH"}
   ]

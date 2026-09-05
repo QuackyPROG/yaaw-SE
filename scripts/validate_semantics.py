@@ -27,24 +27,34 @@ def validate() -> list[str]:
     ownership = load_json(".agents/ownership.json")
     controller_policy = load_json("config/controller-policy.json")
 
-    agents = {a["id"] for a in catalog.get("agents", [])}
+    roles = {a["id"] for a in catalog.get("authority_roles", [])}
     skills = {s["id"]: s for s in catalog.get("skills", [])}
 
+    if catalog.get("agents") is not None:
+        errors.append("v2 catalog must not register named agents")
+    if (ROOT / ".agents/agents").exists():
+        errors.append(".agents/agents must be absent in v2")
+    if (ROOT / ".codex/agents").exists():
+        errors.append(".codex/agents must be absent in v2")
+
     for skill_id, skill in skills.items():
-        if skill.get("owner") not in agents:
-            errors.append(f"skill {skill_id} has unregistered owner {skill.get('owner')}")
+        if skill.get("owner") not in roles:
+            errors.append(f"skill {skill_id} has unregistered authority role {skill.get('owner')}")
 
     for shape in router.get("work_shapes", []):
-        default_agents = set(shape.get("default_agents", []))
-        default_skills = shape.get("default_skills", [])
-        for role in default_agents:
-            if role not in agents:
-                errors.append(f"route {shape['id']} references unknown agent {role}")
-        for skill_id in default_skills:
+        if "default_agents" in shape:
+            errors.append(f"route {shape['id']} still declares default_agents")
+        for skill_id in shape.get("default_skills", []):
             if skill_id not in skills:
                 errors.append(f"route {shape['id']} references unknown skill {skill_id}")
-        if int(shape.get("default_level", shape.get("minimum_level", 0))) >= 2 and "qa" not in default_agents:
-            errors.append(f"route {shape['id']} defaults to L2+ but omits qa from default_agents")
+
+    qa_policy = router.get("qa_policy", {})
+    if qa_policy.get("independent_qa_levels") != [2, 3]:
+        errors.append("qa_policy must require independent review for L2-L3")
+    if qa_policy.get("high_assurance_levels") != [4]:
+        errors.append("qa_policy must require high-assurance review for L4")
+    if qa_policy.get("v2_public_skill") != "yaaw-review":
+        errors.append("qa_policy must route independent review through yaaw-review")
 
     context_budget_ref = router.get("context_budget_policy")
     if context_budget_ref != "config/context-budget.json":
@@ -53,6 +63,8 @@ def validate() -> list[str]:
         errors.append("registered context budget policy does not exist")
     if router.get("principles", {}).get("token_budgeted_context") is not True:
         errors.append("router must require token_budgeted_context")
+    if router.get("principles", {}).get("named_agent_profiles_forbidden") is not True:
+        errors.append("router must explicitly forbid named agent profiles")
 
     budget_state = controller_policy.get("budget_state", {})
     if budget_state.get("path") != ".yaaw/runtime/budgets.json":
@@ -67,17 +79,21 @@ def validate() -> list[str]:
             errors.append(f"controller policy requires positive {required_budget}")
 
     artifact_types = {a["id"]: a for a in artifacts.get("artifact_types", [])}
-    contracts = artifacts.get("contracts", {}).get("agents", {})
-    for role, contract in contracts.items():
-        if role not in agents:
-            errors.append(f"artifact contract references unknown agent {role}")
+    skill_contracts = artifacts.get("contracts", {}).get("skills", {})
+    if "agents" in artifacts.get("contracts", {}):
+        errors.append("artifact registry must not retain named-agent contracts")
+    for skill_id, contract in skill_contracts.items():
+        skill = skills.get(skill_id)
+        if skill is None:
+            errors.append(f"artifact contract references unknown skill {skill_id}")
             continue
+        role = skill.get("owner")
         for artifact_id in contract.get("may_mutate", []):
             artifact = artifact_types.get(artifact_id)
             if artifact is None:
-                errors.append(f"{role} may_mutate unknown artifact {artifact_id}")
+                errors.append(f"{skill_id} may_mutate unknown artifact {artifact_id}")
             elif role not in artifact.get("allowed_mutators", []):
-                errors.append(f"{role} may_mutate {artifact_id} but artifact disallows role")
+                errors.append(f"{skill_id} owner {role} may_mutate {artifact_id} but artifact disallows that authority role")
 
     # Field authority may narrow an artifact's physical writer set, never expand it.
     for artifact_id, auth_spec in authority.get("artifacts", {}).items():
@@ -162,17 +178,16 @@ def validate() -> list[str]:
 
     overview = (ROOT / "docs/workflow/overview.md").read_text(encoding="utf-8")
     delivery_doc = (ROOT / "docs/workflow/delivery.md").read_text(encoding="utf-8")
-    release_role = (ROOT / ".agents/agents/release-engineer.md").read_text(encoding="utf-8")
     if "Release / integration semantics?" not in overview or "REL --> COMMIT" not in overview:
-        errors.append("workflow overview does not model conditional Release Engineer admission before material commit/integration")
+        errors.append("workflow overview does not model conditional release admission before material commit/integration")
     if "QR -->|PASS| COMMIT" in overview or "COMMIT --> MSG" in overview:
-        errors.append("workflow overview retains pre-Release-Engineer material commit ordering")
+        errors.append("workflow overview retains pre-release material commit ordering")
     if "release_engineer_required" not in delivery_doc:
-        errors.append("delivery docs do not describe executable conditional Release Engineer policy")
-    if "Do not add ceremony to trivial local work" not in release_role:
-        errors.append("Release Engineer role lost trivial-local-work exclusion")
+        errors.append("delivery docs do not describe executable conditional release policy")
+    if "Trivial/local verified outcomes should not acquire a release stage merely for ceremony." not in delivery_doc:
+        errors.append("delivery docs lost trivial-local-work exclusion")
 
-    # Cold-start root policy must point agents at executable enforcement and bounded context.
+    # Cold-start host bootstrap must point skill executions at executable enforcement and bounded context.
     root_policy = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     for required_phrase in (
         ".agents/authority.json",
@@ -184,6 +199,8 @@ def validate() -> list[str]:
         "UNPROVEN",
         "config/context-budget.json",
         "yaaw context",
+        "five locked public skills",
+        "not an agent definition",
     ):
         if required_phrase not in root_policy:
             errors.append(f"AGENTS.md cold-start contract missing {required_phrase!r}")
@@ -216,7 +233,7 @@ def validate() -> list[str]:
     eval_source = (ROOT / "scripts/yaaw/agent_eval.py").read_text(encoding="utf-8")
     for required_phrase in ("max_total_tokens", "tokens_per_passing_trial", "max_total_cost_usd", "max_total_duration_ms"):
         if required_phrase not in eval_source:
-            errors.append(f"agent eval lost resource threshold invariant {required_phrase!r}")
+            errors.append(f"model-loop eval lost resource threshold invariant {required_phrase!r}")
 
     evidence_source = (ROOT / "scripts/yaaw/workload_evidence.py").read_text(encoding="utf-8")
     for required_phrase in ("manifest_fingerprint", "_manifest_matches", '"EMPIRICAL"', "token_reduction_ratio", "quality_non_regression"):

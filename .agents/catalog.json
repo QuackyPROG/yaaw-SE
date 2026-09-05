@@ -1,14 +1,14 @@
 {
-  "version": 7,
-  "description": "yaaw-SE v2 inventory. Public workflow surface is intentionally small; detailed methodology lives in _yaaw-core while deterministic controller/runtime enforcement remains in scripts/config.",
+  "version": 8,
+  "description": "yaaw-SE v2 inventory. The public workflow surface is exactly five locked skills. Detailed methodology lives in _yaaw-core. Named agent profiles are intentionally absent; authority_roles are semantic write principals used by the deterministic controller and artifact policy.",
   "artifact_registry": ".agents/artifacts.json",
-  "agents": [
-    {"id":"orchestrator","path":".agents/agents/orchestrator.md","artifact_contract":"agents.orchestrator","purpose":"Root control loop: observe durable state, resolve route/level, dispatch Planner/Implement/Review, and integrate controller state.","normal_write_scope":["tickets/**","routing metadata","docs/prd/** only during explicit yaaw-prd"]},
-    {"id":"planner","path":".agents/agents/planner.md","artifact_contract":"agents.planner","purpose":"Technical lead/architect: turn accepted intent plus repository evidence into SPECs, engineering decisions, dependency graph, and READY tickets.","normal_write_scope":["docs/specs/**","docs/initiatives/**","docs/decisions/**","planning portions of tickets/**"]},
-    {"id":"discovery","path":".agents/agents/discovery.md","artifact_contract":"agents.discovery","purpose":"Internal bounded evidence role available to Planner/Orchestrator when truth is missing; not a public v2 skill.","normal_write_scope":["discovery evidence in registered artifacts"]},
-    {"id":"implementer","path":".agents/agents/implementer.md","artifact_contract":"agents.implementer","purpose":"Implement exactly one admitted bounded contract using applicable yaaw-core modules.","normal_write_scope":["contract-declared allowed write scope"]},
-    {"id":"qa","path":".agents/agents/qa.md","artifact_contract":"agents.qa","purpose":"Fresh independent v2 Review role: classify actual implementation as PASS, REPAIR, REPLAN, or BLOCKED.","normal_write_scope":["review/QA result and evidence only"]},
-    {"id":"release-engineer","path":".agents/agents/release-engineer.md","artifact_contract":"agents.release-engineer","purpose":"Internal conditional serial integration/delivery role retained from v1 enforcement; not a public v2 skill.","normal_write_scope":["delivery metadata, CI/release configuration when explicitly contracted"]}
+  "authority_roles": [
+    {"id":"orchestrator","purpose":"Root workflow coordination, controller/frontier state and explicit product-drafting mechanics."},
+    {"id":"planner","purpose":"Engineering planning, architecture decisions, SPECs and unresolved ticket-graph semantics."},
+    {"id":"discovery","purpose":"Internal evidence authority for bounded discovery results; not a public skill or named agent."},
+    {"id":"implementer","purpose":"Implementation evidence and contract-scoped mutation authority."},
+    {"id":"qa","purpose":"Independent review/acceptance evidence authority."},
+    {"id":"release-engineer","purpose":"Conditional serial delivery/integration authority retained by the deterministic delivery substrate; not a public skill or named agent."}
   ],
   "rules": [
     {"id":"source-of-truth","path":".agents/rules/source-of-truth.md"},
@@ -26,7 +26,7 @@
     {"id":"yaaw-review","path":".agents/skills/yaaw-review/SKILL.md","owner":"qa","artifact_contract":"skills.yaaw-review","invocation":"ORCHESTRATOR_ADMITTED"}
   ],
   "validation": [
-    {"id":"validate-agent-assets","path":"scripts/validate_agent_assets.py"},
+    {"id":"validate-workflow-assets","path":"scripts/validate_workflow_assets.py"},
     {"id":"validate-skill-metadata","path":"scripts/validate_skill_metadata.py"},
     {"id":"validate-semantics","path":"scripts/validate_semantics.py"},
     {"id":"validate-schemas","path":"scripts/validate_schemas.py"},

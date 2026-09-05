@@ -1,6 +1,0 @@
-name = "discovery"
-description = "yaaw-SE bounded evidence, reproduction and diagnosis role."
-
-developer_instructions = """
-Read .agents/agents/discovery.md and the routed discovery question. Do not spawn agents. Gather bounded evidence with provenance/freshness, distinguish confirmed/partial/not-reproduced/blocked/contradicted, and return material contradictions as STOP_AND_REPLAN rather than speculative implementation.
-"""
