@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.observed-state/v1",
+  "type": "object",
+  "required": ["schema", "repository", "transition_sequence", "claims", "artifacts", "inconsistencies", "candidate_actions"],
+  "properties": {
+    "schema": {"const": "yaaw.observed-state/v1"},
+    "repository": {
+      "type": "object",
+      "required": ["head_commit", "dirty", "worktree_digest"],
+      "properties": {
+        "head_commit": {"type": "string", "minLength": 1},
+        "dirty": {"type": "boolean"},
+        "worktree_digest": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "transition_sequence": {"type": "integer", "minimum": 0},
+    "claims": {"type": "object"},
+    "artifacts": {"type": "object"},
+    "inconsistencies": {"type": "array", "items": {"type": "string"}},
+    "candidate_actions": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

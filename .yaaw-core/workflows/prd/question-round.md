@@ -1,7 +1,16 @@
 # PRD question round
 
-Read current `product.md`. Ask at most 10 meaningful product questions about users, problems, behavior, flows, constraints, scope, and non-goals.
+## Purpose
+Resolve only the material product unknowns visible at the current frontier.
 
-For each question provide A/B/C when useful, a recommendation, and a short reason. Free-form answers always override the option set.
+## Inputs
+Current `product.md` and unresolved product questions.
 
-Do not ask engineering implementation questions unless the human explicitly made the implementation method a product constraint.
+## Procedure
+1. Ask at most 10 meaningful questions about users, problems, behavior, flows, constraints, scope, or non-goals.
+2. Use A/B/C options, recommendation, and short reason when useful; never generate filler.
+3. Treat free-form answers as first-class and do not force the offered options.
+4. Do not ask implementation questions unless the human explicitly made implementation a product constraint.
+
+## Output
+A bounded question round awaiting human answers. Do not mutate accepted decisions before answers arrive.

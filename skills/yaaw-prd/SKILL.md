@@ -1,6 +1,10 @@
-# yaaw-prd
-
+---
+name: yaaw-prd
+description: Create or continue product definition and route product clarification or revision work in a YAAW project.
+---
+# YAAW PRD
 ROLE: `prd`
 WORKFLOW: `prd.route`
 
-Load `.yaaw-core/roles/prd.md`, resolve `prd.route` through the workflow registry, and execute it. This is a smart PRD entrypoint; keep all product-workflow logic in `.yaaw-core`.
+## Execute
+Load the PRD role, resolve `prd.route` through the canonical workflow registry, and execute the selected product workflow rather than stopping after classification.

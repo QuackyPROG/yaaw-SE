@@ -1,3 +1,16 @@
+---
+schema: yaaw.ticket/v1
+id: TASK-XXX
+revision: 1
+spec: SPEC-XXX
+spec_revision: 1
+product_revision: 1
+engineering_revision: 1
+status: DRAFT
+dependencies: []
+decision_ids: []
+expertise: []
+---
 # TASK-XXX
 
 ## Goal
@@ -12,6 +25,4 @@
 ## Required tests
 ## Dependencies
 ## Expertise hints
-## Status
-
-DRAFT
+## Status rationale

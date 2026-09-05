@@ -1,10 +1,16 @@
 # Reconcile state
 
-Compare claims with evidence and repair only evidence-backed inconsistencies.
+## Purpose
+Repair only evidence-backed state inconsistencies before routing semantic work.
 
-Examples:
-- `IN_PROGRESS` + expected implementation + passing evidence + no review -> `REVIEW_REQUIRED`.
-- `PASS` + missing implementation or missing/stale review -> inconsistency; never retain PASS blindly.
-- `READY` + implementation already present -> avoid duplicate implementation and inspect/review the work.
+## Inputs
+Current observed-state snapshot, state claims, artifact revisions, repository/evidence/review identity.
 
-If the last trustworthy boundary cannot be proven, return `BLOCKED` rather than guessing.
+## Procedure
+- apply `core/recovery.md`, `core/transitions.md`, and `core/invalidation.md`;
+- examples: `IN_PROGRESS` + implementation + passing verification + no review -> `REVIEW_REQUIRED`; stale `PASS` -> `REPLAN_REQUIRED` or `REVIEW_REQUIRED` according to cause; `READY` + implementation already present -> recover/inspect rather than duplicate;
+- never change product/architecture meaning during reconciliation;
+- every repaired state records transition reason/evidence and increments transition sequence.
+
+## Output
+Reconciled state or `BLOCKED` when the last trustworthy boundary cannot be proven.

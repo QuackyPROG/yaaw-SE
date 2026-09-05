@@ -1,11 +1,18 @@
 # Review ticket
 
-Use a fresh independent context.
+## Purpose
+Independently determine whether current implementation satisfies the current ticket contract.
 
-1. Run `inspect-change`.
-2. Check every acceptance criterion and required test/evidence.
-3. Inspect regressions, failure paths, security/UX/accessibility requirements when relevant.
-4. Run `classify-findings`.
-5. Run `record-review`.
+## Preconditions
+Ticket is `REVIEW_REQUIRED`; source revisions and evidence are current enough to review.
 
-Result exactly one of `PASS`, `REPAIR`, `REPLAN`, `BLOCKED`.
+## Procedure
+1. Use a fresh review context when practical.
+2. Execute `review.inspect-change`.
+3. Check every acceptance criterion and required test/evidence.
+4. Inspect regressions, failure paths, security, UX/accessibility, migration, and compatibility when relevant.
+5. Execute `review.classify-findings`.
+6. Execute `review.record-review`.
+
+## Output
+Exactly one result: `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`.

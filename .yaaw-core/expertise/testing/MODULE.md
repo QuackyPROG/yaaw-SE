@@ -1,9 +1,16 @@
 # Expertise: testing
 
-Signals: acceptance, regression, failure handling, verification, refactor risk.
+## Description
+Specialist test design, regression strategy, verification scope, and evidence-quality guidance. It grants no workflow authority.
 
-Planner: define observable acceptance and required test layers without overspecifying implementation.
+## Required context
+Ticket acceptance criteria, changed surface, project test tooling/conventions, existing relevant tests, and known failure modes.
 
-Implementer: prefer targeted tests that prove behavior and regressions; run project-native checks.
+## Rules
+Planner makes acceptance verifiable. Implementer runs required tests and adds targeted coverage justified by the change. Reviewer checks evidence quality and may run/require additional focused checks when acceptance cannot otherwise be established.
 
-Reviewer: distinguish test existence from useful coverage, inspect negative/failure paths, and require evidence tied to the reviewed state.
+## Anti-patterns
+Tests that only mirror implementation details, skipping failure paths, treating an unrun test suite as passing, or expanding into unrelated test cleanup.
+
+## Verification expectations
+Required tests executed, meaningful failure/regression coverage, reproducible commands/results, and evidence tied to repository identity.

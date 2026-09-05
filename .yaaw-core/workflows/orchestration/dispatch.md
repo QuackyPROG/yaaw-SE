@@ -1,14 +1,17 @@
-# Orchestration dispatch
+# Dispatch one handoff
 
-Run:
+## Purpose
+Execute exactly one already-selected canonical workflow. This file is not the orchestration loop.
 
-`inspect-state -> reconcile-state -> determine-next-action -> dispatch`.
+## Inputs
+`.yaaw/runtime/handoff.json` created by `orchestration.determine-next-action`.
 
-Dispatch through `.yaaw-core/registries/workflows.json`, the same canonical mapping used by manual public skills. Continue bounded autonomous execution across safe workflow boundaries until one of these occurs:
+## Procedure
+1. Validate handoff schema, workflow registry entry, role, source artifact revisions, transition-sequence basis, and repository identity.
+2. If any basis is stale, discard the handoff and return `STALE_HANDOFF` to `orchestration.route`; do not execute it.
+3. Load target role contract, target workflow contract, exact references, selected expertise, and minimal relevant repository context.
+4. Execute the target workflow once.
+5. Require its expected durable output/state/evidence or an explicit stop result.
+6. Mark/remove the consumed runtime handoff and return control to `orchestration.route`.
 
-- human product/engineering answer is required;
-- evidence is insufficient / `BLOCKED`;
-- destructive or externally consequential action requires approval under the host environment;
-- accepted scope reaches terminal `COMPLETE`.
-
-After each workflow, persist artifacts/state and re-enter inspection rather than trusting conversational continuity.
+Never recursively dispatch `orchestration.dispatch` as its own target.

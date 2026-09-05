@@ -1,6 +1,38 @@
 {
-  "frontend-design":{"path":".yaaw-core/expertise/frontend-design/MODULE.md","signals":["UI","layout","component","responsive","interaction","accessibility"],"usable_by":["planner","implementer","reviewer"]},
-  "security":{"path":".yaaw-core/expertise/security/MODULE.md","signals":["auth","authorization","secret","input","permission","security"],"usable_by":["planner","implementer","reviewer"]},
-  "testing":{"path":".yaaw-core/expertise/testing/MODULE.md","signals":["test","verification","regression","acceptance"],"usable_by":["planner","implementer","reviewer"]},
-  "python":{"path":".yaaw-core/expertise/python/MODULE.md","signals":["Python","pyproject.toml","pytest","ruff"],"usable_by":["planner","implementer","reviewer"]}
+  "frontend-design": {
+    "path": ".yaaw-core/expertise/frontend-design/MODULE.md",
+    "description": "UI interaction, responsive behavior, accessibility, state feedback, and component-boundary guidance.",
+    "signals": ["UI", "layout", "component", "responsive", "interaction", "accessibility"],
+    "usable_by": ["planner", "implementer", "reviewer"],
+    "required_context": ["relevant UI files", "design-system/project rules", "user-facing acceptance criteria"],
+    "anti_patterns": ["inventing visual requirements", "ignoring keyboard/focus states", "rewriting unrelated components"],
+    "verification_expectations": ["state coverage", "responsive behavior", "semantics and keyboard/focus behavior"]
+  },
+  "security": {
+    "path": ".yaaw-core/expertise/security/MODULE.md",
+    "description": "Authentication, authorization, trust-boundary, secret, input, and abuse-case guidance.",
+    "signals": ["auth", "authorization", "secret", "input", "permission", "security"],
+    "usable_by": ["planner", "implementer", "reviewer"],
+    "required_context": ["trust boundaries", "sensitive data paths", "relevant auth/project rules"],
+    "anti_patterns": ["security by assumption", "client-only authorization", "logging secrets"],
+    "verification_expectations": ["negative authorization cases", "input/failure paths", "secret/data exposure review"]
+  },
+  "testing": {
+    "path": ".yaaw-core/expertise/testing/MODULE.md",
+    "description": "Test design, verification strategy, regression coverage, and evidence quality guidance.",
+    "signals": ["test", "verification", "regression", "acceptance"],
+    "usable_by": ["planner", "implementer", "reviewer"],
+    "required_context": ["ticket acceptance", "project test tooling", "changed surface"],
+    "anti_patterns": ["tests that restate implementation", "ignoring failure paths", "claiming PASS from unrun tests"],
+    "verification_expectations": ["required tests executed", "targeted regressions", "reproducible evidence"]
+  },
+  "python": {
+    "path": ".yaaw-core/expertise/python/MODULE.md",
+    "description": "Repository-aware Python design, typing, runtime, IO/error, async, tooling, and review guidance.",
+    "signals": ["Python", "pyproject.toml", "pytest", "ruff", "typing"],
+    "usable_by": ["planner", "implementer", "reviewer"],
+    "required_context": ["pyproject/tool config", "supported Python version", "relevant package/test files"],
+    "anti_patterns": ["overriding local conventions", "unexamined sync/async mixing", "broad exception swallowing"],
+    "verification_expectations": ["project tooling passes", "error/resource behavior checked", "typing/runtime assumptions validated"]
+  }
 }

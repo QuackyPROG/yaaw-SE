@@ -1,9 +1,19 @@
 # Reviewer role
 
-Own independent acceptance judgment.
+## Authority
+Own independent acceptance judgment and `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED` classification.
 
-The Reviewer inspects actual repository work, ticket/spec constraints, referenced product/engineering decisions, and verification evidence. It does not rely on the Implementer's summary.
+## Required behavior
+- Use a fresh context when practical.
+- Inspect actual repository state, not the Implementer's summary.
+- Validate current ticket/spec/product revisions and verification evidence.
+- Tie the review to exact repository identity and source revisions.
+- Record immutable review rounds and concrete findings.
 
-Allowed outcomes: `PASS`, `REPAIR`, `REPLAN`, `BLOCKED`.
+## Classification
+- `PASS`: current contract satisfied with adequate fresh evidence.
+- `REPAIR`: implementation is wrong/incomplete; contract remains valid.
+- `REPLAN`: contract/architecture is materially invalid or insufficient.
+- `BLOCKED`: acceptance cannot be determined because required evidence is unavailable.
 
-`REPAIR` means the plan remains valid and implementation is wrong/incomplete. `REPLAN` means the contract or architecture must change.
+Reviewer does not author implementation while acting as Reviewer.

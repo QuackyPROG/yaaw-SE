@@ -1,16 +1,28 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"yaaw.handoff/v1",
-  "type":"object",
-  "required":["schema","role","workflow","active_artifact","references","expertise","expected_output"],
-  "properties":{
-    "schema":{"const":"yaaw.handoff/v1"},
-    "role":{"enum":["prd","planner","implementer","reviewer","orchestrator"]},
-    "workflow":{"type":"string","minLength":1},
-    "active_artifact":{"type":"string","minLength":1},
-    "references":{"type":"array","items":{"type":"string"}},
-    "expertise":{"type":"array","items":{"type":"string"}},
-    "expected_output":{"type":"string","minLength":1}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.handoff/v1",
+  "type": "object",
+  "required": ["schema", "role", "workflow", "active_artifact", "references", "revisions", "expertise", "expected_output", "repository", "transition_sequence"],
+  "properties": {
+    "schema": {"const": "yaaw.handoff/v1"},
+    "role": {"enum": ["prd", "planner", "implementer", "reviewer", "orchestrator"]},
+    "workflow": {"type": "string", "minLength": 1},
+    "active_artifact": {"type": "string", "minLength": 1},
+    "references": {"type": "array", "items": {"type": "string"}},
+    "revisions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "expertise": {"type": "array", "items": {"type": "string"}},
+    "expected_output": {"type": "string", "minLength": 1},
+    "repository": {
+      "type": "object",
+      "required": ["head_commit", "dirty", "worktree_digest"],
+      "properties": {
+        "head_commit": {"type": "string", "minLength": 1},
+        "dirty": {"type": "boolean"},
+        "worktree_digest": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "transition_sequence": {"type": "integer", "minimum": 0}
   },
-  "additionalProperties":false
+  "additionalProperties": false
 }

@@ -1,17 +1,74 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"yaaw.project-state/v1",
-  "type":"object",
-  "required":["schema","phase","product","planning","tickets"],
-  "properties":{
-    "schema":{"const":"yaaw.project-state/v1"},
-    "phase":{"enum":["product","planning","implementation","complete","blocked"]},
-    "product":{"type":"object","required":["artifact","status"],"properties":{"artifact":{"type":"string"},"status":{"enum":["missing","draft","ready","blocked"]}}},
-    "planning":{"type":"object","required":["artifact","status"],"properties":{"artifact":{"type":"string"},"status":{"enum":["missing","discovery","questions","ready","blocked"]},"active_spec":{"type":["string","null"]}}},
-    "active_ticket":{"type":["string","null"]},
-    "tickets":{"type":"object","additionalProperties":{"enum":["DRAFT","READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","REPLAN_REQUIRED","BLOCKED","PASS","CANCELLED"]}},
-    "last_observed_commit":{"type":["string","null"]},
-    "last_workflow":{"type":["string","null"]}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.project-state/v1",
+  "type": "object",
+  "required": ["schema", "phase", "product", "planning", "active_ticket", "tickets", "transition_sequence", "last_transition", "blocker", "last_observed_commit", "last_workflow"],
+  "properties": {
+    "schema": {"const": "yaaw.project-state/v1"},
+    "phase": {"enum": ["product", "planning", "implementation", "complete", "blocked"]},
+    "product": {
+      "type": "object",
+      "required": ["artifact", "status", "revision"],
+      "properties": {
+        "artifact": {"type": "string"},
+        "status": {"enum": ["missing", "draft", "ready", "blocked"]},
+        "revision": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "planning": {
+      "type": "object",
+      "required": ["artifact", "status", "revision", "current_frontier", "readiness", "active_spec"],
+      "properties": {
+        "artifact": {"type": "string"},
+        "status": {"enum": ["missing", "discovery", "questions", "ready", "blocked"]},
+        "revision": {"type": "integer", "minimum": 0},
+        "current_frontier": {"type": ["string", "null"]},
+        "readiness": {"enum": ["pending", "PASS", "MISSING_DECISIONS", "PRODUCT_GAP", "REPLAN", "BLOCKED"]},
+        "active_spec": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "active_ticket": {"type": ["string", "null"], "pattern": "^TASK-[0-9]+$"},
+    "tickets": {"type": "object", "additionalProperties": {"enum": ["DRAFT", "READY", "IN_PROGRESS", "REVIEW_REQUIRED", "REPAIR_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PASS", "CANCELLED"]}},
+    "transition_sequence": {"type": "integer", "minimum": 0},
+    "last_transition": {
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["sequence", "subject", "from", "to", "workflow", "reason", "evidence", "observed_commit"],
+          "properties": {
+            "sequence": {"type": "integer", "minimum": 1},
+            "subject": {"type": "string", "minLength": 1},
+            "from": {"type": ["string", "null"]},
+            "to": {"type": "string", "minLength": 1},
+            "workflow": {"type": "string", "minLength": 1},
+            "reason": {"type": "string", "minLength": 1},
+            "evidence": {"type": "array", "items": {"type": "string"}},
+            "observed_commit": {"type": ["string", "null"]}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "blocker": {
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["kind", "summary", "missing"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "summary": {"type": "string", "minLength": 1},
+            "missing": {"type": "array", "items": {"type": "string"}}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "last_observed_commit": {"type": ["string", "null"]},
+    "last_workflow": {"type": ["string", "null"]}
   },
-  "additionalProperties":false
+  "additionalProperties": false
 }

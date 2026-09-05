@@ -1,0 +1,12 @@
+{
+  "schema": "yaaw.handoff/v1",
+  "role": "implementer",
+  "workflow": "implementation.implement-ticket",
+  "active_artifact": ".yaaw/tickets/TASK-000.md",
+  "references": [],
+  "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
+  "expertise": [],
+  "expected_output": "implementation_evidence",
+  "repository": {"head_commit": "COMMIT", "dirty": false, "worktree_digest": "DIGEST"},
+  "transition_sequence": 0
+}

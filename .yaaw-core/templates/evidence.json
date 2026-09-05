@@ -1,0 +1,12 @@
+{
+  "schema": "yaaw.evidence/v1",
+  "id": "EVIDENCE-TASK-000-V1",
+  "ticket": "TASK-000",
+  "ticket_revision": 1,
+  "spec_revision": 1,
+  "kind": "implementation_verification",
+  "repository": {"head_commit": "COMMIT", "dirty": true, "worktree_digest": "DIGEST"},
+  "workflow": "implementation.verify-ticket",
+  "commands": [],
+  "checks": []
+}

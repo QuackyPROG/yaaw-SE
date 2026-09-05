@@ -1,6 +1,10 @@
-# yaaw-revise-prd
-
+---
+name: yaaw-revise-prd
+description: Change accepted YAAW product intent and invalidate downstream engineering contracts whose basis became stale.
+---
+# YAAW Revise PRD
 ROLE: `prd`
 WORKFLOW: `prd.revise`
 
-Direct shortcut to the canonical PRD revise workflow. Load the PRD role and registry target; contain no independent revision logic.
+## Execute
+Load the PRD role and execute the canonical revision workflow. Preserve history, increment product revision, and use core invalidation propagation.

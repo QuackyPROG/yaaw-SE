@@ -1,5 +1,17 @@
 # Inspect state
 
-Read `.yaaw/state.json`, product/engineering artifacts, active specs/tickets/reviews/evidence, repository status/diff/log/current branch, and relevant project rules.
+## Purpose
+Create a non-mutating observed-reality snapshot that separates claims from evidence.
 
-Produce a compact observed-state model that separates state claims from repository/artifact evidence. Do not mutate yet.
+## Inputs
+`.yaaw/state.json`, product/engineering artifacts, current specs/tickets/reviews/evidence/runtime files, project rules, and repository status/diff/log/branch.
+
+## Procedure
+1. Compute current repository identity.
+2. Read machine-readable artifact metadata and active durable artifacts.
+3. Compare state claims with artifact/repository/review evidence without repairing yet.
+4. List inconsistencies, stale artifacts/handoffs, blockers, and candidate next states.
+5. Write replaceable `.yaaw/runtime/observed-state.json` conforming to the observed-state schema.
+
+## Output
+Observed-state snapshot only; no semantic or ticket-state mutation.

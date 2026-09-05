@@ -1,7 +1,18 @@
 # Create specification
 
-Precondition: readiness `PASS` for the target frontier.
+## Purpose
+Materialize one coherent ready engineering frontier as a durable implementation contract.
 
-Create the next `SPEC-NNN` from the spec template. Reference source product sections and `ENG-*` decisions rather than copying full planning history. Cover boundaries, behavior, data/state changes, interfaces, failures, security, UX/accessibility where relevant, tests, observability, migration/compatibility, non-goals, risks, and acceptance conditions.
+## Preconditions
+Current frontier readiness is `PASS` and its product/engineering revisions still match.
 
-Do not invent unresolved decisions during spec writing.
+## Procedure
+1. Allocate the next `SPEC-NNN` and create from the canonical template.
+2. Record metadata: revision, product revision, engineering revision, frontier ID, decision IDs, and status.
+3. Write goal, repository context, boundaries, behavior, data/state, interfaces, failure modes, security, UX/accessibility, tests, observability, migration/compatibility, non-goals, risks, and acceptance conditions as relevant.
+4. Reference `ENG-*` decisions rather than copying planning history.
+5. Validate required metadata/sections and confirm no unresolved material decision was invented.
+6. Mark spec `ACCEPTED`; otherwise leave `DRAFT`/route back to planning.
+
+## Output
+One current accepted spec or an explicit planning gap.

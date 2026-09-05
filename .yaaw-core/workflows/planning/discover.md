@@ -1,11 +1,16 @@
 # Planning discovery
 
-Before engineering questions:
+## Purpose
+Establish repository-backed engineering facts before asking technical questions.
 
-- read `.yaaw/product.md`;
-- inspect repository structure and relevant implementation areas;
-- read project rules and existing `engineering.md`;
-- inspect applicable specs/tickets when continuing work;
-- distinguish observed facts from assumptions.
+## Inputs
+Current product revision, existing engineering artifact, project rules, relevant specs/tickets, and repository.
 
-Output repository/system observations to `engineering.md`; do not keep them only in context.
+## Procedure
+- inspect repository structure, language/framework/tooling, existing interfaces/data boundaries, tests, deployment/migration constraints, and relevant implementation areas;
+- distinguish observed facts from assumptions;
+- identify product requirements that interact with existing system constraints;
+- do not ask engineering questions yet.
+
+## Output
+Repository/system observations and evidence references for `planning.write-understanding`.

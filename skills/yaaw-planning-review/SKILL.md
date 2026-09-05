@@ -1,6 +1,10 @@
-# yaaw-planning-review
-
+---
+name: yaaw-planning-review
+description: Freshly assess whether the current YAAW engineering frontier is ready for implementation without material invention.
+---
+# YAAW Planning Review
 ROLE: `planner`
 WORKFLOW: `planning.readiness-review`
 
-Direct shortcut to a fresh planning-readiness review. It asks whether the next frontier is executable without material invention and returns only the canonical readiness outcomes.
+## Execute
+Load the Planner role and readiness workflow in a fresh context when practical. Record the frontier, source revisions, result, reason, and evidence durably.

@@ -1,15 +1,19 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"yaaw.review/v1",
-  "type":"object",
-  "required":["schema","ticket","round","result","reviewed_state","findings"],
-  "properties":{
-    "schema":{"const":"yaaw.review/v1"},
-    "ticket":{"pattern":"^TASK-[0-9]+$"},
-    "round":{"type":"integer","minimum":1},
-    "result":{"enum":["PASS","REPAIR","REPLAN","BLOCKED"]},
-    "reviewed_state":{"type":"string","minLength":1},
-    "findings":{"type":"array","items":{"type":"object","required":["id","severity","summary"],"properties":{"id":{"pattern":"^F-[0-9]+$"},"severity":{"enum":["LOW","MEDIUM","HIGH","CRITICAL"]},"summary":{"type":"string"}}}}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.review/v1",
+  "type": "object",
+  "required": ["schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"],
+  "properties": {
+    "schema": {"const": "yaaw.review/v1"},
+    "ticket": {"type": "string", "pattern": "^TASK-[0-9]+$"},
+    "round": {"type": "integer", "minimum": 1},
+    "result": {"enum": ["PASS", "REPAIR", "REPLAN", "BLOCKED"]},
+    "ticket_revision": {"type": "integer", "minimum": 1},
+    "spec_revision": {"type": "integer", "minimum": 1},
+    "reviewed_head_commit": {"type": "string", "minLength": 1},
+    "reviewed_dirty": {"type": "boolean"},
+    "reviewed_worktree_digest": {"type": "string", "minLength": 1},
+    "evidence": {"type": "array", "items": {"type": "string"}, "minItems": 1}
   },
-  "additionalProperties":true
+  "additionalProperties": false
 }

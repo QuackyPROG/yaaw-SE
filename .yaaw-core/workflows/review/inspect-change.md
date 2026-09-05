@@ -1,5 +1,16 @@
 # Inspect change
 
-Reviewer loads ticket, source spec, referenced product/engineering decisions, actual diff/repository state, relevant project rules, test evidence, and expertise. Ignore implementation summaries when they conflict with observed work.
+## Purpose
+Build an evidence-grounded view of the actual implementation to review.
 
-Identify the exact repository state being reviewed so acceptance can become stale if that state changes later.
+## Inputs
+Current ticket/spec/product/engineering revisions, actual repository state, project rules, verification evidence, and relevant expertise.
+
+## Procedure
+1. Revalidate source revisions and reject stale review inputs.
+2. Compute/record repository identity using `rules/repository-identity.md`.
+3. Inspect actual diff/files/tests/evidence; ignore implementation summaries when they conflict with observed work.
+4. Identify acceptance criteria, failure paths, regressions, and domain-specific requirements that must be checked.
+
+## Output
+Review inspection tied to exact repository and contract identity.

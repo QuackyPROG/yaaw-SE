@@ -2,4 +2,8 @@
 
 State files are claims. Observed repository evidence is stronger for implementation reality.
 
-Safe reconciliation requires enough evidence to identify the last trustworthy boundary. When that cannot be established, preserve evidence, avoid destructive re-execution, and return `BLOCKED` with the exact missing proof.
+Safe reconciliation requires enough evidence to identify the last trustworthy boundary and exact repository identity. Use evidence records, current artifact revisions, git history/diff, and review records together.
+
+When the boundary cannot be established, preserve evidence, avoid destructive re-execution, and return `BLOCKED` with exact missing proof.
+
+Never execute a runtime handoff whose repository or source-revision basis is stale.

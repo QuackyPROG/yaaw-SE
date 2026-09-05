@@ -1,14 +1,15 @@
 # Write engineering understanding
 
-Update `.yaaw/engineering.md` with:
+## Purpose
+Create the durable checkpoint from which a fresh Planner can continue.
 
-- product interpretation;
-- existing system observations;
-- engineering constraints;
-- problems requiring decisions;
-- current known decisions;
-- assumptions and risks;
-- current decision frontier;
-- future fog.
+## Inputs
+Product interpretation plus discovery observations.
 
-This write is the checkpoint a human or fresh Planner can inspect before questioning continues.
+## Procedure
+Update `.yaaw/engineering.md` with product interpretation, existing-system facts, engineering constraints, problems requiring decisions, known decisions, assumptions, risks, current frontier, future fog, and architecture spine.
+
+Increment engineering revision when the durable engineering contract/understanding materially changes. Record provenance for repository observations and product dependencies.
+
+## Output
+Updated engineering artifact ready for frontier analysis or questioning.

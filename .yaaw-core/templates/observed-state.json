@@ -1,0 +1,9 @@
+{
+  "schema": "yaaw.observed-state/v1",
+  "repository": {"head_commit": "COMMIT", "dirty": false, "worktree_digest": "DIGEST"},
+  "transition_sequence": 0,
+  "claims": {},
+  "artifacts": {},
+  "inconsistencies": [],
+  "candidate_actions": []
+}

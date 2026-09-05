@@ -1,6 +1,10 @@
-# yaaw-implement
-
+---
+name: yaaw-implement
+description: Implement one admitted READY YAAW ticket and produce repository-identity-bound verification evidence.
+---
+# YAAW Implement
 ROLE: `implementer`
 WORKFLOW: `implementation.implement-ticket`
 
-Load the Implementer role and canonical workflow through the registries. Implement exactly one admitted ticket unless the orchestrator later dispatches another fresh iteration.
+## Execute
+Load the Implementer role and canonical workflow. Implement exactly one admitted ticket; never self-approve or silently change its contract.

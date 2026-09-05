@@ -14,3 +14,5 @@ Reason: ...
 ```
 
 Free-form answers are first-class. New unknowns discovered from an answer belong in the next round unless they block recording the current answer safely.
+
+Before presenting another round, persist the accepted answers and update unresolved questions/frontier.

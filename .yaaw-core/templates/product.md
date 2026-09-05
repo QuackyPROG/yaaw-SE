@@ -1,3 +1,8 @@
+---
+schema: yaaw.product/v1
+revision: 1
+status: draft
+---
 # Product
 
 ## Goal

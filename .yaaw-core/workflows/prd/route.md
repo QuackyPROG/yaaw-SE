@@ -1,11 +1,23 @@
 # PRD route
 
-Inspect `.yaaw/product.md` and current request, then select exactly one: `CREATE`, `CONTINUE`, `REFINE`, `REVISE`, `READY`.
+## Purpose
+Choose and execute the next product-definition workflow from current product state and the human's request.
 
-- Missing product artifact -> `CREATE`.
-- Partial artifact with unresolved product questions -> `CONTINUE`.
-- Existing artifact needing clarity without intent change -> `REFINE`.
-- Human requests changed product intent -> `REVISE`.
-- Accepted product intent is sufficient for the current frontier -> `READY`.
+## Inputs
+`.yaaw/product.md` if present, `.yaaw/state.json`, current request, and relevant accepted product history.
 
-Do not infer engineering choices as product decisions.
+## Procedure
+1. Classify exactly one route:
+   - missing product -> `prd.create`;
+   - draft product with unresolved questions -> `prd.question-round`;
+   - clarity-only cleanup requested -> `prd.refine`;
+   - accepted intent change requested -> `prd.revise`;
+   - sufficient current intent -> terminal PRD result `READY`.
+2. For a workflow route, resolve the canonical ID through `registries/workflows.json` and execute it; do not stop after classification.
+3. After the workflow writes durable output, re-evaluate product state or return control to Orchestrator.
+
+## Output
+Either one executed canonical PRD workflow or `READY` with the current product revision.
+
+## Stop conditions
+Stop for human answers when material product ambiguity remains. Never infer engineering implementation choices as product intent.

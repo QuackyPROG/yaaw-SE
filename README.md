@@ -2,34 +2,31 @@
 
 YAAW-SE v2 is an artifact-first autonomous software-engineering workflow.
 
-> Agents are disposable. Artifacts are durable.
+> **Agents are disposable. Artifacts are durable.**
 
-The public API lives in `skills/`. Canonical behavior lives in `.yaaw-core/`. Project-specific durable memory lives in `.yaaw/` inside the project using YAAW.
+`skills/` is the public workflow API. `.yaaw-core/` is the canonical implementation. A consuming project stores durable memory under `.yaaw/`.
 
-## Public entrypoints
-
-- `@yaaw-orchestrator` — reconstruct reality and choose the next valid workflow.
-- `@yaaw-prd` — create, continue, revise, or refine product intent.
-- `@yaaw-planner` — discover, question, decide, review readiness, specify, and ticket.
+## Public skills
+Core smart entrypoints:
+- `@yaaw-orchestrator` — reconstruct reality and continue/recover autonomously.
+- `@yaaw-prd` — create/continue/refine/revise product definition.
+- `@yaaw-planner` — continue engineering discovery, decisions, readiness, spec, or ticket planning.
 - `@yaaw-implement` — implement one admitted ticket.
-- `@yaaw-review` — independently review actual work and evidence.
+- `@yaaw-review` — independently review current work.
 
-Convenience shortcuts route to the exact same canonical workflows: `@yaaw-revise-prd`, `@yaaw-refine-prd`, `@yaaw-create-spec`, `@yaaw-create-tickets`, and `@yaaw-repair`.
+Direct shortcuts using the same canonical workflows:
+- `@yaaw-revise-prd`
+- `@yaaw-refine-prd`
+- `@yaaw-planning-review`
+- `@yaaw-create-spec`
+- `@yaaw-create-ticket`
+- `@yaaw-create-tickets`
+- `@yaaw-repair`
 
 ## Core model
+Each execution composes **Role** (authority) + **Workflow** (process) + relevant **Expertise** (specialist knowledge). Expertise never grants authority.
 
-YAAW composes three things for each execution context:
-
-1. **Role** — who owns the judgment.
-2. **Workflow** — what process is executing.
-3. **Expertise** — specialist knowledge loaded only when relevant.
-
-State is a routing cache, not universal truth. Repository contents, git evidence, accepted artifacts, and independent review evidence remain authoritative in their domains.
-
-## Project artifacts
-
-A project using YAAW should maintain:
-
+## Project memory
 ```text
 .yaaw/
 ├── product.md
@@ -39,7 +36,12 @@ A project using YAAW should maintain:
 ├── tickets/
 ├── reviews/
 ├── evidence/
-└── rules/
+├── rules/
+└── runtime/
+    ├── observed-state.json
+    └── handoff.json
 ```
 
-See `.yaaw-core/README.md` for the canonical architecture and lifecycle.
+State is a claim/routing cache. Product intent, engineering contracts, repository reality, and fresh review evidence have domain-specific authority. Runtime files are replaceable coordination caches and must be revalidated before use.
+
+See `.yaaw-core/README.md` for lifecycle, transition, invalidation, and recovery contracts.

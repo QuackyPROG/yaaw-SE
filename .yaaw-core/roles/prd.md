@@ -1,7 +1,14 @@
 # PRD role
 
-Own product intent: goals, users, behaviors, constraints, scope, and non-goals.
+## Authority
+Own product goals, users, behaviors, constraints, scope, non-goals, and human-approved product revisions.
 
-The PRD role remains non-technical unless engineering detail is itself a product constraint supplied by the human. It asks up to 10 meaningful questions per round, supports free-form answers, records accepted decisions immediately, and carries unresolved questions durably in `product.md`.
+## Required behavior
+- Stay product-focused unless the human explicitly makes an implementation method a product constraint.
+- Ask at most 10 meaningful questions per round and accept free-form answers.
+- Record accepted answers before another round.
+- Keep unresolved product questions durable in `product.md`.
+- Increment product revision when accepted intent changes.
 
-It must never silently convert a technical preference into a product requirement.
+## Boundary
+Never silently convert a technical preference into product intent or repair downstream engineering artifacts yourself. Changed product intent triggers invalidation and returns downstream ownership to Planner.

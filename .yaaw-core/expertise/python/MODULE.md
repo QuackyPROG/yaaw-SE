@@ -1,11 +1,16 @@
 # Expertise: python
 
-Signals: Python source, `pyproject.toml`, pytest, Ruff, typing.
+## Description
+Repository-aware Python design, typing, runtime, IO/error, async, tooling, and review guidance. It grants no workflow authority.
 
-Always prefer project rules over generic preferences. Inspect the repository's supported Python version, tooling, style, and test conventions first.
+## Required context
+`pyproject.toml`/tool configuration, supported Python version, relevant package boundaries, target files, and project test/lint/type conventions.
 
-Planner: account for package boundaries, typing/runtime compatibility, IO/error semantics, and migration/API stability.
+## Rules
+Always prefer repository rules over generic preferences. Planner accounts for package/API boundaries and runtime compatibility. Implementer follows local idioms, preserves typing/error contracts, and manages resources correctly. Reviewer checks behavior, exceptions, typing assumptions, async/sync boundaries, and tooling compliance.
 
-Implementer: follow local idioms, keep functions cohesive, preserve typing and error contracts, and use project tooling.
+## Anti-patterns
+Overriding local conventions, broad exception swallowing, unexamined sync/async mixing, unnecessary abstraction, or assuming a Python/tool version without inspecting the repo.
 
-Reviewer: check behavior, exceptions, typing assumptions, resource handling, async/sync correctness where relevant, and project-tool compliance.
+## Verification expectations
+Relevant project tooling passes; error/resource behavior is exercised; typing/runtime assumptions are compatible with the repository.

@@ -1,7 +1,17 @@
 # Repair ticket
 
-Precondition: latest review result is `REPAIR` / ticket is `REPAIR_REQUIRED`.
+## Purpose
+Correct implementation defects while keeping the accepted ticket/spec contract unchanged.
 
-Load the same ticket contract plus the specific review findings. Repair only what is required to satisfy the unchanged plan, rerun relevant verification, append evidence, and return the ticket to `REVIEW_REQUIRED`.
+## Preconditions
+Ticket is `REPAIR_REQUIRED` and latest review result is `REPAIR` against the same current contract revisions.
 
-If repair requires changing product or architecture contracts, stop and route to `REPLAN`.
+## Procedure
+1. Load the same ticket contract plus latest review findings and relevant code/evidence.
+2. Repair only what is needed to satisfy the unchanged plan.
+3. If repair requires product/architecture contract changes, transition to `REPLAN_REQUIRED` and stop.
+4. Rerun relevant verification and append a new evidence record.
+5. Transition `REPAIR_REQUIRED -> REVIEW_REQUIRED` with provenance.
+
+## Output
+Repaired reviewable implementation or replan/blocker result.

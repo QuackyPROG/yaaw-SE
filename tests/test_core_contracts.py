@@ -17,14 +17,69 @@ class CoreContractsTest(unittest.TestCase):
             self.assertIn(entry["workflow_id"], self.workflows, skill)
             self.assertEqual(entry["role"], self.workflows[entry["workflow_id"]]["role"], skill)
 
+    def test_public_skills_have_agent_skill_frontmatter(self):
+        for skill in self.skills:
+            text = (ROOT / "skills" / skill / "SKILL.md").read_text()
+            self.assertTrue(text.startswith("---\nname: "), skill)
+            self.assertIn(f"name: {skill}\n", text, skill)
+            self.assertIn("\ndescription: ", text, skill)
+
     def test_public_skills_are_thin(self):
         for skill in self.skills:
             lines = (ROOT / "skills" / skill / "SKILL.md").read_text().splitlines()
-            self.assertLessEqual(len(lines), 20, skill)
+            self.assertLessEqual(len(lines), 24, skill)
 
-    def test_registered_workflow_files_exist(self):
+    def test_registered_workflow_files_exist_and_are_operational_contracts(self):
         for workflow_id, entry in self.workflows.items():
-            self.assertTrue((ROOT / entry["workflow"]).is_file(), workflow_id)
+            path = ROOT / entry["workflow"]
+            self.assertTrue(path.is_file(), workflow_id)
+            self.assertIn("## Purpose", path.read_text(), workflow_id)
+
+    def test_orchestrator_route_and_dispatch_are_not_aliases(self):
+        self.assertNotEqual(
+            self.workflows["orchestration.route"]["workflow"],
+            self.workflows["orchestration.dispatch"]["workflow"],
+        )
+        dispatch = (CORE / "workflows/orchestration/dispatch.md").read_text()
+        self.assertIn("This file is not the orchestration loop", dispatch)
+        self.assertIn("Never recursively dispatch", dispatch)
+
+    def test_routing_state_precedence_prevents_review_repair_loop(self):
+        text = (CORE / "core/routing.md").read_text()
+        order = [
+            text.index("If a ticket is `REPLAN_REQUIRED`"),
+            text.index("If a ticket is `REPAIR_REQUIRED`"),
+            text.index("If a ticket is `REVIEW_REQUIRED`"),
+            text.index("If a ticket is `IN_PROGRESS`"),
+            text.index("ticket is `READY`"),
+        ]
+        self.assertEqual(order, sorted(order))
+
+    def test_state_schema_can_represent_transition_provenance(self):
+        state = json.loads((CORE / "schemas/project-state.schema.json").read_text())
+        required = set(state["required"])
+        self.assertTrue({"transition_sequence", "last_transition", "blocker"}.issubset(required))
+        transition = state["properties"]["last_transition"]["anyOf"][1]
+        self.assertTrue({"reason", "evidence", "workflow", "observed_commit"}.issubset(set(transition["required"])))
+
+    def test_review_and_evidence_bind_repository_identity(self):
+        review = json.loads((CORE / "schemas/review.schema.json").read_text())
+        self.assertTrue({"reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"}.issubset(set(review["required"])))
+        evidence = json.loads((CORE / "schemas/evidence.schema.json").read_text())
+        self.assertIn("repository", evidence["required"])
+        self.assertEqual(set(review["properties"]["result"]["enum"]), {"PASS", "REPAIR", "REPLAN", "BLOCKED"})
+
+    def test_transition_contract_forbids_self_acceptance_shortcuts(self):
+        text = (CORE / "core/transitions.md").read_text()
+        for forbidden in ["DRAFT -> PASS", "READY -> PASS", "REPAIR_REQUIRED -> PASS"]:
+            self.assertIn(forbidden, text)
+        self.assertIn("PASS | REPLAN_REQUIRED", text)
+
+    def test_invalidation_preserves_history_but_revokes_current_trust(self):
+        text = (CORE / "core/invalidation.md").read_text()
+        self.assertIn("Prior reviews remain immutable historical evidence", text)
+        self.assertIn("REPLAN_REQUIRED", text)
+        self.assertIn("STALE", text)
 
     def test_no_named_agent_layer(self):
         self.assertFalse((ROOT / ".agents").exists())
@@ -35,18 +90,6 @@ class CoreContractsTest(unittest.TestCase):
         self.assertIn("must not author product decisions", text)
         self.assertIn("architecture", text)
         self.assertIn("acceptance", text)
-
-    def test_review_outcomes_and_ticket_states_are_locked(self):
-        review = json.loads((CORE / "schemas/review.schema.json").read_text())
-        outcomes = set(review["properties"]["result"]["enum"])
-        self.assertEqual(outcomes, {"PASS", "REPAIR", "REPLAN", "BLOCKED"})
-        state = json.loads((CORE / "schemas/project-state.schema.json").read_text())
-        states = set(state["properties"]["tickets"]["additionalProperties"]["enum"])
-        self.assertIn("READY", states)
-        self.assertIn("REVIEW_REQUIRED", states)
-        self.assertIn("REPAIR_REQUIRED", states)
-        self.assertIn("REPLAN_REQUIRED", states)
-        self.assertIn("PASS", states)
 
 
 if __name__ == "__main__":
