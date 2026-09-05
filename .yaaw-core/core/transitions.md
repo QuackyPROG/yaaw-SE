@@ -2,6 +2,8 @@
 
 State names are not enough; only the transitions below are legal unless an explicit recovery rule documents a narrower evidence-backed exception.
 
+The machine-readable transition table used by conformance tests lives in `.yaaw-core/registries/transitions.json`. This document remains the human-readable explanation and CI checks the registry against workflow IDs and the project-state schema.
+
 ## Ticket transitions
 | From | To | Owner/workflow | Required basis |
 |---|---|---|---|

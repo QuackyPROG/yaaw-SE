@@ -22,5 +22,9 @@ jobs:
           python-version: '3.12'
       - name: Validate contracts, manifests, schemas, and templates
         run: python scripts/validate_core.py
-      - name: Run contract tests
+      - name: Validate lifecycle behavior
+        run: python scripts/validate_behavior.py
+      - name: Run lifecycle fixture oracle
+        run: python scripts/behavior_oracle.py
+      - name: Run contract and behavioral tests
         run: python -m unittest discover -s tests -v

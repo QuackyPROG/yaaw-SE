@@ -15,12 +15,15 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Implementer never self-approves. Acceptance requires independent review tied to repository/source identity.
 - Conversation must never be the only location of an accepted decision.
 - State transitions follow `core/transitions.md`; upstream changes follow `core/invalidation.md`.
+- Behavioral oracles/fixtures are conformance infrastructure only. They must never become a second semantic runtime or override canonical workflow authority.
 
 ## Change discipline
-When changing a skill, update registry/description together rather than copying workflow logic. When changing lifecycle states, routing, review outcomes, artifact metadata, or evidence identity, update schemas/templates/rules/tests together.
+When changing a skill, update registry/description together rather than copying workflow logic. When changing lifecycle states, routing, review outcomes, artifact metadata, evidence identity, or recovery semantics, update schemas/templates/rules/machine contracts/fixtures/tests together.
 
 Run:
 ```text
 python scripts/validate_core.py
+python scripts/validate_behavior.py
+python scripts/behavior_oracle.py
 python -m unittest discover -s tests -v
 ```

@@ -1,0 +1,13 @@
+{
+  "schema": "yaaw.project-state/v1",
+  "phase": "complete",
+  "product": {"artifact": ".yaaw/product.md", "status": "ready", "revision": 3},
+  "planning": {"artifact": ".yaaw/engineering.md", "status": "ready", "revision": 5, "current_frontier": "F-001", "readiness": "PASS", "active_spec": "SPEC-001"},
+  "active_ticket": null,
+  "tickets": {"TASK-001": "PASS"},
+  "transition_sequence": 4,
+  "last_transition": {"sequence": 4, "subject": "TASK-001", "from": "REVIEW_REQUIRED", "to": "PASS", "workflow": "review.record-review", "reason": "fresh review passed", "evidence": [".yaaw/reviews/TASK-001-R1.md", "EVIDENCE-TASK-001-V1"], "observed_commit": "abc123"},
+  "blocker": null,
+  "last_observed_commit": "abc123",
+  "last_workflow": "review.record-review"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "yaaw.routing-policy/v1",
+  "product_unready_workflow": "prd.route",
+  "planning_unready_workflow": "planning.route",
+  "missing_spec_workflow": "planning.create-spec",
+  "missing_tickets_workflow": "planning.create-tickets",
+  "next_frontier_workflow": "planning.route",
+  "complete_terminal": "COMPLETE",
+  "ticket_state_precedence": [
+    {"state": "REPLAN_REQUIRED", "workflow": "planning.replan"},
+    {"state": "REPAIR_REQUIRED", "workflow": "implementation.repair-ticket"},
+    {"state": "REVIEW_REQUIRED", "workflow": "review.review-ticket"},
+    {"state": "IN_PROGRESS", "workflow": "orchestration.recover-interruption"},
+    {"state": "READY", "workflow": "implementation.implement-ticket"}
+  ]
+}

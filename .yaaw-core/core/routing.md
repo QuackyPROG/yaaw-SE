@@ -2,6 +2,8 @@
 
 Routing chooses exactly one next canonical workflow from observed reality. Explicit state beats broad heuristics.
 
+The machine-readable precedence used by conformance tests lives in `.yaaw-core/registries/routing-policy.json`. This document explains the same semantics; CI must fail if the machine contract drifts from the workflow registry or lifecycle fixtures.
+
 ## Priority
 1. Resolve material state inconsistency or incomplete recovery.
 2. If accepted product intent is missing or newly invalidated, route to PRD.
@@ -21,5 +23,8 @@ Routing chooses exactly one next canonical workflow from observed reality. Expli
 - Never implement a `REPLAN_REQUIRED` ticket.
 - Never preserve `PASS` after source revision or repository identity invalidates its review.
 - When evidence is insufficient to choose safely, route to recovery and ultimately `BLOCKED` rather than guessing.
+
+## Conformance rule
+Behavioral fixtures may reconcile only transitions explicitly justified by durable/repository evidence. They must never make product or architecture decisions. The conformance oracle is test infrastructure, not a second runtime orchestrator.
 
 The Orchestrator selects the workflow; the target role owns semantic work inside it.

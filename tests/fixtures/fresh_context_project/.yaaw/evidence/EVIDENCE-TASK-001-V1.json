@@ -1,0 +1,18 @@
+{
+  "schema": "yaaw.evidence/v1",
+  "id": "EVIDENCE-TASK-001-V1",
+  "ticket": "TASK-001",
+  "ticket_revision": 1,
+  "spec_revision": 2,
+  "kind": "implementation_verification",
+  "repository": {
+    "head_commit": "abc123",
+    "dirty": false,
+    "worktree_digest": "sha256:fixture"
+  },
+  "workflow": "implementation.verify-ticket",
+  "commands": [
+    {"command": "python -m unittest tests.test_notes", "result": "PASS"}
+  ],
+  "checks": ["acceptance criteria covered"]
+}

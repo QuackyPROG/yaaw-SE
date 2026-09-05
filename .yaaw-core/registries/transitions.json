@@ -1,0 +1,29 @@
+{
+  "schema": "yaaw.transitions/v1",
+  "ticket_states": ["DRAFT", "READY", "IN_PROGRESS", "REVIEW_REQUIRED", "REPAIR_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PASS", "CANCELLED"],
+  "legal": [
+    {"from": "DRAFT", "to": "READY", "owner": "planner", "workflow": "planning.create-tickets"},
+    {"from": "DRAFT", "to": "CANCELLED", "owner": "planner", "workflow": "planning.replan"},
+    {"from": "READY", "to": "IN_PROGRESS", "owner": "implementer", "workflow": "implementation.implement-ticket"},
+    {"from": "READY", "to": "REPLAN_REQUIRED", "owner": "planner", "workflow": "planning.replan"},
+    {"from": "IN_PROGRESS", "to": "REVIEW_REQUIRED", "owner": "implementer", "workflow": "implementation.verify-ticket"},
+    {"from": "IN_PROGRESS", "to": "REPLAN_REQUIRED", "owner": "planner", "workflow": "planning.replan"},
+    {"from": "IN_PROGRESS", "to": "BLOCKED", "owner": "implementer", "workflow": "implementation.implement-ticket"},
+    {"from": "REVIEW_REQUIRED", "to": "PASS", "owner": "reviewer", "workflow": "review.record-review"},
+    {"from": "REVIEW_REQUIRED", "to": "REPAIR_REQUIRED", "owner": "reviewer", "workflow": "review.record-review"},
+    {"from": "REVIEW_REQUIRED", "to": "REPLAN_REQUIRED", "owner": "reviewer", "workflow": "review.record-review"},
+    {"from": "REVIEW_REQUIRED", "to": "BLOCKED", "owner": "reviewer", "workflow": "review.record-review"},
+    {"from": "REPAIR_REQUIRED", "to": "REVIEW_REQUIRED", "owner": "implementer", "workflow": "implementation.repair-ticket"},
+    {"from": "REPAIR_REQUIRED", "to": "REPLAN_REQUIRED", "owner": "planner", "workflow": "planning.replan"},
+    {"from": "REPLAN_REQUIRED", "to": "DRAFT", "owner": "planner", "workflow": "planning.replan"},
+    {"from": "REPLAN_REQUIRED", "to": "READY", "owner": "planner", "workflow": "planning.replan"},
+    {"from": "PASS", "to": "REPLAN_REQUIRED", "owner": "planner", "workflow": "planning.replan"},
+    {"from": "PASS", "to": "CANCELLED", "owner": "planner", "workflow": "planning.replan"}
+  ],
+  "blocked_exit_targets": ["DRAFT", "READY", "IN_PROGRESS", "REVIEW_REQUIRED", "REPAIR_REQUIRED", "REPLAN_REQUIRED"],
+  "forbidden": [
+    {"from": "DRAFT", "to": "PASS"},
+    {"from": "READY", "to": "PASS"},
+    {"from": "REPAIR_REQUIRED", "to": "PASS"}
+  ]
+}
