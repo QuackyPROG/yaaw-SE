@@ -1,14 +1,14 @@
 {
-  "version": 6,
-  "description": "Cold inventory of registered yaaw-SE agents, rules, skills, artifact contracts, and validation assets. Load for harness maintenance/audit, not ordinary task routing.",
+  "version": 7,
+  "description": "yaaw-SE v2 inventory. Public workflow surface is intentionally small; detailed methodology lives in _yaaw-core while deterministic controller/runtime enforcement remains in scripts/config.",
   "artifact_registry": ".agents/artifacts.json",
   "agents": [
-    {"id":"orchestrator","path":".agents/agents/orchestrator.md","artifact_contract":"agents.orchestrator","purpose":"Route requests, select minimum safe complexity, identify ownership, discover relevant product intent, manage frontier/dispatch and integration state.","normal_write_scope":["tickets/**","docs/workflow/**","routing metadata","docs/prd/** only during manual prd-creation"]},
-    {"id":"planner","path":".agents/agents/planner.md","artifact_contract":"agents.planner","purpose":"Own specs, initiative maps, decision structure, ticket decomposition and PLAN_DELTA graph changes while preserving accepted product intent.","normal_write_scope":["docs/specs/**","docs/initiatives/**","docs/decisions/**","planning portions of tickets/**"]},
-    {"id":"discovery","path":".agents/agents/discovery.md","artifact_contract":"agents.discovery","purpose":"Gather bounded evidence and reproduce/diagnose uncertainty without inventing product decisions.","normal_write_scope":["discovery evidence in tickets/specs/initiative artifacts"]},
-    {"id":"implementer","path":".agents/agents/implementer.md","artifact_contract":"agents.implementer","purpose":"Implement exactly one bounded delivery contract and stop on material scope expansion.","normal_write_scope":["contract-declared allowed write scope"]},
-    {"id":"qa","path":".agents/agents/qa.md","artifact_contract":"agents.qa","purpose":"Fresh independent review of actual diff, contract fidelity, evidence quality, risk and blast radius.","normal_write_scope":["QA result/evidence only"]},
-    {"id":"release-engineer","path":".agents/agents/release-engineer.md","artifact_contract":"agents.release-engineer","purpose":"Serial integration/delivery after route acceptance and CI/QA admission.","normal_write_scope":["delivery metadata, CI/release configuration when explicitly contracted"]}
+    {"id":"orchestrator","path":".agents/agents/orchestrator.md","artifact_contract":"agents.orchestrator","purpose":"Root control loop: observe durable state, resolve route/level, dispatch Planner/Implement/Review, and integrate controller state.","normal_write_scope":["tickets/**","routing metadata","docs/prd/** only during explicit yaaw-prd"]},
+    {"id":"planner","path":".agents/agents/planner.md","artifact_contract":"agents.planner","purpose":"Technical lead/architect: turn accepted intent plus repository evidence into SPECs, engineering decisions, dependency graph, and READY tickets.","normal_write_scope":["docs/specs/**","docs/initiatives/**","docs/decisions/**","planning portions of tickets/**"]},
+    {"id":"discovery","path":".agents/agents/discovery.md","artifact_contract":"agents.discovery","purpose":"Internal bounded evidence role available to Planner/Orchestrator when truth is missing; not a public v2 skill.","normal_write_scope":["discovery evidence in registered artifacts"]},
+    {"id":"implementer","path":".agents/agents/implementer.md","artifact_contract":"agents.implementer","purpose":"Implement exactly one admitted bounded contract using applicable yaaw-core modules.","normal_write_scope":["contract-declared allowed write scope"]},
+    {"id":"qa","path":".agents/agents/qa.md","artifact_contract":"agents.qa","purpose":"Fresh independent v2 Review role: classify actual implementation as PASS, REPAIR, REPLAN, or BLOCKED.","normal_write_scope":["review/QA result and evidence only"]},
+    {"id":"release-engineer","path":".agents/agents/release-engineer.md","artifact_contract":"agents.release-engineer","purpose":"Internal conditional serial integration/delivery role retained from v1 enforcement; not a public v2 skill.","normal_write_scope":["delivery metadata, CI/release configuration when explicitly contracted"]}
   ],
   "rules": [
     {"id":"source-of-truth","path":".agents/rules/source-of-truth.md"},
@@ -19,15 +19,11 @@
     {"id":"git-and-delivery","path":".agents/rules/git-and-delivery.md"}
   ],
   "skills": [
-    {"id":"prd-creation","path":".agents/skills/prd-creation/SKILL.md","owner":"orchestrator","artifact_contract":"skills.prd-creation","invocation":"MANUAL_ONLY"},
-    {"id":"intake-routing","path":".agents/skills/intake-routing/SKILL.md","owner":"orchestrator","artifact_contract":"skills.intake-routing"},
-    {"id":"progressive-planning","path":".agents/skills/progressive-planning/SKILL.md","owner":"planner","artifact_contract":"skills.progressive-planning"},
-    {"id":"plan-delta","path":".agents/skills/plan-delta/SKILL.md","owner":"planner","artifact_contract":"skills.plan-delta"},
-    {"id":"bug-diagnosis","path":".agents/skills/bug-diagnosis/SKILL.md","owner":"discovery","artifact_contract":"skills.bug-diagnosis"},
-    {"id":"implementation","path":".agents/skills/implementation/SKILL.md","owner":"implementer","artifact_contract":"skills.implementation"},
-    {"id":"qa-regression","path":".agents/skills/qa-regression/SKILL.md","owner":"qa","artifact_contract":"skills.qa-regression"},
-    {"id":"documentation-impact","path":".agents/skills/documentation-impact/SKILL.md","owner":"orchestrator","artifact_contract":"skills.documentation-impact"},
-    {"id":"architecture-change","path":".agents/skills/architecture-change/SKILL.md","owner":"planner","artifact_contract":"skills.architecture-change"}
+    {"id":"yaaw-prd","path":".agents/skills/yaaw-prd/SKILL.md","owner":"orchestrator","artifact_contract":"skills.yaaw-prd","invocation":"MANUAL_ONLY"},
+    {"id":"yaaw-orchestrator","path":".agents/skills/yaaw-orchestrator/SKILL.md","owner":"orchestrator","artifact_contract":"skills.yaaw-orchestrator","invocation":"NORMAL_ENTRYPOINT"},
+    {"id":"yaaw-planner","path":".agents/skills/yaaw-planner/SKILL.md","owner":"planner","artifact_contract":"skills.yaaw-planner","invocation":"ORCHESTRATOR_OR_EXPLICIT"},
+    {"id":"yaaw-implement","path":".agents/skills/yaaw-implement/SKILL.md","owner":"implementer","artifact_contract":"skills.yaaw-implement","invocation":"ORCHESTRATOR_ADMITTED"},
+    {"id":"yaaw-review","path":".agents/skills/yaaw-review/SKILL.md","owner":"qa","artifact_contract":"skills.yaaw-review","invocation":"ORCHESTRATOR_ADMITTED"}
   ],
   "validation": [
     {"id":"validate-agent-assets","path":"scripts/validate_agent_assets.py"},

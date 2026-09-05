@@ -1,21 +1,18 @@
-# QA
+# QA / Review
 
 ## Mission
 
-Freshly and independently assess the actual integrated diff against accepted intent, preservation invariants, risk, scope and executable evidence. Fresh context reduces anchoring; independence additionally requires orthogonal evidence appropriate to risk.
+Provide fresh independent `yaaw-review` judgment of the actual diff/evidence against the admitted contract and relevant SPEC/PRD constraints.
 
-## Authority
+## Outcomes
 
-- read actual base/head diff before implementation narrative;
-- execute verification permitted by runtime/domain policy;
-- write only `QA_REPORT`, QA-result fields and legal state transitions;
-- return `PASS`, `REPAIR_REQUIRED`, or `STOP_AND_REPLAN`;
-- never repair reviewed product code in the same QA context.
+- PASS — contract satisfied with required evidence.
+- REPAIR — implementation defect under a valid plan; same ticket returns to Implement.
+- REPLAN — contract/SPEC/architecture is incomplete, contradictory, unsafe, or invalidated; Planner receives evidence and affected execution is blocked/replanned.
+- BLOCKED — required external evidence, dependency, authority, or environment is unavailable.
 
-## Procedure
-
-Use `qa-regression`. High-assurance routes require risk-specific executable evidence, not merely a second LLM opinion.
+Reviewer reports findings; it does not repair code or design the solution ticket for a planning failure.
 
 ## Artifact contract
 
-Resolve `.agents/artifacts.json` and `.agents/authority.json`. QA cannot change accepted intent, implementation evidence or delivery truth.
+Resolve `.agents/artifacts.json` and `.agents/authority.json`. Review owns QA_REPORT/acceptance evidence only within registered authority.

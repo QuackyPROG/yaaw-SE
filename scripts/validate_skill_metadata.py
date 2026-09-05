@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Validate Codex-discoverable yaaw-SE skill metadata and local context budget."""
+"""Validate the intentionally small yaaw-SE v2 public skill surface and yaaw-core presence."""
 from __future__ import annotations
-
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_ROOT = ROOT / ".agents" / "skills"
+EXPECTED = {"yaaw-prd","yaaw-orchestrator","yaaw-planner","yaaw-implement","yaaw-review"}
 MAX_DESCRIPTION_CHARS = 160
-MAX_TOTAL_DESCRIPTION_CHARS = 1500
+MAX_TOTAL_DESCRIPTION_CHARS = 800
 
 
 def require(condition: bool, message: str) -> None:
@@ -17,60 +17,47 @@ def require(condition: bool, message: str) -> None:
 
 
 def parse_frontmatter(path: Path) -> dict[str, str]:
-    text = path.read_text(encoding="utf-8")
-    lines = text.splitlines()
+    lines = path.read_text(encoding="utf-8").splitlines()
     require(lines and lines[0].strip() == "---", f"{path.relative_to(ROOT)} missing YAML frontmatter")
     try:
-        end = next(index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---")
+        end = next(i for i, line in enumerate(lines[1:], start=1) if line.strip() == "---")
     except StopIteration:
         raise SystemExit(f"ERROR: {path.relative_to(ROOT)} has unterminated YAML frontmatter")
-
-    metadata: dict[str, str] = {}
+    out = {}
     for line in lines[1:end]:
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
-        require(":" in line, f"{path.relative_to(ROOT)} has unsupported frontmatter line: {line!r}")
-        key, value = line.split(":", 1)
-        metadata[key.strip()] = value.strip().strip('"').strip("'")
-    return metadata
+        require(":" in line, f"{path.relative_to(ROOT)} unsupported frontmatter line: {line!r}")
+        k,v=line.split(":",1); out[k.strip()]=v.strip().strip('"').strip("'")
+    return out
 
 
 def main() -> None:
-    catalog = json.loads((ROOT / ".agents/catalog.json").read_text(encoding="utf-8"))
-    skills = catalog.get("skills", [])
-    require(skills, "catalog has no active skills")
-
-    catalog_paths = {item["path"] for item in skills}
-    discovered_paths = {
-        str(path.relative_to(ROOT)).replace("\\", "/")
-        for path in SKILLS_ROOT.glob("*/SKILL.md")
-    }
-    require(discovered_paths == catalog_paths,
-            f"Codex-discoverable skill paths differ from active catalog: discovered={sorted(discovered_paths)} catalog={sorted(catalog_paths)}")
-
-    total = 0
+    catalog=json.loads((ROOT/".agents/catalog.json").read_text(encoding="utf-8"))
+    skills=catalog.get("skills",[])
+    ids={s["id"] for s in skills}
+    require(ids == EXPECTED, f"v2 public skills must be exactly {sorted(EXPECTED)}, got {sorted(ids)}")
+    discovered={p.parent.name for p in SKILLS_ROOT.glob("*/SKILL.md")}
+    require(discovered == EXPECTED, f"discovered skill dirs differ from v2 surface: {sorted(discovered)}")
+    total=0
     for item in skills:
-        skill_id = item["id"]
-        path = ROOT / item["path"]
-        require(item.get("status") not in {"DEPRECATED", "DEPRECATED_COMPATIBILITY_SHIM"},
-                f"deprecated skill {skill_id} must not remain in the active catalog")
-        require(item["path"] == f".agents/skills/{skill_id}/SKILL.md",
-                f"skill {skill_id} path must match its directory")
-
-        metadata = parse_frontmatter(path)
-        require(metadata.get("name") == skill_id,
-                f"skill {skill_id} frontmatter name mismatch: {metadata.get('name')!r}")
-        description = metadata.get("description", "").strip()
-        require(description, f"skill {skill_id} missing description")
-        require(len(description) <= MAX_DESCRIPTION_CHARS,
-                f"skill {skill_id} description is {len(description)} chars; max is {MAX_DESCRIPTION_CHARS}")
-        total += len(description)
-
-    require(total <= MAX_TOTAL_DESCRIPTION_CHARS,
-            f"aggregate yaaw-SE skill descriptions are {total} chars; max is {MAX_TOTAL_DESCRIPTION_CHARS}")
-    print(f"OK: {len(skills)} active skills; {total}/{MAX_TOTAL_DESCRIPTION_CHARS} description chars; max per skill {MAX_DESCRIPTION_CHARS}")
-
+        path=ROOT/item["path"]
+        meta=parse_frontmatter(path)
+        require(meta.get("name")==item["id"], f"skill {item['id']} frontmatter mismatch")
+        desc=meta.get("description","").strip(); require(desc, f"skill {item['id']} missing description")
+        require(len(desc)<=MAX_DESCRIPTION_CHARS, f"skill {item['id']} description too long")
+        total+=len(desc)
+    require(total<=MAX_TOTAL_DESCRIPTION_CHARS, f"aggregate skill descriptions {total}>{MAX_TOTAL_DESCRIPTION_CHARS}")
+    for required in (
+        "_yaaw-core/README.md","_yaaw-core/core/levels.json","_yaaw-core/core/modules.json",
+        "_yaaw-core/workflows/orchestrator/workflow.md","_yaaw-core/workflows/prd/workflow.md",
+        "_yaaw-core/workflows/planner/workflow.md","_yaaw-core/workflows/implement/workflow.md","_yaaw-core/workflows/review/workflow.md",
+        "_yaaw-core/modules/architecture/MODULE.md","_yaaw-core/modules/security/MODULE.md","_yaaw-core/modules/migration/MODULE.md","_yaaw-core/modules/frontend-design/MODULE.md","_yaaw-core/modules/testing/MODULE.md",
+    ):
+        require((ROOT/required).is_file(), f"required v2 core asset missing: {required}")
+    levels=json.loads((ROOT/"_yaaw-core/core/levels.json").read_text(encoding="utf-8"))["levels"]
+    require(set(levels)=={"0","1","2","3","4"}, "yaaw-core must preserve exactly L0-L4")
+    print(f"OK: v2 exposes exactly 5 public skills; {total}/{MAX_TOTAL_DESCRIPTION_CHARS} description chars; yaaw-core workflows/modules present")
 
 if __name__ == "__main__":
     main()

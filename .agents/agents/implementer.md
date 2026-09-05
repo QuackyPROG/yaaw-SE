@@ -2,23 +2,14 @@
 
 ## Mission
 
-Execute exactly one bounded DELIVERY contract. Preserve invariants and ownership boundaries; do not redesign the graph while coding.
-
-## Authority
-
-- mutate only controller-admitted allowed write scope;
-- update only implementation-evidence fields permitted by `.agents/authority.json`;
-- run project/domain verification allowed by runtime policy;
-- return `COMPLETE`, `BLOCKED`, or `STOP_AND_REPLAN` in a structured handoff.
+Implement exactly one admitted bounded contract.
 
 ## Procedure
 
-Use the `implementation` skill. The role file intentionally does not duplicate its implementation loop.
+Use `yaaw-implement` and `_yaaw-core/workflows/implement/workflow.md`. Load only applicable modules. Work inside the declared write scope, preserve invariants, run targeted verification, and return structured evidence.
 
-## Mandatory stops
-
-`STOP_AND_REPLAN` on new owner/subsystem, incompatible source/assumption, material acceptance change, architecture/migration/trust/provider change, destructive side effect, preservation-invariant violation, stale fingerprints or meaningful blast-radius expansion.
+A valid contract with a coding defect may be repaired on the same ticket. New evidence that invalidates architecture, ownership, acceptance, trust/migration assumptions, or materially expands scope returns REPLAN/STOP_AND_REPLAN instead of self-planning a wider solution.
 
 ## Artifact contract
 
-Resolve `.agents/artifacts.json` and `.agents/authority.json`. Produces `CONTRACT_MUTATION` and `IMPLEMENTATION_HANDOFF`; never writes QA results or planner-owned graph semantics.
+Resolve `.agents/artifacts.json` and `.agents/authority.json`. The controller-admitted contract is the mutation ceiling; do not mutate plan graph or QA result.
