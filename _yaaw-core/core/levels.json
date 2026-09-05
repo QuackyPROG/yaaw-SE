@@ -1,0 +1,11 @@
+{
+  "schema": "yaaw.v2.levels/v1",
+  "levels": {
+    "0": {"name":"MICRO","planner":"NOT_REQUIRED","spec":"NOT_REQUIRED","ticket":"EPHEMERAL_ALLOWED","review":"SELF_OR_ROUTE","rolling_frontier":false,"high_assurance":false},
+    "1": {"name":"BOUNDED","planner":"CONDITIONAL","spec":"NOT_REQUIRED","ticket":"EPHEMERAL_OR_DURABLE","review":"ROUTE_DEPENDENT","rolling_frontier":false,"high_assurance":false},
+    "2": {"name":"PLANNED_FEATURE","planner":"REQUIRED","spec":"DURABLE_WHEN_MATERIAL","ticket":"DURABLE","review":"INDEPENDENT","rolling_frontier":false,"high_assurance":false},
+    "3": {"name":"INITIATIVE","planner":"REQUIRED","spec":"PROGRESSIVE","ticket":"DURABLE","review":"INDEPENDENT","rolling_frontier":true,"high_assurance":false},
+    "4": {"name":"PROGRAM_ARCHITECTURE","planner":"REQUIRED","spec":"PROGRESSIVE","ticket":"DURABLE_HIGH_ASSURANCE","review":"HIGH_ASSURANCE","rolling_frontier":true,"high_assurance":true}
+  },
+  "principle": "Level changes workflow depth and assurance, not the public skill vocabulary. Complexity and consequence risk remain separate signals."
+}
