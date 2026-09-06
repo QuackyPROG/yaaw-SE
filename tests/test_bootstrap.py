@@ -41,6 +41,45 @@ class BootstrapTest(unittest.TestCase):
             self.assertEqual(second, [])
             self.assertEqual(product.read_text(), "custom product content\n")
 
+    def test_existing_yaaw_without_docs_is_repaired(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".yaaw").mkdir()
+            initialize_project(root)
+            self.assertTrue((root / "docs" / "product" / "product.md").is_file())
+            self.assertTrue((root / "docs" / "engineering" / "engineering.md").is_file())
+            self.assertTrue((root / ".yaaw" / "state.json").is_file())
+
+    def test_existing_docs_without_yaaw_is_repaired_without_overwrite(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            product_dir = root / "docs" / "product"
+            product_dir.mkdir(parents=True)
+            product = product_dir / "product.md"
+            product.write_text("existing product\n")
+            initialize_project(root)
+            self.assertEqual(product.read_text(), "existing product\n")
+            self.assertTrue((root / ".yaaw" / "state.json").is_file())
+            self.assertTrue((root / "docs" / "engineering" / "engineering.md").is_file())
+
+    def test_partial_canonical_tree_only_creates_missing_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            engineering_dir = root / "docs" / "engineering"
+            engineering_dir.mkdir(parents=True)
+            engineering = engineering_dir / "engineering.md"
+            engineering.write_text("existing engineering\n")
+            tickets = root / ".yaaw" / "tickets"
+            tickets.mkdir(parents=True)
+
+            initialize_project(root)
+
+            self.assertEqual(engineering.read_text(), "existing engineering\n")
+            self.assertTrue((root / "docs" / "product" / "product.md").is_file())
+            self.assertTrue((root / "docs" / "engineering" / "decisions").is_dir())
+            self.assertTrue((root / ".yaaw" / "reviews").is_dir())
+            self.assertTrue((root / ".yaaw" / "state.json").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()
