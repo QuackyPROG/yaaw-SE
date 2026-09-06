@@ -49,8 +49,25 @@ class CoreContractsTest(unittest.TestCase):
             "Orchestrator owns **lifecycle**",
             "Implementer owns **execution**",
             "Reviewer owns **acceptance**",
+            "Users are never required to pre-create YAAW folders or artifacts",
+            "partially populated canonical trees",
+            "never overwrite them during bootstrap",
         ]:
             self.assertIn(required, text)
+
+    def test_prd_create_bootstraps_missing_or_partial_structure(self):
+        text = (CORE / "workflows/prd/create.md").read_text()
+        self.assertIn("Ensure the canonical project structure exists", text)
+        self.assertIn("any required `docs/` or `.yaaw/`", text)
+        self.assertIn("docs/product/product.md", text)
+        self.assertIn("never overwrite existing project memory", text)
+
+    def test_orchestrator_bootstraps_before_inspection(self):
+        route = (CORE / "workflows/orchestration/route.md").read_text()
+        inspect = (CORE / "workflows/orchestration/inspect-state.md").read_text()
+        self.assertIn("Before entering the loop, ensure the canonical project structure exists", route)
+        self.assertIn("idempotent project initializer", route)
+        self.assertIn("Direct callers must run the idempotent project initializer first", inspect)
 
     def test_orchestrator_route_and_dispatch_are_not_aliases(self):
         self.assertNotEqual(self.workflows["orchestration.route"]["workflow"], self.workflows["orchestration.dispatch"]["workflow"])
