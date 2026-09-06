@@ -4,7 +4,10 @@
 Create a non-mutating observed-reality snapshot that separates claims from evidence.
 
 ## Inputs
-`.yaaw/state.json`, product/engineering artifacts, current specs/tickets/reviews/evidence/runtime files, project rules, and repository status/diff/log/branch.
+`.yaaw/state.json`, `docs/product/product.md`, `docs/engineering/engineering.md`, current specs/tickets/reviews/evidence/runtime files, project rules, and repository status/diff/log/branch.
+
+## Preconditions
+Canonical project structure has been ensured by the invoking entry workflow. Direct callers must run the idempotent project initializer first when required structure is missing.
 
 ## Procedure
 1. Compute current repository identity.
