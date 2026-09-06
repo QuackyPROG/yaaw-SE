@@ -35,24 +35,32 @@ class CoreContractsTest(unittest.TestCase):
             self.assertTrue(path.is_file(), workflow_id)
             self.assertIn("## Purpose", path.read_text(), workflow_id)
 
+    def test_folder_ownership_contract_locks_semantic_write_areas(self):
+        text = (CORE / "core/folder-ownership.md").read_text()
+        for required in [
+            "docs/product/**",
+            "docs/engineering/**",
+            "docs/specs/**",
+            ".yaaw/tickets/**",
+            ".yaaw/evidence/**",
+            ".yaaw/reviews/**",
+            ".yaaw/runtime/**",
+            "Planner owns **content**",
+            "Orchestrator owns **lifecycle**",
+            "Implementer owns **execution**",
+            "Reviewer owns **acceptance**",
+        ]:
+            self.assertIn(required, text)
+
     def test_orchestrator_route_and_dispatch_are_not_aliases(self):
-        self.assertNotEqual(
-            self.workflows["orchestration.route"]["workflow"],
-            self.workflows["orchestration.dispatch"]["workflow"],
-        )
+        self.assertNotEqual(self.workflows["orchestration.route"]["workflow"], self.workflows["orchestration.dispatch"]["workflow"])
         dispatch = (CORE / "workflows/orchestration/dispatch.md").read_text()
         self.assertIn("This file is not the orchestration loop", dispatch)
         self.assertIn("Never recursively dispatch", dispatch)
 
     def test_routing_state_precedence_prevents_review_repair_loop(self):
         text = (CORE / "core/routing.md").read_text()
-        order = [
-            text.index("If a ticket is `REPLAN_REQUIRED`"),
-            text.index("If a ticket is `REPAIR_REQUIRED`"),
-            text.index("If a ticket is `REVIEW_REQUIRED`"),
-            text.index("If a ticket is `IN_PROGRESS`"),
-            text.index("ticket is `READY`"),
-        ]
+        order = [text.index("If a ticket is `REPLAN_REQUIRED`"), text.index("If a ticket is `REPAIR_REQUIRED`"), text.index("If a ticket is `REVIEW_REQUIRED`"), text.index("If a ticket is `IN_PROGRESS`"), text.index("ticket is `READY`")]
         self.assertEqual(order, sorted(order))
 
     def test_state_schema_can_represent_transition_provenance(self):

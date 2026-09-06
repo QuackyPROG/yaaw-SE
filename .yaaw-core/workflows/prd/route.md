@@ -4,7 +4,7 @@
 Choose and execute the next product-definition workflow from current product state and the human's request.
 
 ## Inputs
-`.yaaw/product.md` if present, `.yaaw/state.json`, current request, and relevant accepted product history.
+`docs/product/product.md` if present, `.yaaw/state.json`, current request, and relevant accepted product history.
 
 ## Procedure
 1. Classify exactly one route:

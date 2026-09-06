@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize the durable .yaaw artifact root in a target project."""
+"""Initialize YAAW durable documentation and workflow-state roots."""
 from __future__ import annotations
 
 import argparse
@@ -13,27 +13,31 @@ TEMPLATES = ROOT / ".yaaw-core" / "templates"
 
 def initialize_project(project_root: Path) -> list[Path]:
     project_root = project_root.resolve()
+    docs = project_root / "docs"
     yaaw = project_root / ".yaaw"
     created: list[Path] = []
 
     for directory in (
+        docs,
+        docs / "product",
+        docs / "engineering",
+        docs / "engineering" / "decisions",
+        docs / "specs",
+        docs / "rules",
         yaaw,
-        yaaw / "specs",
         yaaw / "tickets",
         yaaw / "reviews",
         yaaw / "evidence",
-        yaaw / "rules",
         yaaw / "runtime",
     ):
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
             created.append(directory)
 
-    for template_name, destination_name in (
-        ("product.md", "product.md"),
-        ("engineering.md", "engineering.md"),
+    for template_name, destination in (
+        ("product.md", docs / "product" / "product.md"),
+        ("engineering.md", docs / "engineering" / "engineering.md"),
     ):
-        destination = yaaw / destination_name
         if not destination.exists():
             shutil.copyfile(TEMPLATES / template_name, destination)
             created.append(destination)
@@ -54,7 +58,7 @@ def initialize_project(project_root: Path) -> list[Path]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Initialize .yaaw durable project state.")
+    parser = argparse.ArgumentParser(description="Initialize YAAW docs and autonomous workflow state.")
     parser.add_argument("project_root", nargs="?", default=".", type=Path)
     args = parser.parse_args()
     created = initialize_project(args.project_root)
