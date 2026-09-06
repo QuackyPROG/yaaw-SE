@@ -34,5 +34,14 @@
     "required_context": ["pyproject/tool config", "supported Python version", "relevant package/test files"],
     "anti_patterns": ["overriding local conventions", "unexamined sync/async mixing", "broad exception swallowing"],
     "verification_expectations": ["project tooling passes", "error/resource behavior checked", "typing/runtime assumptions validated"]
+  },
+  "changeability": {
+    "path": ".yaaw-core/expertise/changeability/MODULE.md",
+    "description": "Maintainability guidance for visible control flow, domain naming, external boundaries, valid-state modeling, decision/side-effect separation, useful errors, and focused changes.",
+    "signals": ["maintainability", "refactor", "boundary", "adapter", "state model", "error contract", "complex control flow", "coupling"],
+    "usable_by": ["planner", "implementer", "reviewer"],
+    "required_context": ["current ticket/spec contract", "changed surface", "repository conventions", "changeability policy"],
+    "anti_patterns": ["style-only rewrites", "speculative abstractions", "unrelated refactor creep", "subjective review failures"],
+    "verification_expectations": ["relevant structural property checked", "targeted behavior/regression tests", "scope remains focused"]
   }
 }
