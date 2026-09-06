@@ -24,6 +24,20 @@ docs/
 
 Durable project knowledge belongs in `docs/`. Autonomous execution records and reconstructable routing state belong in `.yaaw/`.
 
+## First-use bootstrap invariant
+
+Users are never required to pre-create YAAW folders or artifacts. Before an entry workflow assumes canonical project artifacts exist, it must ensure the canonical structure using the idempotent project initializer.
+
+Missing or partial structure is a normal recoverable state:
+
+- missing `docs/` -> create missing documentation folders/artifacts;
+- missing `.yaaw/` -> create missing workflow-state folders/artifacts;
+- one root present and the other missing -> create only the missing root/content;
+- partially populated canonical trees -> create only missing paths;
+- existing artifacts -> never overwrite them during bootstrap.
+
+After bootstrap, canonical product and engineering artifacts are `docs/product/product.md` and `docs/engineering/engineering.md`, while `.yaaw/state.json` references those exact paths.
+
 ## Ownership matrix
 
 | Area | Content owner | Lifecycle / execution authority | Other roles |
