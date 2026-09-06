@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "yaaw.handoff/v1",
+  "$id": "yaaw.handoff/v2",
   "type": "object",
-  "required": ["schema", "role", "workflow", "desired_intent", "active_artifact", "reads", "writes", "forbidden_writes", "references", "revisions", "expertise", "expected_results", "repository", "transition_sequence"],
+  "required": ["schema", "role", "workflow", "desired_intent", "active_artifact", "reads", "writes", "forbidden_writes", "references", "revisions", "expertise", "context_policy", "expected_results", "repository", "transition_sequence"],
   "properties": {
-    "schema": {"const": "yaaw.handoff/v1"},
+    "schema": {"const": "yaaw.handoff/v2"},
     "role": {"enum": ["prd", "planner", "implementer", "reviewer", "orchestrator"]},
     "workflow": {"type": "string", "minLength": 1},
     "desired_intent": {"enum": ["AUTO", "PRODUCT", "PRODUCT_REVISE", "PRODUCT_REFINE", "PLANNING", "PLANNING_REVIEW", "SPEC", "TICKETS", "IMPLEMENTATION", "REPAIR", "REVIEW"]},
@@ -15,6 +15,18 @@
     "references": {"type": "array", "items": {"type": "string"}},
     "revisions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
     "expertise": {"type": "array", "items": {"type": "string"}},
+    "context_policy": {
+      "type": "object",
+      "required": ["strategy", "memory_mode", "memory_phase", "memory_target_tokens", "deep_history_allowed"],
+      "properties": {
+        "strategy": {"const": "minimum-necessary"},
+        "memory_mode": {"enum": ["disabled", "light", "standard", "secondary"]},
+        "memory_phase": {"enum": ["never", "before-reasking", "before-broad-discovery", "after-primary-evidence-review"]},
+        "memory_target_tokens": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "deep_history_allowed": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
     "expected_results": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "repository": {
       "type": "object",

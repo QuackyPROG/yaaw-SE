@@ -24,6 +24,8 @@ docs/
 
 Durable project knowledge belongs in `docs/`. Autonomous execution records and reconstructable routing state belong in `.yaaw/`.
 
+An optional project-memory provider is a derived advisory cache, not another canonical project folder. YAAW must not create a parallel memory-owned source of truth that duplicates current product/engineering/spec/ticket/review/state authority.
+
 ## Ownership matrix
 
 | Area | Content owner | Lifecycle / execution authority | Other roles |
@@ -38,6 +40,7 @@ Durable project knowledge belongs in `docs/`. Autonomous execution records and r
 | `.yaaw/reviews/**` | Reviewer | Reviewer | immutable review rounds; never rewritten by Implementer |
 | `.yaaw/runtime/**` | Orchestrator | Orchestrator | role communication/routing cache only |
 | `.yaaw/state.json` | Orchestrator | Orchestrator | reconstructable routing cache, not semantic truth |
+| optional project memory | none; derived only | none | advisory reads governed by context policy; never a write-authority substitute |
 
 ## Ticket ownership
 
@@ -69,8 +72,10 @@ Before an entry workflow assumes canonical artifacts exist, Orchestrator/PRD mus
 
 Bootstrap creates only missing canonical folders/templates/state. Existing durable artifacts remain authoritative; never overwrite them during bootstrap.
 
+Project-memory initialization, seeding, or provider availability is never part of the canonical folder bootstrap prerequisite.
+
 ## Cross-owner mutation rule
 
 No role may silently rewrite an artifact whose meaning belongs to another role. A downstream role may report invalidity and return control to the owner. Orchestrator may reconcile lifecycle metadata only when repository/artifact evidence is sufficient; it may not rewrite semantic content.
 
-Exact read/write sets for each dispatch follow `core/io-contract.md` and `registries/role-io.json`.
+Memory retrieval/correction does not confer permission to rewrite another owner's canonical artifact. Exact read/write sets for each dispatch follow `core/io-contract.md` and `registries/role-io.json`.

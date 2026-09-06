@@ -11,17 +11,20 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - `docs/` is durable project knowledge; `.yaaw/` is autonomous execution state.
 - Canonical paths come from `.yaaw-core/registries/artifacts.json`; roles must not invent alternate artifact locations.
 - Default role read/write authority comes from `.yaaw-core/registries/role-io.json`; every semantic dispatch receives exact `reads`, `writes`, and `forbidden_writes` in `.yaaw/runtime/handoff.json`.
+- Role context/memory timing comes from `.yaaw-core/registries/context-policy.json`; project memory is optional advisory context, never authority and never a prerequisite.
 - Roles never spawn peer roles. Roles produce durable output + typed results; Orchestrator alone chooses the next role/workflow.
 - Planner owns ticket contract content; Orchestrator owns ticket lifecycle; Implementer owns execution/evidence; Reviewer owns acceptance/review records.
 - Implementer must not run without one exact admitted ticket and current source spec. No ticket/spec is a prerequisite-routing condition, never permission to invent work.
-- Orchestrator owns routing/reconciliation/lifecycle persistence, never product/architecture/implementation/acceptance semantics.
-- Implementer never self-approves. Acceptance requires independent review tied to repository/source identity.
-- Conversation must never be the only location of an accepted decision.
+- Orchestrator owns routing/reconciliation/lifecycle persistence, never product/architecture/implementation/acceptance semantics and never uses semantic project memory to route or reconcile state.
+- Implementer never self-approves. Acceptance requires independent review tied to repository/source identity; memory is never acceptance evidence.
+- Conversation/project memory must never be the only location of an accepted decision.
+- Every workflow must still work if project memory is unavailable; memory may reduce rediscovery but cannot be required for correctness.
+- Do not deliberately ingest live control files (`AGENTS.md`, `skills/**`, `.yaaw-core/**`, `.yaaw/runtime/**`, `.yaaw/state.json`) or secrets into project memory.
 - State transitions follow `core/transitions.md` / `registries/transitions.json`; upstream changes follow `core/invalidation.md`.
 - Do not reintroduce persistent named-agent personas.
 
 ## Change discipline
-When changing skills, routing, role authority, artifact paths, handoff fields, lifecycle states, review outcomes, evidence identity, recovery semantics, or folder ownership, update machine registries/schemas/templates/fixtures/tests together.
+When changing skills, routing, role authority, artifact paths, handoff fields, lifecycle states, review outcomes, evidence identity, recovery semantics, folder ownership, context policy, or project-memory behavior, update machine registries/schemas/templates/fixtures/tests together.
 
 Run:
 ```text

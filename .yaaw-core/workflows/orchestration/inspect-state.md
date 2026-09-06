@@ -12,8 +12,9 @@ Canonical paths from `registries/artifacts.json`; `.yaaw/state.json`; `.yaaw/run
 3. Resolve current artifact identities through `registries/artifacts.json`; do not guess alternate locations.
 4. Read machine-readable artifact metadata and only the semantic bodies needed to determine current references/status.
 5. Compare state claims with artifact/repository/review/evidence reality without repairing yet.
-6. List inconsistencies, missing prerequisites, stale artifacts/handoffs, blockers, and candidate next states.
-7. Write replaceable `.yaaw/runtime/observed-state.json` conforming to the observed-state schema.
+6. Do not query or use project memory as observed-state evidence. Memory is advisory historical context and is deliberately excluded from routing/reconciliation truth.
+7. List inconsistencies, missing prerequisites, stale artifacts/handoffs, blockers, and candidate next states.
+8. Write replaceable `.yaaw/runtime/observed-state.json` conforming to the observed-state schema.
 
 ## Output
 Observed-state snapshot only; no semantic or ticket-state mutation.

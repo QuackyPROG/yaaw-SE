@@ -1,0 +1,43 @@
+{
+  "schema": "yaaw.context-policy/v1",
+  "defaults": {
+    "strategy": "minimum-necessary",
+    "provider": "optional",
+    "memory_authority": "advisory",
+    "fallback": "durable-artifacts-and-repository",
+    "search_before_broad_discovery": true,
+    "deep_history": "on-demand"
+  },
+  "roles": {
+    "prd": {
+      "memory_mode": "light",
+      "memory_phase": "before-reasking",
+      "memory_target_tokens": 800,
+      "deep_history_allowed": false
+    },
+    "planner": {
+      "memory_mode": "standard",
+      "memory_phase": "before-broad-discovery",
+      "memory_target_tokens": 1600,
+      "deep_history_allowed": true
+    },
+    "implementer": {
+      "memory_mode": "standard",
+      "memory_phase": "before-broad-discovery",
+      "memory_target_tokens": 1200,
+      "deep_history_allowed": true
+    },
+    "reviewer": {
+      "memory_mode": "secondary",
+      "memory_phase": "after-primary-evidence-review",
+      "memory_target_tokens": 800,
+      "deep_history_allowed": true
+    },
+    "orchestrator": {
+      "memory_mode": "disabled",
+      "memory_phase": "never",
+      "memory_target_tokens": 0,
+      "deep_history_allowed": false
+    }
+  }
+}
