@@ -43,7 +43,7 @@ Durable project knowledge belongs in `docs/`. Autonomous execution records and r
 
 A ticket is the bounded handoff contract from Planner to Implementer.
 
-**Planner owns content. Orchestrator owns lifecycle. Implementer owns execution. Reviewer owns acceptance.**
+Planner owns **content**. Orchestrator owns **lifecycle**. Implementer owns **execution**. Reviewer owns **acceptance**.
 
 - Planner creates tickets only from a current accepted spec.
 - Planner owns ticket goal, scope, requirements, non-goals, acceptance criteria, required tests, dependencies, and referenced engineering decisions.
