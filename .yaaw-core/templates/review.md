@@ -18,6 +18,9 @@ evidence: []
 
 ## Findings
 
+## Changeability assessment
+Record only materially relevant principles. Use `PASS`, `FAIL`, or `NOT_APPLICABLE`; do not use subjective scores. Blocking failures must cite concrete engineering impact rather than style preference.
+
 ## Verification
 
 ## Evidence
