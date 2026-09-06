@@ -1,5 +1,5 @@
 {
-  "schema": "yaaw.handoff/v1",
+  "schema": "yaaw.handoff/v2",
   "role": "implementer",
   "workflow": "implementation.implement-ticket",
   "desired_intent": "IMPLEMENTATION",
@@ -25,6 +25,13 @@
   "references": ["docs/specs/SPEC-001.md"],
   "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
   "expertise": [],
+  "context_policy": {
+    "strategy": "minimum-necessary",
+    "memory_mode": "standard",
+    "memory_phase": "before-broad-discovery",
+    "memory_target_tokens": 1200,
+    "deep_history_allowed": true
+  },
   "expected_results": ["REVIEW_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PRECONDITION_UNSATISFIED"],
   "repository": {"head_commit": "COMMIT", "dirty": false, "worktree_digest": "DIGEST"},
   "transition_sequence": 1

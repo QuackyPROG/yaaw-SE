@@ -4,7 +4,7 @@
 Turn reconciled observed reality plus desired intent into one explicit, fresh dispatch contract.
 
 ## Inputs
-Current observed-state snapshot, reconciled state, `.yaaw/runtime/intent.json`, `core/routing.md`, artifact/role-I/O/workflow/expertise registries.
+Current observed-state snapshot, reconciled state, `.yaaw/runtime/intent.json`, `core/routing.md`, artifact/role-I/O/workflow/expertise/context-policy registries.
 
 ## Procedure
 1. Resolve prerequisites using `registries/routing-policy.json`; prerequisite state always outranks requested destination.
@@ -15,8 +15,9 @@ Current observed-state snapshot, reconciled state, `.yaaw/runtime/intent.json`, 
 6. Resolve the active artifact and every workflow artifact path through `registries/artifacts.json`.
 7. Build exact `reads`, `writes`, and `forbidden_writes` from `registries/role-io.json`, then narrow them to the current artifact IDs/revisions and ticket scope. Do not send generic repository-wide artifact discovery instructions to semantic roles.
 8. Select only expertise relevant to that workflow/artifact.
-9. Write `.yaaw/runtime/handoff.json` with role, workflow, desired intent, active artifact, exact read/write sets, references/revisions, expertise, expected results, repository identity, and transition-sequence basis.
-10. If result is human-input, `BLOCKED`, or `COMPLETE`, write no executable handoff and return the stop result.
+9. Copy the selected role's entry from `registries/context-policy.json` into the handoff `context_policy`. Orchestrator must not query project memory or generate semantic remembered conclusions while doing this.
+10. Write `.yaaw/runtime/handoff.json` with role, workflow, desired intent, active artifact, exact read/write sets, references/revisions, expertise, context policy, expected results, repository identity, and transition-sequence basis.
+11. If result is human-input, `BLOCKED`, or `COMPLETE`, write no executable handoff and return the stop result.
 
 ## Boundary
-Do not perform target role semantic work here and do not let a target role choose/spawn its successor.
+Do not perform target role semantic work here and do not let a target role choose/spawn its successor. Project memory cannot influence lifecycle routing or prerequisite resolution.

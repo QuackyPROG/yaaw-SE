@@ -4,8 +4,11 @@
 
 ## Composition
 ```text
-skills/ -> registry -> role + workflow + selected expertise
-        -> durable artifacts + repository reality
+skills/ -> registry -> Orchestrator intent/routing
+        -> exact handoff + role context policy
+        -> role + workflow + selected expertise
+        -> optional focused project-memory retrieval
+        -> durable artifacts + current repository reality
         -> evidence-backed state transition
         -> orchestration re-inspection
 ```
@@ -16,6 +19,8 @@ skills/ -> registry -> role + workflow + selected expertise
 - Implementer: bounded code/test changes and verification evidence within an admitted ticket.
 - Reviewer: independent acceptance and defect classification.
 - Orchestrator: continuity, reconciliation, invalidation coordination, ticket lifecycle, and routing.
+
+Project memory is not a sixth authority role. It is optional derived context governed by `core/project-memory.md` and `registries/context-policy.json`.
 
 ## Project artifact roots
 
@@ -54,5 +59,6 @@ Read these contracts together:
 - `core/invalidation.md`
 - `core/recovery.md`
 - `core/context-loading.md`
+- `core/project-memory.md`
 
-Any workflow context may disappear after durable output without destroying project understanding.
+Any workflow context may disappear after durable output without destroying project understanding. Optional memory makes the next disposable role faster, but the artifact graph remains sufficient when memory is absent.

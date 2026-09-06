@@ -9,6 +9,8 @@ Recovery compares claimed state with observed reality and returns to the last tr
 - Acceptance: fresh review evidence tied to the exact ticket/spec revisions and repository identity.
 - Routing cache: `state.json`, reconciled against stronger evidence.
 
+Project memory is not recovery evidence. A remembered statement that work completed, tests passed, or a review happened may suggest where to inspect, but recovery must prove the boundary from current artifacts/repository/evidence/reviews before changing state.
+
 ## Rules
 - Never reimplement solely because state is stale.
 - `IN_PROGRESS` + implementation + required verification evidence + no review -> reconcile to `REVIEW_REQUIRED`.

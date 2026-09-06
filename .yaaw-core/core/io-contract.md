@@ -6,7 +6,8 @@ YAAW roles communicate through durable artifacts, exact Orchestrator handoffs, a
 
 - `registries/artifacts.json` defines canonical artifact path patterns and semantic/lifecycle ownership.
 - `registries/role-io.json` defines each role's default read/write authority.
-- `.yaaw/runtime/handoff.json` resolves those symbolic contracts to the exact files for one dispatch.
+- `registries/context-policy.json` defines each role's project-memory phase and target context budget.
+- `.yaaw/runtime/handoff.json` resolves those symbolic contracts to the exact files and context policy for one dispatch.
 - `.yaaw/runtime/intent.json` records the public skill's desired destination while prerequisites are being resolved.
 
 ## Dispatch rule
@@ -19,9 +20,12 @@ Every semantic-role dispatch must include:
 - current artifact revisions;
 - repository identity;
 - desired intent;
+- selected `context_policy` copied from the machine registry;
 - allowed/expected result vocabulary.
 
 A role must read the handoff before doing semantic work. If a workflow artifact is not in the handoff, the role does not search the repository hoping to discover it. The only allowed exploratory search is repository/application inspection that the ticket or planning workflow explicitly admits.
+
+Optional project-memory retrieval is not workflow-artifact discovery and does not expand `reads`, `writes`, or authority. It may be used only at the phase allowed by `context_policy` and `core/project-memory.md`. Missing memory is never a missing YAAW prerequisite.
 
 ## Communication topology
 

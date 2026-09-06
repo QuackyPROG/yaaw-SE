@@ -12,6 +12,8 @@ Authority is semantic, not hierarchical. Orchestrator controls routing and lifec
 
 Expertise modules never grant authority. They may advise a role but cannot override the role contract.
 
+Project memory never grants authority either. It is derived advisory context governed by `core/project-memory.md` and `registries/context-policy.json`. A remembered conversation, commit rationale, convention, or historical implementation may guide where a semantic role looks, but only current human authority, canonical artifacts, repository/evidence reality, and the owning role's verified judgment can change current truth.
+
 A downstream role may detect that an upstream contract is invalid, but it returns a typed result to Orchestrator rather than spawning the owning role directly. Orchestrator then routes to the correct owner.
 
 Semantic roles author the evidence/judgment for lifecycle outcomes. Orchestrator is the state writer: it validates durable output against `registries/transitions.json`, persists the legal transition, and determines the next workflow.

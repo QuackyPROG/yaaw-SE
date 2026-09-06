@@ -16,6 +16,12 @@ Examples:
 
 After the requested destination has been validly reached, Orchestrator resumes normal autonomous routing rather than handing control to a peer role.
 
+## Project-memory boundary
+
+Semantic project memory never participates in routing, prerequisite resolution, state reconciliation, ticket admission, or completion detection. Orchestrator routes only from current canonical artifacts, state claims reconciled to repository/review/evidence reality, registries, and legal transition rules.
+
+`registries/context-policy.json` affects only the context behavior of the already-selected target role. It cannot change which workflow is selected.
+
 ## Priority
 
 1. Resolve material state inconsistency or incomplete recovery.
