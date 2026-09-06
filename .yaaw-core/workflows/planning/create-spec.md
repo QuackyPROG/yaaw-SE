@@ -1,7 +1,10 @@
-# Create specification
+# Create spec
 
 ## Purpose
-Materialize one coherent ready engineering frontier as a durable implementation contract.
+Materialize one implementation-ready engineering contract from a current readiness-passed frontier.
+
+## Inputs
+Exact handoff reads including current `docs/product/product.md`, `docs/engineering/engineering.md`, relevant `docs/engineering/decisions/ENG-*.md`, project rules, and repository references.
 
 ## Preconditions
 Current frontier readiness is `PASS` and its product/engineering revisions still match.
@@ -11,8 +14,8 @@ Current frontier readiness is `PASS` and its product/engineering revisions still
 2. Record metadata: revision, product revision, engineering revision, frontier ID, decision IDs, and status.
 3. Write goal, repository context, boundaries, behavior, data/state, interfaces, failure modes, security, UX/accessibility, tests, observability, migration/compatibility, non-goals, risks, and acceptance conditions as relevant.
 4. Reference `ENG-*` decisions rather than copying planning history.
-5. Validate required metadata/sections and confirm no unresolved material decision was invented.
-6. Mark spec `ACCEPTED`; otherwise leave `DRAFT`/route back to planning.
+5. Validate the spec against the canonical template/schema.
+6. Return the exact spec path/revision to Orchestrator; do not create implementation code or choose the next role.
 
 ## Output
-One current accepted spec in `docs/specs/` or an explicit planning gap.
+One current accepted `docs/specs/SPEC-NNN.md` or explicit `PRECONDITION_UNSATISFIED` / `BLOCKED` result.

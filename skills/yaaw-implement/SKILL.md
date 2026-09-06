@@ -1,10 +1,11 @@
 ---
 name: yaaw-implement
-description: Implement one admitted READY YAAW ticket and produce repository-identity-bound verification evidence.
+description: Request implementation through Orchestrator; product, engineering, spec, and ticket prerequisites are resolved before code changes.
 ---
 # YAAW Implement
-ROLE: `implementer`
-WORKFLOW: `implementation.implement-ticket`
+ROLE: `orchestrator`
+WORKFLOW: `orchestration.route`
+INTENT: `IMPLEMENTATION`
 
 ## Execute
-Load the Implementer role and canonical workflow. Implement exactly one admitted ticket; never self-approve or silently change its contract.
+Enter Orchestrator with implementation intent. Never run Implementer without one exact admitted READY ticket and current source spec.

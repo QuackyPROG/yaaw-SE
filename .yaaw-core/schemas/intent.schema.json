@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.intent/v1",
+  "type": "object",
+  "required": ["schema", "desired_intent", "source_skill", "requested_at_transition_sequence", "target_artifact"],
+  "properties": {
+    "schema": {"const": "yaaw.intent/v1"},
+    "desired_intent": {"enum": ["AUTO", "PRODUCT", "PRODUCT_REVISE", "PRODUCT_REFINE", "PLANNING", "PLANNING_REVIEW", "SPEC", "TICKETS", "IMPLEMENTATION", "REPAIR", "REVIEW"]},
+    "source_skill": {"type": "string", "minLength": 1},
+    "requested_at_transition_sequence": {"type": "integer", "minimum": 0},
+    "target_artifact": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

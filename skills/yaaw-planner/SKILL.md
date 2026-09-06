@@ -1,10 +1,11 @@
 ---
 name: yaaw-planner
-description: Continue YAAW engineering discovery, decisions, readiness, specification, or ticket planning from durable project state.
+description: Drive engineering discovery and planning through Orchestrator, resolving any upstream prerequisites first.
 ---
 # YAAW Planner
-ROLE: `planner`
-WORKFLOW: `planning.route`
+ROLE: `orchestrator`
+WORKFLOW: `orchestration.route`
+INTENT: `PLANNING`
 
 ## Execute
-Load the Planner role, resolve `planning.route` through the workflow registry, and execute the selected canonical planning workflow from current artifacts and repository reality.
+Enter Orchestrator with planning intent; product prerequisites are resolved before Planner receives an exact handoff.

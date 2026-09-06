@@ -6,6 +6,20 @@
   "missing_tickets_workflow": "planning.create-tickets",
   "next_frontier_workflow": "planning.route",
   "complete_terminal": "COMPLETE",
+  "intent_targets": {
+    "AUTO": null,
+    "PRODUCT": "prd.route",
+    "PRODUCT_REVISE": "prd.revise",
+    "PRODUCT_REFINE": "prd.refine",
+    "PLANNING": "planning.route",
+    "PLANNING_REVIEW": "planning.readiness-review",
+    "SPEC": "planning.create-spec",
+    "TICKETS": "planning.create-tickets",
+    "IMPLEMENTATION": "implementation.implement-ticket",
+    "REPAIR": "implementation.repair-ticket",
+    "REVIEW": "review.review-ticket"
+  },
+  "prerequisite_chain": ["product", "engineering", "spec", "tickets", "implementation", "review"],
   "ticket_state_precedence": [
     {"state": "REPLAN_REQUIRED", "workflow": "planning.replan"},
     {"state": "REPAIR_REQUIRED", "workflow": "implementation.repair-ticket"},

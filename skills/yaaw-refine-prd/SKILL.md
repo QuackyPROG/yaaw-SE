@@ -1,10 +1,11 @@
 ---
 name: yaaw-refine-prd
-description: Improve clarity and completeness of a YAAW product artifact without changing accepted product meaning.
+description: Request product-document clarity refinement through Orchestrator without changing accepted product meaning.
 ---
 # YAAW Refine PRD
-ROLE: `prd`
-WORKFLOW: `prd.refine`
+ROLE: `orchestrator`
+WORKFLOW: `orchestration.route`
+INTENT: `PRODUCT_REFINE`
 
 ## Execute
-Load the PRD role and canonical refine workflow. If meaning would change, switch to the revision workflow instead of silently editing intent.
+Enter Orchestrator with refinement intent; dispatch PRD refinement only against a valid current product artifact.

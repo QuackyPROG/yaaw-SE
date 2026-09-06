@@ -1,10 +1,11 @@
 ---
 name: yaaw-prd
-description: Create or continue product definition and route product clarification or revision work in a YAAW project.
+description: Drive product definition through Orchestrator while preserving prerequisite and downstream lifecycle safety.
 ---
 # YAAW PRD
-ROLE: `prd`
-WORKFLOW: `prd.route`
+ROLE: `orchestrator`
+WORKFLOW: `orchestration.route`
+INTENT: `PRODUCT`
 
 ## Execute
-Load the PRD role, resolve `prd.route` through the canonical workflow registry, and execute the selected product workflow rather than stopping after classification.
+Enter Orchestrator with product intent. Orchestrator dispatches PRD when valid and resumes autonomous routing after durable product output.

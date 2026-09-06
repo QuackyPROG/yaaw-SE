@@ -1,0 +1,7 @@
+{
+  "schema": "yaaw.intent/v1",
+  "desired_intent": "AUTO",
+  "source_skill": "yaaw-orchestrator",
+  "requested_at_transition_sequence": 0,
+  "target_artifact": null
+}

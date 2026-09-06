@@ -1,10 +1,11 @@
 ---
 name: yaaw-revise-prd
-description: Change accepted YAAW product intent and invalidate downstream engineering contracts whose basis became stale.
+description: Request an accepted product-intent revision through Orchestrator and propagate downstream invalidation safely.
 ---
 # YAAW Revise PRD
-ROLE: `prd`
-WORKFLOW: `prd.revise`
+ROLE: `orchestrator`
+WORKFLOW: `orchestration.route`
+INTENT: `PRODUCT_REVISE`
 
 ## Execute
-Load the PRD role and execute the canonical revision workflow. Preserve history, increment product revision, and use core invalidation propagation.
+Enter Orchestrator with revision intent; resolve product prerequisites, dispatch PRD revision, then reconcile downstream invalidation.

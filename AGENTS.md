@@ -6,22 +6,22 @@ This branch implements the artifact-first YAAW workflow architecture.
 Explicit user instructions take precedence over YAAW skill guidance unless a higher-priority safety, permission, or host requirement prevents the action. If a YAAW rule causes a pause or deviation, identify the exact file/rule and distinguish a hard requirement from interpretation.
 
 ## Non-negotiable architecture
-- `skills/` is the public Agent Skills API; every `SKILL.md` requires valid `name`/`description` YAML frontmatter and must stay thin.
+- `skills/` is the public Agent Skills API; every public skill expresses a `desired_intent` and enters through `orchestration.route`.
 - `.yaaw-core/` is the canonical private implementation.
-- `docs/` is durable project knowledge in a target project: product intent, engineering understanding/decisions, accepted specs, and promoted project rules.
-- `.yaaw/` is autonomous execution state: tickets, reviews, evidence, runtime coordination, and reconstructable `state.json`.
-- Folder ownership follows `.yaaw-core/core/folder-ownership.md`; no role silently rewrites another role's semantic artifacts.
+- `docs/` is durable project knowledge; `.yaaw/` is autonomous execution state.
+- Canonical paths come from `.yaaw-core/registries/artifacts.json`; roles must not invent alternate artifact locations.
+- Default role read/write authority comes from `.yaaw-core/registries/role-io.json`; every semantic dispatch receives exact `reads`, `writes`, and `forbidden_writes` in `.yaaw/runtime/handoff.json`.
+- Roles never spawn peer roles. Roles produce durable output + typed results; Orchestrator alone chooses the next role/workflow.
 - Planner owns ticket contract content; Orchestrator owns ticket lifecycle; Implementer owns execution/evidence; Reviewer owns acceptance/review records.
-- Do not reintroduce persistent named-agent personas.
-- Roles define authority; workflows define process; expertise provides knowledge only.
-- Orchestrator owns routing/reconciliation, never product/architecture/implementation/acceptance semantics.
+- Implementer must not run without one exact admitted ticket and current source spec. No ticket/spec is a prerequisite-routing condition, never permission to invent work.
+- Orchestrator owns routing/reconciliation/lifecycle persistence, never product/architecture/implementation/acceptance semantics.
 - Implementer never self-approves. Acceptance requires independent review tied to repository/source identity.
 - Conversation must never be the only location of an accepted decision.
-- State transitions follow `core/transitions.md`; upstream changes follow `core/invalidation.md`.
-- Behavioral oracles/fixtures are conformance infrastructure only. They must never become a second semantic runtime or override canonical workflow authority.
+- State transitions follow `core/transitions.md` / `registries/transitions.json`; upstream changes follow `core/invalidation.md`.
+- Do not reintroduce persistent named-agent personas.
 
 ## Change discipline
-When changing a skill, update registry/description together rather than copying workflow logic. When changing lifecycle states, routing, review outcomes, artifact metadata, evidence identity, recovery semantics, or folder ownership, update schemas/templates/rules/machine contracts/fixtures/tests together.
+When changing skills, routing, role authority, artifact paths, handoff fields, lifecycle states, review outcomes, evidence identity, recovery semantics, or folder ownership, update machine registries/schemas/templates/fixtures/tests together.
 
 Run:
 ```text

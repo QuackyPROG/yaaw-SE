@@ -18,7 +18,7 @@
   "planning.create-tickets": {"role": "planner", "workflow": ".yaaw-core/workflows/planning/create-tickets.md"},
   "planning.replan": {"role": "planner", "workflow": ".yaaw-core/workflows/planning/replan.md"},
 
-  "implementation.select-ticket": {"role": "implementer", "workflow": ".yaaw-core/workflows/implementation/select-ticket.md"},
+  "implementation.select-ticket": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/implementation/select-ticket.md"},
   "implementation.implement-ticket": {"role": "implementer", "workflow": ".yaaw-core/workflows/implementation/implement-ticket.md"},
   "implementation.verify-ticket": {"role": "implementer", "workflow": ".yaaw-core/workflows/implementation/verify-ticket.md"},
   "implementation.repair-ticket": {"role": "implementer", "workflow": ".yaaw-core/workflows/implementation/repair-ticket.md"},

@@ -2,11 +2,30 @@
   "schema": "yaaw.handoff/v1",
   "role": "implementer",
   "workflow": "implementation.implement-ticket",
-  "active_artifact": ".yaaw/tickets/TASK-000.md",
-  "references": [],
+  "desired_intent": "IMPLEMENTATION",
+  "active_artifact": ".yaaw/tickets/SPEC-001/TASK-001.md",
+  "reads": [
+    ".yaaw/tickets/SPEC-001/TASK-001.md",
+    "docs/specs/SPEC-001.md",
+    "docs/product/product.md"
+  ],
+  "writes": [
+    "<ticket-admitted application paths>",
+    ".yaaw/evidence/SPEC-001/TASK-001-V1.json"
+  ],
+  "forbidden_writes": [
+    "docs/product/**",
+    "docs/engineering/**",
+    "docs/specs/**",
+    ".yaaw/tickets/**",
+    ".yaaw/reviews/**",
+    ".yaaw/runtime/**",
+    ".yaaw/state.json"
+  ],
+  "references": ["docs/specs/SPEC-001.md"],
   "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
   "expertise": [],
-  "expected_output": "implementation_evidence",
+  "expected_results": ["REVIEW_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PRECONDITION_UNSATISFIED"],
   "repository": {"head_commit": "COMMIT", "dirty": false, "worktree_digest": "DIGEST"},
-  "transition_sequence": 0
+  "transition_sequence": 1
 }

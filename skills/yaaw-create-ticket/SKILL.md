@@ -1,10 +1,11 @@
 ---
 name: yaaw-create-ticket
-description: Create bounded YAAW implementation ticket contracts from the current accepted specification.
+description: Request bounded implementation-ticket creation through Orchestrator after a current accepted spec exists.
 ---
 # YAAW Create Ticket
-ROLE: `planner`
-WORKFLOW: `planning.create-tickets`
+ROLE: `orchestrator`
+WORKFLOW: `orchestration.route`
+INTENT: `TICKETS`
 
 ## Execute
-Load the Planner role and canonical ticket-creation workflow. This shortcut uses the same implementation as `yaaw-create-tickets`.
+Enter Orchestrator with ticket intent; missing product/engineering/spec prerequisites are resolved before ticket creation.

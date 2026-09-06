@@ -1,0 +1,31 @@
+{
+  "schema": "yaaw.role-io/v1",
+  "roles": {
+    "prd": {
+      "reads": ["product", "state"],
+      "writes": ["product"],
+      "forbidden_writes": ["engineering", "engineering_decision", "spec", "rule", "ticket", "application_files", "evidence", "review", "intent", "observed_state", "handoff", "state"]
+    },
+    "planner": {
+      "reads": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "repository"],
+      "writes": ["engineering", "engineering_decision", "spec", "rule", "ticket"],
+      "forbidden_writes": ["product", "application_files", "evidence", "review", "intent", "observed_state", "handoff", "state"]
+    },
+    "implementer": {
+      "reads": ["ticket", "spec", "product", "engineering_decision", "rule", "application_files", "evidence", "review", "repository"],
+      "writes": ["application_files", "evidence"],
+      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "review", "intent", "observed_state", "handoff", "state"]
+    },
+    "reviewer": {
+      "reads": ["ticket", "spec", "product", "engineering_decision", "rule", "application_files", "evidence", "review", "repository"],
+      "writes": ["review"],
+      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "application_files", "evidence", "intent", "observed_state", "handoff", "state"]
+    },
+    "orchestrator": {
+      "reads": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "evidence", "review", "intent", "observed_state", "handoff", "state", "repository"],
+      "writes": ["intent", "observed_state", "handoff", "state"],
+      "write_scopes": [{"artifact": "ticket", "scope": "lifecycle_metadata_only"}],
+      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "application_files", "evidence", "review"]
+    }
+  }
+}

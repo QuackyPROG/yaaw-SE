@@ -1,138 +1,89 @@
 # YAAW Workflow
 
-This document describes the canonical project flow and the handoffs between roles.
+> **Agents are disposable. Artifacts are durable. Roles do work. Orchestrator decides work.**
 
-> **Agents are disposable. Artifacts are durable.**
+## Entry
 
-## 1. Product definition
+Every public skill enters Orchestrator and records a desired intent in `.yaaw/runtime/intent.json`. The requested skill is a destination, not a bypass.
 
-The Human / PRD role owns product intent.
+```text
+@yaaw-implement
+      ↓
+Orchestrator
+      ↓
+resolve prerequisites
+      ↓
+implementation when legal
+      ↓
+Orchestrator
+      ↓
+review / repair / replan / next work / COMPLETE
+```
 
-It writes:
+Roles never spawn peer roles. Every semantic role returns durable output plus a typed result to Orchestrator.
+
+## Product
+
+PRD reads the exact product/state references in its handoff and writes only:
 
 ```text
 docs/product/product.md
 ```
 
-This file defines what should exist: users, behavior, scope, non-goals, constraints, and unresolved product questions. It should not become the engineering architecture document.
+If product intent is missing or needs human answers, downstream work stops until that authority is satisfied.
 
-When product intent is sufficiently clear, Planner takes over.
+## Engineering planning
 
-## 2. Engineering discovery
+Planner reads the current product revision, exact engineering/spec/ticket/rule references supplied by handoff, and only repository reality needed for the planning task.
 
-Planner reads the product definition, relevant repository reality, project rules, and existing engineering context.
-
-Planner writes durable engineering understanding to:
+Planner writes:
 
 ```text
 docs/engineering/engineering.md
+docs/engineering/decisions/ENG-*.md
+docs/specs/<SPEC-ID>.md
+.yaaw/tickets/<SPEC-ID>/<TASK-ID>.md
+docs/rules/**                 # only explicit rule promotion
 ```
 
-This is where engineering decisions, assumptions, risks, current decision frontier, future fog, and readiness live. Important decisions use `ENG-*` identities and may be expanded under:
+Planner creates ticket semantic contracts as `DRAFT`; Orchestrator persists lifecycle admission to `READY` when the Planner's durable result justifies it.
+
+## Implementation hard gate
+
+Implementer never creates tasks for itself.
 
 ```text
-docs/engineering/decisions/
+no READY ticket
+→ PRECONDITION_UNSATISFIED / NO_READY_TICKET
+→ Orchestrator
+→ accepted spec exists?
+    no  → engineering ready?
+            no  → Planner engineering workflow
+            yes → create spec
+    yes → create tickets
+→ Orchestrator admits one READY ticket
+→ Implementer
 ```
 
-Accepted engineering decisions must be durable before the planning context disappears.
+If product is missing further upstream, Orchestrator routes to PRD first.
 
-## 3. Readiness
-
-Planner asks:
-
-> Could a fresh Implementer execute the next slice without inventing a material product or architecture decision?
-
-If no, planning continues. If yes, readiness is `PASS` and Planner may create the implementation spec.
-
-## 4. Specification
-
-Planner creates an accepted spec under:
+Implementer reads one exact ticket and only its referenced upstream artifacts/rules plus admitted code context. It writes admitted source/tests and immutable evidence:
 
 ```text
-docs/specs/SPEC-NNN.md
+.yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json
 ```
 
-The spec is the coherent engineering contract for one implementation slice. It references product and engineering revisions/decisions and defines the larger technical boundary.
+Implementer never writes product/planning/spec/ticket/review/runtime/state artifacts and never self-approves.
 
-## 5. Ticket creation
+## Review
 
-After the spec is accepted, **Planner creates tickets from that spec**.
+Reviewer receives the exact ticket/spec/product/decision/evidence identities and repository basis in the handoff. It writes only the next immutable round:
 
 ```text
-docs/specs/SPEC-007.md
-        ↓
-Planner decomposes work
-        ↓
-.yaaw/tickets/SPEC-007/
-├── TASK-031.md
-├── TASK-032.md
-└── TASK-033.md
+.yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md
 ```
 
-A ticket is the primary bounded handoff to a fresh Implementer.
-
-A ticket contains enough execution context to define:
-
-- goal
-- source spec/revision
-- relevant product requirements
-- relevant `ENG-*` decisions
-- dependencies
-- relevant files/areas
-- required behavior
-- allowed scope
-- explicit non-goals
-- acceptance criteria
-- required tests
-- expertise hints
-
-Planner owns the ticket's semantic contract. Once `READY`, Implementer may not silently redefine scope, architecture, acceptance criteria, or requirements.
-
-## 6. Implementation
-
-Implementer selects exactly one admitted `READY` ticket.
-
-Its execution context is:
-
-```text
-TASK
-+ referenced SPEC sections
-+ referenced engineering decisions
-+ relevant product constraints
-+ relevant project rules/expertise
-+ relevant repository code
-```
-
-Implementer owns:
-
-- source changes within admitted scope
-- tests required by the contract
-- verification evidence
-
-Verification evidence belongs under:
-
-```text
-.yaaw/evidence/<SPEC-ID>/TASK-NNN.json
-```
-
-Implementer does not self-approve.
-
-If implementation is correct and required verification exists, the ticket advances toward `REVIEW_REQUIRED`.
-
-If implementation reveals that the ticket/spec architecture is invalid, the correct outcome is `REPLAN_REQUIRED`, not silent contract rewriting.
-
-## 7. Review
-
-Reviewer independently evaluates the implementation against the ticket contract and its referenced upstream artifacts.
-
-Reviewer writes immutable review rounds:
-
-```text
-.yaaw/reviews/SPEC-007/TASK-031/R1.md
-.yaaw/reviews/SPEC-007/TASK-031/R2.md
-```
-
-Reviewer returns exactly one of:
+Reviewer returns exactly:
 
 ```text
 PASS
@@ -141,135 +92,61 @@ REPLAN
 BLOCKED
 ```
 
-- **PASS** — implementation satisfies the current contract.
-- **REPAIR** — contract is valid; implementation has a defect.
-- **REPLAN** — engineering/ticket contract is invalid or incomplete.
-- **BLOCKED** — required information/evidence/access is missing.
+Orchestrator validates that durable review and persists the legal lifecycle transition.
 
-Review history is append-only. A later review does not rewrite an earlier round.
+## Orchestration
 
-## 8. Orchestration
-
-Orchestrator continuously asks:
-
-> Given durable artifacts and repository reality, what is the one correct next workflow?
-
-It owns:
+Orchestrator owns:
 
 ```text
+.yaaw/runtime/intent.json
+.yaaw/runtime/observed-state.json
+.yaaw/runtime/handoff.json
 .yaaw/state.json
-.yaaw/runtime/**
-ticket lifecycle coordination
+ticket lifecycle metadata only
 ```
 
-It does not own product intent, engineering meaning, implementation, or acceptance.
-
-Examples:
+Every handoff includes exact:
 
 ```text
-product missing
-→ PRD
+reads
+writes
+forbidden_writes
+artifact revisions
+repository identity
+desired intent
+expected results
+```
 
-product ready, engineering discovery incomplete
-→ Planner
+A semantic role does not search for missing YAAW artifacts. It returns `PRECONDITION_UNSATISFIED`; Orchestrator resolves the prerequisite using canonical paths from `registries/artifacts.json`.
 
-readiness PASS, no accepted spec
-→ create spec
+## Routing order
 
-accepted spec, no tickets
-→ Planner creates tickets
+```text
+recovery/inconsistency
+→ product
+→ replan
+→ engineering planning
+→ spec
+→ tickets
+→ repair
+→ review
+→ interruption recovery
+→ READY implementation
+→ next frontier
+→ COMPLETE
+```
 
-TASK READY
+For requested implementation, this naturally becomes:
+
+```text
+PRD (if needed)
+→ Planner engineering (if needed)
+→ Spec (if needed)
+→ Tickets (if needed)
 → Implementer
-
-TASK REVIEW_REQUIRED
 → Reviewer
-
-TASK REPAIR_REQUIRED
-→ Implementer repair
-
-TASK REPLAN_REQUIRED
-→ Planner
-
-TASK PASS + next READY ticket
-→ next Implementer
+→ Orchestrator decides what is next
 ```
 
-## 9. Ownership model
-
-The folder map encodes authority:
-
-```text
-Human / PRD
-  writes docs/product/**
-
-Planner
-  writes docs/engineering/**
-  writes docs/specs/**
-  authors .yaaw/tickets/** contracts
-
-Implementer
-  writes admitted application code/tests
-  writes .yaaw/evidence/**
-
-Reviewer
-  writes .yaaw/reviews/**
-
-Orchestrator
-  writes .yaaw/runtime/**
-  writes .yaaw/state.json
-  manages ticket lifecycle metadata
-```
-
-The central invariant is:
-
-> **Planner owns ticket content. Orchestrator owns ticket lifecycle. Implementer owns execution. Reviewer owns acceptance.**
-
-No downstream role silently rewrites an upstream semantic contract. Invalid contracts are returned to their owner.
-
-## 10. Recovery
-
-State files are useful but reconstructable. Repository reality and durable artifacts are evidence.
-
-Example:
-
-```text
-state says TASK-031 = IN_PROGRESS
-implementation exists
-required evidence exists
-review does not exist
-```
-
-Orchestrator should reconcile to the review path rather than implementing the ticket again.
-
-Likewise, an old `PASS` loses current authority when source revisions or repository identity no longer match.
-
-## Full chain
-
-```text
-docs/product/product.md
-        ↓
-Planner engineering discovery
-        ↓
-docs/engineering/engineering.md
-        ↓
-readiness PASS
-        ↓
-docs/specs/SPEC-NNN.md
-        ↓
-Planner ticket decomposition
-        ↓
-.yaaw/tickets/<SPEC-ID>/TASK-NNN.md
-        ↓
-Implementer
-        ↓
-code + tests + evidence
-        ↓
-Reviewer
-        ↓
-PASS / REPAIR / REPLAN / BLOCKED
-        ↓
-Orchestrator routes next valid workflow
-```
-
-The authoritative folder/write rules live in `.yaaw-core/core/folder-ownership.md`.
+The authoritative contracts are `.yaaw-core/core/io-contract.md`, `routing.md`, `folder-ownership.md`, and the machine registries under `.yaaw-core/registries/`.

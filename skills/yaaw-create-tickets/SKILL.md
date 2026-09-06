@@ -1,10 +1,11 @@
 ---
 name: yaaw-create-tickets
-description: Create dependency-aware bounded YAAW implementation tickets from the current accepted specification.
+description: Request dependency-aware implementation tickets through Orchestrator after all planning prerequisites are satisfied.
 ---
 # YAAW Create Tickets
-ROLE: `planner`
-WORKFLOW: `planning.create-tickets`
+ROLE: `orchestrator`
+WORKFLOW: `orchestration.route`
+INTENT: `TICKETS`
 
 ## Execute
-Load the Planner role and canonical ticket-creation workflow. Produce fresh-context-ready tickets and admit only dependency-satisfied work.
+Enter Orchestrator with ticket-decomposition intent; Planner receives only a current accepted spec and exact references.

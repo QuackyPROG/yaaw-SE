@@ -4,128 +4,96 @@ YAAW-SE is an artifact-first autonomous software-engineering workflow.
 
 > **Agents are disposable. Artifacts are durable.**
 
-A PRD, planning, implementation, or review context may disappear. The project should still be resumable from repository reality plus durable artifacts.
-
 ## Architecture
 
 ```text
-skills/        -> public workflow entrypoints
+skills/        -> public desired-intent entrypoints
 .yaaw-core/    -> canonical workflow implementation
 docs/          -> durable project knowledge
 .yaaw/         -> autonomous execution state
 ```
 
-There are five authority roles:
+There are five semantic authority roles: PRD, Planner, Implementer, Reviewer, and Orchestrator. Orchestrator is the team lead/traffic controller: it reconstructs reality, resolves prerequisites, persists lifecycle state, and dispatches exactly one semantic workflow at a time. It does not author product meaning, architecture, implementation, or acceptance.
 
-- **PRD / Human** — product intent and scope.
-- **Planner** — engineering decisions, specs, readiness, and ticket contracts.
-- **Implementer** — code/tests for one admitted ticket plus verification evidence.
-- **Reviewer** — independent acceptance and repair-vs-replan classification.
-- **Orchestrator** — continuity, reconciliation, lifecycle, and routing.
+Core rule:
 
-The Orchestrator does not own product meaning, architecture, implementation, or acceptance.
+> **Roles do work. Orchestrator decides work.**
 
-## Folder ownership
+Roles do not privately spawn each other. They communicate through durable artifacts, exact `.yaaw/runtime/handoff.json` contracts, and typed results returned to Orchestrator.
 
-YAAW separates durable documentation from execution artifacts.
+## Canonical artifacts
 
 ```text
-docs/
-├── product/
-│   └── product.md
-├── engineering/
-│   ├── engineering.md
-│   └── decisions/
-├── specs/
-└── rules/
+docs/product/product.md
+docs/engineering/engineering.md
+docs/engineering/decisions/ENG-*.md
+docs/specs/<SPEC-ID>.md
+docs/rules/**
 
-.yaaw/
-├── tickets/
-├── reviews/
-├── evidence/
-├── runtime/
-└── state.json
+.yaaw/tickets/<SPEC-ID>/<TASK-ID>.md
+.yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json
+.yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md
+.yaaw/runtime/intent.json
+.yaaw/runtime/observed-state.json
+.yaaw/runtime/handoff.json
+.yaaw/state.json
 ```
 
-The normative ownership contract is `.yaaw-core/core/folder-ownership.md`.
+`registries/artifacts.json` is the machine-readable path authority; `registries/role-io.json` defines role I/O authority. Every dispatch resolves these patterns into exact files, so semantic roles do not wander the project looking for workflow artifacts.
 
-### Ownership summary
-
-| Area | Owner |
-|---|---|
-| `docs/product/**` | Human / PRD |
-| `docs/engineering/**` | Planner |
-| `docs/specs/**` | Planner |
-| `docs/rules/**` | Planner-controlled promotion |
-| `.yaaw/tickets/**` contract content | Planner |
-| application code/tests | Implementer |
-| `.yaaw/evidence/**` | Implementer |
-| `.yaaw/reviews/**` | Reviewer |
-| `.yaaw/runtime/**`, `.yaaw/state.json` | Orchestrator |
-
-For tickets specifically:
+For tickets:
 
 > **Planner owns content. Orchestrator owns lifecycle. Implementer owns execution. Reviewer owns acceptance.**
 
-No role may silently rewrite another role's semantic artifact.
+## Autonomous prerequisite chain
 
-## Canonical flow
+A public skill names a desired destination, not permission to skip prerequisites. For example `@yaaw-implement` means “get the project safely to implementation and continue the valid lifecycle,” not “run Implementer immediately.”
 
 ```text
-PRD
-  ↓
-docs/product/product.md
-  ↓
-Planner discovery + engineering decisions
-  ↓
-docs/engineering/engineering.md
-  ↓
-readiness PASS
-  ↓
-docs/specs/SPEC-NNN.md
-  ↓
-Planner creates tickets from the accepted spec
-  ↓
-.yaaw/tickets/SPEC-NNN/TASK-NNN.md
-  ↓
-Implementer
-  ↓
-code + tests + .yaaw/evidence/**
-  ↓
-Reviewer
-  ↓
-.yaaw/reviews/**
-  ↓
-PASS / REPAIR / REPLAN / BLOCKED
+product missing/unready
+→ PRD
+→ engineering unresolved
+→ Planner
+→ readiness PASS, no spec
+→ create spec
+→ accepted spec, no executable ticket
+→ create tickets
+→ one READY ticket
+→ Implementer
+→ Reviewer
+→ repair / replan / next ticket / next frontier / COMPLETE
 ```
 
-A ticket is the Implementer's bounded handoff contract. It references the source spec and relevant engineering/product decisions, defines allowed scope, non-goals, acceptance criteria, required tests, dependencies, and expertise hints.
-
-The Implementer does not invent or rewrite its own ticket. If implementation reveals that the contract is wrong, control returns to Planner through `REPLAN_REQUIRED`.
+Implementer has a hard gate: without one exact admitted ticket and current source spec, it makes no code changes and returns `PRECONDITION_UNSATISFIED`. Orchestrator then resolves the missing prerequisite.
 
 ## Skills
 
-Primary entrypoints:
+All public skills enter Orchestrator with a desired intent:
 
-- `@yaaw-orchestrator`
-- `@yaaw-prd`
-- `@yaaw-planner`
-- `@yaaw-implement`
-- `@yaaw-review`
+- `@yaaw-orchestrator` — autonomous continuation (`AUTO`)
+- `@yaaw-prd` — product intent
+- `@yaaw-revise-prd` — product revision
+- `@yaaw-refine-prd` — product clarity refinement
+- `@yaaw-planner` — engineering planning
+- `@yaaw-planning-review` — readiness review
+- `@yaaw-create-spec` — specification
+- `@yaaw-create-ticket`
+- `@yaaw-create-tickets` — ticket decomposition
+- `@yaaw-implement` — implementation
+- `@yaaw-repair` — repair
+- `@yaaw-review` — independent review
 
-Direct shortcuts include `@yaaw-revise-prd`, `@yaaw-refine-prd`, `@yaaw-planning-review`, `@yaaw-create-spec`, `@yaaw-create-ticket`, `@yaaw-create-tickets`, and `@yaaw-repair`.
-
-All shortcuts resolve to canonical workflows in `.yaaw-core/`; they do not duplicate workflow logic.
+Prerequisites always outrank desired intent.
 
 ## Bootstrap
 
-From a YAAW checkout:
+The user never needs to pre-create `docs/` or `.yaaw/`. Entry workflows ensure the canonical tree exists idempotently, equivalent to:
 
 ```text
 python scripts/init_project.py /path/to/project
 ```
 
-This creates the `docs/` knowledge tree and `.yaaw/` execution tree without overwriting existing project artifacts.
+Existing durable content is never overwritten.
 
 ## Verification
 
@@ -136,4 +104,4 @@ python scripts/behavior_oracle.py
 python -m unittest discover -s tests -v
 ```
 
-For the plain-English lifecycle, see `WORKFLOW.md`. For normative contracts, start with `.yaaw-core/core/folder-ownership.md`, `.yaaw-core/core/authority.md`, and `.yaaw-core/core/artifact-model.md`.
+See `WORKFLOW.md` for the lifecycle and `.yaaw-core/core/io-contract.md`, `artifact-model.md`, `folder-ownership.md`, `authority.md`, and `routing.md` for normative contracts.

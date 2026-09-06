@@ -1,0 +1,19 @@
+{
+  "schema": "yaaw.artifacts/v1",
+  "artifacts": {
+    "product": {"pattern": "docs/product/product.md", "kind": "durable_semantic", "semantic_owner": "prd", "lifecycle_owner": "prd"},
+    "engineering": {"pattern": "docs/engineering/engineering.md", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner"},
+    "engineering_decision": {"pattern": "docs/engineering/decisions/ENG-*.md", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner"},
+    "spec": {"pattern": "docs/specs/<SPEC-ID>.md", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner"},
+    "rule": {"pattern": "docs/rules/**", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner"},
+    "ticket": {"pattern": ".yaaw/tickets/<SPEC-ID>/<TASK-ID>.md", "kind": "execution_contract", "semantic_owner": "planner", "lifecycle_owner": "orchestrator"},
+    "evidence": {"pattern": ".yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json", "kind": "immutable_evidence", "semantic_owner": "implementer", "lifecycle_owner": "implementer"},
+    "review": {"pattern": ".yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md", "kind": "immutable_review", "semantic_owner": "reviewer", "lifecycle_owner": "reviewer"},
+    "intent": {"pattern": ".yaaw/runtime/intent.json", "kind": "runtime", "semantic_owner": "orchestrator", "lifecycle_owner": "orchestrator"},
+    "observed_state": {"pattern": ".yaaw/runtime/observed-state.json", "kind": "runtime", "semantic_owner": "orchestrator", "lifecycle_owner": "orchestrator"},
+    "handoff": {"pattern": ".yaaw/runtime/handoff.json", "kind": "runtime", "semantic_owner": "orchestrator", "lifecycle_owner": "orchestrator"},
+    "state": {"pattern": ".yaaw/state.json", "kind": "runtime_state", "semantic_owner": null, "lifecycle_owner": "orchestrator"},
+    "application_files": {"pattern": "<ticket-admitted application paths>", "kind": "repository", "semantic_owner": "implementer", "lifecycle_owner": "implementer"},
+    "repository": {"pattern": "<repository reality>", "kind": "observed", "semantic_owner": null, "lifecycle_owner": null}
+  }
+}

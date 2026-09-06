@@ -33,14 +33,9 @@ def main() -> int:
         ("IN_PROGRESS", "orchestration.recover-interruption"),
         ("READY", "implementation.implement-ticket"),
     ]
-    actual_precedence = [
-        (entry.get("state"), entry.get("workflow"))
-        for entry in policy.get("ticket_state_precedence", [])
-    ]
+    actual_precedence = [(entry.get("state"), entry.get("workflow")) for entry in policy.get("ticket_state_precedence", [])]
     if actual_precedence != expected_precedence:
-        errors.append(
-            f"routing precedence drifted: expected={expected_precedence!r} actual={actual_precedence!r}"
-        )
+        errors.append(f"routing precedence drifted: expected={expected_precedence!r} actual={actual_precedence!r}")
 
     policy_workflows = {
         policy.get("product_unready_workflow"),
@@ -49,24 +44,26 @@ def main() -> int:
         policy.get("missing_tickets_workflow"),
         policy.get("next_frontier_workflow"),
         *(entry.get("workflow") for entry in policy.get("ticket_state_precedence", [])),
+        *(policy.get("intent_targets", {}).values()),
     }
     for workflow in sorted(policy_workflows - {None}):
         if workflow not in workflows:
             errors.append(f"routing policy references unregistered workflow {workflow}")
 
+    if policy.get("prerequisite_chain") != ["product", "engineering", "spec", "tickets", "implementation", "review"]:
+        errors.append("routing prerequisite chain drifted")
+
     if transitions.get("schema") != "yaaw.transitions/v1":
         errors.append("transitions registry schema id drifted")
+    for transition in transitions.get("legal", []):
+        if transition.get("state_writer") != "orchestrator":
+            errors.append(f"ticket transition must be state-written by orchestrator: {transition}")
 
     state_schema = load_json(CORE / "schemas" / "project-state.schema.json")
-    schema_states = set(
-        state_schema["properties"]["tickets"]["additionalProperties"]["enum"]
-    )
+    schema_states = set(state_schema["properties"]["tickets"]["additionalProperties"]["enum"])
     transition_states = set(transitions.get("ticket_states", []))
     if transition_states != schema_states:
-        errors.append(
-            f"transition ticket states differ from project-state schema: "
-            f"transitions={sorted(transition_states)} schema={sorted(schema_states)}"
-        )
+        errors.append(f"transition ticket states differ from project-state schema: transitions={sorted(transition_states)} schema={sorted(schema_states)}")
 
     legal_pairs = set()
     for transition in transitions.get("legal", []):
@@ -78,14 +75,9 @@ def main() -> int:
         if workflow not in workflows:
             errors.append(f"transition {pair} references unregistered workflow {workflow}")
 
-    forbidden_pairs = {
-        (entry.get("from"), entry.get("to"))
-        for entry in transitions.get("forbidden", [])
-    }
+    forbidden_pairs = {(entry.get("from"), entry.get("to")) for entry in transitions.get("forbidden", [])}
     if legal_pairs & forbidden_pairs:
-        errors.append(
-            f"transitions are both legal and forbidden: {sorted(legal_pairs & forbidden_pairs)}"
-        )
+        errors.append(f"transitions are both legal and forbidden: {sorted(legal_pairs & forbidden_pairs)}")
 
     ids = [case.get("id") for case in fixtures.get("cases", [])]
     if len(ids) != len(set(ids)):
@@ -97,17 +89,17 @@ def main() -> int:
 
     errors.extend(run_fixture_cases(FIXTURES))
 
-    fresh_root = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw"
+    fresh = ROOT / "tests" / "fixtures" / "fresh_context_project"
     for relative in (
-        "product.md",
-        "engineering.md",
-        "state.json",
-        "specs/SPEC-001.md",
-        "tickets/TASK-001.md",
-        "reviews/TASK-001-R1.md",
-        "evidence/EVIDENCE-TASK-001-V1.json",
+        "docs/product/product.md",
+        "docs/engineering/engineering.md",
+        "docs/specs/SPEC-001.md",
+        ".yaaw/state.json",
+        ".yaaw/tickets/SPEC-001/TASK-001.md",
+        ".yaaw/reviews/SPEC-001/TASK-001/R1.md",
+        ".yaaw/evidence/SPEC-001/TASK-001-V1.json",
     ):
-        if not (fresh_root / relative).is_file():
+        if not (fresh / relative).is_file():
             errors.append(f"fresh-context fixture missing {relative}")
 
     if not (ROOT / "scripts" / "init_project.py").is_file():
@@ -119,11 +111,7 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print(
-        f"YAAW behavioral validation passed: "
-        f"{len(fixtures['cases'])} lifecycle cases, "
-        f"{len(legal_pairs)} explicit legal transitions"
-    )
+    print(f"YAAW behavioral validation passed: {len(fixtures['cases'])} lifecycle cases, {len(legal_pairs)} explicit legal transitions")
     return 0
 
 
