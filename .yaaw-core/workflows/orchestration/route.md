@@ -4,6 +4,8 @@
 Continuously restore project reality and execute one safe canonical workflow at a time until a true stop condition.
 
 ## Procedure
+Before entering the loop, ensure the canonical project structure exists. If any required `docs/` or `.yaaw/` directory/artifact is missing, run the idempotent project initializer (equivalent to `python scripts/init_project.py .`) to create only missing structure without overwriting existing artifacts.
+
 Repeat:
 1. execute `orchestration.inspect-state`;
 2. execute `orchestration.reconcile-state` when inconsistencies exist;
