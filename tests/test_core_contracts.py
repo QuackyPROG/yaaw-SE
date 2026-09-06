@@ -11,6 +11,7 @@ class CoreContractsTest(unittest.TestCase):
     def setUpClass(cls):
         cls.workflows = json.loads((CORE / "registries/workflows.json").read_text())
         cls.skills = json.loads((CORE / "registries/skills.json").read_text())
+        cls.expertise = json.loads((CORE / "registries/expertise.json").read_text())
 
     def test_every_public_skill_routes_to_canonical_workflow(self):
         for skill, entry in self.skills.items():
@@ -90,6 +91,45 @@ class CoreContractsTest(unittest.TestCase):
         self.assertIn("must not author product decisions", text)
         self.assertIn("architecture", text)
         self.assertIn("acceptance", text)
+
+    def test_changeability_is_core_policy_not_public_skill(self):
+        policy = CORE / "rules/changeability.md"
+        module = CORE / "expertise/changeability/MODULE.md"
+        self.assertTrue(policy.is_file())
+        self.assertTrue(module.is_file())
+        self.assertIn("changeability", self.expertise)
+        self.assertNotIn("yaaw-changeability", self.skills)
+        policy_text = policy.read_text()
+        for principle in [
+            "Keep the main path visible",
+            "Name by domain meaning",
+            "Contain external systems behind boundaries",
+            "Make invalid states harder to represent",
+            "Separate decisions from actions",
+            "Make failures useful",
+            "Keep changes focused",
+        ]:
+            self.assertIn(principle, policy_text)
+
+    def test_changeability_is_enforced_across_plan_build_review(self):
+        required_files = [
+            CORE / "roles/planner.md",
+            CORE / "roles/implementer.md",
+            CORE / "roles/reviewer.md",
+            CORE / "workflows/planning/create-tickets.md",
+            CORE / "workflows/implementation/implement-ticket.md",
+            CORE / "workflows/implementation/verify-ticket.md",
+            CORE / "workflows/implementation/repair-ticket.md",
+            CORE / "workflows/review/review-ticket.md",
+        ]
+        for path in required_files:
+            self.assertIn("changeability", path.read_text().lower(), str(path))
+
+        review_template = (CORE / "templates/review.md").read_text()
+        self.assertIn("## Changeability assessment", review_template)
+        classify = (CORE / "workflows/review/classify-findings.md").read_text()
+        self.assertIn("style preference", classify.lower())
+        self.assertIn("CHANGEABILITY", classify)
 
 
 if __name__ == "__main__":
