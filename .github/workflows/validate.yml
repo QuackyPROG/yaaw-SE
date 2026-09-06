@@ -2,7 +2,7 @@ name: Validate YAAW Core
 
 on:
   push:
-    branches: [yaaw-SEv2]
+    branches: [main, yaaw-SEv2]
   pull_request:
     paths:
       - '.yaaw-core/**'
@@ -11,6 +11,7 @@ on:
       - 'tests/**'
       - 'AGENTS.md'
       - 'README.md'
+      - 'WORKFLOW.md'
 
 jobs:
   validate:
