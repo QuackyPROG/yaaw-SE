@@ -36,6 +36,8 @@ After the requested destination has been validly reached, Orchestrator resumes n
 
 Implementer may run only for one exact admitted ticket. If no dependency-satisfied `READY` ticket exists, Orchestrator must not dispatch `implementation.implement-ticket`.
 
+Missing ticket is a planning prerequisite. It is never an Implementer invitation to invent work.
+
 For an implementation intent, prerequisites resolve automatically in this order:
 
 ```text
