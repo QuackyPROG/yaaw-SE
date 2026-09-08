@@ -1,0 +1,57 @@
+# YAAW Codex project defaults
+# Main controller: Luna Max on Fast service.
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
+service_tier = "fast"
+
+[features]
+multi_agent = true
+
+[agents]
+max_threads = 8
+max_depth = 1
+
+[agents.prd]
+description = "YAAW PRD · High · product requirements and clarification"
+config_file = "agents/prd.toml"
+
+[agents.planner]
+description = "YAAW Planner · High · architecture, specs, decisions, and tickets"
+config_file = "agents/planner.toml"
+
+[agents.implementer]
+description = "YAAW Implementer · High · executes one admitted ticket and verifies it"
+config_file = "agents/implementer.toml"
+
+[agents.reviewer]
+description = "YAAW Reviewer · High · independent acceptance review"
+config_file = "agents/reviewer.toml"
+
+# Escalation variants are explicit so Codex subagent v2 shows the role and effort.
+[agents.prd_xhigh]
+description = "YAAW PRD · XHigh · retry after verified High failure"
+config_file = "agents/prd-xhigh.toml"
+[agents.prd_max]
+description = "YAAW PRD · Max · final bounded retry after XHigh failure"
+config_file = "agents/prd-max.toml"
+
+[agents.planner_xhigh]
+description = "YAAW Planner · XHigh · retry after verified High failure"
+config_file = "agents/planner-xhigh.toml"
+[agents.planner_max]
+description = "YAAW Planner · Max · final bounded retry after XHigh failure"
+config_file = "agents/planner-max.toml"
+
+[agents.implementer_xhigh]
+description = "YAAW Implementer · XHigh · retry after verified High failure"
+config_file = "agents/implementer-xhigh.toml"
+[agents.implementer_max]
+description = "YAAW Implementer · Max · final bounded retry after XHigh failure"
+config_file = "agents/implementer-max.toml"
+
+[agents.reviewer_xhigh]
+description = "YAAW Reviewer · XHigh · retry after verified High failure"
+config_file = "agents/reviewer-xhigh.toml"
+[agents.reviewer_max]
+description = "YAAW Reviewer · Max · final bounded retry after XHigh failure"
+config_file = "agents/reviewer-max.toml"

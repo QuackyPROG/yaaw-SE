@@ -12,6 +12,7 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Canonical paths come from `.yaaw-core/registries/artifacts.json`; roles must not invent alternate artifact locations.
 - Default role read/write authority comes from `.yaaw-core/registries/role-io.json`; every semantic dispatch receives exact `reads`, `writes`, and `forbidden_writes` in `.yaaw/runtime/handoff.json`.
 - Role context/memory timing comes from `.yaaw-core/registries/context-policy.json`; project memory is optional advisory context, never authority and never a prerequisite.
+- Codex execution policy comes from `.codex/config.toml` and `.yaaw-core/core/codex-runtime.md`: main controller is Luna Max Fast; semantic subagents start Luna High Fast and may be retried by Orchestrator at XHigh then Max only with concrete failure evidence. Escalation never changes semantic authority or scope.
 - Roles never spawn peer roles. Roles produce durable output + typed results; Orchestrator alone chooses the next role/workflow.
 - Planner owns ticket contract content; Orchestrator owns ticket lifecycle; Implementer owns execution/evidence; Reviewer owns acceptance/review records.
 - Implementer must not run without one exact admitted ticket and current source spec. No ticket/spec is a prerequisite-routing condition, never permission to invent work.
@@ -21,10 +22,10 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Every workflow must still work if project memory is unavailable; memory may reduce rediscovery but cannot be required for correctness.
 - Do not deliberately ingest live control files (`AGENTS.md`, `skills/**`, `.yaaw-core/**`, `.yaaw/runtime/**`, `.yaaw/state.json`) or secrets into project memory.
 - State transitions follow `core/transitions.md` / `registries/transitions.json`; upstream changes follow `core/invalidation.md`.
-- Do not reintroduce persistent named-agent personas.
+- Do not reintroduce persistent named-agent personas. Codex custom-agent names are visible execution-role labels, not durable personas or semantic authorities.
 
 ## Change discipline
-When changing skills, routing, role authority, artifact paths, handoff fields, lifecycle states, review outcomes, evidence identity, recovery semantics, folder ownership, context policy, or project-memory behavior, update machine registries/schemas/templates/fixtures/tests together.
+When changing skills, routing, role authority, artifact paths, handoff fields, lifecycle states, review outcomes, evidence identity, recovery semantics, folder ownership, context policy, project-memory behavior, or Codex runtime/escalation policy, update machine registries/schemas/templates/fixtures/tests together.
 
 Run:
 ```text
