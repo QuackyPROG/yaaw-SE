@@ -5,6 +5,7 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONFIG = ROOT / ".codex" / "config.toml"
 ROLES = ("prd", "planner", "implementer", "reviewer")
+DISPLAY_NAMES = {"prd": "PRD", "planner": "Planner", "implementer": "Implementer", "reviewer": "Reviewer"}
 
 
 class CodexRuntimePolicyTests(unittest.TestCase):
@@ -26,7 +27,7 @@ class CodexRuntimePolicyTests(unittest.TestCase):
             for suffix, effort in (("", "high"), ("_xhigh", "xhigh"), ("_max", "max")):
                 key = role + suffix
                 registration = self.config["agents"][key]
-                self.assertIn(role.capitalize(), registration["description"])
+                self.assertIn(DISPLAY_NAMES[role], registration["description"])
                 path = CONFIG.parent / registration["config_file"]
                 self.assertTrue(path.is_file(), key)
                 agent = tomllib.loads(path.read_text())
