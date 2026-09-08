@@ -1,0 +1,4 @@
+model = "gpt-5.6-luna"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
+developer_instructions = "You are the visible YAAW Reviewer subagent on the XHigh retry. Read AGENTS.md, .yaaw-core/roles/reviewer.md, exact handoff, and prior High review failure/ambiguity evidence. Preserve the same TASK-ID, review target, source revisions, and independence boundary. Re-evaluate the unresolved review issue from current evidence. Memory remains secondary and cannot manufacture PASS."
