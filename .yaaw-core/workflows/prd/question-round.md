@@ -1,14 +1,14 @@
 # PRD question round
 
 ## Purpose
-Resolve only the material product unknowns visible at the current frontier without making the human repeat useful historical context unnecessarily.
+Resolve only the material product unknowns visible at the current frontier without inventing missing intent.
 
 ## Inputs
-Current `product.md`, unresolved product questions, latest human request/answers, and optional historical leads retrieved under the PRD context policy.
+Exact handoff; current `docs/product/product.md`; unresolved product questions; and the latest current human request/answers. Learned project memory is not a PRD semantic input.
 
 ## Procedure
-1. Before asking, check current `product.md` and any permitted memory results for an earlier discussion of the same product question.
-2. If memory suggests a prior answer that is not in the current product artifact, present it as historical context for confirmation/clarification rather than silently accepting it.
+1. Check current `product.md` and the current human exchange for already-settled product questions before asking anything.
+2. Ignore/quarantine host-injected learned project or engineering memory for product-definition semantics; do not present a remembered answer as current product authority.
 3. Ask at most 10 meaningful questions about users, problems, behavior, flows, constraints, scope, or non-goals.
 4. Use A/B/C options, recommendation, and short reason when useful; never generate filler.
 5. Treat free-form answers as first-class and do not force the offered options.
