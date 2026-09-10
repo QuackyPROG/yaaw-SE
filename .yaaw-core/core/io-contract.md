@@ -6,6 +6,7 @@ YAAW roles communicate through durable artifacts, exact Orchestrator handoffs, a
 
 - `registries/artifacts.json` defines canonical artifact path patterns and semantic/lifecycle ownership.
 - `registries/role-io.json` defines each role's default read/write authority.
+- `registries/workflows.json` maps every canonical workflow ID to exactly one workflow contract.
 - `registries/context-policy.json` defines each role's optional learned-memory phase and target context budget.
 - `.yaaw/runtime/handoff.json` resolves those symbolic contracts to the exact files and context policy for one dispatch.
 - `.yaaw/runtime/intent.json` records the public skill's desired destination while prerequisites are being resolved.
@@ -23,7 +24,17 @@ Every semantic-role dispatch must include:
 - selected `context_policy` copied from the machine registry;
 - allowed/expected result vocabulary.
 
-A role must read the handoff before doing semantic work. If a workflow artifact is not in the handoff, the role does not search the repository hoping to discover it. The only allowed exploratory search is repository/application inspection that the ticket or planning workflow explicitly admits.
+A semantic role must read `.yaaw/runtime/handoff.json` before semantic work, then read its role contract, resolve `handoff.workflow` through `registries/workflows.json`, and read that exact workflow contract. Only then may it load the handoff `reads`, selected expertise, and admitted repository/evidence context.
+
+If a YAAW workflow artifact is not named by the canonical workflow registry/handoff chain, the role does not search the repository hoping to discover an alternate workflow or artifact. The only allowed exploratory search is repository/application inspection that the current ticket or planning workflow explicitly admits.
+
+## Workflow input closure
+
+Every file under `.yaaw-core/workflows/**/*.md` must be registered exactly once in `registries/workflows.json` and declare both `## Purpose` and `## Inputs`.
+
+For a semantic-role workflow, every required canonical YAAW artifact named by `## Inputs` must be available through the current handoff `reads` or be same-dispatch derived data produced by an already-entered internal subworkflow. An internal same-role subworkflow inherits the exact current handoff, role, revisions, repository basis, `writes`, `forbidden_writes`, and context policy; calling it never broadens authority.
+
+If a required canonical input is missing, stale, or outside the handoff, return `PRECONDITION_UNSATISFIED` (or the workflow's narrower documented stop result) to Orchestrator. Never compensate by scanning for an alternate YAAW artifact location.
 
 Optional learned-memory retrieval is not workflow-artifact discovery and does not expand `reads`, `writes`, or authority. It may be used only at the phase allowed by `context_policy` and `core/project-memory.md`. Missing memory is never a missing YAAW prerequisite.
 
@@ -55,7 +66,9 @@ Core rule: **Roles report reality. Orchestrator decides routing.**
 
 ## Lifecycle writing
 
-Semantic roles may author the evidence that justifies a lifecycle change, but they do not mutate `.yaaw/state.json` or runtime routing state. `registries/transitions.json` records the semantic outcome authority in `owner` and the actual lifecycle state writer in `state_writer`; `state_writer` is Orchestrator for ticket transitions.
+Semantic roles may author the evidence/judgment that justifies a lifecycle outcome, but they do not mutate `.yaaw/state.json` or runtime routing state. `registries/transitions.json` records semantic outcome authority in `owner` and the actual lifecycle state writer in `state_writer`; `state_writer` is Orchestrator for ticket transitions.
+
+A workflow may therefore say that Implementer or Reviewer *reports* `REPLAN_REQUIRED`, or that Reviewer *classifies* `PASS`, without granting that role permission to persist ticket lifecycle state. Orchestrator validates the durable result against `registries/transitions.json` and writes the legal transition.
 
 Ticket semantic content remains Planner-owned. Orchestrator may change ticket lifecycle metadata only; it may not rewrite ticket goal, scope, acceptance criteria, architecture, dependencies, or non-goals.
 
@@ -78,4 +91,4 @@ REPLAN
 COMPLETE
 ```
 
-`PRECONDITION_UNSATISFIED` must include a concrete reason such as `NO_READY_TICKET`, `SOURCE_SPEC_MISSING`, or `STALE_SOURCE_REVISION`. Orchestrator then resolves the missing prerequisite through the routing policy.
+`PRECONDITION_UNSATISFIED` must include a concrete reason such as `NO_READY_TICKET`, `SOURCE_SPEC_MISSING`, or `STALE_SOURCE_REVISION`. Reason codes do not replace the typed result. Orchestrator then resolves the missing prerequisite through the routing policy.
