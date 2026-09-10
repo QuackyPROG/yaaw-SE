@@ -6,6 +6,25 @@ This policy configures the Codex host only. It does not change YAAW semantic aut
 
 The main Codex session is the YAAW Orchestrator/controller and uses `gpt-5.6-luna`, `max` reasoning, and Fast service. Semantic work is delegated through the custom agents registered in `.codex/config.toml`.
 
+## Mandatory subagent load protocol
+
+Every PRD, Planner, Implementer, and Reviewer variant uses the same load sequence regardless of reasoning tier:
+
+```text
+read .yaaw/runtime/handoff.json FIRST
+→ read AGENTS.md + exact role contract
+→ resolve handoff.workflow via .yaaw-core/registries/workflows.json
+→ read that exact workflow contract
+→ load only handoff-authorized workflow inputs/expertise/repository evidence
+→ apply context_policy / optional memory at its allowed phase
+→ execute
+→ return durable output + typed result to Orchestrator
+```
+
+A subagent must never infer a workflow file from its role label. `planner` can execute several different planning workflows; `implementer` can implement or repair; `reviewer` can run review subworkflows. The persisted `handoff.workflow` is the canonical dynamic selector.
+
+If the exact workflow contract or one of its required authoritative inputs cannot be resolved, the subagent returns the appropriate prerequisite/stale-handoff result instead of searching for an alternate YAAW artifact or inventing the missing contract.
+
 ## Visible subagents
 
 PRD, Planner, Implementer, and Reviewer are registered as named custom Codex agents. Their descriptions expose role and reasoning tier in the subagent UI. The concrete task passed at spawn must also include the active artifact identity (for example `SPEC-12`, `TASK-31`, or review round) so the UI answers both **who is running** and **what it is doing**.
@@ -21,7 +40,7 @@ Escalation is Orchestrator-owned and is allowed only when the previous attempt h
 3. `ROLE_max` — Luna Max + Fast, receiving the same handoff plus all prior failure evidence.
 4. If Max still cannot satisfy the contract, stop escalating and persist/return the role-appropriate `BLOCKED`, `REPLAN_REQUIRED`, prerequisite, repair, or review outcome.
 
-An escalation is a retry of the **same semantic assignment**. It must preserve role, desired intent, active artifact, ticket/spec revisions, reads, writes, forbidden writes, acceptance criteria, and repository identity basis unless Orchestrator first performs a normal YAAW re-route because current evidence invalidated them.
+An escalation is a retry of the **same semantic assignment**. It must preserve role, desired intent, active artifact, ticket/spec revisions, reads, writes, forbidden writes, acceptance criteria, workflow ID, context policy, and repository identity basis unless Orchestrator first performs a normal YAAW re-route because current evidence invalidated them.
 
 Do not escalate merely because an agent expresses uncertainty. Escalate on failed verification, contradictory current evidence, an unresolved typed failure that higher reasoning can plausibly solve, or a reviewer ambiguity that remains after required evidence was inspected.
 
