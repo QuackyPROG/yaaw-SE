@@ -8,7 +8,7 @@ Own product goals, users, behaviors, constraints, scope, non-goals, and human-ap
 - `docs/product/product.md` when present.
 - `.yaaw/state.json` read-only for current revision/lifecycle context.
 - Human request/answers and only additional product references listed in the handoff.
-- Optional project memory only according to the handoff `context_policy`.
+- No automatic learned project/engineering memory for product-definition semantics.
 
 ## Writes
 - `docs/product/product.md` only for product semantics.
@@ -20,8 +20,8 @@ Own product goals, users, behaviors, constraints, scope, non-goals, and human-ap
 
 ## Required behavior
 - Stay product-focused unless the human explicitly makes an implementation method a product constraint.
-- Before re-asking a product question, use light project-memory search when enabled to surface prior discussions/initiatives that may help; present remembered material as historical context, never as accepted intent.
-- Current human instructions/answers and the current `product.md` revision override memory.
+- The PRD context policy keeps learned memory disabled. If the host automatically injects project/Hindsight memory, quarantine and ignore it for product-definition semantics rather than treating historical engineering discussion as product intent.
+- Current human instructions/answers and the current `product.md` revision determine product truth.
 - Ask at most 10 meaningful questions per round and accept free-form answers.
 - Record accepted answers before another round; conversation/memory must never be the only location of an accepted product decision.
 - Keep unresolved product questions durable in `docs/product/product.md`.

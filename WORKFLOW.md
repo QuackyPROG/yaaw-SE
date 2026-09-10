@@ -1,6 +1,6 @@
 # YAAW Workflow
 
-> **Agents are disposable. Artifacts are durable. Memory is advisory. Roles do work. Orchestrator decides work.**
+> **Agents are disposable. Artifacts are durable. Learned experience may persist. Memory is advisory. Roles do work. Orchestrator decides work.**
 
 ## Entry
 
@@ -24,7 +24,7 @@ review / repair / replan / next work / COMPLETE
 
 Roles never spawn peer roles. Every semantic role returns durable output plus a typed result to Orchestrator.
 
-## Context and project memory
+## Context and learned project memory
 
 Every dispatch contains the exact authoritative reads/writes plus a `context_policy` copied from `.yaaw-core/registries/context-policy.json`.
 
@@ -33,15 +33,18 @@ Normal role startup is:
 ```text
 read exact handoff
 → load exact authoritative references
+→ quarantine any host-injected learned memory
 → focused project-memory retrieval when policy allows
 → verify current files/evidence that matter
 → broaden repository exploration only if a gap remains
 → execute workflow
 ```
 
-Project memory is optional and advisory. Hindsight is the reference provider, but YAAW remains provider-neutral and must work when memory is absent. Search curated knowledge first; read a page only when needed; use deep historical reflection only when policy allows and the shallow path is insufficient.
+Project memory is optional and advisory. Hindsight is the first reference adapter, but YAAW remains provider-neutral and must work when memory is absent, disabled, unavailable, stale, wrong, or times out. Search curated knowledge first; read a page only when needed; use deep historical reflection only when policy allows and the shallow path is insufficient.
 
-Orchestrator never uses semantic memory to route/reconcile. Reviewer performs primary acceptance/evidence inspection before memory. Memory never supplies lifecycle evidence or `PASS`.
+Every deliberately consumed memory item remains visibly labeled/provenanced as learned/advisory context. It never replaces a required current artifact/repository/evidence read.
+
+Orchestrator never uses semantic memory to route/reconcile. Reviewer performs primary acceptance/evidence inspection before memory. PRD automatic learned-memory use is disabled. Memory never supplies lifecycle evidence or `PASS`.
 
 ## Product
 
@@ -51,7 +54,7 @@ PRD reads the exact product/state references in its handoff and writes only:
 docs/product/product.md
 ```
 
-When memory is enabled, PRD may search prior product discussions before asking the human to repeat context, but remembered material is not accepted intent until current human/product authority supports it.
+PRD automatic learned project/engineering memory is disabled. If a host injects historical memory anyway, PRD ignores it for product-definition semantics. Current human answers and current `product.md` determine product truth.
 
 If product intent is missing or needs human answers, downstream work stops until that authority is satisfied.
 
@@ -59,7 +62,7 @@ If product intent is missing or needs human answers, downstream work stops until
 
 Planner reads the current product revision, exact engineering/spec/ticket/rule references supplied by handoff, and only repository reality needed for the planning task.
 
-Before broad repository rediscovery, Planner may use project memory to retrieve component maps, conventions, historical decisions, initiatives, and rejected approaches, then verifies anything material against current code/artifacts.
+After understanding those authoritative inputs and before broad repository rediscovery, Planner may use project memory to retrieve component maps, conventions, historical decisions, initiatives, prior failures, and rejected approaches, then verifies anything material against current code/artifacts.
 
 Planner writes:
 
@@ -72,6 +75,8 @@ docs/rules/**                 # only explicit rule promotion
 ```
 
 Planner creates ticket semantic contracts as `DRAFT`; Orchestrator persists lifecycle admission to `READY` when the Planner's durable result justifies it. Specs/tickets are sourced from current accepted authority, never directly from remembered history.
+
+After an accepted spec has been decomposed into validated tickets, Planner may best-effort capture/update an external learned-memory initiative. That provider write is non-authoritative, non-blocking, and never part of ticket admission.
 
 ## Implementation hard gate
 
@@ -104,7 +109,7 @@ Implementer never writes product/planning/spec/ticket/review/runtime/state artif
 
 ## Review
 
-Reviewer receives the exact ticket/spec/product/decision/evidence identities and repository basis in the handoff. It first inspects the current contract, diff, repository, tests, and evidence independently. Only after that primary review may it consult project memory for ambiguous historical rationale.
+Reviewer receives the exact ticket/spec/product/decision/evidence identities and repository basis in the handoff. It first inspects the current contract, diff, repository, tests, and evidence independently. Only after that primary review may it consult project memory for historical rationale or recurring failure-mode leads.
 
 It writes only the next immutable round:
 
@@ -179,4 +184,4 @@ PRD (if needed)
 → Orchestrator decides what is next
 ```
 
-The authoritative contracts are `.yaaw-core/core/io-contract.md`, `routing.md`, `folder-ownership.md`, `context-loading.md`, `project-memory.md`, and the machine registries under `.yaaw-core/registries/`.
+The authoritative contracts are `.yaaw-core/core/io-contract.md`, `routing.md`, `folder-ownership.md`, `context-loading.md`, `project-memory.md`, the Hindsight provider adapter at `.yaaw-core/integrations/hindsight.md`, and the machine registries under `.yaaw-core/registries/`.

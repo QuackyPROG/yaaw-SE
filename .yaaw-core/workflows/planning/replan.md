@@ -8,12 +8,13 @@ Repository evidence, product revision, review finding, or invalidation has made 
 
 ## Procedure
 1. Identify exact current evidence and affected `ENG-*`/spec/ticket assumptions.
-2. When memory is enabled, retrieve relevant prior rationale, rejected approaches, and earlier attempts before inventing a replacement; treat them as historical context and verify any claim that influences the new plan.
+2. When memory is enabled, retrieve relevant prior rationale, rejected approaches, and earlier attempts before inventing a replacement; treat them as learned historical context and verify any claim that influences the new plan.
 3. Mark superseded decisions explicitly; never overwrite their history.
 4. Make new engineering decisions within current product authority and increment engineering revision. Memory alone cannot create or reinstate a decision.
 5. Execute invalidation propagation to dependent specs/tickets/reviews.
 6. Rebuild current decision frontier and rerun readiness before implementation resumes.
 7. Revised tickets move through `DRAFT`/`READY` using legal transitions; never jump directly back to PASS.
+8. If replanning materially changes the goal, scope, or rationale of an initiative already captured by the active learned-memory provider, best-effort update the same initiative using its stable spec/frontier identity. Do not create a duplicate merely because a replan occurred. Provider failure is non-blocking and cannot affect the authoritative replan result.
 
 ## Output
 Current engineering contract plus updated downstream admission state.

@@ -7,8 +7,9 @@
 skills/ -> registry -> Orchestrator intent/routing
         -> exact handoff + role context policy
         -> role + workflow + selected expertise
-        -> optional focused project-memory retrieval
-        -> durable artifacts + current repository reality
+        -> authoritative artifact/repository/evidence context
+        -> optional focused learned-memory enrichment
+        -> durable role output
         -> evidence-backed state transition
         -> orchestration re-inspection
 ```
@@ -20,7 +21,16 @@ skills/ -> registry -> Orchestrator intent/routing
 - Reviewer: independent acceptance and defect classification.
 - Orchestrator: continuity, reconciliation, invalidation coordination, ticket lifecycle, and routing.
 
-Project memory is not a sixth authority role. It is optional derived context governed by `core/project-memory.md` and `registries/context-policy.json`.
+Learned project memory is not a sixth authority role. It is optional derived context governed by `core/project-memory.md` and `registries/context-policy.json`. Hindsight is the first provider adapter in `integrations/hindsight.md`.
+
+## Two continuity layers
+
+```text
+contractual continuity -> canonical YAAW artifacts + repository/evidence
+experiential continuity -> optional learned-memory provider
+```
+
+Agents are disposable. Artifacts are durable. Learned experience may also persist. Only authoritative artifacts/evidence determine workflow truth.
 
 ## Project artifact roots
 
@@ -60,5 +70,6 @@ Read these contracts together:
 - `core/recovery.md`
 - `core/context-loading.md`
 - `core/project-memory.md`
+- `integrations/hindsight.md`
 
-Any workflow context may disappear after durable output without destroying project understanding. Optional memory makes the next disposable role faster, but the artifact graph remains sufficient when memory is absent.
+Any workflow context may disappear after durable output without destroying project understanding. Optional learned memory can make the next disposable role faster, but removing/disablement/failure of the provider leaves YAAW correctness unchanged.

@@ -10,9 +10,9 @@
   },
   "roles": {
     "prd": {
-      "memory_mode": "light",
-      "memory_phase": "before-reasking",
-      "memory_target_tokens": 800,
+      "memory_mode": "disabled",
+      "memory_phase": "never",
+      "memory_target_tokens": 0,
       "deep_history_allowed": false
     },
     "planner": {
