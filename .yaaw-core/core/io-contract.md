@@ -6,7 +6,7 @@ YAAW roles communicate through durable artifacts, exact Orchestrator handoffs, a
 
 - `registries/artifacts.json` defines canonical artifact path patterns and semantic/lifecycle ownership.
 - `registries/role-io.json` defines each role's default read/write authority.
-- `registries/context-policy.json` defines each role's project-memory phase and target context budget.
+- `registries/context-policy.json` defines each role's optional learned-memory phase and target context budget.
 - `.yaaw/runtime/handoff.json` resolves those symbolic contracts to the exact files and context policy for one dispatch.
 - `.yaaw/runtime/intent.json` records the public skill's desired destination while prerequisites are being resolved.
 
@@ -25,7 +25,21 @@ Every semantic-role dispatch must include:
 
 A role must read the handoff before doing semantic work. If a workflow artifact is not in the handoff, the role does not search the repository hoping to discover it. The only allowed exploratory search is repository/application inspection that the ticket or planning workflow explicitly admits.
 
-Optional project-memory retrieval is not workflow-artifact discovery and does not expand `reads`, `writes`, or authority. It may be used only at the phase allowed by `context_policy` and `core/project-memory.md`. Missing memory is never a missing YAAW prerequisite.
+Optional learned-memory retrieval is not workflow-artifact discovery and does not expand `reads`, `writes`, or authority. It may be used only at the phase allowed by `context_policy` and `core/project-memory.md`. Missing memory is never a missing YAAW prerequisite.
+
+## Learned-memory side effects
+
+When `core/project-memory.md` explicitly allows it, a role may perform a best-effort provider correction or initiative update. These are auxiliary external-memory side effects, not canonical YAAW writes.
+
+They:
+
+- do not modify the handoff's YAAW file write set;
+- do not satisfy required durable output;
+- cannot justify a lifecycle transition or review result;
+- are non-blocking if the provider is unavailable or fails;
+- must preserve the role's semantic authority boundary.
+
+Hindsight-specific behavior is defined only in `integrations/hindsight.md`; do not copy provider logic into public skills.
 
 ## Communication topology
 
@@ -44,6 +58,8 @@ Core rule: **Roles report reality. Orchestrator decides routing.**
 Semantic roles may author the evidence that justifies a lifecycle change, but they do not mutate `.yaaw/state.json` or runtime routing state. `registries/transitions.json` records the semantic outcome authority in `owner` and the actual lifecycle state writer in `state_writer`; `state_writer` is Orchestrator for ticket transitions.
 
 Ticket semantic content remains Planner-owned. Orchestrator may change ticket lifecycle metadata only; it may not rewrite ticket goal, scope, acceptance criteria, architecture, dependencies, or non-goals.
+
+Learned memory is never transition evidence.
 
 ## Typed role results
 
