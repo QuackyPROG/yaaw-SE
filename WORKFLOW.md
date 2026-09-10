@@ -31,14 +31,18 @@ Every dispatch contains the exact authoritative reads/writes plus a `context_pol
 Normal role startup is:
 
 ```text
-read exact handoff
-→ load exact authoritative references
-→ quarantine any host-injected learned memory
-→ focused project-memory retrieval when policy allows
+read exact .yaaw/runtime/handoff.json FIRST
+→ read AGENTS.md + exact role contract
+→ resolve handoff.workflow through .yaaw-core/registries/workflows.json
+→ read that exact workflow contract and its ## Inputs
+→ load exact handoff-authorized authoritative references/expertise/repository evidence
+→ quarantine/release learned memory only when context_policy allows
 → verify current files/evidence that matter
-→ broaden repository exploration only if a gap remains
+→ broaden repository exploration only when the workflow admits it and a gap remains
 → execute workflow
 ```
+
+Same-role internal subworkflows inherit the same handoff, revisions, repository basis, context policy, writes, and forbidden writes. A role does not guess alternate workflow or artifact paths.
 
 Project memory is optional and advisory. Hindsight is the first reference adapter, but YAAW remains provider-neutral and must work when memory is absent, disabled, unavailable, stale, wrong, or times out. Search curated knowledge first; read a page only when needed; use deep historical reflection only when policy allows and the shallow path is insufficient.
 
@@ -57,6 +61,8 @@ docs/product/product.md
 PRD automatic learned project/engineering memory is disabled. If a host injects historical memory anyway, PRD ignores it for product-definition semantics. Current human answers and current `product.md` determine product truth.
 
 If product intent is missing or needs human answers, downstream work stops until that authority is satisfied.
+
+If current product intent changes, PRD updates only the product artifact and returns an invalidation requirement. Orchestrator coordinates Planner-owned semantic invalidation and persists lifecycle invalidation; PRD does not cascade writes across authority boundaries.
 
 ## Engineering planning
 
@@ -126,7 +132,7 @@ REPLAN
 BLOCKED
 ```
 
-Memory can never justify `PASS`. Orchestrator validates the durable review and persists the legal lifecycle transition.
+Memory can never justify `PASS`. Reviewer owns the acceptance classification; Orchestrator validates the durable review and persists the legal lifecycle transition.
 
 ## Orchestration
 
@@ -143,6 +149,8 @@ ticket lifecycle metadata only
 Every handoff includes exact:
 
 ```text
+role
+workflow
 reads
 writes
 forbidden_writes
@@ -153,7 +161,7 @@ context policy
 expected results
 ```
 
-A semantic role does not search for missing YAAW artifacts. It returns `PRECONDITION_UNSATISFIED`; Orchestrator resolves the prerequisite using canonical paths from `registries/artifacts.json`.
+Before dispatch, Orchestrator resolves the exact workflow contract and proves that its `## Inputs` are satisfiable from the handoff/current dispatch basis. A semantic role does not search for missing YAAW artifacts. It returns `PRECONDITION_UNSATISFIED`; Orchestrator resolves the prerequisite using canonical paths from `registries/artifacts.json`.
 
 ## Routing order
 

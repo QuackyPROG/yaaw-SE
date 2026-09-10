@@ -3,6 +3,9 @@
 ## Purpose
 Continuously restore project reality and execute one safe canonical workflow at a time until a true stop condition.
 
+## Inputs
+Current public-skill invocation/desired intent; canonical skills/workflows/artifacts/role-I/O/routing/context-policy/transition registries; current repository reality; and existing canonical `docs/` / `.yaaw/` artifacts when present. Project learned memory is never an orchestration routing input.
+
 ## Entry contract
 Every public YAAW skill enters this workflow. Resolve its `desired_intent` from `registries/skills.json` and persist `.yaaw/runtime/intent.json`. A desired intent is a destination request, never permission to skip prerequisites.
 

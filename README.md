@@ -64,23 +64,29 @@ Hindsight is a reference adapter, not a dependency. YAAW never installs or enabl
 
 ## Context-efficient disposable roles
 
-A fresh semantic role starts from the exact handoff and authoritative references first:
+A fresh semantic role uses one deterministic loading chain:
 
 ```text
-exact handoff / task
+exact .yaaw/runtime/handoff.json FIRST
         ↓
-current authoritative artifacts
+AGENTS.md + exact role contract
         ↓
-quarantine any host-injected memory
+handoff.workflow → registries/workflows.json
         ↓
-focused learned-memory search (only when role policy allows)
+exact workflow contract + its ## Inputs
         ↓
-targeted verification of current code/evidence
+exact handoff reads + selected expertise + admitted repository/evidence
         ↓
-broad repository discovery only if a gap remains
+quarantine/release learned memory only when context_policy allows
+        ↓
+targeted current verification
+        ↓
+broad repository discovery only if the workflow admits it and a gap remains
         ↓
 work
 ```
+
+No semantic role guesses a workflow path from its role name, searches for alternate YAAW artifact locations, or broadens an internal same-role subworkflow beyond the persisted handoff.
 
 Planner and Implementer may use focused learned memory after understanding their current contract. Reviewer performs its primary acceptance/evidence inspection before memory. PRD and Orchestrator automatic learned-memory use is disabled.
 

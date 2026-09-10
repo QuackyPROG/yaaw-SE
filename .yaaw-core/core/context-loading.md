@@ -11,17 +11,19 @@ If the host injects memory at session start, quarantine it as `LEARNED MEMORY â€
 ## Startup order
 
 1. Read `.yaaw/runtime/handoff.json` first and validate its repository/revision basis.
-2. Load the role contract, workflow contract, active artifact/revision, directly referenced decisions, relevant product/rules, selected expertise, and only repository/evidence paths admitted by the handoff.
-3. Apply the handoff `context_policy`. When memory is enabled for the role and the harness already exposes a provider, use `core/project-memory.md` at the prescribed phase and retrieve only task-relevant context.
-4. Keep every memory result in a visibly separate advisory/provenance envelope. Verify remembered claims against the exact current files or evidence that matter to the judgment or edit.
-5. Expand repository exploration only when the authoritative references, targeted verification, and focused memory retrieval still leave a material gap.
+2. Read the target role contract, resolve `handoff.workflow` through `.yaaw-core/registries/workflows.json`, and read that exact workflow contract. Never infer a workflow path from a role name or desired intent.
+3. Load every authoritative input named by the workflow's `## Inputs` from the exact handoff/current dispatch basis: active artifact/revision, directly referenced decisions, relevant product/rules, selected expertise, and only repository/evidence paths admitted by the handoff. If a required YAAW artifact input is missing, return the typed prerequisite failure; do not search for an alternate artifact location.
+4. Apply the handoff `context_policy`. When memory is enabled for the role and the harness already exposes a provider, use `core/project-memory.md` at the prescribed phase and retrieve only task-relevant context.
+5. Keep every memory result in a visibly separate advisory/provenance envelope. Verify remembered claims against the exact current files or evidence that matter to the judgment or edit.
+6. Expand repository exploration only when the authoritative references, targeted verification, and focused memory retrieval still leave a material gap and the workflow/handoff admits that exploration.
 
 The normal context is therefore:
 
 ```text
-role contract
-+ workflow contract
-+ exact handoff
+exact handoff
++ role contract
++ exact handoff.workflow contract
++ workflow-required authoritative inputs
 + active artifact and revision
 + directly referenced decisions
 + relevant product constraints
@@ -57,6 +59,7 @@ Provider absence, disablement, empty results, unavailability, and search/read/re
 
 ```text
 exact handoff
++ exact role/workflow contracts
 + canonical durable artifacts
 + current repository/evidence
 ```
