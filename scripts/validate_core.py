@@ -54,6 +54,13 @@ def require_headings(path: Path, headings: list[str], errors: list[str]):
             errors.append(f"{path.relative_to(ROOT)}: missing heading '## {heading}'")
 
 
+def require_phrases(path: Path, phrases: list[str], errors: list[str]):
+    text = path.read_text(encoding="utf-8").lower()
+    for phrase in phrases:
+        if phrase.lower() not in text:
+            errors.append(f"{path.relative_to(ROOT)}: missing semantic marker {phrase!r}")
+
+
 def main() -> int:
     workflows = load_json(CORE / "registries/workflows.json")
     skills = load_json(CORE / "registries/skills.json")
@@ -125,6 +132,95 @@ def main() -> int:
         invalid = set(entry.get("usable_by", [])) - allowed_roles
         if invalid:
             errors.append(f"{expertise_id}: invalid usable_by roles {sorted(invalid)}")
+
+    # Canonical assumption-challenge rule and declared consumers.
+    challenge_rule = CORE / "rules/assumption-challenge.md"
+    if not challenge_rule.is_file():
+        errors.append("missing canonical rules/assumption-challenge.md")
+    else:
+        require_phrases(
+            challenge_rule,
+            [
+                "Facts before questions",
+                "material assumptions",
+                "contradictions",
+                "ambiguous terminology",
+                "Stress-test concrete scenarios",
+                "decision dependencies",
+                "current frontier",
+                "Recommendation:",
+                "Do not delegate owned decisions",
+                "persist accepted conclusions",
+                "conversation transcript",
+                "recompute the frontier",
+                "product intent",
+                "engineering decisions",
+                "Do not challenge a settled decision merely to demonstrate rigor",
+                "Do not reopen accepted decisions without new evidence, contradiction, changed intent, or explicit human request",
+            ],
+            errors,
+        )
+
+    challenge_consumers = [
+        ".yaaw-core/roles/prd.md",
+        ".yaaw-core/roles/planner.md",
+        ".yaaw-core/workflows/prd/question-round.md",
+        ".yaaw-core/workflows/prd/create.md",
+        ".yaaw-core/workflows/prd/record-decisions.md",
+        ".yaaw-core/workflows/prd/readiness.md",
+        ".yaaw-core/workflows/prd/revise.md",
+        ".yaaw-core/workflows/prd/refine.md",
+        ".yaaw-core/workflows/planning/discover.md",
+        ".yaaw-core/workflows/planning/write-understanding.md",
+        ".yaaw-core/workflows/planning/decision-frontier.md",
+        ".yaaw-core/workflows/planning/question-round.md",
+        ".yaaw-core/workflows/planning/record-decisions.md",
+        ".yaaw-core/workflows/planning/readiness-review.md",
+    ]
+    for rel in challenge_consumers:
+        path = ROOT / rel
+        if not path.is_file():
+            errors.append(f"assumption-challenge consumer missing: {rel}")
+        elif "rules/assumption-challenge.md" not in path.read_text(encoding="utf-8"):
+            errors.append(f"{rel}: must reference canonical assumption-challenge rule")
+
+    for rel in [
+        ".yaaw-core/workflows/prd/question-round.md",
+        ".yaaw-core/workflows/planning/question-round.md",
+    ]:
+        if "rules/question-format.md" not in (ROOT / rel).read_text(encoding="utf-8"):
+            errors.append(f"{rel}: must reference canonical question-format rule")
+
+    require_phrases(
+        CORE / "roles/prd.md",
+        ["product assumptions", "product intent", "must not decide engineering implementation decisions"],
+        errors,
+    )
+    require_phrases(
+        CORE / "roles/planner.md",
+        [
+            "repository evidence before questioning",
+            "engineering assumptions",
+            "routine reversible implementation decisions",
+            "never invent product intent",
+        ],
+        errors,
+    )
+    for rel in [".yaaw-core/roles/orchestrator.md", ".yaaw-core/roles/implementer.md", ".yaaw-core/roles/reviewer.md"]:
+        if "assumption-challenge" in (ROOT / rel).read_text(encoding="utf-8").lower():
+            errors.append(f"{rel}: must not consume assumption-challenge user-question authority")
+
+    forbidden_skills = {"yaaw-grill", "yaaw-challenge"}
+    present_forbidden_skills = forbidden_skills & set(skills)
+    if present_forbidden_skills:
+        errors.append(f"assumption challenge must remain internal; forbidden skills: {sorted(present_forbidden_skills)}")
+    for skill_id in forbidden_skills:
+        if (ROOT / "skills" / skill_id).exists():
+            errors.append(f"assumption challenge must not create public skill directory skills/{skill_id}/")
+    forbidden_workflows = {"prd.grill", "planning.grill"}
+    present_forbidden_workflows = forbidden_workflows & set(workflows)
+    if present_forbidden_workflows:
+        errors.append(f"assumption challenge must not create workflow IDs: {sorted(present_forbidden_workflows)}")
 
     # Schemas parse and expose the contracts prose depends on.
     schemas = {}

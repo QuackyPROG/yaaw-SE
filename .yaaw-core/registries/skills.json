@@ -1,9 +1,9 @@
 {
   "yaaw-orchestrator": {"role": "orchestrator", "workflow_id": "orchestration.route", "description": "Continue or recover a YAAW project by reconstructing reality and dispatching the next safe workflow."},
-  "yaaw-prd": {"role": "prd", "workflow_id": "prd.route", "description": "Create or continue product definition and route product clarification or revision work in a YAAW project."},
+  "yaaw-prd": {"role": "prd", "workflow_id": "prd.route", "description": "Create or continue YAAW product definition, challenge material product assumptions, and route clarification or revision work."},
   "yaaw-revise-prd": {"role": "prd", "workflow_id": "prd.revise", "description": "Change accepted YAAW product intent and invalidate downstream engineering contracts whose basis became stale."},
   "yaaw-refine-prd": {"role": "prd", "workflow_id": "prd.refine", "description": "Improve clarity and completeness of a YAAW product artifact without changing accepted product meaning."},
-  "yaaw-planner": {"role": "planner", "workflow_id": "planning.route", "description": "Continue YAAW engineering discovery, decisions, readiness, specification, or ticket planning from durable project state."},
+  "yaaw-planner": {"role": "planner", "workflow_id": "planning.route", "description": "Continue repository-backed YAAW engineering planning, challenge material technical assumptions, and advance decisions, readiness, specifications, or tickets."},
   "yaaw-planning-review": {"role": "planner", "workflow_id": "planning.readiness-review", "description": "Freshly assess whether the current YAAW engineering frontier is ready for implementation without material invention."},
   "yaaw-create-spec": {"role": "planner", "workflow_id": "planning.create-spec", "description": "Create the next YAAW specification from an engineering frontier whose readiness is currently PASS."},
   "yaaw-create-ticket": {"role": "planner", "workflow_id": "planning.create-tickets", "description": "Create bounded YAAW implementation ticket contracts from the current accepted specification."},

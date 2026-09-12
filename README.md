@@ -9,8 +9,8 @@ YAAW-SE v2 is an artifact-first autonomous software-engineering workflow.
 ## Public skills
 Core smart entrypoints:
 - `@yaaw-orchestrator` — reconstruct reality and continue/recover autonomously.
-- `@yaaw-prd` — create/continue/refine/revise product definition.
-- `@yaaw-planner` — continue engineering discovery, decisions, readiness, spec, or ticket planning.
+- `@yaaw-prd` — create/continue product definition, challenge material product assumptions, and route clarification/revision work.
+- `@yaaw-planner` — continue repository-backed engineering planning, challenge material technical assumptions, and advance readiness/spec/ticket work.
 - `@yaaw-implement` — implement one admitted ticket.
 - `@yaaw-review` — independently review current work.
 
@@ -24,7 +24,9 @@ Direct shortcuts using the same canonical workflows:
 - `@yaaw-repair`
 
 ## Core model
-Each execution composes **Role** (authority) + **Workflow** (process) + relevant **Expertise** (specialist knowledge). Expertise never grants authority.
+Each execution composes **Role** (authority) + **Workflow** (process) + applicable **Shared Rules** (cross-cutting behavior) + relevant **Expertise** (specialist knowledge). Shared rules and expertise never grant authority or create lifecycle stages.
+
+PRD challenges whether the product meaning is coherent enough to plan. Planner first inspects repository reality, then challenges material technical assumptions and resolves only the current engineering frontier. Accepted conclusions are written to durable artifacts rather than retained as conversation transcripts.
 
 ## Project memory
 ```text
@@ -60,6 +62,7 @@ YAAW keeps deterministic **validation infrastructure** for the lifecycle without
 - `.yaaw-core/registries/transitions.json` — machine-readable legal ticket transition table.
 - `tests/fixtures/lifecycle_cases.json` — A–Q lifecycle/recovery scenarios.
 - `tests/fixtures/fresh_context_project/` — a complete durable artifact graph proving fresh-context reconstruction.
+- `tests/fixtures/assumption_challenge_fresh_context/` — a focused example proving challenged conclusions survive without the original question wording.
 - `scripts/behavior_oracle.py` — deterministic fixture oracle; validation-only, never semantic runtime authority.
 
 Run:
@@ -71,4 +74,4 @@ python scripts/behavior_oracle.py
 python -m unittest discover -s tests -v
 ```
 
-See `.yaaw-core/README.md` for lifecycle, transition, invalidation, and recovery contracts.
+See `.yaaw-core/README.md` for lifecycle, transition, invalidation, recovery, shared-rule, and authority contracts.

@@ -1,6 +1,6 @@
 ---
 name: yaaw-prd
-description: Create or continue product definition and route product clarification or revision work in a YAAW project.
+description: Create or continue YAAW product definition, challenge material product assumptions, and route clarification or revision work.
 ---
 # YAAW PRD
 ROLE: `prd`

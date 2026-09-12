@@ -7,6 +7,7 @@ from scripts.validate_core import parse_frontmatter
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core"
 FIXTURE = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw"
+CHALLENGE_FIXTURE = ROOT / "tests" / "fixtures" / "assumption_challenge_fresh_context" / ".yaaw"
 
 
 class FreshContextConformanceTest(unittest.TestCase):
@@ -72,6 +73,35 @@ class FreshContextConformanceTest(unittest.TestCase):
         self.assertIsInstance(review["reviewed_dirty"], bool)
         self.assertTrue(review["reviewed_worktree_digest"])
         self.assertTrue(review["evidence"])
+
+    def test_challenged_conclusions_survive_without_original_question_wording(self):
+        product, product_body = parse_frontmatter(CHALLENGE_FIXTURE / "product.md")
+        engineering, engineering_body = parse_frontmatter(CHALLENGE_FIXTURE / "engineering.md")
+
+        self.assertEqual(engineering["product_revision"], product["revision"])
+        self.assertIn("Decision: Each workspace has exactly one active owner in V1.", product_body)
+        self.assertIn("Reason: Shared ownership is not required by the accepted collaboration scope.", product_body)
+        self.assertIn("Implication: Ownership transfer must preserve exactly one active owner.", product_body)
+
+        for marker in [
+            "### ENG-007",
+            "Status: DECIDED",
+            "Reason:",
+            "Rejected alternatives:",
+            "Implications:",
+            "Provenance:",
+            "## Assumptions",
+            "## Current decision frontier",
+            "## Future fog",
+        ]:
+            self.assertIn(marker, engineering_body)
+
+        combined = f"{product_body}\n{engineering_body}".lower()
+        for transcript_marker in ["user said", "assistant asked", "original question", "conversation transcript"]:
+            self.assertNotIn(transcript_marker, combined)
+
+        self.assertIn("F-007 is executable without inventing ownership semantics.", engineering_body)
+        self.assertIn("Shared ownership remains future fog", engineering_body)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,8 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 ## Change discipline
 When changing a skill, update registry/description together rather than copying workflow logic. When changing lifecycle states, routing, review outcomes, artifact metadata, evidence identity, or recovery semantics, update schemas/templates/rules/machine contracts/fixtures/tests together.
 
+When changing cross-role decision interaction behavior, update the canonical shared reasoning rule and every declared consumer together. Do not duplicate the complete shared rule into role/workflow files; consumers should reference it and specialize only their authority-specific behavior. Validation must verify consumer references and authority boundaries.
+
 Run:
 ```text
 python scripts/validate_core.py
