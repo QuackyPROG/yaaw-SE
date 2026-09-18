@@ -187,8 +187,38 @@ def load_artifacts(repo: Path) -> dict:
 
 def load_vcs_config(repo: Path) -> dict:
     config = _load_repo_or_snapshot(repo, repo / VCS_CONFIG, "vcs.json", "local VCS configuration")
-    if config.get("schema") != "yaaw.vcs/v1" or config.get("mode") != "consumer":
-        raise VcsGuardError(VCS_POLICY_VIOLATION, "invalid local VCS configuration", [str(path)])
+    problems: list[str] = []
+    if config.get("schema") != "yaaw.vcs/v1":
+        problems.append("schema must be yaaw.vcs/v1")
+    if config.get("mode") != "consumer":
+        problems.append("mode must be consumer")
+
+    publish_branches = config.get("publish_branches")
+    if (
+        not isinstance(publish_branches, list)
+        or not publish_branches
+        or any(not isinstance(branch, str) or not branch.strip() or branch.startswith("refs/") for branch in publish_branches)
+        or len(set(publish_branches)) != len(publish_branches)
+    ):
+        problems.append("publish_branches must be a non-empty unique list of branch names")
+
+    integration_branch = config.get("integration_branch")
+    if not isinstance(integration_branch, str) or not integration_branch.strip():
+        problems.append("integration_branch must be a branch name")
+    elif isinstance(publish_branches, list) and integration_branch not in publish_branches:
+        problems.append("integration_branch must be included in publish_branches")
+
+    if config.get("topic_branches", {}).get("local_only") is not True:
+        problems.append("topic_branches.local_only must be true")
+    if config.get("worktree_branches", {}).get("local_only") is not True:
+        problems.append("worktree_branches.local_only must be true")
+
+    if problems:
+        raise VcsGuardError(
+            VCS_POLICY_VIOLATION,
+            "invalid local VCS configuration",
+            [str(VCS_CONFIG), *problems],
+        )
     return config
 
 
@@ -466,6 +496,7 @@ def install_hooks(repo: Path, source_guard: Path) -> dict:
         target.chmod(target.stat().st_mode | stat.S_IXUSR)
         hook_state["hooks"][hook] = {
             "wrapper": str(target),
+            "wrapper_sha256": hashlib.sha256(wrapper.encode()).hexdigest(),
             "original": str(original) if original else None,
         }
 
@@ -477,10 +508,29 @@ def install_hooks(repo: Path, source_guard: Path) -> dict:
 def hook_health(repo: Path) -> dict[str, bool]:
     common = git_common_dir(repo)
     deployed = common / "yaaw" / "guard.py"
-    result = {"guard": deployed.is_file()}
+    state_path = common / "yaaw" / "hook-state.json"
+    try:
+        state = _load_json(state_path) if state_path.is_file() else {}
+    except (OSError, json.JSONDecodeError):
+        state = {}
+
+    expected_guard = state.get("guard_sha256")
+    guard_ok = bool(
+        deployed.is_file()
+        and isinstance(expected_guard, str)
+        and hashlib.sha256(deployed.read_bytes()).hexdigest() == expected_guard
+    )
+    result = {"guard": guard_ok}
+    hook_state = state.get("hooks", {}) if isinstance(state.get("hooks", {}), dict) else {}
     for hook in ("pre-commit", "commit-msg", "pre-push"):
         path = common / "hooks" / hook
-        result[hook] = path.is_file() and HOOK_MARKER in path.read_text(encoding="utf-8", errors="replace")
+        expected_wrapper = hook_state.get(hook, {}).get("wrapper_sha256") if isinstance(hook_state.get(hook, {}), dict) else None
+        if not path.is_file() or not isinstance(expected_wrapper, str):
+            result[hook] = False
+            continue
+        data = path.read_bytes()
+        text = data.decode("utf-8", errors="replace")
+        result[hook] = HOOK_MARKER in text and hashlib.sha256(data).hexdigest() == expected_wrapper
     return result
 
 
@@ -756,8 +806,15 @@ def publication_audit(repo: Path, branch: str, remote_ref_sha: str | None = None
     allowed = set(config.get("publish_branches", []))
     if branch not in allowed:
         raise VcsGuardError(PUBLICATION_NOT_ALLOWED, "branch is not allowlisted", [branch, f"allowed={sorted(allowed)}"])
-    if git_output(repo, "branch", "--show-current") != branch:
+    identity = publishable_identity(repo)
+    if identity.branch != branch:
         raise VcsGuardError(PUBLICATION_NOT_ALLOWED, "publication must originate from the checked-out integration branch")
+    if identity.dirty_publishable:
+        raise VcsGuardError(
+            PUBLICATION_NOT_ALLOWED,
+            "publishable application worktree must be clean before publication",
+            [identity.publishable_worktree_digest],
+        )
     if any(not ok for ok in hook_health(repo).values()):
         raise VcsGuardError(PUBLICATION_NOT_ALLOWED, "local VCS guards are unhealthy")
     pre_commit(repo)
