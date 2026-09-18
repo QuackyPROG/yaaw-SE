@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize YAAW durable state and consumer-local VCS isolation."""
+"""Initialize YAAW durable state and project-local VCS isolation."""
 from __future__ import annotations
 
 import argparse
@@ -65,9 +65,9 @@ def _classify_shared_artifact(
 
 
 def _framework_mode(project_root: Path) -> bool:
-    # Framework/consumer identity is based on repository reality, not a GitHub
+    # Framework/project identity is based on repository reality, not a GitHub
     # owner/name.  A framework checkout versions YAAW's own core, public skill,
-    # and bootstrap source.  A consumer may contain the same files locally, but
+    # and bootstrap source.  A project may contain the same files locally, but
     # they are intentionally untracked control-plane material.
     if os.environ.get("YAAW_FRAMEWORK_MODE") == "1":
         return True
@@ -111,7 +111,7 @@ def initialize_project(project_root: Path) -> list[Path]:
         guard = _load_guard()
         if not guard.is_git_repository(project_root):
             raise InitializationError(
-                "VCS_POLICY_VIOLATION: consumer VCS isolation requires an initialized Git repository"
+                "VCS_POLICY_VIOLATION: project VCS isolation requires an initialized Git repository"
             )
 
     # Detect shared-path collisions before adopting canonical YAAW locations.
@@ -180,7 +180,7 @@ def initialize_project(project_root: Path) -> list[Path]:
     manifest_path = yaaw / "install.json"
     manifest = {
         "schema": "yaaw.install/v1",
-        "mode": "consumer",
+        "mode": "project",
         "vcs_isolation": "enabled",
         "artifact_ownership": artifact_ownership,
         "owned_paths": [
@@ -194,8 +194,8 @@ def initialize_project(project_root: Path) -> list[Path]:
     }
     if manifest_path.exists():
         existing = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if existing.get("mode") != "consumer":
-            raise InitializationError("VCS_POLICY_VIOLATION: existing install marker is not consumer mode")
+        if existing.get("mode") != "project":
+            raise InitializationError("VCS_POLICY_VIOLATION: existing install marker is not project mode")
         # Never silently replace an established ownership classification.
         for artifact_id, owner in artifact_ownership.items():
             prior = existing.get("artifact_ownership", {}).get(artifact_id)
@@ -210,7 +210,7 @@ def initialize_project(project_root: Path) -> list[Path]:
     vcs_path = yaaw / "vcs.json"
     vcs_config = {
         "schema": "yaaw.vcs/v1",
-        "mode": "consumer",
+        "mode": "project",
         "integration_branch": "main",
         "publish_branches": ["main"],
         "topic_branches": {"local_only": True},
@@ -219,7 +219,7 @@ def initialize_project(project_root: Path) -> list[Path]:
     _write_json_if_missing(vcs_path, vcs_config, created)
 
     try:
-        guard.bootstrap_consumer(project_root, GUARD_PATH)
+        guard.bootstrap_project(project_root, GUARD_PATH)
         observed = guard.inspect_repository(project_root)
     except guard.VcsGuardError as exc:
         raise InitializationError(str(exc)) from exc
@@ -234,7 +234,7 @@ def initialize_project(project_root: Path) -> list[Path]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Initialize YAAW docs, workflow state, and consumer-local VCS isolation.")
+    parser = argparse.ArgumentParser(description="Initialize YAAW docs, workflow state, and project-local VCS isolation.")
     parser.add_argument("project_root", nargs="?", default=".", type=Path)
     args = parser.parse_args()
     try:

@@ -207,7 +207,7 @@ class ContextMemoryContractsTest(unittest.TestCase):
             self.assertNotIn("hindsight_", text, skill.as_posix())
             self.assertNotIn("integrations/hindsight", text, skill.as_posix())
 
-    def test_hindsight_cannot_change_consumer_vcs_policy(self):
+    def test_hindsight_cannot_change_project_vcs_policy(self):
         memory = (CORE / "core/project-memory.md").read_text()
         adapter = (CORE / "integrations/hindsight.md").read_text()
         self.assertIn("cannot mark a path publishable", memory)

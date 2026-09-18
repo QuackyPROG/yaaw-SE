@@ -24,7 +24,7 @@ class BootstrapTest(unittest.TestCase):
         self.git(root, "commit", "-m", "chore: initialize application")
         shutil.copytree(CORE, root / ".yaaw-core")
 
-    def test_initialization_creates_owned_layout_state_and_consumer_marker(self):
+    def test_initialization_creates_owned_layout_state_and_project_marker(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.prepare(root)
@@ -45,7 +45,7 @@ class BootstrapTest(unittest.TestCase):
             self.assertEqual(state["product"]["status"], "draft")
             self.assertEqual(state["planning"]["status"], "discovery")
             install = json.loads((yaaw / "install.json").read_text())
-            self.assertEqual(install["mode"], "consumer")
+            self.assertEqual(install["mode"], "project")
             self.assertEqual(install["vcs_isolation"], "enabled")
             self.assertTrue((yaaw / "vcs.json").is_file())
             self.assertTrue((yaaw / "runtime/vcs-observed.json").is_file())
