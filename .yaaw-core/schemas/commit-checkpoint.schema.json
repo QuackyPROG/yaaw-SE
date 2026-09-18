@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.commit-checkpoint/v1",
+  "type": "object",
+  "required": ["schema", "ticket", "checkpoint", "paths", "message", "base_commit", "expected_result"],
+  "properties": {
+    "schema": {"const": "yaaw.commit-checkpoint/v1"},
+    "ticket": {"type": "string", "pattern": "^TASK-[0-9]+$"},
+    "checkpoint": {"type": "integer", "minimum": 1},
+    "paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "message": {"type": "string", "minLength": 1},
+    "base_commit": {"type": "string", "minLength": 1},
+    "expected_result": {"const": "local_commit"},
+    "explanation": {"type": "string"}
+  },
+  "additionalProperties": false
+}

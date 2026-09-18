@@ -1,38 +1,17 @@
 {
-  "schema": "yaaw.handoff/v2",
+  "schema": "yaaw.handoff/v3",
   "role": "implementer",
   "workflow": "implementation.implement-ticket",
   "desired_intent": "IMPLEMENTATION",
   "active_artifact": ".yaaw/tickets/SPEC-001/TASK-001.md",
-  "reads": [
-    ".yaaw/tickets/SPEC-001/TASK-001.md",
-    "docs/specs/SPEC-001.md",
-    "docs/product/product.md"
-  ],
-  "writes": [
-    "<ticket-admitted application paths>",
-    ".yaaw/evidence/SPEC-001/TASK-001-V1.json"
-  ],
-  "forbidden_writes": [
-    "docs/product/**",
-    "docs/engineering/**",
-    "docs/specs/**",
-    ".yaaw/tickets/**",
-    ".yaaw/reviews/**",
-    ".yaaw/runtime/**",
-    ".yaaw/state.json"
-  ],
+  "reads": [".yaaw/tickets/SPEC-001/TASK-001.md", "docs/specs/SPEC-001.md", "docs/product/product.md", ".yaaw/vcs.json", ".yaaw/runtime/vcs-observed.json"],
+  "writes": ["<ticket-admitted application paths>", ".yaaw/evidence/SPEC-001/TASK-001-V1.json", ".yaaw/vcs/checkpoints/TASK-001/C1.json"],
+  "forbidden_writes": ["docs/product/**", "docs/engineering/**", "docs/specs/**", ".yaaw/tickets/**", ".yaaw/reviews/**", ".yaaw/runtime/**", ".yaaw/state.json", ".yaaw/vcs.json"],
   "references": ["docs/specs/SPEC-001.md"],
   "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
   "expertise": [],
-  "context_policy": {
-    "strategy": "minimum-necessary",
-    "memory_mode": "standard",
-    "memory_phase": "before-broad-discovery",
-    "memory_target_tokens": 1200,
-    "deep_history_allowed": true
-  },
-  "expected_results": ["REVIEW_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PRECONDITION_UNSATISFIED"],
-  "repository": {"head_commit": "COMMIT", "dirty": false, "worktree_digest": "DIGEST"},
+  "context_policy": {"strategy": "minimum-necessary", "memory_mode": "standard", "memory_phase": "before-broad-discovery", "memory_target_tokens": 1200, "deep_history_allowed": true},
+  "expected_results": ["CHECKPOINT_READY", "REVIEW_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PRECONDITION_UNSATISFIED"],
+  "repository": {"identity_schema": "yaaw.repository-identity/v2", "head_commit": "COMMIT", "branch": "feature/local-only", "dirty_publishable": false, "publishable_worktree_digest": "sha256:DIGEST", "integration_branch": "main", "base_commit": "BASE"},
   "transition_sequence": 1
 }

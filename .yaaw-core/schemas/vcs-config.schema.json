@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.vcs/v1",
+  "type": "object",
+  "required": ["schema", "mode", "integration_branch", "publish_branches", "topic_branches", "worktree_branches"],
+  "properties": {
+    "schema": {"const": "yaaw.vcs/v1"},
+    "mode": {"const": "consumer"},
+    "integration_branch": {"type": "string", "minLength": 1},
+    "publish_branches": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "topic_branches": {"type": "object", "required": ["local_only"], "properties": {"local_only": {"const": true}}, "additionalProperties": false},
+    "worktree_branches": {"type": "object", "required": ["local_only"], "properties": {"local_only": {"const": true}}, "additionalProperties": false}
+  },
+  "additionalProperties": false
+}
