@@ -607,6 +607,25 @@
           }
         ]
       }
+    },
+    {
+      "id": "W-product-gap-precedes-research",
+      "observed": {
+        "state_consistent": true,
+        "recovery_evidence_sufficient": true,
+        "blocker": false,
+        "product_status": "ready",
+        "planning_status": "product_gap",
+        "readiness": "PRODUCT_GAP",
+        "research_pending": true,
+        "spec_status": "missing",
+        "accepted_scope_remaining": false,
+        "tickets": {}
+      },
+      "expected": {
+        "workflow": "planning.route",
+        "terminal": null
+      }
     }
   ]
 }

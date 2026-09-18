@@ -135,6 +135,31 @@ class EngineeringHardeningTest(unittest.TestCase):
     def test_25_max_depth_remains_one(self):
         self.assertIn("max_depth = 1", (ROOT / ".codex/config.toml").read_text())
 
+    def test_26_existing_install_manifest_adopts_research_ownership(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, stdout=subprocess.DEVNULL)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
+            (root / "app.txt").write_text("baseline\n")
+            subprocess.run(["git", "add", "app.txt"], cwd=root, check=True)
+            subprocess.run(["git", "commit", "-m", "init"], cwd=root, check=True, stdout=subprocess.DEVNULL)
+            initialize_project(root)
+            manifest_path = root / ".yaaw/install.json"
+            manifest = json.loads(manifest_path.read_text())
+            manifest["artifact_ownership"].pop("engineering_research", None)
+            manifest["owned_paths"] = [p for p in manifest["owned_paths"] if p != "docs/engineering/research/**"]
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+            initialize_project(root)
+            upgraded = json.loads(manifest_path.read_text())
+            self.assertEqual(upgraded["artifact_ownership"]["engineering_research"], "yaaw")
+            self.assertIn("docs/engineering/research/**", upgraded["owned_paths"])
+
+    def test_27_product_gap_precedes_pending_research(self):
+        policy = self.load(".yaaw-core/registries/routing-policy.json")
+        obs = {"state_consistent": True, "recovery_evidence_sufficient": True, "blocker": False, "product_status": "ready", "planning_status": "product_gap", "readiness": "PRODUCT_GAP", "research_pending": True, "spec_status": "missing", "tickets": {}}
+        self.assertEqual(determine_next(obs, policy)["workflow"], "planning.route")
+
 
 if __name__ == "__main__":
     unittest.main()

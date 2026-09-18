@@ -84,7 +84,7 @@ def main() -> int:
     if len(ids) != len(set(ids)):
         errors.append("lifecycle fixture IDs must be unique")
     covered = {case_id.split("-", 1)[0] for case_id in ids if isinstance(case_id, str)}
-    required = set("ABCDEFGHIJKLMNOPQRSTUV")
+    required = set("ABCDEFGHIJKLMNOPQRSTUVW")
     if not required.issubset(covered):
         errors.append(f"lifecycle fixtures missing required cases {sorted(required - covered)}")
 

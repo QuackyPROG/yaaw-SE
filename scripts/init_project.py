@@ -206,6 +206,19 @@ def initialize_project(project_root: Path) -> list[Path]:
                 raise InitializationError(
                     f"PATH_OWNERSHIP_CONFLICT: existing ownership for {artifact_id} is {prior!r}, not {owner!r}"
                 )
+        changed_manifest = False
+        existing_ownership = existing.setdefault("artifact_ownership", {})
+        for artifact_id, owner in artifact_ownership.items():
+            if artifact_id not in existing_ownership:
+                existing_ownership[artifact_id] = owner
+                changed_manifest = True
+        existing_owned_paths = existing.setdefault("owned_paths", [])
+        for owned_path in manifest["owned_paths"]:
+            if owned_path not in existing_owned_paths:
+                existing_owned_paths.append(owned_path)
+                changed_manifest = True
+        if changed_manifest:
+            manifest_path.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")
         manifest = existing
     else:
         _write_json_if_missing(manifest_path, manifest, created)

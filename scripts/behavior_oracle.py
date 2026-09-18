@@ -99,6 +99,13 @@ def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str
         if any(ticket["state"] == state for ticket in tickets.values()):
             return {"workflow": state_rule["workflow"], "terminal": None, "reconciliations": changes}
 
+    if reconciled.get("readiness") == "PRODUCT_GAP" or reconciled.get("planning_status") == "product_gap":
+        return {
+            "workflow": policy["planning_unready_workflow"],
+            "terminal": None,
+            "reconciliations": changes,
+        }
+
     if reconciled.get("research_pending", False):
         return {
             "workflow": policy["planning_research_workflow"],
