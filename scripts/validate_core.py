@@ -146,6 +146,7 @@ def main() -> int:
         "product": "docs/product/product.md",
         "engineering": "docs/engineering/engineering.md",
         "engineering_decision": "docs/engineering/decisions/ENG-*.md",
+        "engineering_research": "docs/engineering/research/RSH-*.md",
         "spec": "docs/specs/<SPEC-ID>.md",
         "rule": "docs/rules/**",
         "ticket": ".yaaw/tickets/<SPEC-ID>/<TASK-ID>.md",
@@ -475,6 +476,69 @@ def main() -> int:
             errors.append(f"README missing public skill @{skill_id}")
     if not (CORE / "core/invalidation.md").is_file() or not (CORE / "rules/repository-identity.md").is_file():
         errors.append("missing invalidation or repository-identity contract")
+
+
+    # Engineering-hardening closure.
+    hardened_workflows = {
+        "planning.research": "planner",
+        "implementation.diagnose-ticket": "implementer",
+        "review.inspect-contract": "reviewer",
+        "review.inspect-test-validity": "reviewer",
+        "review.inspect-engineering-quality": "reviewer",
+    }
+    for workflow_id, role in hardened_workflows.items():
+        if workflows.get(workflow_id, {}).get("role") != role:
+            errors.append(f"{workflow_id}: missing or wrong role")
+
+    research = schemas.get("engineering-research.schema.json", {})
+    if research.get("$id") != "yaaw.engineering-research/v1":
+        errors.append("engineering research schema missing/drifted")
+    if artifacts.get("engineering_research", {}).get("pattern") != "docs/engineering/research/RSH-*.md":
+        errors.append("engineering research artifact path drift")
+    if "engineering_research" not in role_io["planner"].get("writes", []):
+        errors.append("Planner must own engineering_research writes")
+    for role in ("implementer", "reviewer", "orchestrator"):
+        if "engineering_research" in role_io[role].get("writes", []):
+            errors.append(f"{role} must not author engineering_research")
+    research_template = CORE / "templates" / "engineering-research.md"
+    try:
+        rmeta, _ = parse_frontmatter(research_template)
+        missing = set(research.get("required", [])) - set(rmeta)
+        if missing:
+            errors.append(f"engineering research template missing {sorted(missing)}")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"engineering research template invalid: {exc}")
+
+    ticket_schema = schemas.get("ticket.schema.json", {})
+    for field in ("contract_version", "slice_type", "verification_mode"):
+        if field not in ticket_schema.get("properties", {}):
+            errors.append(f"ticket v2 field missing: {field}")
+    ticket_meta, _ = parse_frontmatter(CORE / "templates" / "ticket.md")
+    if ticket_meta.get("contract_version") != 2:
+        errors.append("new ticket template must use contract_version 2")
+    for field in ("slice_type", "verification_mode"):
+        if field not in ticket_meta:
+            errors.append(f"new ticket template missing {field}")
+
+    for heading in ("Test seams", "Independent test oracles", "Verification strategy", "Decomposition / slicing strategy", "External research basis"):
+        require_headings(CORE / "templates" / "spec.md", [heading], errors)
+    for heading in ("Contract lens", "Test-validity lens", "Engineering-quality lens"):
+        require_headings(CORE / "templates" / "review.md", [heading], errors)
+
+    if "codebase-design" not in expertise:
+        errors.append("codebase-design expertise missing")
+    elif set(expertise["codebase-design"].get("usable_by", [])) != {"planner", "implementer", "reviewer"}:
+        errors.append("codebase-design usable_by drift")
+
+    internal_targets = set(hardened_workflows)
+    public_targets = {entry.get("workflow_id") for entry in skills.values()}
+    leaked = internal_targets & public_targets
+    if leaked:
+        errors.append(f"internal hardening workflows exposed publicly: {sorted(leaked)}")
+
+    config_text = (ROOT / ".codex/config.toml").read_text(encoding="utf-8")
+    if "max_depth = 1" not in config_text:
+        errors.append("Codex max_depth must remain 1")
 
     if errors:
         print("YAAW core validation failed:")

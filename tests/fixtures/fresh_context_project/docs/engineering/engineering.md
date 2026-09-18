@@ -4,6 +4,7 @@ revision: 5
 status: ready
 product_revision: 3
 current_frontier: F-001
+research_pending: []
 readiness: PASS
 ---
 # Engineering
@@ -16,6 +17,9 @@ Python package with a service layer.
 
 ## Engineering constraints
 Preserve the existing service boundary.
+
+## Research
+RSH-001 resolved the external service-layer compatibility fact from primary-source evidence and was promoted through ENG-001.
 
 ## Decisions
 ### ENG-001
@@ -45,3 +49,9 @@ Handler -> service -> storage.
 
 ## Readiness status
 PASS for F-001.
+
+## Planning destination
+F-001 note completion behavior only.
+
+## Out of scope
+F-001 note completion behavior only.
