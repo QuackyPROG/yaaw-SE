@@ -1,23 +1,138 @@
 {
   "schema": "yaaw.artifacts/v2",
   "artifacts": {
-    "product": {"pattern": "docs/product/product.md", "kind": "durable_semantic", "semantic_owner": "prd", "lifecycle_owner": "prd", "vcs_visibility": "local_only"},
-    "engineering": {"pattern": "docs/engineering/engineering.md", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner", "vcs_visibility": "local_only"},
-    "engineering_decision": {"pattern": "docs/engineering/decisions/ENG-*.md", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner", "vcs_visibility": "local_only"},
-    "spec": {"pattern": "docs/specs/<SPEC-ID>.md", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner", "vcs_visibility": "local_only"},
-    "rule": {"pattern": "docs/rules/**", "kind": "durable_semantic", "semantic_owner": "planner", "lifecycle_owner": "planner", "vcs_visibility": "local_only"},
-    "ticket": {"pattern": ".yaaw/tickets/<SPEC-ID>/<TASK-ID>.md", "kind": "execution_contract", "semantic_owner": "planner", "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "evidence": {"pattern": ".yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json", "kind": "immutable_evidence", "semantic_owner": "implementer", "lifecycle_owner": "implementer", "vcs_visibility": "local_only"},
-    "review": {"pattern": ".yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md", "kind": "immutable_review", "semantic_owner": "reviewer", "lifecycle_owner": "reviewer", "vcs_visibility": "local_only"},
-    "intent": {"pattern": ".yaaw/runtime/intent.json", "kind": "runtime", "semantic_owner": "orchestrator", "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "observed_state": {"pattern": ".yaaw/runtime/observed-state.json", "kind": "runtime", "semantic_owner": "orchestrator", "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "handoff": {"pattern": ".yaaw/runtime/handoff.json", "kind": "runtime", "semantic_owner": "orchestrator", "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "state": {"pattern": ".yaaw/state.json", "kind": "runtime_state", "semantic_owner": null, "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "install_marker": {"pattern": ".yaaw/install.json", "kind": "installation", "semantic_owner": null, "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "vcs_config": {"pattern": ".yaaw/vcs.json", "kind": "runtime_config", "semantic_owner": null, "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "commit_checkpoint": {"pattern": ".yaaw/vcs/checkpoints/<TASK-ID>/C<CHECKPOINT>.json", "kind": "execution_intent", "semantic_owner": "implementer", "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "vcs_observed": {"pattern": ".yaaw/runtime/vcs-observed.json", "kind": "runtime", "semantic_owner": null, "lifecycle_owner": "orchestrator", "vcs_visibility": "local_only"},
-    "application_files": {"pattern": "<ticket-admitted application paths>", "kind": "repository", "semantic_owner": "implementer", "lifecycle_owner": "implementer", "vcs_visibility": "publishable"},
-    "repository": {"pattern": "<repository reality>", "kind": "observed", "semantic_owner": null, "lifecycle_owner": null, "vcs_visibility": "observed"}
+    "product": {
+      "pattern": "docs/product/product.md",
+      "kind": "durable_semantic",
+      "semantic_owner": "prd",
+      "lifecycle_owner": "prd",
+      "vcs_visibility": "local_only"
+    },
+    "engineering": {
+      "pattern": "docs/engineering/engineering.md",
+      "kind": "durable_semantic",
+      "semantic_owner": "planner",
+      "lifecycle_owner": "planner",
+      "vcs_visibility": "local_only"
+    },
+    "engineering_decision": {
+      "pattern": "docs/engineering/decisions/ENG-*.md",
+      "kind": "durable_semantic",
+      "semantic_owner": "planner",
+      "lifecycle_owner": "planner",
+      "vcs_visibility": "local_only"
+    },
+    "spec": {
+      "pattern": "docs/specs/<SPEC-ID>.md",
+      "kind": "durable_semantic",
+      "semantic_owner": "planner",
+      "lifecycle_owner": "planner",
+      "vcs_visibility": "local_only"
+    },
+    "rule": {
+      "pattern": "docs/rules/**",
+      "kind": "durable_semantic",
+      "semantic_owner": "planner",
+      "lifecycle_owner": "planner",
+      "vcs_visibility": "local_only"
+    },
+    "ticket": {
+      "pattern": ".yaaw/tickets/<SPEC-ID>/<TASK-ID>.md",
+      "kind": "execution_contract",
+      "semantic_owner": "planner",
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "evidence": {
+      "pattern": ".yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json",
+      "kind": "immutable_evidence",
+      "semantic_owner": "implementer",
+      "lifecycle_owner": "implementer",
+      "vcs_visibility": "local_only"
+    },
+    "review": {
+      "pattern": ".yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md",
+      "kind": "immutable_review",
+      "semantic_owner": "reviewer",
+      "lifecycle_owner": "reviewer",
+      "vcs_visibility": "local_only"
+    },
+    "intent": {
+      "pattern": ".yaaw/runtime/intent.json",
+      "kind": "runtime",
+      "semantic_owner": "orchestrator",
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "observed_state": {
+      "pattern": ".yaaw/runtime/observed-state.json",
+      "kind": "runtime",
+      "semantic_owner": "orchestrator",
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "handoff": {
+      "pattern": ".yaaw/runtime/handoff.json",
+      "kind": "runtime",
+      "semantic_owner": "orchestrator",
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "state": {
+      "pattern": ".yaaw/state.json",
+      "kind": "runtime_state",
+      "semantic_owner": null,
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "install_marker": {
+      "pattern": ".yaaw/install.json",
+      "kind": "installation",
+      "semantic_owner": null,
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "vcs_config": {
+      "pattern": ".yaaw/vcs.json",
+      "kind": "runtime_config",
+      "semantic_owner": null,
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "commit_checkpoint": {
+      "pattern": ".yaaw/vcs/checkpoints/<TASK-ID>/C<CHECKPOINT>.json",
+      "kind": "execution_intent",
+      "semantic_owner": "implementer",
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "vcs_observed": {
+      "pattern": ".yaaw/runtime/vcs-observed.json",
+      "kind": "runtime",
+      "semantic_owner": null,
+      "lifecycle_owner": "orchestrator",
+      "vcs_visibility": "local_only"
+    },
+    "application_files": {
+      "pattern": "<ticket-admitted application paths>",
+      "kind": "repository",
+      "semantic_owner": "implementer",
+      "lifecycle_owner": "implementer",
+      "vcs_visibility": "publishable"
+    },
+    "repository": {
+      "pattern": "<repository reality>",
+      "kind": "observed",
+      "semantic_owner": null,
+      "lifecycle_owner": null,
+      "vcs_visibility": "observed"
+    },
+    "engineering_research": {
+      "pattern": "docs/engineering/research/RSH-*.md",
+      "kind": "durable_semantic",
+      "semantic_owner": "planner",
+      "lifecycle_owner": "planner",
+      "vcs_visibility": "local_only"
+    }
   }
 }

@@ -121,6 +121,7 @@ def initialize_project(project_root: Path) -> list[Path]:
             ("product", docs / "product" / "product.md", "yaaw.product/", False),
             ("engineering", docs / "engineering" / "engineering.md", "yaaw.engineering/", False),
             ("engineering_decision", docs / "engineering" / "decisions", "yaaw.engineering-decision/", True),
+            ("engineering_research", docs / "engineering" / "research", "yaaw.engineering-research/", True),
             ("spec", docs / "specs", "yaaw.spec/", True),
             ("rule", docs / "rules", "yaaw.rule/", True),
         )
@@ -139,6 +140,7 @@ def initialize_project(project_root: Path) -> list[Path]:
         docs / "product",
         docs / "engineering",
         docs / "engineering" / "decisions",
+        docs / "engineering" / "research",
         docs / "specs",
         docs / "rules",
         yaaw,
@@ -187,6 +189,7 @@ def initialize_project(project_root: Path) -> list[Path]:
             "docs/product/product.md",
             "docs/engineering/engineering.md",
             "docs/engineering/decisions/**",
+            "docs/engineering/research/**",
             "docs/specs/**",
             "docs/rules/**"
         ],

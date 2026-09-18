@@ -93,3 +93,8 @@ Memory retrieval/correction does not confer permission to rewrite another owner'
 | YAAW control plane in a project | YAAW | local-only |
 
 Shared-path ownership is established before adoption. Existing application-owned content is never silently claimed merely because it lives under `docs/**`, `.codex/**`, or a generic root file.
+
+
+| Path | Semantic owner | Other roles | VCS visibility |
+|---|---|---|---|
+| `docs/engineering/research/**` | Planner | exact-reference read only | local-only |
