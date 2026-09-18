@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.install/v1",
+  "type": "object",
+  "required": ["schema", "mode", "vcs_isolation", "artifact_ownership", "owned_paths", "control_plane_patterns"],
+  "properties": {
+    "schema": {"const": "yaaw.install/v1"},
+    "mode": {"const": "consumer"},
+    "vcs_isolation": {"const": "enabled"},
+    "artifact_ownership": {"type": "object", "additionalProperties": {"enum": ["yaaw", "application", "conflict"]}},
+    "owned_paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "control_plane_patterns": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}

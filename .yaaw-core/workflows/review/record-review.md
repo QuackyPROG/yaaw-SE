@@ -15,3 +15,7 @@ Exact handoff; final `PASS`/`REPAIR`/`REPLAN`/`BLOCKED` classification; concrete
 6. Orchestrator validates the immutable review and persists the corresponding legal ticket transition/provenance.
 
 A prior PASS remains historical but becomes stale when repository/source revisions invalidate its basis.
+
+## Publication basis
+
+Record `repository_identity_schema`, reviewed branch/head, publishable dirty flag/digest, and review base commit. The review artifact itself is local-only and writing it must not alter the reviewed application identity.

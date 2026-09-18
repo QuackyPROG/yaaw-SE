@@ -1,16 +1,25 @@
 # Repository identity
 
-Acceptance and recovery must distinguish one working state from another, including uncommitted work.
+Acceptance and recovery bind to **application/publication identity**, not the local YAAW control plane.
 
-Record:
-- `head_commit`: current `HEAD` commit SHA;
-- `dirty`: whether tracked/untracked work differs from HEAD;
-- `worktree_digest`: SHA-256 over a deterministic snapshot of status plus tracked/staged diffs and untracked file content where accessible.
+## Canonical identity
 
-Recommended digest inputs:
-1. `git status --porcelain=v1 -z`;
-2. `git diff --binary HEAD`;
-3. `git diff --cached --binary HEAD`;
-4. sorted untracked paths and their byte hashes.
+Repository identity uses schema `yaaw.repository-identity/v2` and records `head_commit`, `branch`, `dirty_publishable`, `publishable_worktree_digest`, and optional integration/base identity.
 
-If the environment cannot produce a trustworthy worktree digest for dirty work, review/recovery must say so and may return `BLOCKED` rather than pretending the state is uniquely identified.
+The deterministic VCS path classifier decides whether a path participates. No reviewer, role, hook, bootstrap routine, or workflow keeps a competing path list.
+
+## Excluded control-plane state
+
+Protected YAAW local artifacts do not change application identity: `.yaaw/**`, YAAW-owned planning/spec/rule documents, consumer-local YAAW control-plane files, local Git guard metadata, VCS config, reviews, evidence, runtime handoffs, and state.
+
+A consumer workspace with only YAAW-local mutation has `dirty_publishable = false`.
+
+## Included publication state
+
+The digest covers only publishable tracked/staged/untracked application changes relative to HEAD, including path identity and file content/diff sufficient to distinguish the exact state.
+
+## Review immutability
+
+Reviewer PASS belongs to the exact publishable base/head identity. Amend, rebase, squash, cherry-pick, merge conflict repair, or any application change that creates a different accepted head makes the prior review stale. Reverify and review again.
+
+Writing YAAW-local state does not invalidate review.

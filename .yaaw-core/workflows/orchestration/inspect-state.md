@@ -18,3 +18,9 @@ Canonical paths from `registries/artifacts.json`; `.yaaw/state.json`; `.yaaw/run
 
 ## Output
 Observed-state snapshot only; no semantic or ticket-state mutation.
+
+## Consumer VCS observations
+
+When consumer mode is active, also inspect and persist operational facts in `.yaaw/runtime/vcs-observed.json`: consumer policy health, current/integration branch, publishable dirtiness/digest, protected staged paths, upstream presence, pending checkpoint candidates, outgoing contamination, hook health, and remote-policy conflicts. These are observed facts only; they do not create semantic authority.
+
+A non-integration local topic/worktree branch with an upstream is a VCS policy violation.

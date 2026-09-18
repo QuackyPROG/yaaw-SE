@@ -22,3 +22,7 @@ Handoff names exactly one ticket in `REVIEW_REQUIRED` plus exact current source 
 
 ## Output
 Exactly one result: `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`.
+
+## Review immutability
+
+A PASS is valid only for the exact reviewed publishable application identity. Amend, rebase, squash, cherry-pick, merge repair, or any changed application HEAD requires new verification and review. Local YAAW control-plane mutation does not stale PASS.

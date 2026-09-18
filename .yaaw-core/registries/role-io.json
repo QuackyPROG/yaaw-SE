@@ -1,31 +1,31 @@
 {
-  "schema": "yaaw.role-io/v1",
+  "schema": "yaaw.role-io/v2",
   "roles": {
     "prd": {
       "reads": ["product", "state"],
       "writes": ["product"],
-      "forbidden_writes": ["engineering", "engineering_decision", "spec", "rule", "ticket", "application_files", "evidence", "review", "intent", "observed_state", "handoff", "state"]
+      "forbidden_writes": ["engineering", "engineering_decision", "spec", "rule", "ticket", "application_files", "evidence", "review", "intent", "observed_state", "handoff", "state", "install_marker", "vcs_config", "commit_checkpoint", "vcs_observed"]
     },
     "planner": {
       "reads": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "repository"],
       "writes": ["engineering", "engineering_decision", "spec", "rule", "ticket"],
-      "forbidden_writes": ["product", "application_files", "evidence", "review", "intent", "observed_state", "handoff", "state"]
+      "forbidden_writes": ["product", "application_files", "evidence", "review", "intent", "observed_state", "handoff", "state", "install_marker", "vcs_config", "commit_checkpoint", "vcs_observed"]
     },
     "implementer": {
-      "reads": ["ticket", "spec", "product", "engineering_decision", "rule", "application_files", "evidence", "review", "repository"],
-      "writes": ["application_files", "evidence"],
-      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "review", "intent", "observed_state", "handoff", "state"]
+      "reads": ["ticket", "spec", "product", "engineering_decision", "rule", "application_files", "evidence", "review", "repository", "vcs_config", "vcs_observed"],
+      "writes": ["application_files", "evidence", "commit_checkpoint"],
+      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "review", "intent", "observed_state", "handoff", "state", "install_marker", "vcs_config", "vcs_observed"]
     },
     "reviewer": {
-      "reads": ["ticket", "spec", "product", "engineering_decision", "rule", "application_files", "evidence", "review", "repository"],
+      "reads": ["ticket", "spec", "product", "engineering_decision", "rule", "application_files", "evidence", "review", "repository", "vcs_config", "vcs_observed"],
       "writes": ["review"],
-      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "application_files", "evidence", "intent", "observed_state", "handoff", "state"]
+      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "application_files", "evidence", "intent", "observed_state", "handoff", "state", "install_marker", "vcs_config", "commit_checkpoint", "vcs_observed"]
     },
     "orchestrator": {
-      "reads": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "evidence", "review", "intent", "observed_state", "handoff", "state", "repository"],
-      "writes": ["intent", "observed_state", "handoff", "state"],
+      "reads": ["product", "engineering", "engineering_decision", "spec", "rule", "ticket", "evidence", "review", "intent", "observed_state", "handoff", "state", "repository", "install_marker", "vcs_config", "commit_checkpoint", "vcs_observed"],
+      "writes": ["intent", "observed_state", "handoff", "state", "install_marker", "vcs_config", "vcs_observed"],
       "write_scopes": [{"artifact": "ticket", "scope": "lifecycle_metadata_only"}],
-      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "application_files", "evidence", "review"]
+      "forbidden_writes": ["product", "engineering", "engineering_decision", "spec", "rule", "application_files", "evidence", "review", "commit_checkpoint"]
     }
   }
 }

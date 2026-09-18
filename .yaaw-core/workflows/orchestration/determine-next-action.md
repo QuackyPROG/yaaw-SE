@@ -22,3 +22,7 @@ Current observed-state snapshot, reconciled state, `.yaaw/runtime/intent.json`, 
 
 ## Boundary
 Do not perform target role semantic work here and do not let a target role choose/spawn its successor. Project memory cannot influence lifecycle routing or prerequisite resolution.
+
+## Operational VCS steps around semantic routing
+
+VCS mechanics are not ticket states. Before semantic dispatch, prioritize deterministic operational prerequisites when present: repair or establish the consumer boundary, execute a valid pending checkpoint, complete reviewed local integration, invalidate review when integration changed application identity, or run publication audit after PASS. Do not introduce `COMMIT_REQUIRED` or `PUSH_REQUIRED` ticket states.

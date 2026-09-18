@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "yaaw.handoff/v2",
+  "$id": "yaaw.handoff/v3",
   "type": "object",
   "required": ["schema", "role", "workflow", "desired_intent", "active_artifact", "reads", "writes", "forbidden_writes", "references", "revisions", "expertise", "context_policy", "expected_results", "repository", "transition_sequence"],
   "properties": {
-    "schema": {"const": "yaaw.handoff/v2"},
+    "schema": {"const": "yaaw.handoff/v3"},
     "role": {"enum": ["prd", "planner", "implementer", "reviewer", "orchestrator"]},
     "workflow": {"type": "string", "minLength": 1},
     "desired_intent": {"enum": ["AUTO", "PRODUCT", "PRODUCT_REVISE", "PRODUCT_REFINE", "PLANNING", "PLANNING_REVIEW", "SPEC", "TICKETS", "IMPLEMENTATION", "REPAIR", "REVIEW"]},
@@ -28,16 +28,7 @@
       "additionalProperties": false
     },
     "expected_results": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "repository": {
-      "type": "object",
-      "required": ["head_commit", "dirty", "worktree_digest"],
-      "properties": {
-        "head_commit": {"type": "string", "minLength": 1},
-        "dirty": {"type": "boolean"},
-        "worktree_digest": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": false
-    },
+    "repository": {"$ref": "repository-identity.schema.json"},
     "transition_sequence": {"type": "integer", "minimum": 0}
   },
   "additionalProperties": false

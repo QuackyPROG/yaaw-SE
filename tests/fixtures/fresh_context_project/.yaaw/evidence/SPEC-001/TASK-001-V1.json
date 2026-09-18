@@ -1,14 +1,18 @@
 {
-  "schema": "yaaw.evidence/v1",
+  "schema": "yaaw.evidence/v2",
   "id": "EVIDENCE-TASK-001-V1",
   "ticket": "TASK-001",
   "ticket_revision": 1,
   "spec_revision": 2,
   "kind": "implementation_verification",
   "repository": {
+    "identity_schema": "yaaw.repository-identity/v2",
     "head_commit": "abc123",
-    "dirty": false,
-    "worktree_digest": "sha256:fixture"
+    "branch": "feature/fixture",
+    "dirty_publishable": false,
+    "publishable_worktree_digest": "sha256:fixture",
+    "integration_branch": "main",
+    "base_commit": "base123"
   },
   "workflow": "implementation.verify-ticket",
   "commands": [

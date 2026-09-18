@@ -19,3 +19,7 @@ Handoff names exactly one ticket in `REPAIR_REQUIRED`, its exact current source 
 
 ## Output
 Repaired reviewable implementation or `REPLAN_REQUIRED`, `PRECONDITION_UNSATISFIED`, or `BLOCKED`.
+
+## Repair checkpoints
+
+Repairs use the same checkpoint protocol as normal implementation: one narrow coherent fix, exact publishable paths, application-focused message, Orchestrator-created local commit, fresh verification, then fresh review. Never encode the review round or TASK/SPEC identity in the commit message.

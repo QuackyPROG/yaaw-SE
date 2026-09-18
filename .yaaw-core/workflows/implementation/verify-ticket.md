@@ -15,3 +15,7 @@ Exact active ticket requirements/tests, changed surface, project tooling/rules, 
 
 ## Output
 Immutable evidence record(s). Verification never accepts the ticket; only Reviewer can classify acceptance and only Orchestrator persists lifecycle.
+
+## Final publication-clean verification boundary
+
+Final ticket verification occurs only after every publishable application change for the ticket has been committed through validated checkpoints. YAAW local state may remain mutable. Bind verification evidence to the exact `yaaw.repository-identity/v2` application HEAD and require `dirty_publishable = false` before returning `REVIEW_REQUIRED`.

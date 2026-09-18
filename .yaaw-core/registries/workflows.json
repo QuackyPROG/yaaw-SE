@@ -33,5 +33,12 @@
   "orchestration.reconcile-state": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/orchestration/reconcile-state.md"},
   "orchestration.determine-next-action": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/orchestration/determine-next-action.md"},
   "orchestration.dispatch": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/orchestration/dispatch.md"},
-  "orchestration.recover-interruption": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/orchestration/recover-interruption.md"}
+  "orchestration.recover-interruption": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/orchestration/recover-interruption.md"},
+
+  "vcs.ensure-consumer-boundary": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/ensure-consumer-boundary.md"},
+  "vcs.create-checkpoint-commit": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/create-checkpoint-commit.md"},
+  "vcs.inspect-local-integration": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/inspect-local-integration.md"},
+  "vcs.integrate-local-work": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/integrate-local-work.md"},
+  "vcs.validate-publication": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/validate-publication.md"},
+  "vcs.publish-integration-branch": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/publish-integration-branch.md"}
 }

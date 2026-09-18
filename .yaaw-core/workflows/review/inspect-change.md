@@ -15,3 +15,7 @@ Current ticket/spec/product/engineering revisions, actual repository state, proj
 
 ## Output
 Review inspection tied to exact repository and contract identity, independent of project-memory recollection.
+
+## Consumer publication inspection
+
+Inspect the exact publishable base..head commit range, publishable diff, verification evidence, and `yaaw.repository-identity/v2`. Do not treat protected local YAAW files as implementation changes. Any application identity mismatch between evidence, handoff, and current repository is a stale-review condition.

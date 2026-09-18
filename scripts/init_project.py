@@ -1,14 +1,102 @@
 #!/usr/bin/env python3
-"""Initialize YAAW durable documentation and workflow-state roots."""
+"""Initialize YAAW durable state and consumer-local VCS isolation."""
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
+import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / ".yaaw-core" / "templates"
+GUARD_PATH = ROOT / ".yaaw-core" / "vcs" / "guard.py"
+
+
+class InitializationError(RuntimeError):
+    pass
+
+
+def _load_guard():
+    spec = importlib.util.spec_from_file_location("yaaw_vcs_guard", GUARD_PATH)
+    if spec is None or spec.loader is None:
+        raise InitializationError(f"Cannot load YAAW VCS guard from {GUARD_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _looks_like_yaaw_markdown(path: Path, schema_prefix: str) -> bool:
+    if not path.is_file():
+        return False
+    head = path.read_text(encoding="utf-8", errors="replace")[:512]
+    return f"schema: {schema_prefix}" in head
+
+
+def _classify_shared_artifact(
+    project_root: Path,
+    artifact_id: str,
+    path: Path,
+    *,
+    schema_prefix: str | None = None,
+    directory: bool = False,
+) -> tuple[str, bool]:
+    """Return ownership and whether bootstrap may create/adopt the path."""
+    if not path.exists():
+        return "yaaw", True
+    if directory:
+        files = [p for p in path.rglob("*") if p.is_file()]
+        if not files:
+            return "yaaw", True
+        if schema_prefix and all(_looks_like_yaaw_markdown(p, schema_prefix) for p in files):
+            return "yaaw", True
+        raise InitializationError(
+            f"PATH_OWNERSHIP_CONFLICT: {artifact_id} collides with pre-existing application content at {path}"
+        )
+    if schema_prefix and _looks_like_yaaw_markdown(path, schema_prefix):
+        return "yaaw", True
+    raise InitializationError(
+        f"PATH_OWNERSHIP_CONFLICT: {artifact_id} collides with pre-existing application content at {path}"
+    )
+
+
+def _framework_mode(project_root: Path) -> bool:
+    # Framework/consumer identity is based on repository reality, not a GitHub
+    # owner/name.  A framework checkout versions YAAW's own core, public skill,
+    # and bootstrap source.  A consumer may contain the same files locally, but
+    # they are intentionally untracked control-plane material.
+    if os.environ.get("YAAW_FRAMEWORK_MODE") == "1":
+        return True
+    if project_root.resolve() != ROOT.resolve() or not (project_root / ".git").exists():
+        return False
+    required_tracked = (
+        ".yaaw-core/registries/artifacts.json",
+        "skills/yaaw-orchestrator/SKILL.md",
+        "scripts/init_project.py",
+    )
+    for relative in required_tracked:
+        proc = subprocess.run(
+            ["git", "-C", str(project_root), "ls-files", "--error-unmatch", relative],
+            text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if proc.returncode != 0:
+            return False
+    return True
+
+
+def _write_json_if_missing(path: Path, value: dict, created: list[Path]) -> None:
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+    created.append(path)
 
 
 def initialize_project(project_root: Path) -> list[Path]:
@@ -16,6 +104,28 @@ def initialize_project(project_root: Path) -> list[Path]:
     docs = project_root / "docs"
     yaaw = project_root / ".yaaw"
     created: list[Path] = []
+
+    framework_mode = _framework_mode(project_root)
+
+    # Detect shared-path collisions before adopting canonical YAAW locations.
+    artifact_ownership: dict[str, str] = {}
+    if not framework_mode:
+        checks = (
+            ("product", docs / "product" / "product.md", "yaaw.product/", False),
+            ("engineering", docs / "engineering" / "engineering.md", "yaaw.engineering/", False),
+            ("engineering_decision", docs / "engineering" / "decisions", "yaaw.engineering-decision/", True),
+            ("spec", docs / "specs", "yaaw.spec/", True),
+            ("rule", docs / "rules", "yaaw.rule/", True),
+        )
+        for artifact_id, path, schema_prefix, is_dir in checks:
+            owner, _ = _classify_shared_artifact(
+                project_root,
+                artifact_id,
+                path,
+                schema_prefix=schema_prefix,
+                directory=is_dir,
+            )
+            artifact_ownership[artifact_id] = owner
 
     for directory in (
         docs,
@@ -29,6 +139,8 @@ def initialize_project(project_root: Path) -> list[Path]:
         yaaw / "reviews",
         yaaw / "evidence",
         yaaw / "runtime",
+        yaaw / "vcs",
+        yaaw / "vcs" / "checkpoints",
     ):
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
@@ -54,14 +166,80 @@ def initialize_project(project_root: Path) -> list[Path]:
         state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
         created.append(state_path)
 
+    if framework_mode:
+        return created
+
+    guard = _load_guard()
+    if not guard.is_git_repository(project_root):
+        raise InitializationError(
+            "VCS_POLICY_VIOLATION: consumer VCS isolation requires an initialized Git repository"
+        )
+
+    manifest_path = yaaw / "install.json"
+    manifest = {
+        "schema": "yaaw.install/v1",
+        "mode": "consumer",
+        "vcs_isolation": "enabled",
+        "artifact_ownership": artifact_ownership,
+        "owned_paths": [
+            "docs/product/product.md",
+            "docs/engineering/engineering.md",
+            "docs/engineering/decisions/**",
+            "docs/specs/**",
+            "docs/rules/**"
+        ],
+        "control_plane_patterns": [".yaaw/**", ".yaaw-core/**", "skills/yaaw-*/**"],
+    }
+    if manifest_path.exists():
+        existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if existing.get("mode") != "consumer":
+            raise InitializationError("VCS_POLICY_VIOLATION: existing install marker is not consumer mode")
+        # Never silently replace an established ownership classification.
+        for artifact_id, owner in artifact_ownership.items():
+            prior = existing.get("artifact_ownership", {}).get(artifact_id)
+            if prior not in (None, owner):
+                raise InitializationError(
+                    f"PATH_OWNERSHIP_CONFLICT: existing ownership for {artifact_id} is {prior!r}, not {owner!r}"
+                )
+        manifest = existing
+    else:
+        _write_json_if_missing(manifest_path, manifest, created)
+
+    vcs_path = yaaw / "vcs.json"
+    vcs_config = {
+        "schema": "yaaw.vcs/v1",
+        "mode": "consumer",
+        "integration_branch": "main",
+        "publish_branches": ["main"],
+        "topic_branches": {"local_only": True},
+        "worktree_branches": {"local_only": True},
+    }
+    _write_json_if_missing(vcs_path, vcs_config, created)
+
+    try:
+        guard.bootstrap_consumer(project_root, GUARD_PATH)
+        observed = guard.inspect_repository(project_root)
+    except guard.VcsGuardError as exc:
+        raise InitializationError(str(exc)) from exc
+
+    observed_path = yaaw / "runtime" / "vcs-observed.json"
+    observed_was_new = not observed_path.exists()
+    observed_path.write_text(json.dumps(observed, indent=2) + "\n", encoding="utf-8")
+    if observed_was_new:
+        created.append(observed_path)
+
     return created
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Initialize YAAW docs and autonomous workflow state.")
+    parser = argparse.ArgumentParser(description="Initialize YAAW docs, workflow state, and consumer-local VCS isolation.")
     parser.add_argument("project_root", nargs="?", default=".", type=Path)
     args = parser.parse_args()
-    created = initialize_project(args.project_root)
+    try:
+        created = initialize_project(args.project_root)
+    except InitializationError as exc:
+        print(str(exc))
+        return 2
     if created:
         print("Initialized YAAW project artifacts:")
         for path in created:
