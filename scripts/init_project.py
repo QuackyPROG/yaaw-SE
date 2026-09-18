@@ -61,9 +61,23 @@ def _classify_shared_artifact(
 
 
 def _framework_mode(project_root: Path) -> bool:
-    # The source framework itself must remain versionable.  The consumer marker
-    # is never written when init_project.py is invoked at the framework root.
-    return project_root.resolve() == ROOT.resolve()
+    # A vendored consumer may also execute a copied scripts/init_project.py from
+    # its repository root, so path equality alone is not sufficient.  The
+    # canonical framework repository is recognized by its remote identity; forks
+    # may opt in explicitly for framework development.
+    if os.environ.get("YAAW_FRAMEWORK_MODE") == "1":
+        return True
+    if project_root.resolve() != ROOT.resolve() or not (project_root / ".git").exists():
+        return False
+    proc = subprocess.run(
+        ["git", "-C", str(project_root), "config", "--get", "remote.origin.url"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    remote = proc.stdout.strip().lower().removesuffix(".git")
+    return remote.endswith("github.com/quackyprog/yaaw-se") or remote.endswith("quackyprog/yaaw-se")
 
 
 def _write_json_if_missing(path: Path, value: dict, created: list[Path]) -> None:
@@ -198,8 +212,9 @@ def initialize_project(project_root: Path) -> list[Path]:
         raise InitializationError(str(exc)) from exc
 
     observed_path = yaaw / "runtime" / "vcs-observed.json"
+    observed_was_new = not observed_path.exists()
     observed_path.write_text(json.dumps(observed, indent=2) + "\n", encoding="utf-8")
-    if observed_path not in created:
+    if observed_was_new:
         created.append(observed_path)
 
     return created

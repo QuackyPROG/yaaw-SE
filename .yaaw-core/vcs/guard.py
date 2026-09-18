@@ -115,14 +115,25 @@ def _load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _common_snapshot(repo: Path, name: str) -> Path | None:
+    if not is_git_repository(repo):
+        return None
+    return git_common_dir(repo) / "yaaw" / name
+
+
 def consumer_manifest(repo: Path) -> dict:
-    path = repo / CONSUMER_MARKER
-    if not path.is_file():
-        return {}
-    try:
-        return _load_json(path)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise VcsGuardError(VCS_POLICY_VIOLATION, f"invalid consumer marker {path}", [str(exc)]) from exc
+    candidates = [repo / CONSUMER_MARKER]
+    snapshot = _common_snapshot(repo, "install.json")
+    if snapshot is not None:
+        candidates.append(snapshot)
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            return _load_json(path)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise VcsGuardError(VCS_POLICY_VIOLATION, f"invalid consumer marker {path}", [str(exc)]) from exc
+    return {}
 
 
 def consumer_mode_active(repo: Path) -> bool:
@@ -144,25 +155,38 @@ def _registry_root(repo: Path) -> Path:
     return repo / ".yaaw-core" / "registries"
 
 
+def _load_repo_or_snapshot(repo: Path, primary: Path, snapshot_name: str, label: str) -> dict:
+    candidates = [primary]
+    snapshot = _common_snapshot(repo, snapshot_name)
+    if snapshot is not None:
+        candidates.append(snapshot)
+    for path in candidates:
+        if path.is_file():
+            return _load_json(path)
+    raise VcsGuardError(VCS_POLICY_VIOLATION, f"missing {label}", [str(p) for p in candidates])
+
+
 def load_policy(repo: Path) -> dict:
-    path = _registry_root(repo) / "vcs-policy.json"
-    if not path.is_file():
-        raise VcsGuardError(VCS_POLICY_VIOLATION, "missing canonical VCS policy registry", [str(path)])
-    return _load_json(path)
+    return _load_repo_or_snapshot(
+        repo,
+        _registry_root(repo) / "vcs-policy.json",
+        "vcs-policy.json",
+        "canonical VCS policy registry",
+    )
 
 
 def load_artifacts(repo: Path) -> dict:
-    path = _registry_root(repo) / "artifacts.json"
-    if not path.is_file():
-        raise VcsGuardError(VCS_POLICY_VIOLATION, "missing canonical artifact registry", [str(path)])
-    return _load_json(path).get("artifacts", {})
+    data = _load_repo_or_snapshot(
+        repo,
+        _registry_root(repo) / "artifacts.json",
+        "artifacts.json",
+        "canonical artifact registry",
+    )
+    return data.get("artifacts", {})
 
 
 def load_vcs_config(repo: Path) -> dict:
-    path = repo / VCS_CONFIG
-    if not path.is_file():
-        raise VcsGuardError(VCS_POLICY_VIOLATION, "missing local VCS configuration", [str(path)])
-    config = _load_json(path)
+    config = _load_repo_or_snapshot(repo, repo / VCS_CONFIG, "vcs.json", "local VCS configuration")
     if config.get("schema") != "yaaw.vcs/v1" or config.get("mode") != "consumer":
         raise VcsGuardError(VCS_POLICY_VIOLATION, "invalid local VCS configuration", [str(path)])
     return config
@@ -516,19 +540,39 @@ def assert_clean_consumer_history(repo: Path) -> None:
 
 def bootstrap_consumer(repo: Path, source_guard: Path) -> dict:
     repo = repo_root(repo)
-    require_consumer_mode(repo)
+    manifest = require_consumer_mode(repo)
     before_gitignore = (repo / ".gitignore").read_bytes() if (repo / ".gitignore").exists() else None
+    common = git_common_dir(repo)
+    metadata = common / "yaaw"
+    metadata.mkdir(parents=True, exist_ok=True)
+
+    # Worktrees share the Git common directory but not untracked YAAW files.
+    # Snapshot only machine policy/config needed by deployed guards so every
+    # linked worktree receives the same protection without publishing YAAW.
+    snapshots = {
+        "install.json": manifest,
+        "vcs.json": _load_json(repo / VCS_CONFIG),
+        "vcs-policy.json": _load_json(_registry_root(repo) / "vcs-policy.json"),
+        "artifacts.json": _load_json(_registry_root(repo) / "artifacts.json"),
+    }
+    for name, value in snapshots.items():
+        (metadata / name).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
     exclude = install_exclude(repo)
     hooks = install_hooks(repo, source_guard)
-    previous_push_default = git_output(repo, "config", "--local", "--get", "push.default", check=False) or None
+    state_path = metadata / "config-state.json"
+    prior_state = _load_json(state_path) if state_path.is_file() else {}
+    previous_push_default = prior_state.get(
+        "previous_push_default",
+        git_output(repo, "config", "--local", "--get", "push.default", check=False) or None,
+    )
     _run(repo, "config", "--local", "push.default", "nothing")
-    common = git_common_dir(repo)
     config_state = {
         "schema": "yaaw.git-local-state/v1",
         "previous_push_default": previous_push_default,
         "effective_push_default": "nothing",
     }
-    (common / "yaaw" / "config-state.json").write_text(json.dumps(config_state, indent=2) + "\n", encoding="utf-8")
+    state_path.write_text(json.dumps(config_state, indent=2) + "\n", encoding="utf-8")
     after_gitignore = (repo / ".gitignore").read_bytes() if (repo / ".gitignore").exists() else None
     if before_gitignore != after_gitignore:
         raise AssertionError("YAAW bootstrap modified .gitignore")
@@ -729,7 +773,10 @@ def publish(repo: Path, remote: str, branch: str) -> None:
     publication_audit(repo, branch, remote_sha)
     proc = _run(repo, "push", remote, f"refs/heads/{branch}:refs/heads/{branch}", check=False)
     if proc.returncode != 0:
-        raise VcsGuardError(PUBLICATION_NOT_ALLOWED, "explicit integration-branch push failed", [proc.stderr.strip()])
+        message = proc.stderr.strip() or proc.stdout.strip()
+        lowered = message.lower()
+        code = REMOTE_POLICY_CONFLICT if ("protected branch" in lowered or "pull request" in lowered) else PUBLICATION_NOT_ALLOWED
+        raise VcsGuardError(code, "explicit integration-branch push failed", [message])
 
 
 def _hook_cli(args: argparse.Namespace, trailing: list[str]) -> None:
