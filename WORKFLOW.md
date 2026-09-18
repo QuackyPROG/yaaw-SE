@@ -194,7 +194,7 @@ PRD (if needed)
 
 The authoritative contracts are `.yaaw-core/core/io-contract.md`, `routing.md`, `folder-ownership.md`, `context-loading.md`, `project-memory.md`, the Hindsight provider adapter at `.yaaw-core/integrations/hindsight.md`, and the machine registries under `.yaaw-core/registries/`.
 
-## Consumer publication loop
+## Project publication loop
 
 ```text
 PRD / planning
@@ -216,4 +216,4 @@ PRD / planning
   -> push allowlisted integration branch only
 ```
 
-YAAW control artifacts never enter consumer application history. Git operations are operational steps around the semantic lifecycle; there are no `COMMIT_REQUIRED` or `PUSH_REQUIRED` ticket states and no public Git skills.
+YAAW control artifacts never enter project application history. Git operations are operational steps around the semantic lifecycle; there are no `COMMIT_REQUIRED` or `PUSH_REQUIRED` ticket states and no public Git skills.
