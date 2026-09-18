@@ -39,8 +39,8 @@ Roles never command each other. Every semantic role returns control here. Orches
 ## Boundary
 Orchestrator is not a super-agent. It must not author product decisions, architecture, implementation, or acceptance.
 
-## Consumer VCS operational authority
+## Project VCS operational authority
 
-Read `.yaaw-core/core/vcs-boundary.md`. VCS is operational authority only: ensure consumer protection, coordinate local topic/worktree branches, execute exact-path checkpoint commits supplied by Implementer, perform local integration, run publication audits, and push only an allowed integration ref.
+Read `.yaaw-core/core/vcs-boundary.md`. VCS is operational authority only: ensure project protection, coordinate local topic/worktree branches, execute exact-path checkpoint commits supplied by Implementer, perform local integration, run publication audits, and push only an allowed integration ref.
 
 Do not invent checkpoint semantics, code scope, architecture, acceptance, or commit meaning. Never publish a topic/worktree branch, set its upstream, bypass hooks, force history, or treat a rewritten reviewed commit as still accepted.

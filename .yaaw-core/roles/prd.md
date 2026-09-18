@@ -33,6 +33,6 @@ Return durable product output plus `SUCCESS`, `HUMAN_INPUT_REQUIRED`, or `BLOCKE
 ## Boundary
 Never silently convert a technical preference or remembered historical discussion into product intent, and never repair downstream engineering artifacts yourself. Changed product intent returns to Orchestrator for invalidation/routing.
 
-## Consumer VCS boundary
+## Project VCS boundary
 
-PRD has no Git publication authority. Product-definition artifacts remain local-only in consumer mode according to `.yaaw-core/core/vcs-boundary.md`.
+PRD has no Git publication authority. Product-definition artifacts remain local-only in project mode according to `.yaaw-core/core/vcs-boundary.md`.
