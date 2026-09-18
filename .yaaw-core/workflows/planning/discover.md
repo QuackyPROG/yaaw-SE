@@ -17,3 +17,7 @@ Current product revision, existing engineering artifact, project rules, relevant
 
 ## Output
 Repository/system observations with evidence references, plus any useful historical leads clearly separated from verified current facts, for `planning.write-understanding`.
+
+
+## Evidence separation
+Reported claim ≠ verified repository fact. Distinguish what product says, what repository proves, what project memory suggests, what external documentation says, and what Planner is assuming. For bug-like claims, record whether current repository reality verifies the claim; never invent a reproduction result.

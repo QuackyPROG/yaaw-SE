@@ -24,3 +24,7 @@ Observed-state snapshot only; no semantic or ticket-state mutation.
 When project mode is active, also inspect and persist operational facts in `.yaaw/runtime/vcs-observed.json`: project policy health, current/integration branch, publishable dirtiness/digest, protected staged paths, upstream presence, pending checkpoint candidates, outgoing contamination, hook health, and remote-policy conflicts. These are observed facts only; they do not create semantic authority.
 
 A non-integration local topic/worktree branch with an upstream is a VCS policy violation.
+
+
+## Pending engineering research
+Inspect `engineering.research_pending`, referenced RSH status, and product/engineering/frontier basis revisions. Pending or stale RSH state is observed planning prerequisite evidence, never project-memory evidence.

@@ -34,3 +34,7 @@ Human product/engineering answer required; evidence/permission unavailable; host
 ## Project publication loop
 
 Project VCS setup is an operational prerequisite before checkpoint or publication work. After Reviewer PASS, route through local integration eligibility, local integration, identity validation, re-verification/review if integration changed identity, final publication audit, then push only the configured integration branch. Topic/worktree refs stay local.
+
+
+## RESEARCH_REQUIRED loop
+`RESEARCH_REQUIRED` is non-terminal and does not mutate ticket lifecycle. Consume the Planner result, re-inspect reality, then dispatch a fresh Planner with `planning.research` and the exact RSH artifact. After research returns, re-inspect and continue normal planning.

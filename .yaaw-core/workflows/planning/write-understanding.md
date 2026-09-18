@@ -15,3 +15,7 @@ Product interpretation plus discovery observations, verified current repository 
 
 ## Output
 Updated engineering artifact ready for frontier analysis or questioning and sufficient for a future role even if project memory is unavailable.
+
+
+## Hardened durable checkpoint
+Always record the Planning destination, Research state, and Out-of-scope boundary alongside the current frontier/fog.

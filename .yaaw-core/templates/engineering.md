@@ -4,6 +4,7 @@ revision: 1
 status: discovery
 product_revision: 1
 current_frontier: FRONTIER-001
+research_pending: []
 readiness: pending
 ---
 # Engineering
@@ -31,3 +32,9 @@ readiness: pending
 ## Architecture spine
 
 ## Readiness status
+
+## Planning destination
+
+## Research
+
+## Out of scope

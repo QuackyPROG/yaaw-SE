@@ -19,12 +19,35 @@
     "REPAIR": "implementation.repair-ticket",
     "REVIEW": "review.review-ticket"
   },
-  "prerequisite_chain": ["product", "engineering", "spec", "tickets", "implementation", "review"],
+  "prerequisite_chain": [
+    "product",
+    "engineering",
+    "spec",
+    "tickets",
+    "implementation",
+    "review"
+  ],
   "ticket_state_precedence": [
-    {"state": "REPLAN_REQUIRED", "workflow": "planning.replan"},
-    {"state": "REPAIR_REQUIRED", "workflow": "implementation.repair-ticket"},
-    {"state": "REVIEW_REQUIRED", "workflow": "review.review-ticket"},
-    {"state": "IN_PROGRESS", "workflow": "orchestration.recover-interruption"},
-    {"state": "READY", "workflow": "implementation.implement-ticket"}
-  ]
+    {
+      "state": "REPLAN_REQUIRED",
+      "workflow": "planning.replan"
+    },
+    {
+      "state": "REPAIR_REQUIRED",
+      "workflow": "implementation.repair-ticket"
+    },
+    {
+      "state": "REVIEW_REQUIRED",
+      "workflow": "review.review-ticket"
+    },
+    {
+      "state": "IN_PROGRESS",
+      "workflow": "orchestration.recover-interruption"
+    },
+    {
+      "state": "READY",
+      "workflow": "implementation.implement-ticket"
+    }
+  ],
+  "planning_research_workflow": "planning.research"
 }

@@ -75,3 +75,7 @@ A missing spec therefore never causes Implementer to invent one, and a missing t
 Roles never dispatch peer roles. A semantic role returns durable output plus a typed result to Orchestrator. Orchestrator validates the result, persists any legal lifecycle transition, reconstructs reality, and chooses the next workflow.
 
 Core rule: **Roles do work. Orchestrator decides work.**
+
+
+## Internal research prerequisite
+Pending engineering research is an internal planning prerequisite. It is not a public desired intent, not a ticket state, and not a second router. Orchestrator dispatches `planning.research` before downstream planning/spec/ticket/implementation work that depends on the unresolved fact.

@@ -31,3 +31,7 @@ Every state transition follows `core/transitions.md`, records provenance in `.ya
 
 ## Invalidation invariant
 Changed product intent or engineering decisions propagate through `core/invalidation.md`; historical artifacts are preserved but stale acceptance is never treated as current.
+
+
+## Planning research cycle
+Planning may temporarily cycle `frontier -> research -> frontier` without changing ticket lifecycle. Research always returns through Orchestrator and a fresh Planner context.
