@@ -96,3 +96,7 @@ COMPLETE
 ## Filesystem authority is not publication authority
 
 Permission to write a YAAW artifact means semantic/filesystem authority only. It never grants permission to stage, commit, or publish that artifact. Project publication is governed separately by `.yaaw-core/core/vcs-boundary.md` and deterministic VCS workflows.
+
+
+## Hardened I/O
+`engineering_research` is Planner-write and exact-reference read-only for Implementer/Reviewer; Orchestrator may inspect it for routing but never author its semantic content. Contract-v2 tickets carry slice/verification contracts; evidence carries phase/seam/oracle proof and an `acceptance_ready` boundary.

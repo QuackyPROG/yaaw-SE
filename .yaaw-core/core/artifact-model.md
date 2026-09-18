@@ -37,3 +37,7 @@ Conversation may be retained by an optional project-memory provider, but convers
 Durable does not mean Git-tracked. In project mode, durable YAAW project knowledge is local contractual state and is intentionally excluded from application publication history. Application documentation and YAAW planning documentation may both be Markdown; classification comes from the artifact registry plus installation ownership, not file extension or a generic `docs/**` rule.
 
 A fresh model/session on the same initialized workspace can reconstruct the project from local artifacts. A fresh clone does not automatically contain that local YAAW state; learned memory is not promoted to authority to compensate.
+
+
+## Engineering research artifacts
+`docs/engineering/research/RSH-*.md` is durable Planner-owned semantic evidence. It is separate from project memory, runtime handoff, implementation evidence, and product authority. Other roles may read an RSH only when the exact current handoff/spec/ticket references it; only Planner authors its meaning.

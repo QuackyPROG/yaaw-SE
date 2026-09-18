@@ -42,3 +42,7 @@ Never invent missing product intent. Product gaps return to Orchestrator, which 
 ## Project VCS boundary
 
 Planner has no Git publication authority. Planner-owned engineering artifacts remain local-only in project mode according to `.yaaw-core/core/vcs-boundary.md`. Planning decisions never make a YAAW artifact publishable.
+
+
+## Engineering research authority
+Planner owns primary-source engineering research needed to make current engineering decisions. Research artifacts live at `docs/engineering/research/RSH-*.md`. A research finding is evidence, not automatically an accepted `ENG-*` decision; Planner must explicitly promote a current verified result through normal decision ownership. When an external fact is required, Planner writes the RSH artifact and returns `RESEARCH_REQUIRED` to Orchestrator instead of spawning a peer or guessing.

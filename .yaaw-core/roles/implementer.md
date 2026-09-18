@@ -44,3 +44,7 @@ Read `.yaaw-core/core/vcs-boundary.md` whenever project mode is active. Never us
 For one coherent application change, determine the exact admitted application paths and application-focused commit summary, then write `.yaaw/vcs/checkpoints/<TASK-ID>/C<N>.json`. The checkpoint is semantic intent only; Orchestrator executes the deterministic VCS workflow. Ticket state remains `IN_PROGRESS` across intermediate commits.
 
 A checkpoint commit message must describe application behavior and must not contain `TASK-*`, `SPEC-*`, `ENG-*`, YAAW lifecycle language, or review-round bookkeeping.
+
+
+## Verification contract
+Implementer must obey the ticket verification mode, preserve failed/reproduction evidence, and never manufacture a pass by weakening the independent oracle. The planned seam/oracle may not be changed silently; an invalid seam/contract returns `REPLAN_REQUIRED`. Only final publication-clean evidence with `acceptance_ready: true` may support `REVIEW_REQUIRED`.

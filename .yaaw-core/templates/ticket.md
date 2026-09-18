@@ -2,6 +2,9 @@
 schema: yaaw.ticket/v1
 id: TASK-XXX
 revision: 1
+contract_version: 2
+slice_type: tracer
+verification_mode: red_green
 spec: SPEC-XXX
 spec_revision: 1
 product_revision: 1
@@ -26,3 +29,17 @@ expertise: []
 ## Dependencies
 ## Expertise hints
 ## Status rationale
+
+## Observable outcome
+
+## Slice rationale
+
+## Test seams
+
+## Independent oracle
+
+## Verification mode
+
+## Required baseline signal
+
+## Required final signal

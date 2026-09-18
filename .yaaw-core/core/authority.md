@@ -19,3 +19,7 @@ A downstream role may detect that an upstream contract is invalid, but it return
 Semantic roles author the evidence/judgment for lifecycle outcomes. Orchestrator is the state writer: it validates durable output against `registries/transitions.json`, persists the legal transition, and determines the next workflow.
 
 For tickets specifically: Planner owns **content**, Orchestrator owns **lifecycle**, Implementer owns **execution**, and Reviewer owns **acceptance**. See `core/folder-ownership.md` and `core/io-contract.md`.
+
+
+## Hardening authority clarification
+Planner owns RSH research, test seam/oracle planning, and ticket decomposition. Implementer owns application edits/tests and immutable evidence but cannot silently change the planned seam/oracle. Reviewer owns acceptance across the three lenses but cannot author fixes while reviewing. Orchestrator routes pending research and persists lifecycle; it does not author research/engineering meaning. PRD/product authority is unchanged.

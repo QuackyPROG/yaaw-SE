@@ -15,3 +15,7 @@ Exact handoff, current product/engineering revisions, latest accepted engineerin
 
 ## Output
 Updated Planner-owned engineering/spec contract artifacts with stable decision IDs and provenance, plus any lifecycle invalidation request for Orchestrator.
+
+
+## Research promotion rule
+A resolved RSH does not become an engineering decision automatically. When a source-backed finding affects the current plan, Planner explicitly promotes the verified fact into the appropriate `ENG-NNN` decision with RSH/source provenance; conflicts or stale basis remain visible.

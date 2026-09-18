@@ -60,3 +60,18 @@ None material.
 
 ## Acceptance conditions
 Completion persists and existing behavior remains intact.
+
+## Test seams
+Public service-layer completion method.
+
+## Independent test oracles
+SPEC-001 acceptance condition: completing a note persists completion; unknown note remains an error.
+
+## Verification strategy
+red_green through the public service seam, then final project suite.
+
+## Decomposition / slicing strategy
+One tracer ticket for note completion behavior.
+
+## External research basis
+RSH-001, resolved and current.

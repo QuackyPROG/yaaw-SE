@@ -71,3 +71,7 @@ They do not create `BLOCKED`, change routing, or satisfy/violate a lifecycle pre
 A handoff names exact artifact paths, revisions, selected expertise, context policy, expected output, and the repository identity observed when it was created. Before executing it, verify those bases still match current reality. If they do not, discard the stale handoff and re-enter orchestration inspection.
 
 Runtime handoffs and observed-state snapshots live under `.yaaw/runtime/`; they are coordination caches, not semantic sources of truth. Learned project memory is also not a semantic source of truth.
+
+
+## Research is not learned project memory
+An engineering research artifact is current Planner-owned source-backed engineering evidence with explicit basis revisions and provenance. Learned project memory is advisory historical context. Memory never becomes research merely because it contains a link, and research does not change PRD or Orchestrator memory policy. Reviewer still completes all three primary review lenses before optional memory.

@@ -17,3 +17,7 @@ Current product/engineering revisions, verified repository observations, current
 
 ## Output
 Question round awaiting human answers, with duplicate historical questions avoided where possible.
+
+
+## Question discipline
+Ask humans only for product authority or materially consequential tradeoffs. Repository facts must be inspected; external facts that authoritative sources can answer must become RSH research. Use concrete scenarios to stress ambiguous domain language. Do not create a separate domain-modeling authority.

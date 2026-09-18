@@ -217,3 +217,7 @@ PRD / planning
 ```
 
 YAAW control artifacts never enter project application history. Git operations are operational steps around the semantic lifecycle; there are no `COMMIT_REQUIRED` or `PUSH_REQUIRED` ticket states and no public Git skills.
+
+
+## Engineering hardening invariants
+YAAW keeps the same public skills and authority roles. The hardened engineering loop adds Planner-owned primary-source research (`RSH-*`), planning destination/current frontier/Future Fog classification, tracer tickets, explicit test seams and independent oracles, verification modes (`red_green`, `bug_repro`, `characterization`, `verification_only`), acceptance-ready verification, and Reviewer contract/test-validity/engineering-quality lenses. Research returns through Orchestrator; roles never spawn peers; Reviewer remains acceptance authority; Orchestrator remains routing/lifecycle authority; `max_depth = 1` remains unchanged.

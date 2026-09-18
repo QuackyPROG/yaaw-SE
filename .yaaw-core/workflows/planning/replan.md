@@ -21,3 +21,7 @@ Repository evidence, product revision, review finding, or owner-coordinated inva
 
 ## Output
 Updated Planner-owned engineering/spec/ticket contract semantics, readiness/admission recommendation, and any lifecycle transition request for Orchestrator.
+
+
+## Contract migration
+Historical accepted/in-flight legacy tickets retain their original accepted contract. Any materially revised ticket becomes `contract_version: 2`; a legacy DRAFT ticket upgraded during normal Planner work is rewritten to v2 with seam, oracle, slice type, and verification mode before re-admission.

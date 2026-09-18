@@ -16,7 +16,47 @@
   },
   "workflow": "implementation.verify-ticket",
   "commands": [
-    {"command": "python -m unittest tests.test_notes", "result": "PASS"}
+    {
+      "command": "python -m unittest tests.test_notes",
+      "result": "PASS"
+    }
   ],
-  "checks": ["acceptance criteria covered"]
+  "checks": [
+    "acceptance criteria covered"
+  ],
+  "ticket_contract_version": 2,
+  "acceptance_ready": true,
+  "verification": {
+    "mode": "red_green",
+    "seams": [
+      {
+        "id": "SEAM-1",
+        "interface": "service.complete_note(note_id)",
+        "oracle": "SPEC-001 acceptance condition"
+      }
+    ],
+    "phases": [
+      {
+        "phase": "RED",
+        "command": "python -m unittest tests.test_notes",
+        "expected": "fail",
+        "actual": "fail",
+        "signal": "completion behavior absent before implementation"
+      },
+      {
+        "phase": "GREEN",
+        "command": "python -m unittest tests.test_notes",
+        "expected": "pass",
+        "actual": "pass",
+        "signal": "completion behavior now satisfies contract"
+      },
+      {
+        "phase": "FINAL",
+        "command": "python -m unittest discover -s tests -v",
+        "expected": "pass",
+        "actual": "pass",
+        "signal": "required suite passes on publication-clean abc123"
+      }
+    ]
+  }
 }

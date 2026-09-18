@@ -13,7 +13,7 @@ Project memory is not recovery evidence. A remembered statement that work comple
 
 ## Rules
 - Never reimplement solely because state is stale.
-- `IN_PROGRESS` + implementation + required verification evidence + no review -> reconcile to `REVIEW_REQUIRED`.
+- `IN_PROGRESS` + implementation + acceptance-ready final verification tied to the current application identity + no review -> reconcile to `REVIEW_REQUIRED`.
 - `READY` + implementation already present -> inspect/recover rather than duplicate the change.
 - `PASS` + missing/stale review, source revision mismatch, or repository identity mismatch -> invalidate current PASS and route to review/replan as appropriate.
 - A stale `.yaaw/runtime/handoff.json` is discarded, not executed.
@@ -24,3 +24,7 @@ Every reconciliation uses a legal transition and records its reason/evidence in 
 ## VCS-aware recovery
 
 Repository evidence is split by authority domain. Application/publication identity is evidence for implemented code; local YAAW artifacts are evidence for control-plane state. Recovery understands pending checkpoint intent, local commit presence, current branch position, integration status, publication status, and protected-path violations without turning Git mechanics into ticket states.
+
+
+## Acceptance-ready boundary
+For hardened contract-v2 tickets, verification presence is not verification completion. Diagnosis evidence, RED-only evidence, and failed verification are never completion evidence. Only final `acceptance_ready: true` verification whose top-level repository identity matches the publication-clean current application identity can prove the `REVIEW_REQUIRED` boundary. Legacy tickets retain their documented legacy interpretation.

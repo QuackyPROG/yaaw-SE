@@ -23,3 +23,7 @@ Source spec is `ACCEPTED` and its product/engineering revisions remain current.
 
 ## Output
 Dependency-aware `.yaaw/tickets/<SPEC-ID>/TASK-NNN.md` contracts plus admission results requiring no planning-chat or project-memory dependency.
+
+
+## Hardened decomposition contract
+Prefer `slice_type: tracer`. New tickets use `contract_version: 2` and declare one verification mode: `red_green`, `bug_repro`, `characterization`, or `verification_only`. Admission requires an observable outcome, bounded scope/non-goals, test seam, independent oracle, verification mode, required baseline signal, and required final signal. `verification_only` requires a written reason and is never a convenience escape hatch.

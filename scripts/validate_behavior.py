@@ -43,6 +43,7 @@ def main() -> int:
         policy.get("missing_spec_workflow"),
         policy.get("missing_tickets_workflow"),
         policy.get("next_frontier_workflow"),
+        policy.get("planning_research_workflow"),
         *(entry.get("workflow") for entry in policy.get("ticket_state_precedence", [])),
         *(policy.get("intent_targets", {}).values()),
     }
@@ -83,9 +84,16 @@ def main() -> int:
     if len(ids) != len(set(ids)):
         errors.append("lifecycle fixture IDs must be unique")
     covered = {case_id.split("-", 1)[0] for case_id in ids if isinstance(case_id, str)}
-    required = set("ABCDEFGHIJKLMNOPQ")
+    required = set("ABCDEFGHIJKLMNOPQRSTUVW")
     if not required.issubset(covered):
         errors.append(f"lifecycle fixtures missing required cases {sorted(required - covered)}")
+
+    if policy.get("planning_research_workflow") != "planning.research":
+        errors.append("pending research must route to planning.research")
+    for edge in transitions.get("legal", []):
+        if edge.get("to") == "REVIEW_REQUIRED" and edge.get("from") in {"IN_PROGRESS", "REPAIR_REQUIRED"}:
+            if edge.get("evidence_requirement") != "acceptance_ready_verification":
+                errors.append(f"review boundary lacks acceptance-ready evidence requirement: {edge}")
 
     errors.extend(run_fixture_cases(FIXTURES))
 
@@ -93,6 +101,7 @@ def main() -> int:
     for relative in (
         "docs/product/product.md",
         "docs/engineering/engineering.md",
+        "docs/engineering/research/RSH-001.md",
         "docs/specs/SPEC-001.md",
         ".yaaw/state.json",
         ".yaaw/tickets/SPEC-001/TASK-001.md",

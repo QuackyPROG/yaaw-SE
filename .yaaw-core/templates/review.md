@@ -21,6 +21,12 @@ evidence: []
 
 Record the exact publishable application base/head range and repository identity. Local YAAW control-plane mutation is supporting state, not application diff.
 
+## Contract lens
+
+## Test-validity lens
+
+## Engineering-quality lens
+
 ## Findings
 
 ## Verification

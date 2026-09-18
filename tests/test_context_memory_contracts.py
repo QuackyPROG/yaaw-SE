@@ -220,6 +220,20 @@ class ContextMemoryContractsTest(unittest.TestCase):
         self.assertNotIn("hindsight", init)
         self.assertNotIn("project-memory", init)
 
+    def test_engineering_research_is_distinct_from_project_memory(self):
+        artifacts = json.loads((CORE / "registries/artifacts.json").read_text())["artifacts"]
+        context = (CORE / "core/context-loading.md").read_text()
+        self.assertEqual(artifacts["engineering_research"]["semantic_owner"], "planner")
+        self.assertIn("Research is not learned project memory", context)
+        self.assertIn("Memory never becomes research", context)
+
+    def test_reviewer_memory_still_follows_three_primary_lenses(self):
+        review = (CORE / "workflows/review/review-ticket.md").read_text()
+        memory_index = review.index("optional learned project memory")
+        self.assertLess(review.index("review.inspect-contract"), memory_index)
+        self.assertLess(review.index("review.inspect-test-validity"), memory_index)
+        self.assertLess(review.index("review.inspect-engineering-quality"), memory_index)
+
 
 if __name__ == "__main__":
     unittest.main()

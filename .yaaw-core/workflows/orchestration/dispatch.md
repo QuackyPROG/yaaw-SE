@@ -22,3 +22,6 @@ Execute exactly one already-selected canonical workflow. This file is not the or
 13. Mark/remove the consumed runtime handoff.
 
 Never recursively dispatch `orchestration.dispatch` as its own target.
+
+
+`planning.research` is a normal fresh Planner semantic dispatch. The handoff names exactly one RSH read/write plus current revision basis; no new role, peer spawn, or concurrent handoff authority is introduced.

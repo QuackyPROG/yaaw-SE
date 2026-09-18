@@ -42,3 +42,7 @@ Write the immutable review round, then return exactly `PASS`, `REPAIR`, `REPLAN`
 Read `.yaaw-core/core/vcs-boundary.md` in project mode. Review the exact publishable application base/head range and `yaaw.repository-identity/v2`. YAAW-local files are supporting workflow evidence, not implementation diff noise.
 
 PASS becomes stale after application commit rewrite or application identity change. Writing `.yaaw/state.json`, evidence, a new review artifact, or runtime handoff does not itself invalidate acceptance.
+
+
+## Three-lens acceptance authority
+Reviewer evaluates every review through three independent lenses: contract correctness, test validity, and engineering quality. A clean implementation of the wrong contract fails; correct behavior with meaningless tests fails; a material engineering defect can fail independently. Reviewer never authors fixes while acting as Reviewer, and style preference/heuristic smell alone is insufficient without concrete impact.

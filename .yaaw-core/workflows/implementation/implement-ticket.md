@@ -31,3 +31,7 @@ Reviewable implementation plus evidence, or `REPLAN_REQUIRED`, `PRECONDITION_UNS
 While the ticket remains `IN_PROGRESS`, stop at coherent application-change boundaries. Persist a `yaaw.commit-checkpoint/v1` candidate with exact admitted publishable paths, semantic application commit message, and current base commit, then return `CHECKPOINT_READY` to Orchestrator. Do not stage or commit the candidate yourself.
 
 After Orchestrator records the local commit, continue from the new HEAD. Small means one independently understandable application behavior/change, not an arbitrary file/line limit. Prefer buildable intermediate commits and do not split coupled interface/caller changes unnaturally.
+
+
+## Hardened verification-mode dispatch
+Before coding, if `verification_mode == bug_repro`, execute `implementation.diagnose-ticket` inside this same handoff. For `red_green`, preserve a meaningful RED signal before behavior implementation. For `characterization`, capture intended baseline behavior before the behavior-preserving change. For `verification_only`, execute the Planner-documented objective validator and rationale. Never return `REVIEW_REQUIRED` without acceptance-ready final verification.
