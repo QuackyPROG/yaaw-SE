@@ -5,7 +5,7 @@
   "required": ["schema", "mode", "vcs_isolation", "artifact_ownership", "owned_paths", "control_plane_patterns"],
   "properties": {
     "schema": {"const": "yaaw.install/v1"},
-    "mode": {"const": "consumer"},
+    "mode": {"const": "project"},
     "vcs_isolation": {"const": "enabled"},
     "artifact_ownership": {"type": "object", "additionalProperties": {"enum": ["yaaw", "application", "conflict"]}},
     "owned_paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},

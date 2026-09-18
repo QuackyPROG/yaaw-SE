@@ -5,7 +5,7 @@
   "required": ["schema", "mode", "integration_branch", "publish_branches", "topic_branches", "worktree_branches"],
   "properties": {
     "schema": {"const": "yaaw.vcs/v1"},
-    "mode": {"const": "consumer"},
+    "mode": {"const": "project"},
     "integration_branch": {"type": "string", "minLength": 1},
     "publish_branches": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
     "topic_branches": {"type": "object", "required": ["local_only"], "properties": {"local_only": {"const": true}}, "additionalProperties": false},

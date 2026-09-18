@@ -35,7 +35,7 @@
   "orchestration.dispatch": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/orchestration/dispatch.md"},
   "orchestration.recover-interruption": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/orchestration/recover-interruption.md"},
 
-  "vcs.ensure-consumer-boundary": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/ensure-consumer-boundary.md"},
+  "vcs.ensure-project-boundary": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/ensure-project-boundary.md"},
   "vcs.create-checkpoint-commit": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/create-checkpoint-commit.md"},
   "vcs.inspect-local-integration": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/inspect-local-integration.md"},
   "vcs.integrate-local-work": {"role": "orchestrator", "workflow": ".yaaw-core/workflows/vcs/integrate-local-work.md"},
