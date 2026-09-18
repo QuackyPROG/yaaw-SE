@@ -443,10 +443,11 @@ def main() -> int:
             errors.append(f"VCS boundary missing invariant: {phrase}")
 
     init_text = (ROOT / "scripts/init_project.py").read_text(encoding="utf-8")
-    if ".gitignore" not in init_text or "before_gitignore" not in (CORE / "vcs/guard.py").read_text(encoding="utf-8"):
+    guard_text = (CORE / "vcs/guard.py").read_text(encoding="utf-8")
+    if ".gitignore" not in guard_text or "before_gitignore" not in guard_text or "after_gitignore" not in guard_text:
         errors.append("bootstrap must explicitly prove .gitignore remains unchanged")
     for forbidden in ("write_text(", "write_bytes("):
-        if f'".gitignore").{forbidden}' in init_text or f'".gitignore").{forbidden}' in (CORE / "vcs/guard.py").read_text(encoding="utf-8"):
+        if f'".gitignore").{forbidden}' in init_text or f'".gitignore").{forbidden}' in guard_text:
             errors.append("bootstrap contains a .gitignore mutation path")
 
     for workflow_id in (
