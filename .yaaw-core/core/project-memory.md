@@ -180,6 +180,6 @@ Also exclude secrets, credentials, `.env` contents, private keys, tokens, and ot
 
 ## VCS isolation and learned memory
 
-Consumer application Git history is not a valid storage location for YAAW artifacts. Historical YAAW paths discovered in Git are legacy/contaminated context, never current authority. Hindsight remains advisory and cannot mark a path publishable, expand the remote branch allowlist, justify a push, preserve a stale review, or replace local YAAW contractual state.
+Project application Git history is not a valid storage location for YAAW artifacts. Historical YAAW paths discovered in Git are legacy/contaminated context, never current authority. Hindsight remains advisory and cannot mark a path publishable, expand the remote branch allowlist, justify a push, preserve a stale review, or replace local YAAW contractual state.
 
 Small application-focused commits may improve historical rationale retrieval, but YAAW internal IDs must never be inserted into application commit messages for memory correlation.

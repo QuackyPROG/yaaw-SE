@@ -82,7 +82,7 @@ Memory retrieval/correction does not confer permission to rewrite another owner'
 
 ## VCS visibility is separate from semantic ownership
 
-| Area | Semantic owner | Consumer VCS visibility |
+| Area | Semantic owner | Project VCS visibility |
 | --- | --- | --- |
 | `docs/product/**` adopted by YAAW | PRD | local-only |
 | `docs/engineering/**` adopted by YAAW | Planner | local-only |
@@ -90,6 +90,6 @@ Memory retrieval/correction does not confer permission to rewrite another owner'
 | `docs/rules/**` adopted by YAAW | Planner | local-only |
 | `.yaaw/**` | YAAW roles by artifact contract | local-only |
 | admitted application files | Implementer | publishable |
-| YAAW control plane in a consumer | YAAW | local-only |
+| YAAW control plane in a project | YAAW | local-only |
 
 Shared-path ownership is established before adoption. Existing application-owned content is never silently claimed merely because it lives under `docs/**`, `.codex/**`, or a generic root file.
