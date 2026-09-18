@@ -20,3 +20,7 @@ Current frontier readiness is `PASS` and its product/engineering revisions still
 
 ## Output
 One current accepted `docs/specs/SPEC-NNN.md` or explicit `PRECONDITION_UNSATISFIED` / `BLOCKED` result.
+
+
+## Hardened verification design
+Before ticketing, the spec defines the stable behavior observation seam, independent oracle, verification strategy/mode guidance, failure modes, migration/compatibility when material, slicing strategy, and any external RSH basis. Avoid private implementation seams unless they are explicit module contracts.
