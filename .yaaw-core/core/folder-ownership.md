@@ -79,3 +79,17 @@ Project-memory initialization, seeding, or provider availability is never part o
 No role may silently rewrite an artifact whose meaning belongs to another role. A downstream role may report invalidity and return control to the owner. Orchestrator may reconcile lifecycle metadata only when repository/artifact evidence is sufficient; it may not rewrite semantic content.
 
 Memory retrieval/correction does not confer permission to rewrite another owner's canonical artifact. Exact read/write sets for each dispatch follow `core/io-contract.md` and `registries/role-io.json`.
+
+## VCS visibility is separate from semantic ownership
+
+| Area | Semantic owner | Consumer VCS visibility |
+| --- | --- | --- |
+| `docs/product/**` adopted by YAAW | PRD | local-only |
+| `docs/engineering/**` adopted by YAAW | Planner | local-only |
+| `docs/specs/**` adopted by YAAW | Planner | local-only |
+| `docs/rules/**` adopted by YAAW | Planner | local-only |
+| `.yaaw/**` | YAAW roles by artifact contract | local-only |
+| admitted application files | Implementer | publishable |
+| YAAW control plane in a consumer | YAAW | local-only |
+
+Shared-path ownership is established before adoption. Existing application-owned content is never silently claimed merely because it lives under `docs/**`, `.codex/**`, or a generic root file.

@@ -31,3 +31,9 @@ Markdown artifacts use YAML frontmatter for machine-readable identity/revision/s
 Folder ownership is normative in `core/folder-ownership.md`; read/write behavior is normative in `core/io-contract.md`.
 
 Conversation may be retained by an optional project-memory provider, but conversation is never an artifact of record and never the only location of an accepted decision.
+
+## Consumer publication dimension
+
+Durable does not mean Git-tracked. In consumer mode, durable YAAW project knowledge is local contractual state and is intentionally excluded from application publication history. Application documentation and YAAW planning documentation may both be Markdown; classification comes from the artifact registry plus installation ownership, not file extension or a generic `docs/**` rule.
+
+A fresh model/session on the same initialized workspace can reconstruct the project from local artifacts. A fresh clone does not automatically contain that local YAAW state; learned memory is not promoted to authority to compensate.

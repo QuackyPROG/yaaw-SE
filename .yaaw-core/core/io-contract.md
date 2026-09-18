@@ -92,3 +92,7 @@ COMPLETE
 ```
 
 `PRECONDITION_UNSATISFIED` must include a concrete reason such as `NO_READY_TICKET`, `SOURCE_SPEC_MISSING`, or `STALE_SOURCE_REVISION`. Reason codes do not replace the typed result. Orchestrator then resolves the missing prerequisite through the routing policy.
+
+## Filesystem authority is not publication authority
+
+Permission to write a YAAW artifact means semantic/filesystem authority only. It never grants permission to stage, commit, or publish that artifact. Consumer publication is governed separately by `.yaaw-core/core/vcs-boundary.md` and deterministic VCS workflows.
