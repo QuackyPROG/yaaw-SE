@@ -39,6 +39,6 @@ Write the immutable review round, then return exactly `PASS`, `REPAIR`, `REPLAN`
 
 ## Publishable acceptance target
 
-Read `.yaaw-core/core/vcs-boundary.md` in consumer mode. Review the exact publishable application base/head range and `yaaw.repository-identity/v2`. YAAW-local files are supporting workflow evidence, not implementation diff noise.
+Read `.yaaw-core/core/vcs-boundary.md` in project mode. Review the exact publishable application base/head range and `yaaw.repository-identity/v2`. YAAW-local files are supporting workflow evidence, not implementation diff noise.
 
 PASS becomes stale after application commit rewrite or application identity change. Writing `.yaaw/state.json`, evidence, a new review artifact, or runtime handoff does not itself invalidate acceptance.

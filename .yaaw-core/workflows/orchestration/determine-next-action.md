@@ -25,4 +25,4 @@ Do not perform target role semantic work here and do not let a target role choos
 
 ## Operational VCS steps around semantic routing
 
-VCS mechanics are not ticket states. Before semantic dispatch, prioritize deterministic operational prerequisites when present: repair or establish the consumer boundary, execute a valid pending checkpoint, complete reviewed local integration, invalidate review when integration changed application identity, or run publication audit after PASS. Do not introduce `COMMIT_REQUIRED` or `PUSH_REQUIRED` ticket states.
+VCS mechanics are not ticket states. Before semantic dispatch, prioritize deterministic operational prerequisites when present: repair or establish the project boundary, execute a valid pending checkpoint, complete reviewed local integration, invalidate review when integration changed application identity, or run publication audit after PASS. Do not introduce `COMMIT_REQUIRED` or `PUSH_REQUIRED` ticket states.

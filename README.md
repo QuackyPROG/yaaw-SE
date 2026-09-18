@@ -157,7 +157,7 @@ python -m unittest discover -s tests -v
 
 See `WORKFLOW.md` for the lifecycle and `.yaaw-core/core/io-contract.md`, `artifact-model.md`, `folder-ownership.md`, `authority.md`, `routing.md`, `context-loading.md`, `project-memory.md`, plus `.yaaw-core/integrations/hindsight.md` for normative contracts.
 
-## Consumer Git boundary
+## Project Git boundary
 
 YAAW now separates two durable domains:
 
@@ -167,6 +167,6 @@ Application Git      -> publishable product/source history
 Learned memory       -> optional advisory context only
 ```
 
-Consumer isolation activates only after `scripts/init_project.py` initializes `.yaaw/install.json` with consumer mode. Bootstrap leaves the application's `.gitignore` untouched, maintains local visibility through the Git common directory, installs fail-closed commit/push guards, and defaults remote publication to `main` only. Topic/worktree branches stay local.
+Project isolation activates only after `scripts/init_project.py` initializes `.yaaw/install.json` with project mode. Bootstrap leaves the application's `.gitignore` untouched, maintains local visibility through the Git common directory, installs fail-closed commit/push guards, and defaults remote publication to `main` only. Topic/worktree branches stay local.
 
-“Agents are disposable. Artifacts are durable.” still holds; **durable does not imply versioned in the consumer application's Git repository**.
+“Agents are disposable. Artifacts are durable.” still holds; **durable does not imply versioned in the project application's Git repository**.

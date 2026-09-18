@@ -39,6 +39,6 @@ Return durable planning/spec/ticket output plus `SUCCESS`, `HUMAN_INPUT_REQUIRED
 ## Boundary
 Never invent missing product intent. Product gaps return to Orchestrator, which routes to PRD/human authority. Planner does not accept implementation on behalf of Reviewer, and memory does not bypass product/engineering decision ownership.
 
-## Consumer VCS boundary
+## Project VCS boundary
 
-Planner has no Git publication authority. Planner-owned engineering artifacts remain local-only in consumer mode according to `.yaaw-core/core/vcs-boundary.md`. Planning decisions never make a YAAW artifact publishable.
+Planner has no Git publication authority. Planner-owned engineering artifacts remain local-only in project mode according to `.yaaw-core/core/vcs-boundary.md`. Planning decisions never make a YAAW artifact publishable.

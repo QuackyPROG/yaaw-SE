@@ -42,6 +42,6 @@ python scripts/behavior_oracle.py
 python -m unittest discover -s tests -v
 ```
 
-## Consumer VCS isolation invariant
+## Project VCS isolation invariant
 
-The framework repository may version YAAW source normally. In an initialized consumer repository, `.yaaw-core/core/vcs-boundary.md` is the canonical publication contract: YAAW control state is local-authoritative and never application publication content; exact-path checkpoint staging is mandatory; topic/worktree refs stay local; only allowlisted integration branches may be published; and review binds to publishable application identity. No role may bypass local guards with `--no-verify` or force publication.
+The framework repository may version YAAW source normally. In an initialized project repository, `.yaaw-core/core/vcs-boundary.md` is the canonical publication contract: YAAW control state is local-authoritative and never application publication content; exact-path checkpoint staging is mandatory; topic/worktree refs stay local; only allowlisted integration branches may be published; and review binds to publishable application identity. No role may bypass local guards with `--no-verify` or force publication.

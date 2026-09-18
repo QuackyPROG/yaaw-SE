@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "yaaw.vcs-observed/v1",
   "type": "object",
-  "required": ["schema", "consumer_vcs_policy_active", "current_branch", "integration_branch", "publish_branches", "publishable_dirty", "publishable_worktree_digest", "head_commit", "protected_path_staged", "local_branch_has_upstream", "pending_checkpoints", "hook_health", "contamination"],
+  "required": ["schema", "project_vcs_policy_active", "current_branch", "integration_branch", "publish_branches", "publishable_dirty", "publishable_worktree_digest", "head_commit", "protected_path_staged", "local_branch_has_upstream", "pending_checkpoints", "hook_health", "contamination"],
   "properties": {
     "schema": {"const": "yaaw.vcs-observed/v1"},
-    "consumer_vcs_policy_active": {"type": "boolean"},
+    "project_vcs_policy_active": {"type": "boolean"},
     "current_branch": {"type": "string"},
     "integration_branch": {"type": "string"},
     "publish_branches": {"type": "array", "items": {"type": "string"}},

@@ -1,4 +1,4 @@
-# Consumer VCS boundary
+# Project VCS boundary
 
 ## Purpose
 
@@ -10,23 +10,23 @@ Define the single normative publication boundary for YAAW when it is embedded in
 
 The YAAW framework repository versions its own source normally. Files such as `.yaaw-core/**`, `skills/**`, `.codex/**`, tests, scripts, `AGENTS.md`, and `WORKFLOW.md` are product source and are publishable.
 
-Consumer rules MUST NOT activate merely because those paths exist.
+Project rules MUST NOT activate merely because those paths exist.
 
-### Consumer mode
+### Project mode
 
-Consumer mode is active only when `.yaaw/install.json` declares:
+Project mode is active only when `.yaaw/install.json` declares:
 
 ```json
-{"mode":"consumer","vcs_isolation":"enabled"}
+{"mode":"project","vcs_isolation":"enabled"}
 ```
 
-In consumer mode YAAW is a local control plane. Its semantic, planning, execution, review, runtime, memory-control, and installation artifacts are authoritative to YAAW but never application publication content.
+In project mode YAAW is a local control plane. Its semantic, planning, execution, review, runtime, memory-control, and installation artifacts are authoritative to YAAW but never application publication content.
 
 ## Canonical invariants
 
 1. Artifact ownership and VCS visibility come from `.yaaw-core/registries/artifacts.json`.
-2. YAAW control-plane paths additionally come from the consumer installation manifest; generic paths are never claimed merely by name.
-3. YAAW never edits the consumer repository's `.gitignore`.
+2. YAAW control-plane paths additionally come from the project installation manifest; generic paths are never claimed merely by name.
+3. YAAW never edits the project repository's `.gitignore`.
 4. Local visibility convenience uses the actual Git common directory and `info/exclude`.
 5. Exclusion is not the security boundary. Staging is positive, exact-path selection only.
 6. `git add .`, `git add -A`, and `git add --all` are prohibited YAAW operations.

@@ -31,6 +31,6 @@ If the same repository identity, state, intent, handoff, and expected output rep
 ## Stop conditions
 Human product/engineering answer required; evidence/permission unavailable; host requires approval for consequential action; accepted scope is terminal `COMPLETE`; or an unrecoverable `BLOCKED` condition exists.
 
-## Consumer publication loop
+## Project publication loop
 
-Consumer VCS setup is an operational prerequisite before checkpoint or publication work. After Reviewer PASS, route through local integration eligibility, local integration, identity validation, re-verification/review if integration changed identity, final publication audit, then push only the configured integration branch. Topic/worktree refs stay local.
+Project VCS setup is an operational prerequisite before checkpoint or publication work. After Reviewer PASS, route through local integration eligibility, local integration, identity validation, re-verification/review if integration changed identity, final publication audit, then push only the configured integration branch. Topic/worktree refs stay local.

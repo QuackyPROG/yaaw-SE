@@ -95,4 +95,4 @@ COMPLETE
 
 ## Filesystem authority is not publication authority
 
-Permission to write a YAAW artifact means semantic/filesystem authority only. It never grants permission to stage, commit, or publish that artifact. Consumer publication is governed separately by `.yaaw-core/core/vcs-boundary.md` and deterministic VCS workflows.
+Permission to write a YAAW artifact means semantic/filesystem authority only. It never grants permission to stage, commit, or publish that artifact. Project publication is governed separately by `.yaaw-core/core/vcs-boundary.md` and deterministic VCS workflows.

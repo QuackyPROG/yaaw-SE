@@ -430,10 +430,10 @@ def main() -> int:
     if actual_agent_files != registered_agent_files:
         errors.append(f"Codex agent file/registry mismatch: files={sorted(actual_agent_files)} registry={sorted(registered_agent_files)}")
 
-    # Consumer VCS implementation must be canonical, fail-closed, and avoid .gitignore mutation.
+    # Project VCS implementation must be canonical, fail-closed, and avoid .gitignore mutation.
     boundary = (CORE / "core/vcs-boundary.md").read_text(encoding="utf-8")
     for phrase in (
-        "Consumer mode is active only",
+        "Project mode is active only",
         "git add .",
         "Topic/worktree branches are local only",
         "Remote publication is allowed only",
@@ -451,7 +451,7 @@ def main() -> int:
             errors.append("bootstrap contains a .gitignore mutation path")
 
     for workflow_id in (
-        "vcs.ensure-consumer-boundary",
+        "vcs.ensure-project-boundary",
         "vcs.create-checkpoint-commit",
         "vcs.inspect-local-integration",
         "vcs.integrate-local-work",

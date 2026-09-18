@@ -48,7 +48,7 @@ class VcsIsolationTests(unittest.TestCase):
     def install_core(self, root: Path) -> None:
         shutil.copytree(CORE, root / ".yaaw-core")
 
-    def make_consumer(self, root: Path, *, gitignore: str | None = None) -> None:
+    def make_project(self, root: Path, *, gitignore: str | None = None) -> None:
         self.make_repo(root, gitignore=gitignore)
         self.install_core(root)
         initialize_project(root)
@@ -66,7 +66,7 @@ class VcsIsolationTests(unittest.TestCase):
             self.assertTrue(first)
             self.assertEqual(second, [])
             self.assertEqual((root / ".gitignore").read_text(encoding="utf-8"), original)
-            self.assertEqual(json.loads((root / ".yaaw/install.json").read_text())["mode"], "consumer")
+            self.assertEqual(json.loads((root / ".yaaw/install.json").read_text())["mode"], "project")
             self.assertEqual(json.loads((root / ".yaaw/vcs.json").read_text())["publish_branches"], ["main"])
             common = guard.git_common_dir(root)
             exclude = (common / "info/exclude").read_text()
@@ -99,7 +99,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_forced_protected_staging_and_mixed_staging_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             (root / "app.txt").write_text("changed\n", encoding="utf-8")
             self.git(root, "add", "app.txt")
             self.git(root, "add", "-f", ".yaaw/state.json")
@@ -111,7 +111,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_commit_message_guard_rejects_internal_ids_and_accepts_application_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             (root / "app.txt").write_text("changed\n", encoding="utf-8")
             self.git(root, "add", "app.txt")
             bad = self.git(root, "commit", "-m", "TASK-004 complete", check=False)
@@ -123,7 +123,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_checkpoint_commit_uses_exact_paths_and_application_message(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             (root / "app.txt").write_text("checkpoint\n", encoding="utf-8")
             checkpoint = root / ".yaaw/vcs/checkpoints/TASK-001/C1.json"
             checkpoint.parent.mkdir(parents=True, exist_ok=True)
@@ -144,7 +144,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_publishable_identity_ignores_yaaw_mutation_but_tracks_application_change(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             baseline = guard.publishable_identity(root)
             state = root / ".yaaw/state.json"
             state.write_text(state.read_text() + "\n", encoding="utf-8")
@@ -160,7 +160,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_branch_publication_allowlist_rejects_every_topic_ref_mapping(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             sha = self.git(root, "rev-parse", "HEAD").stdout.strip()
             forbidden_pairs = (
                 ("refs/heads/feature/auth", "refs/heads/feature/auth"),
@@ -177,7 +177,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_explicit_staging_branch_is_allowed_only_after_local_configuration(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             self.git(root, "branch", "staging")
             sha = self.git(root, "rev-parse", "staging").stdout.strip()
             with self.assertRaisesRegex(guard.VcsGuardError, guard.PUBLICATION_NOT_ALLOWED):
@@ -240,7 +240,7 @@ class VcsIsolationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as wt_tmp:
             root = Path(tmp)
             worktree = Path(wt_tmp) / "feature"
-            self.make_consumer(root)
+            self.make_project(root)
             self.git(root, "worktree", "add", "-b", "feature/local", str(worktree), "main")
             (worktree / "feature.txt").write_text("feature\n", encoding="utf-8")
             self.git(worktree, "add", "feature.txt")
@@ -294,7 +294,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_outgoing_history_contamination_cannot_be_hidden_by_later_deletion(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             self.git(root, "add", "-f", ".yaaw/state.json")
             self.git(root, "commit", "--no-verify", "-m", "chore: accidental metadata")
             self.git(root, "rm", "--cached", ".yaaw/state.json")
@@ -306,14 +306,14 @@ class VcsIsolationTests(unittest.TestCase):
     def test_invalid_vcs_config_fails_with_typed_policy_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             config = json.loads((root / ".yaaw/vcs.json").read_text())
             config["integration_branch"] = "staging"
             (root / ".yaaw/vcs.json").write_text(json.dumps(config, indent=2) + "\n")
             with self.assertRaisesRegex(guard.VcsGuardError, guard.VCS_POLICY_VIOLATION):
                 guard.load_vcs_config(root)
 
-    def test_non_git_consumer_fails_before_creating_artifacts(self):
+    def test_non_git_project_fails_before_creating_artifacts(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.install_core(root)
@@ -325,7 +325,7 @@ class VcsIsolationTests(unittest.TestCase):
     def test_hook_health_detects_wrapper_tampering(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             common = guard.git_common_dir(root)
             wrapper = common / "hooks" / "pre-commit"
             wrapper.write_text(wrapper.read_text() + "\n# modified after install\n", encoding="utf-8")
@@ -337,13 +337,13 @@ class VcsIsolationTests(unittest.TestCase):
     def test_publication_audit_rejects_dirty_publishable_worktree(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.make_consumer(root)
+            self.make_project(root)
             (root / "app.txt").write_text("uncommitted publishable change\n", encoding="utf-8")
             with self.assertRaisesRegex(guard.VcsGuardError, "worktree must be clean"):
                 guard.publication_audit(root, "main")
 
-    def test_framework_repository_is_not_consumer_classified_without_marker(self):
-        self.assertFalse(guard.consumer_mode_active(ROOT))
+    def test_framework_repository_is_not_project_classified_without_marker(self):
+        self.assertFalse(guard.project_mode_active(ROOT))
         self.assertEqual(guard.classify_path(ROOT, ".yaaw-core/vcs/guard.py"), "framework")
 
     def test_framework_mode_uses_tracked_yaaw_source_not_remote_repository_name(self):

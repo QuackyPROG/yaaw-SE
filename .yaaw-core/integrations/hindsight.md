@@ -128,6 +128,6 @@ secrets / credentials / tokens / private keys / .env contents
 
 A checkout without Hindsight must behave exactly like a checkout with Hindsight removed or disabled, except for the absence of advisory learned context.
 
-## Consumer VCS boundary
+## Project VCS boundary
 
 Hindsight cannot alter VCS visibility, branch publication policy, checkpoint path admission, outgoing-history audit, or review identity. If memory references a YAAW artifact historically found in application Git, label it legacy contamination and verify current authority from local YAAW artifacts. Semantic application commit messages may be useful learned rationale, but YAAW internal IDs must not be inserted into commits for correlation.

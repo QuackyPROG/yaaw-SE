@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Deterministic consumer VCS isolation for YAAW.
+"""Deterministic project VCS isolation for YAAW.
 
-This module is an operational guard, not a semantic agent.  In consumer mode it
+This module is an operational guard, not a semantic agent.  In project mode it
 classifies publication paths from canonical registries + the local installation
 manifest, installs local-only Git protections, validates exact-path checkpoint
 commits, computes publishable repository identity, and audits outgoing history.
@@ -23,10 +23,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
-CONSUMER_MARKER = Path(".yaaw/install.json")
+PROJECT_MARKER = Path(".yaaw/install.json")
 VCS_CONFIG = Path(".yaaw/vcs.json")
-MANAGED_EXCLUDE_START = "# >>> YAAW consumer local-only >>>"
-MANAGED_EXCLUDE_END = "# <<< YAAW consumer local-only <<<"
+MANAGED_EXCLUDE_START = "# >>> YAAW project local-only >>>"
+MANAGED_EXCLUDE_END = "# <<< YAAW project local-only <<<"
 HOOK_MARKER = "# YAAW_MANAGED_HOOK_V1"
 ZERO_SHA = "0" * 40
 
@@ -121,8 +121,8 @@ def _common_snapshot(repo: Path, name: str) -> Path | None:
     return git_common_dir(repo) / "yaaw" / name
 
 
-def consumer_manifest(repo: Path) -> dict:
-    candidates = [repo / CONSUMER_MARKER]
+def project_manifest(repo: Path) -> dict:
+    candidates = [repo / PROJECT_MARKER]
     snapshot = _common_snapshot(repo, "install.json")
     if snapshot is not None:
         candidates.append(snapshot)
@@ -132,21 +132,21 @@ def consumer_manifest(repo: Path) -> dict:
         try:
             return _load_json(path)
         except (OSError, json.JSONDecodeError) as exc:
-            raise VcsGuardError(VCS_POLICY_VIOLATION, f"invalid consumer marker {path}", [str(exc)]) from exc
+            raise VcsGuardError(VCS_POLICY_VIOLATION, f"invalid project marker {path}", [str(exc)]) from exc
     return {}
 
 
-def consumer_mode_active(repo: Path) -> bool:
-    manifest = consumer_manifest(repo)
-    return manifest.get("mode") == "consumer" and manifest.get("vcs_isolation") == "enabled"
+def project_mode_active(repo: Path) -> bool:
+    manifest = project_manifest(repo)
+    return manifest.get("mode") == "project" and manifest.get("vcs_isolation") == "enabled"
 
 
-def require_consumer_mode(repo: Path) -> dict:
-    manifest = consumer_manifest(repo)
-    if manifest.get("mode") != "consumer" or manifest.get("vcs_isolation") != "enabled":
+def require_project_mode(repo: Path) -> dict:
+    manifest = project_manifest(repo)
+    if manifest.get("mode") != "project" or manifest.get("vcs_isolation") != "enabled":
         raise VcsGuardError(
             VCS_POLICY_VIOLATION,
-            "consumer VCS policy is not active; refusing consumer-only Git operation",
+            "project VCS policy is not active; refusing project-only Git operation",
         )
     return manifest
 
@@ -190,8 +190,8 @@ def load_vcs_config(repo: Path) -> dict:
     problems: list[str] = []
     if config.get("schema") != "yaaw.vcs/v1":
         problems.append("schema must be yaaw.vcs/v1")
-    if config.get("mode") != "consumer":
-        problems.append("mode must be consumer")
+    if config.get("mode") != "project":
+        problems.append("mode must be project")
 
     publish_branches = config.get("publish_branches")
     if (
@@ -261,10 +261,10 @@ def classify_path(repo: Path, value: str | Path) -> str:
     path = normalize_path(repo, value)
     if path == ".git" or path.startswith(".git/"):
         return "git_internal"
-    if not consumer_mode_active(repo):
+    if not project_mode_active(repo):
         return "framework"
 
-    manifest = consumer_manifest(repo)
+    manifest = project_manifest(repo)
     policy = load_policy(repo)
     artifacts = load_artifacts(repo)
 
@@ -363,7 +363,7 @@ def publishable_identity(repo: Path) -> RepositoryIdentity:
 
 
 def _owned_exclude_patterns(repo: Path) -> list[str]:
-    manifest = consumer_manifest(repo)
+    manifest = project_manifest(repo)
     policy = load_policy(repo)
     patterns = list(policy.get("control_plane", {}).get("always_local_patterns", []))
     patterns.extend(manifest.get("owned_paths", []))
@@ -548,7 +548,7 @@ def _history_paths(repo: Path, refs: Iterable[str]) -> list[str]:
 
 
 def contamination_audit(repo: Path) -> dict[str, list[str]]:
-    require_consumer_mode(repo)
+    require_project_mode(repo)
     tracked_raw = _run(repo, "ls-files", "-z").stdout
     tracked = sorted({p for p in tracked_raw.split("\0") if p and protected_path(repo, p)})
 
@@ -570,7 +570,7 @@ def contamination_audit(repo: Path) -> dict[str, list[str]]:
     }
 
 
-def assert_clean_consumer_history(repo: Path) -> None:
+def assert_clean_project_history(repo: Path) -> None:
     audit = contamination_audit(repo)
     if audit["tracked"]:
         raise VcsGuardError(TRACKED_YAAW_ARTIFACT, "protected YAAW paths are tracked", audit["tracked"])
@@ -588,9 +588,9 @@ def assert_clean_consumer_history(repo: Path) -> None:
         )
 
 
-def bootstrap_consumer(repo: Path, source_guard: Path) -> dict:
+def bootstrap_project(repo: Path, source_guard: Path) -> dict:
     repo = repo_root(repo)
-    manifest = require_consumer_mode(repo)
+    manifest = require_project_mode(repo)
     before_gitignore = (repo / ".gitignore").read_bytes() if (repo / ".gitignore").exists() else None
     common = git_common_dir(repo)
     metadata = common / "yaaw"
@@ -626,7 +626,7 @@ def bootstrap_consumer(repo: Path, source_guard: Path) -> dict:
     after_gitignore = (repo / ".gitignore").read_bytes() if (repo / ".gitignore").exists() else None
     if before_gitignore != after_gitignore:
         raise AssertionError("YAAW bootstrap modified .gitignore")
-    assert_clean_consumer_history(repo)
+    assert_clean_project_history(repo)
     return {"exclude": str(exclude), "hooks": hooks, "git_common_dir": str(common)}
 
 
@@ -636,7 +636,7 @@ def _upstream(repo: Path) -> str | None:
 
 
 def inspect_repository(repo: Path) -> dict:
-    require_consumer_mode(repo)
+    require_project_mode(repo)
     identity = publishable_identity(repo)
     config = load_vcs_config(repo)
     branch = identity.branch
@@ -650,7 +650,7 @@ def inspect_repository(repo: Path) -> dict:
     upstream_violation = bool(upstream and branch not in allowed)
     return {
         "schema": "yaaw.vcs-observed/v1",
-        "consumer_vcs_policy_active": True,
+        "project_vcs_policy_active": True,
         "current_branch": branch,
         "integration_branch": config.get("integration_branch", "main"),
         "publish_branches": sorted(allowed),
@@ -719,7 +719,7 @@ def validate_outgoing_history(repo: Path, commits: Sequence[str]) -> None:
 
 
 def pre_commit(repo: Path) -> None:
-    require_consumer_mode(repo)
+    require_project_mode(repo)
     bad = [p for p in staged_paths(repo) if protected_path(repo, p)]
     conflicts = [p for p in staged_paths(repo) if classify_path(repo, p) == "conflict"]
     if bad or conflicts:
@@ -731,13 +731,13 @@ def pre_commit(repo: Path) -> None:
 
 
 def commit_msg(repo: Path, message_file: Path) -> None:
-    require_consumer_mode(repo)
+    require_project_mode(repo)
     validate_message(repo, message_file.read_text(encoding="utf-8"))
 
 
 def pre_push(repo: Path, stdin: str) -> None:
-    require_consumer_mode(repo)
-    assert_clean_consumer_history(repo)
+    require_project_mode(repo)
+    assert_clean_project_history(repo)
     current_branch = git_output(repo, "branch", "--show-current")
     config = load_vcs_config(repo)
     if _upstream(repo) and current_branch not in set(config.get("publish_branches", [])):
@@ -759,7 +759,7 @@ def pre_push(repo: Path, stdin: str) -> None:
 
 
 def create_checkpoint_commit(repo: Path, checkpoint_path: Path) -> str:
-    require_consumer_mode(repo)
+    require_project_mode(repo)
     checkpoint = _load_json(checkpoint_path)
     if checkpoint.get("schema") != "yaaw.commit-checkpoint/v1":
         raise VcsGuardError(VCS_POLICY_VIOLATION, "invalid checkpoint schema", [str(checkpoint_path)])
@@ -801,7 +801,7 @@ def create_checkpoint_commit(repo: Path, checkpoint_path: Path) -> str:
 
 
 def publication_audit(repo: Path, branch: str, remote_ref_sha: str | None = None) -> dict:
-    require_consumer_mode(repo)
+    require_project_mode(repo)
     config = load_vcs_config(repo)
     allowed = set(config.get("publish_branches", []))
     if branch not in allowed:
@@ -818,7 +818,7 @@ def publication_audit(repo: Path, branch: str, remote_ref_sha: str | None = None
     if any(not ok for ok in hook_health(repo).values()):
         raise VcsGuardError(PUBLICATION_NOT_ALLOWED, "local VCS guards are unhealthy")
     pre_commit(repo)
-    assert_clean_consumer_history(repo)
+    assert_clean_project_history(repo)
     local_sha = git_output(repo, "rev-parse", branch)
     commits = _outgoing_commits(repo, local_sha, remote_ref_sha or ZERO_SHA)
     validate_outgoing_history(repo, commits)
@@ -851,7 +851,7 @@ def _hook_cli(args: argparse.Namespace, trailing: list[str]) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="YAAW consumer VCS isolation guard")
+    parser = argparse.ArgumentParser(description="YAAW project VCS isolation guard")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("classify")
@@ -899,7 +899,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "audit":
             print(json.dumps(contamination_audit(repo), indent=2))
         elif args.command == "bootstrap":
-            print(json.dumps(bootstrap_consumer(repo, args.source_guard.resolve()), indent=2))
+            print(json.dumps(bootstrap_project(repo, args.source_guard.resolve()), indent=2))
         elif args.command == "checkpoint":
             print(create_checkpoint_commit(repo, args.checkpoint))
         elif args.command == "publish":

@@ -10,9 +10,9 @@ The deterministic VCS path classifier decides whether a path participates. No re
 
 ## Excluded control-plane state
 
-Protected YAAW local artifacts do not change application identity: `.yaaw/**`, YAAW-owned planning/spec/rule documents, consumer-local YAAW control-plane files, local Git guard metadata, VCS config, reviews, evidence, runtime handoffs, and state.
+Protected YAAW local artifacts do not change application identity: `.yaaw/**`, YAAW-owned planning/spec/rule documents, project-local YAAW control-plane files, local Git guard metadata, VCS config, reviews, evidence, runtime handoffs, and state.
 
-A consumer workspace with only YAAW-local mutation has `dirty_publishable = false`.
+A project workspace with only YAAW-local mutation has `dirty_publishable = false`.
 
 ## Included publication state
 
