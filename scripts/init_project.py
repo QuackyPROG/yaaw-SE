@@ -65,23 +65,30 @@ def _classify_shared_artifact(
 
 
 def _framework_mode(project_root: Path) -> bool:
-    # A vendored consumer may also execute a copied scripts/init_project.py from
-    # its repository root, so path equality alone is not sufficient.  The
-    # canonical framework repository is recognized by its remote identity; forks
-    # may opt in explicitly for framework development.
+    # Framework/consumer identity is based on repository reality, not a GitHub
+    # owner/name.  A framework checkout versions YAAW's own core, public skill,
+    # and bootstrap source.  A consumer may contain the same files locally, but
+    # they are intentionally untracked control-plane material.
     if os.environ.get("YAAW_FRAMEWORK_MODE") == "1":
         return True
     if project_root.resolve() != ROOT.resolve() or not (project_root / ".git").exists():
         return False
-    proc = subprocess.run(
-        ["git", "-C", str(project_root), "config", "--get", "remote.origin.url"],
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        check=False,
+    required_tracked = (
+        ".yaaw-core/registries/artifacts.json",
+        "skills/yaaw-orchestrator/SKILL.md",
+        "scripts/init_project.py",
     )
-    remote = proc.stdout.strip().lower().removesuffix(".git")
-    return remote.endswith("github.com/quackyprog/yaaw-se") or remote.endswith("quackyprog/yaaw-se")
+    for relative in required_tracked:
+        proc = subprocess.run(
+            ["git", "-C", str(project_root), "ls-files", "--error-unmatch", relative],
+            text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if proc.returncode != 0:
+            return False
+    return True
 
 
 def _write_json_if_missing(path: Path, value: dict, created: list[Path]) -> None:

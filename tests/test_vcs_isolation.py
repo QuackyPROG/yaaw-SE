@@ -157,13 +157,20 @@ class VcsIsolationTests(unittest.TestCase):
             self.assertTrue(after_app.dirty_publishable)
             self.assertNotEqual(after_app.publishable_worktree_digest, baseline.publishable_worktree_digest)
 
-    def test_branch_publication_allowlist_rejects_topic_refs(self):
+    def test_branch_publication_allowlist_rejects_every_topic_ref_mapping(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.make_consumer(root)
             sha = self.git(root, "rev-parse", "HEAD").stdout.strip()
-            with self.assertRaisesRegex(guard.VcsGuardError, guard.PUBLICATION_NOT_ALLOWED):
-                guard.pre_push(root, f"refs/heads/feature/auth {sha} refs/heads/feature/auth {guard.ZERO_SHA}\n")
+            forbidden_pairs = (
+                ("refs/heads/feature/auth", "refs/heads/feature/auth"),
+                ("refs/heads/feature/auth", "refs/heads/main"),
+                ("refs/heads/main", "refs/heads/feature/auth"),
+            )
+            for local_ref, remote_ref in forbidden_pairs:
+                with self.subTest(local_ref=local_ref, remote_ref=remote_ref):
+                    with self.assertRaisesRegex(guard.VcsGuardError, guard.PUBLICATION_NOT_ALLOWED):
+                        guard.pre_push(root, f"{local_ref} {sha} {remote_ref} {guard.ZERO_SHA}\n")
             # main -> main is structurally allowed when history is clean.
             guard.pre_push(root, f"refs/heads/main {sha} refs/heads/main {guard.ZERO_SHA}\n")
 
@@ -184,20 +191,41 @@ class VcsIsolationTests(unittest.TestCase):
             )
             self.assertTrue(sha)
 
-    def test_existing_hook_is_chained_not_destroyed(self):
+    def test_existing_hooks_are_chained_not_destroyed(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.make_repo(root)
             self.install_core(root)
-            hook = root / ".git/hooks/pre-commit"
-            hook.write_text("#!/bin/sh\nprintf ran > .existing-hook-ran\n", encoding="utf-8")
-            hook.chmod(0o755)
+            hooks = root / ".git/hooks"
+            (hooks / "pre-commit").write_text("#!/bin/sh\nprintf pre-commit > .existing-pre-commit\n", encoding="utf-8")
+            (hooks / "commit-msg").write_text("#!/bin/sh\nprintf commit-msg > .existing-commit-msg\n", encoding="utf-8")
+            (hooks / "pre-push").write_text("#!/bin/sh\ncat >/dev/null\nprintf pre-push > .existing-pre-push\n", encoding="utf-8")
+            for name in ("pre-commit", "commit-msg", "pre-push"):
+                (hooks / name).chmod(0o755)
+
             initialize_project(root)
-            self.assertTrue((root / ".git/hooks/pre-commit.yaaw-original").is_file())
+            for name in ("pre-commit", "commit-msg", "pre-push"):
+                self.assertTrue((hooks / f"{name}.yaaw-original").is_file(), name)
+
             (root / "app.txt").write_text("hook chain\n", encoding="utf-8")
             self.git(root, "add", "app.txt")
-            self.git(root, "commit", "-m", "fix: exercise existing hook")
-            self.assertTrue((root / ".existing-hook-ran").is_file())
+            self.git(root, "commit", "-m", "fix: exercise existing hooks")
+            self.assertTrue((root / ".existing-pre-commit").is_file())
+            self.assertTrue((root / ".existing-commit-msg").is_file())
+
+            sha = self.git(root, "rev-parse", "HEAD").stdout.strip()
+            wrapper = hooks / "pre-push"
+            proc = subprocess.run(
+                [str(wrapper), "origin", "unused"],
+                cwd=root,
+                input=f"refs/heads/main {sha} refs/heads/main {guard.ZERO_SHA}\n",
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertTrue((root / ".existing-pre-push").is_file())
 
     def test_custom_core_hookspath_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -278,6 +306,10 @@ class VcsIsolationTests(unittest.TestCase):
     def test_framework_repository_is_not_consumer_classified_without_marker(self):
         self.assertFalse(guard.consumer_mode_active(ROOT))
         self.assertEqual(guard.classify_path(ROOT, ".yaaw-core/vcs/guard.py"), "framework")
+
+    def test_framework_mode_uses_tracked_yaaw_source_not_remote_repository_name(self):
+        from scripts import init_project
+        self.assertTrue(init_project._framework_mode(ROOT))
 
 
 if __name__ == "__main__":
