@@ -23,3 +23,7 @@ Repaired reviewable implementation or `REPLAN_REQUIRED`, `PRECONDITION_UNSATISFI
 ## Repair checkpoints
 
 Repairs use the same checkpoint protocol as normal implementation: one narrow coherent fix, exact publishable paths, application-focused message, Orchestrator-created local commit, fresh verification, then fresh review. Never encode the review round or TASK/SPEC identity in the commit message.
+
+
+## Hardened repair evidence
+Repair keeps the same accepted contract. When Reviewer identifies a concrete defect, create a targeted failing signal when meaningful, persist it, repair, rerun final verification, and append new immutable evidence without overwriting prior records. If satisfying the finding requires changing the planned seam/spec/architecture, return `REPLAN_REQUIRED` instead of repairing around an invalid contract.

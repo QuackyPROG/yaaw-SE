@@ -150,5 +150,9 @@
   "planning.research": {
     "role": "planner",
     "workflow": ".yaaw-core/workflows/planning/research.md"
+  },
+  "implementation.diagnose-ticket": {
+    "role": "implementer",
+    "workflow": ".yaaw-core/workflows/implementation/diagnose-ticket.md"
   }
 }

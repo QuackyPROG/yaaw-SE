@@ -4,9 +4,52 @@
   "ticket": "TASK-000",
   "ticket_revision": 1,
   "spec_revision": 1,
+  "ticket_contract_version": 2,
   "kind": "implementation_verification",
-  "repository": {"identity_schema": "yaaw.repository-identity/v2", "head_commit": "COMMIT", "branch": "feature/local-only", "dirty_publishable": false, "publishable_worktree_digest": "sha256:DIGEST", "integration_branch": "main", "base_commit": "BASE"},
+  "repository": {
+    "identity_schema": "yaaw.repository-identity/v2",
+    "head_commit": "FINAL_COMMIT",
+    "branch": "feature/local-only",
+    "dirty_publishable": false,
+    "publishable_worktree_digest": "sha256:FINAL",
+    "integration_branch": "main",
+    "base_commit": "BASE"
+  },
   "workflow": "implementation.verify-ticket",
   "commands": [],
-  "checks": []
+  "checks": [],
+  "acceptance_ready": true,
+  "verification": {
+    "mode": "red_green",
+    "seams": [
+      {
+        "id": "SEAM-1",
+        "interface": "public observable interface",
+        "oracle": "accepted specification"
+      }
+    ],
+    "phases": [
+      {
+        "phase": "RED",
+        "command": "targeted test",
+        "expected": "fail",
+        "actual": "fail",
+        "signal": "required behavior absent/wrong"
+      },
+      {
+        "phase": "GREEN",
+        "command": "targeted test",
+        "expected": "pass",
+        "actual": "pass",
+        "signal": "target behavior correct"
+      },
+      {
+        "phase": "FINAL",
+        "command": "required suite",
+        "expected": "pass",
+        "actual": "pass",
+        "signal": "publication-clean required suite passes"
+      }
+    ]
+  }
 }
