@@ -30,6 +30,8 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
         source_current = ticket.get("source_current", True)
         implementation = ticket.get("implementation_present", False)
         verification = ticket.get("verification_present", False)
+        contract_version = ticket.get("contract_version", 1)
+        acceptance_ready = ticket.get("acceptance_ready_verification", False) if contract_version == 2 else verification
         fresh_review = ticket.get("fresh_review", False)
 
         if state == "PASS" and (not source_current or not fresh_review):
@@ -42,7 +44,7 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
             })
             continue
 
-        if state == "IN_PROGRESS" and implementation and verification and not fresh_review:
+        if state == "IN_PROGRESS" and implementation and acceptance_ready and not fresh_review:
             ticket["state"] = "REVIEW_REQUIRED"
             changes.append({
                 "ticket": ticket_id,
@@ -53,7 +55,7 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
             continue
 
         if state == "READY" and implementation:
-            next_state = "REVIEW_REQUIRED" if verification else "IN_PROGRESS"
+            next_state = "REVIEW_REQUIRED" if acceptance_ready else "IN_PROGRESS"
             ticket["state"] = next_state
             changes.append({
                 "ticket": ticket_id,
@@ -96,6 +98,13 @@ def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str
             continue
         if any(ticket["state"] == state for ticket in tickets.values()):
             return {"workflow": state_rule["workflow"], "terminal": None, "reconciliations": changes}
+
+    if reconciled.get("research_pending", False):
+        return {
+            "workflow": policy["planning_research_workflow"],
+            "terminal": None,
+            "reconciliations": changes,
+        }
 
     if (
         reconciled.get("planning_status", "missing") != "ready"

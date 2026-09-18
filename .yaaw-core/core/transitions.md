@@ -13,14 +13,14 @@ A role may detect/report a condition that belongs to a different semantic owner.
 | DRAFT | CANCELLED | Planner | current product/planning authority removes scope; human request may trigger |
 | READY | IN_PROGRESS | Implementer | ticket selected; source revisions still current |
 | READY | REPLAN_REQUIRED | Planner | source invalidation or contradictory evidence requires contract reconsideration |
-| IN_PROGRESS | REVIEW_REQUIRED | Implementer | implementation exists; required verification evidence recorded |
+| IN_PROGRESS | REVIEW_REQUIRED | Implementer | implementation exists; acceptance-ready final verification evidence recorded |
 | IN_PROGRESS | REPLAN_REQUIRED | Planner | material contract gap confirmed for replanning; another role may have reported the trigger |
 | IN_PROGRESS | BLOCKED | Implementer | required external evidence/permission unavailable during execution |
 | REVIEW_REQUIRED | PASS | Reviewer | fresh PASS review tied to current repository/ticket/spec revisions |
 | REVIEW_REQUIRED | REPAIR_REQUIRED | Reviewer | implementation defect; contract remains valid |
 | REVIEW_REQUIRED | REPLAN_REQUIRED | Reviewer | review establishes contract/architecture invalid or insufficient |
 | REVIEW_REQUIRED | BLOCKED | Reviewer | required review evidence unavailable |
-| REPAIR_REQUIRED | REVIEW_REQUIRED | Implementer | required repair applied and reverified |
+| REPAIR_REQUIRED | REVIEW_REQUIRED | Implementer | required repair applied and acceptance-ready final verification recorded |
 | REPAIR_REQUIRED | REPLAN_REQUIRED | Planner | repair evidence shows accepted contract must change; Implementer may report trigger |
 | REPLAN_REQUIRED | DRAFT | Planner | contract revised but not yet re-admitted |
 | REPLAN_REQUIRED | READY | Planner | revised contract passes readiness and dependencies |
