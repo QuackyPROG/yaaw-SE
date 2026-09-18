@@ -70,6 +70,7 @@ class FreshContextConformanceTest(unittest.TestCase):
 
     def test_fresh_reviewer_is_bound_to_repository_and_evidence(self):
         review, _ = parse_frontmatter(YAAW / "reviews" / "SPEC-001" / "TASK-001" / "R1.md")
+        evidence = json.loads((YAAW / "evidence" / "SPEC-001" / "TASK-001-V1.json").read_text())
         self.assertTrue(review["reviewed_head_commit"])
         self.assertEqual(review["repository_identity_schema"], "yaaw.repository-identity/v2")
         self.assertIsInstance(review["reviewed_dirty_publishable"], bool)

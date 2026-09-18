@@ -5,7 +5,10 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +25,7 @@ def _load_guard():
     if spec is None or spec.loader is None:
         raise InitializationError(f"Cannot load YAAW VCS guard from {GUARD_PATH}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 

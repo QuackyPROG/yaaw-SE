@@ -2,6 +2,7 @@ import importlib.util
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +16,7 @@ GUARD_PATH = CORE / "vcs" / "guard.py"
 _spec = importlib.util.spec_from_file_location("yaaw_vcs_guard_tests", GUARD_PATH)
 guard = importlib.util.module_from_spec(_spec)
 assert _spec and _spec.loader
+sys.modules[_spec.name] = guard
 _spec.loader.exec_module(guard)
 
 
