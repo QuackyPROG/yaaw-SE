@@ -20,3 +20,7 @@ Project memory is not recovery evidence. A remembered statement that work comple
 - If the last trustworthy boundary cannot be proven, return `BLOCKED` with exact missing proof.
 
 Every reconciliation uses a legal transition and records its reason/evidence in state provenance.
+
+## VCS-aware recovery
+
+Repository evidence is split by authority domain. Application/publication identity is evidence for implemented code; local YAAW artifacts are evidence for control-plane state. Recovery understands pending checkpoint intent, local commit presence, current branch position, integration status, publication status, and protected-path violations without turning Git mechanics into ticket states.
