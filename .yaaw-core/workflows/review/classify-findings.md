@@ -1,18 +1,18 @@
 # Classify findings
 
 ## Purpose
-Convert concrete review evidence into one authoritative acceptance classification.
+Convert concrete observations from all three review lenses into one acceptance classification.
 
 ## Inputs
-Primary current review observations from `review.inspect-change`, the exact current ticket/spec/product/decision/rule contract, required test/evidence results, repository identity, and any secondary verified historical leads permitted by the Reviewer context policy.
+Contract-lens, test-validity-lens, and engineering-quality-lens observations; exact current contract; evidence; and repository identity.
+
+## Finding contract
+Each finding uses `F-NNN` and records: `lens`, severity, exact contract/source, expected, actual, evidence, and bounded action.
 
 ## Classification
-- `PASS`: current contract satisfied with adequate current evidence.
-- `REPAIR`: implementation defect; ticket/spec remain valid.
-- `REPLAN`: ticket/spec/engineering contract is materially invalid or insufficient.
-- `BLOCKED`: required evidence is unavailable.
+- `PASS`: all required lenses support acceptance.
+- `REPAIR`: ticket/spec are valid but implementation or test evidence is wrong/incomplete (including concrete bug, missing required negative test, tautological test, or missing failure handling).
+- `REPLAN`: ticket/spec/seam/oracle/architecture contract is itself invalid or insufficient.
+- `BLOCKED`: acceptance cannot be determined because required evidence/access is unavailable.
 
-## Findings
-Assign durable `F-NNN` IDs and severity. Each finding records concrete evidence, expected behavior, actual behavior, and required repair/replan action.
-
-Do not choose `REPAIR` when satisfying the finding requires changing accepted product/architecture meaning. Learned memory is never sufficient evidence for any classification and can never establish `PASS`.
+Style preference or heuristic smell alone cannot force failure. Do not choose REPAIR when satisfying the finding requires changing accepted product/architecture meaning.

@@ -1,28 +1,24 @@
 # Review ticket
 
 ## Purpose
-Independently determine whether current implementation satisfies the current ticket contract.
+Independently determine whether current implementation satisfies the exact current contract with meaningful evidence and acceptable engineering quality.
 
 ## Inputs
-Exact handoff; exactly one ticket in `REVIEW_REQUIRED`; exact current ticket/spec/product/engineering-decision/rule revisions; immutable implementation evidence and prior review rounds listed by handoff; selected expertise; and actual repository state/diff for the admitted scope. Learned memory may be consulted only after the primary evidence review when the Reviewer `context_policy` permits it.
+Exact handoff; one ticket in `REVIEW_REQUIRED`; exact current ticket/spec/product/ENG/rule/RSH revisions; immutable implementation evidence and prior reviews; selected expertise; actual admitted repository diff/state. Learned memory is optional only after all three primary lenses.
 
 ## Preconditions
-Handoff names exactly one ticket in `REVIEW_REQUIRED` plus exact current source revisions and evidence.
+Handoff names exactly one current ticket plus exact source revisions, evidence, and final repository identity.
 
 ## Procedure
 1. Use a fresh review context when practical.
-2. Read only the exact workflow artifacts/evidence/prior reviews listed by handoff plus actual repository state for the admitted scope.
-3. Execute `review.inspect-change` under the same handoff without using project memory for the primary inspection.
-4. Check every acceptance criterion and required test/evidence.
-5. Inspect regressions, failure paths, security, UX/accessibility, migration, and compatibility when relevant.
-6. Only after steps 3-5, if historical context could materially improve inspection and the handoff context policy permits it, search learned project memory for recurring regressions, previous review findings, historical problem patterns, subsystem conventions, known failure modes, or rationale. Verify any material remembered claim against current authority/reality. Memory may explain or suggest an inspection lead but is never acceptance evidence and cannot manufacture `PASS`.
-7. Execute `review.classify-findings` under the same handoff.
-8. Execute `review.record-review` under the same handoff to write the next immutable canonical review path.
-9. Return the classification to Orchestrator; do not mutate ticket lifecycle or dispatch the next role.
-
-## Output
-Exactly one result: `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`.
+2. Execute `review.inspect-change` preflight against actual current repository state.
+3. Execute `review.inspect-contract`.
+4. Execute `review.inspect-test-validity`.
+5. Execute `review.inspect-engineering-quality`.
+6. Only now may optional learned project memory be consulted for verified historical leads; memory is never acceptance evidence.
+7. Execute `review.classify-findings`.
+8. Execute `review.record-review` to write the next immutable review round.
+9. Return exactly `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED` to Orchestrator; never mutate ticket lifecycle or dispatch a peer.
 
 ## Review immutability
-
-A PASS is valid only for the exact reviewed publishable application identity. Amend, rebase, squash, cherry-pick, merge repair, or any changed application HEAD requires new verification and review. Local YAAW control-plane mutation does not stale PASS.
+PASS binds to the exact reviewed publishable application identity. Any changed application HEAD requires fresh verification and review.

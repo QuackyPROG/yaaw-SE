@@ -154,5 +154,17 @@
   "implementation.diagnose-ticket": {
     "role": "implementer",
     "workflow": ".yaaw-core/workflows/implementation/diagnose-ticket.md"
+  },
+  "review.inspect-contract": {
+    "role": "reviewer",
+    "workflow": ".yaaw-core/workflows/review/inspect-contract.md"
+  },
+  "review.inspect-test-validity": {
+    "role": "reviewer",
+    "workflow": ".yaaw-core/workflows/review/inspect-test-validity.md"
+  },
+  "review.inspect-engineering-quality": {
+    "role": "reviewer",
+    "workflow": ".yaaw-core/workflows/review/inspect-engineering-quality.md"
   }
 }
