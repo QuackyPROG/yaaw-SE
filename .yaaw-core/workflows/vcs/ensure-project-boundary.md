@@ -1,8 +1,8 @@
-# Ensure consumer VCS boundary
+# Ensure project VCS boundary
 
 ## Purpose
 
-Activate and verify consumer-only VCS isolation before any YAAW-controlled application publication operation.
+Activate and verify project-only VCS isolation before any YAAW-controlled application publication operation.
 
 ## Inputs
 
@@ -14,7 +14,7 @@ Activate and verify consumer-only VCS isolation before any YAAW-controlled appli
 
 ## Process
 
-1. Require the consumer marker before enforcing consumer policy.
+1. Require the project marker before enforcing project policy.
 2. Classify canonical/shared paths and fail on ownership collisions.
 3. Verify `.gitignore` was not changed by YAAW.
 4. Ensure the managed `info/exclude` block is present through the Git common directory.

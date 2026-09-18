@@ -13,7 +13,7 @@ Turn Implementer-owned checkpoint intent into one validated local application co
 
 ## Process
 
-1. Require consumer boundary health.
+1. Require project boundary health.
 2. Validate the checkpoint base commit against current HEAD.
 3. Reject empty, duplicate, protected, missing, or non-admitted paths.
 4. Reject YAAW-internal commit-message patterns.
