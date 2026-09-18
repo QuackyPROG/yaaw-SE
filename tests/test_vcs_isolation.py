@@ -303,6 +303,45 @@ class VcsIsolationTests(unittest.TestCase):
             with self.assertRaisesRegex(guard.VcsGuardError, guard.LOCAL_HISTORY_CONTAMINATION):
                 guard.pre_push(root, f"refs/heads/main {sha} refs/heads/main {guard.ZERO_SHA}\n")
 
+    def test_invalid_vcs_config_fails_with_typed_policy_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_consumer(root)
+            config = json.loads((root / ".yaaw/vcs.json").read_text())
+            config["integration_branch"] = "staging"
+            (root / ".yaaw/vcs.json").write_text(json.dumps(config, indent=2) + "\n")
+            with self.assertRaisesRegex(guard.VcsGuardError, guard.VCS_POLICY_VIOLATION):
+                guard.load_vcs_config(root)
+
+    def test_non_git_consumer_fails_before_creating_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.install_core(root)
+            with self.assertRaisesRegex(InitializationError, "requires an initialized Git repository"):
+                initialize_project(root)
+            self.assertFalse((root / ".yaaw").exists())
+            self.assertFalse((root / "docs").exists())
+
+    def test_hook_health_detects_wrapper_tampering(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_consumer(root)
+            common = guard.git_common_dir(root)
+            wrapper = common / "hooks" / "pre-commit"
+            wrapper.write_text(wrapper.read_text() + "\n# modified after install\n", encoding="utf-8")
+            health = guard.hook_health(root)
+            self.assertFalse(health["pre-commit"])
+            with self.assertRaisesRegex(guard.VcsGuardError, guard.PUBLICATION_NOT_ALLOWED):
+                guard.publication_audit(root, "main")
+
+    def test_publication_audit_rejects_dirty_publishable_worktree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_consumer(root)
+            (root / "app.txt").write_text("uncommitted publishable change\n", encoding="utf-8")
+            with self.assertRaisesRegex(guard.VcsGuardError, "worktree must be clean"):
+                guard.publication_audit(root, "main")
+
     def test_framework_repository_is_not_consumer_classified_without_marker(self):
         self.assertFalse(guard.consumer_mode_active(ROOT))
         self.assertEqual(guard.classify_path(ROOT, ".yaaw-core/vcs/guard.py"), "framework")

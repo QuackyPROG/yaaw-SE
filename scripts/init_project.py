@@ -106,6 +106,13 @@ def initialize_project(project_root: Path) -> list[Path]:
     created: list[Path] = []
 
     framework_mode = _framework_mode(project_root)
+    guard = None
+    if not framework_mode:
+        guard = _load_guard()
+        if not guard.is_git_repository(project_root):
+            raise InitializationError(
+                "VCS_POLICY_VIOLATION: consumer VCS isolation requires an initialized Git repository"
+            )
 
     # Detect shared-path collisions before adopting canonical YAAW locations.
     artifact_ownership: dict[str, str] = {}
@@ -169,12 +176,7 @@ def initialize_project(project_root: Path) -> list[Path]:
     if framework_mode:
         return created
 
-    guard = _load_guard()
-    if not guard.is_git_repository(project_root):
-        raise InitializationError(
-            "VCS_POLICY_VIOLATION: consumer VCS isolation requires an initialized Git repository"
-        )
-
+    assert guard is not None
     manifest_path = yaaw / "install.json"
     manifest = {
         "schema": "yaaw.install/v1",
