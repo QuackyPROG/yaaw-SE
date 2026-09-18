@@ -57,3 +57,7 @@ Do not escalate merely because an agent expresses uncertainty. Escalate on faile
 ## Fast service
 
 Every configured controller/subagent tier explicitly sets `service_tier = "fast"`; do not rely on inheritance. This makes Fast intent auditable in each agent file and prevents a future per-agent override from silently dropping the requested service tier.
+
+
+## Hardening runtime composition
+No new semantic role or peer-spawn layer is introduced. `planning.research` is a fresh Planner dispatch selected by Orchestrator; `implementation.diagnose-ticket` and the three Reviewer lens workflows are same-role internal workflows. Codex `max_depth = 1` remains mandatory.

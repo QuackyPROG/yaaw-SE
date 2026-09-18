@@ -73,3 +73,7 @@ Read these contracts together:
 - `integrations/hindsight.md`
 
 Any workflow context may disappear after durable output without destroying project understanding. Optional learned memory can make the next disposable role faster, but removing/disablement/failure of the provider leaves YAAW correctness unchanged.
+
+
+## Engineering hardening invariants
+YAAW keeps the same public skills and authority roles. The hardened engineering loop adds Planner-owned primary-source research (`RSH-*`), planning destination/current frontier/Future Fog classification, tracer tickets, explicit test seams and independent oracles, verification modes (`red_green`, `bug_repro`, `characterization`, `verification_only`), acceptance-ready verification, and Reviewer contract/test-validity/engineering-quality lenses. Research returns through Orchestrator; roles never spawn peers; Reviewer remains acceptance authority; Orchestrator remains routing/lifecycle authority; `max_depth = 1` remains unchanged.

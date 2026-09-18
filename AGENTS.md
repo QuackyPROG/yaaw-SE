@@ -45,3 +45,7 @@ python -m unittest discover -s tests -v
 ## Project VCS isolation invariant
 
 The framework repository may version YAAW source normally. In an initialized project repository, `.yaaw-core/core/vcs-boundary.md` is the canonical publication contract: YAAW control state is local-authoritative and never application publication content; exact-path checkpoint staging is mandatory; topic/worktree refs stay local; only allowlisted integration branches may be published; and review binds to publishable application identity. No role may bypass local guards with `--no-verify` or force publication.
+
+
+## Engineering hardening invariants
+YAAW keeps the same public skills and authority roles. The hardened engineering loop adds Planner-owned primary-source research (`RSH-*`), planning destination/current frontier/Future Fog classification, tracer tickets, explicit test seams and independent oracles, verification modes (`red_green`, `bug_repro`, `characterization`, `verification_only`), acceptance-ready verification, and Reviewer contract/test-validity/engineering-quality lenses. Research returns through Orchestrator; roles never spawn peers; Reviewer remains acceptance authority; Orchestrator remains routing/lifecycle authority; `max_depth = 1` remains unchanged.

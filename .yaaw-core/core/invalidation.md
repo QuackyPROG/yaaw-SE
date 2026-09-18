@@ -29,3 +29,6 @@ A review becomes stale when the reviewed repository identity no longer matches t
 
 ## No silent cascade
 Every invalidated semantic artifact records why it became stale and which upstream revision/decision caused it. Every lifecycle invalidation records transition provenance. Never delete prior decisions/specs/reviews/evidence merely to make current state look clean.
+
+
+Resolved research becomes stale when its product/engineering/frontier basis changes. Stale research invalidates dependent Planner decisions/readiness through normal owner-coordinated invalidation; it never directly mutates product intent, ticket lifecycle, implementation, review, or project memory.

@@ -350,6 +350,17 @@ class VcsIsolationTests(unittest.TestCase):
         from scripts import init_project
         self.assertTrue(init_project._framework_mode(ROOT))
 
+    def test_engineering_research_remains_local_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_project(root)
+            rsh = root / "docs/engineering/research/RSH-001.md"
+            rsh.write_text("---\nschema: yaaw.engineering-research/v1\nid: RSH-001\nrevision: 1\nstatus: PENDING\nproduct_revision: 1\nengineering_revision: 1\nfrontier_id: FRONTIER-001\n---\n")
+            status = self.git(root, "status", "--porcelain", "--untracked-files=all").stdout
+            self.assertNotIn("docs/engineering/research", status)
+            install = json.loads((root / ".yaaw/install.json").read_text())
+            self.assertIn("docs/engineering/research/**", install["owned_paths"])
+
 
 if __name__ == "__main__":
     unittest.main()
