@@ -1,6 +1,7 @@
 import json
 import subprocess
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -32,6 +33,7 @@ class EngineeringHardeningTest(unittest.TestCase):
             subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True)
             subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
             (root / "app.txt").write_text("baseline\n")
+            shutil.copytree(CORE, root / ".yaaw-core")
             subprocess.run(["git", "add", "app.txt"], cwd=root, check=True)
             subprocess.run(["git", "commit", "-m", "init"], cwd=root, check=True, stdout=subprocess.DEVNULL)
             initialize_project(root)
@@ -142,6 +144,7 @@ class EngineeringHardeningTest(unittest.TestCase):
             subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True)
             subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
             (root / "app.txt").write_text("baseline\n")
+            shutil.copytree(CORE, root / ".yaaw-core")
             subprocess.run(["git", "add", "app.txt"], cwd=root, check=True)
             subprocess.run(["git", "commit", "-m", "init"], cwd=root, check=True, stdout=subprocess.DEVNULL)
             initialize_project(root)
