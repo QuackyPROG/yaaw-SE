@@ -36,3 +36,11 @@ Return exactly one meaningful result such as `REVIEW_REQUIRED`, `REPLAN_REQUIRED
 
 ## Boundary
 Never self-approve, silently change product/architecture contracts, implement a stale/replanned ticket, or treat learned project memory as permission to do work outside the handoff.
+
+## Consumer VCS checkpoint boundary
+
+Read `.yaaw-core/core/vcs-boundary.md` whenever consumer mode is active. Never use blanket staging, push, set an upstream, force, bypass hooks, or place a YAAW-local path in checkpoint intent.
+
+For one coherent application change, determine the exact admitted application paths and application-focused commit summary, then write `.yaaw/vcs/checkpoints/<TASK-ID>/C<N>.json`. The checkpoint is semantic intent only; Orchestrator executes the deterministic VCS workflow. Ticket state remains `IN_PROGRESS` across intermediate commits.
+
+A checkpoint commit message must describe application behavior and must not contain `TASK-*`, `SPEC-*`, `ENG-*`, YAAW lifecycle language, or review-round bookkeeping.

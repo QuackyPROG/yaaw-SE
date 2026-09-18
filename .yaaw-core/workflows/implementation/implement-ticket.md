@@ -25,3 +25,9 @@ If no exact admitted ticket exists, make no code/test/evidence changes and retur
 
 ## Output
 Reviewable implementation plus evidence, or `REPLAN_REQUIRED`, `PRECONDITION_UNSATISFIED`, or `BLOCKED`.
+
+## Commit checkpoint protocol
+
+While the ticket remains `IN_PROGRESS`, stop at coherent application-change boundaries. Persist a `yaaw.commit-checkpoint/v1` candidate with exact admitted publishable paths, semantic application commit message, and current base commit, then return `CHECKPOINT_READY` to Orchestrator. Do not stage or commit the candidate yourself.
+
+After Orchestrator records the local commit, continue from the new HEAD. Small means one independently understandable application behavior/change, not an arbitrary file/line limit. Prefer buildable intermediate commits and do not split coupled interface/caller changes unnaturally.
