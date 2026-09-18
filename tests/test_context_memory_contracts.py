@@ -32,9 +32,9 @@ class ContextMemoryContractsTest(unittest.TestCase):
         self.assertEqual(roles["reviewer"]["memory_phase"], "after-primary-evidence-review")
 
     def test_handoff_carries_provider_neutral_context_policy(self):
-        self.assertEqual(self.handoff_schema["$id"], "yaaw.handoff/v2")
+        self.assertEqual(self.handoff_schema["$id"], "yaaw.handoff/v3")
         self.assertIn("context_policy", self.handoff_schema["required"])
-        self.assertEqual(self.handoff_template["schema"], "yaaw.handoff/v2")
+        self.assertEqual(self.handoff_template["schema"], "yaaw.handoff/v3")
         self.assertTrue(
             set(self.handoff_schema["properties"]["context_policy"]["required"]).issubset(
                 self.handoff_template["context_policy"]
@@ -206,6 +206,14 @@ class ContextMemoryContractsTest(unittest.TestCase):
             text = skill.read_text().lower()
             self.assertNotIn("hindsight_", text, skill.as_posix())
             self.assertNotIn("integrations/hindsight", text, skill.as_posix())
+
+    def test_hindsight_cannot_change_consumer_vcs_policy(self):
+        memory = (CORE / "core/project-memory.md").read_text()
+        adapter = (CORE / "integrations/hindsight.md").read_text()
+        self.assertIn("cannot mark a path publishable", memory)
+        self.assertIn("expand the remote branch allowlist", memory)
+        self.assertIn("cannot alter VCS visibility", adapter)
+        self.assertIn("branch publication policy", adapter)
 
     def test_project_initialization_has_no_hindsight_dependency(self):
         init = (ROOT / "scripts/init_project.py").read_text().lower()

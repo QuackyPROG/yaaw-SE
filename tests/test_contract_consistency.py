@@ -104,8 +104,31 @@ class ContractConsistencyTests(unittest.TestCase):
             self.assertIn(".yaaw-core/registries/workflows.json", instructions, name)
             self.assertIn("handoff.workflow", instructions, name)
             self.assertIn(f".yaaw-core/roles/{role}.md", instructions, name)
+            self.assertIn(".yaaw-core/core/vcs-boundary.md", instructions, name)
         actual = {p.relative_to(ROOT / ".codex").as_posix() for p in (ROOT / ".codex/agents").glob("*.toml")}
         self.assertEqual(actual, registered)
+
+    def test_vcs_visibility_and_checkpoint_authority_are_machine_locked(self):
+        artifacts = json.loads((CORE / "registries/artifacts.json").read_text())["artifacts"]
+        for artifact_id, entry in artifacts.items():
+            if artifact_id == "application_files":
+                self.assertEqual(entry["vcs_visibility"], "publishable")
+            elif artifact_id == "repository":
+                self.assertEqual(entry["vcs_visibility"], "observed")
+            else:
+                self.assertEqual(entry["vcs_visibility"], "local_only", artifact_id)
+        self.assertEqual(
+            self.role_io["implementer"]["writes"],
+            ["application_files", "evidence", "commit_checkpoint"],
+        )
+        self.assertNotIn("commit_checkpoint", self.role_io["orchestrator"]["writes"])
+
+    def test_internal_vcs_workflows_are_orchestrator_owned_and_not_public_skills(self):
+        vcs_ids = {workflow_id for workflow_id in self.workflows if workflow_id.startswith("vcs.")}
+        self.assertEqual(len(vcs_ids), 6)
+        self.assertTrue(all(self.workflows[w]["role"] == "orchestrator" for w in vcs_ids))
+        skills = json.loads((CORE / "registries/skills.json").read_text())
+        self.assertFalse(any(entry["workflow_id"].startswith("vcs.") for entry in skills.values()))
 
     def test_ci_watches_codex_contracts(self):
         workflow = (ROOT / ".github/workflows/validate.yml").read_text()

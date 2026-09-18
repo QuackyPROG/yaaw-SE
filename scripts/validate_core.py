@@ -69,6 +69,7 @@ def main() -> int:
     role_io = load_json(CORE / "registries/role-io.json")["roles"]
     context_policy = load_json(CORE / "registries/context-policy.json")["roles"]
     transition_registry = load_json(CORE / "registries/transitions.json")
+    vcs_policy = load_json(CORE / "registries/vcs-policy.json")
     errors: list[str] = []
 
     # Canonical workflow contracts and exact registry/file closure.
@@ -154,10 +155,32 @@ def main() -> int:
         "observed_state": ".yaaw/runtime/observed-state.json",
         "handoff": ".yaaw/runtime/handoff.json",
         "state": ".yaaw/state.json",
+        "install_marker": ".yaaw/install.json",
+        "vcs_config": ".yaaw/vcs.json",
+        "commit_checkpoint": ".yaaw/vcs/checkpoints/<TASK-ID>/C<CHECKPOINT>.json",
+        "vcs_observed": ".yaaw/runtime/vcs-observed.json",
     }
     for artifact_id, pattern in expected_patterns.items():
         if artifacts.get(artifact_id, {}).get("pattern") != pattern:
             errors.append(f"artifact path drift: {artifact_id} != {pattern}")
+
+    for artifact_id, entry in artifacts.items():
+        visibility = entry.get("vcs_visibility")
+        if artifact_id == "application_files":
+            if visibility != "publishable":
+                errors.append("application_files must be publishable")
+        elif artifact_id == "repository":
+            if visibility != "observed":
+                errors.append("repository must remain observed-only")
+        elif visibility != "local_only":
+            errors.append(f"{artifact_id}: canonical YAAW artifact must be local_only")
+
+    if vcs_policy.get("schema") != "yaaw.vcs-policy/v1":
+        errors.append("vcs-policy registry schema id drifted")
+    if vcs_policy.get("staging", {}).get("strategy") != "explicit-paths-only":
+        errors.append("vcs-policy staging must remain explicit-paths-only")
+    if vcs_policy.get("publication", {}).get("default_allowed_branches") != ["main"]:
+        errors.append("vcs-policy default publication branch must remain main-only")
 
     if set(role_io) != ALL_ROLES:
         errors.append(f"role-io role coverage drift: {sorted(role_io)}")
@@ -188,8 +211,8 @@ def main() -> int:
 
     if role_io.get("prd", {}).get("writes") != ["product"]:
         errors.append("PRD writes must remain product-only")
-    if role_io.get("implementer", {}).get("writes") != ["application_files", "evidence"]:
-        errors.append("Implementer writes must remain application_files + evidence")
+    if role_io.get("implementer", {}).get("writes") != ["application_files", "evidence", "commit_checkpoint"]:
+        errors.append("Implementer writes must remain application_files + evidence + commit_checkpoint")
     if role_io.get("reviewer", {}).get("writes") != ["review"]:
         errors.append("Reviewer writes must remain review-only")
     if "state" not in role_io.get("orchestrator", {}).get("writes", []):
@@ -266,8 +289,18 @@ def main() -> int:
     outcomes = set(review.get("properties", {}).get("result", {}).get("enum", []))
     if outcomes != {"PASS", "REPAIR", "REPLAN", "BLOCKED"}:
         errors.append(f"review outcomes drifted: {sorted(outcomes)}")
-    if "evidence.schema.json" not in schemas or "observed-state.schema.json" not in schemas:
-        errors.append("missing evidence or observed-state schema")
+    required_vcs_schemas = {
+        "evidence.schema.json",
+        "observed-state.schema.json",
+        "repository-identity.schema.json",
+        "install.schema.json",
+        "vcs-config.schema.json",
+        "commit-checkpoint.schema.json",
+        "vcs-observed.schema.json",
+    }
+    missing_vcs_schemas = required_vcs_schemas - set(schemas)
+    if missing_vcs_schemas:
+        errors.append(f"missing VCS/repository schemas: {sorted(missing_vcs_schemas)}")
 
     # Templates: machine-readable metadata + required human-readable sections.
     template_meta = {
@@ -275,7 +308,7 @@ def main() -> int:
         "engineering.md": {"schema", "revision", "status", "product_revision", "current_frontier", "readiness"},
         "spec.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id", "decision_ids"},
         "ticket.md": {"schema", "id", "revision", "spec", "spec_revision", "product_revision", "engineering_revision", "status", "dependencies", "decision_ids", "expertise"},
-        "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"},
+        "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "repository_identity_schema", "reviewed_head_commit", "reviewed_branch", "reviewed_dirty_publishable", "reviewed_publishable_worktree_digest", "review_base_commit", "evidence"},
     }
     for filename, required in template_meta.items():
         path = CORE / "templates" / filename
@@ -387,6 +420,7 @@ def main() -> int:
             ".yaaw-core/registries/workflows.json",
             "handoff.workflow",
             f".yaaw-core/roles/{role}.md",
+            ".yaaw-core/core/vcs-boundary.md",
         )
         for fragment in required_fragments:
             if fragment not in instructions:
@@ -395,6 +429,36 @@ def main() -> int:
     actual_agent_files = {p.relative_to(ROOT / ".codex").as_posix() for p in (ROOT / ".codex/agents").glob("*.toml")}
     if actual_agent_files != registered_agent_files:
         errors.append(f"Codex agent file/registry mismatch: files={sorted(actual_agent_files)} registry={sorted(registered_agent_files)}")
+
+    # Consumer VCS implementation must be canonical, fail-closed, and avoid .gitignore mutation.
+    boundary = (CORE / "core/vcs-boundary.md").read_text(encoding="utf-8")
+    for phrase in (
+        "Consumer mode is active only",
+        "git add .",
+        "Topic/worktree branches are local only",
+        "Remote publication is allowed only",
+        "Hindsight or any learned-memory provider is advisory only",
+    ):
+        if phrase not in boundary:
+            errors.append(f"VCS boundary missing invariant: {phrase}")
+
+    init_text = (ROOT / "scripts/init_project.py").read_text(encoding="utf-8")
+    if ".gitignore" not in init_text or "before_gitignore" not in (CORE / "vcs/guard.py").read_text(encoding="utf-8"):
+        errors.append("bootstrap must explicitly prove .gitignore remains unchanged")
+    for forbidden in ("write_text(", "write_bytes("):
+        if f'".gitignore").{forbidden}' in init_text or f'".gitignore").{forbidden}' in (CORE / "vcs/guard.py").read_text(encoding="utf-8"):
+            errors.append("bootstrap contains a .gitignore mutation path")
+
+    for workflow_id in (
+        "vcs.ensure-consumer-boundary",
+        "vcs.create-checkpoint-commit",
+        "vcs.inspect-local-integration",
+        "vcs.integrate-local-work",
+        "vcs.validate-publication",
+        "vcs.publish-integration-branch",
+    ):
+        if workflows.get(workflow_id, {}).get("role") != "orchestrator":
+            errors.append(f"{workflow_id}: VCS operation must remain orchestrator-owned")
 
     # CI must run when Codex contracts change too.
     workflow_yaml = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")

@@ -30,7 +30,7 @@ class IORoutingContractsTest(unittest.TestCase):
 
     def test_role_io_covers_all_authority_roles(self):
         self.assertEqual(set(self.role_io), {"prd", "planner", "implementer", "reviewer", "orchestrator"})
-        self.assertEqual(self.role_io["implementer"]["writes"], ["application_files", "evidence"])
+        self.assertEqual(self.role_io["implementer"]["writes"], ["application_files", "evidence", "commit_checkpoint"])
         self.assertEqual(self.role_io["reviewer"]["writes"], ["review"])
         self.assertIn("ticket", self.role_io["planner"]["writes"])
         self.assertIn("state", self.role_io["orchestrator"]["writes"])

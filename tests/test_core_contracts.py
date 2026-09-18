@@ -89,9 +89,11 @@ class CoreContractsTest(unittest.TestCase):
 
     def test_review_and_evidence_bind_repository_identity(self):
         review = json.loads((CORE / "schemas/review.schema.json").read_text())
-        self.assertTrue({"reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"}.issubset(set(review["required"])))
+        self.assertTrue({"repository_identity_schema", "reviewed_head_commit", "reviewed_branch", "reviewed_dirty_publishable", "reviewed_publishable_worktree_digest", "review_base_commit", "evidence"}.issubset(set(review["required"])))
         evidence = json.loads((CORE / "schemas/evidence.schema.json").read_text())
         self.assertIn("repository", evidence["required"])
+        identity = json.loads((CORE / "schemas/repository-identity.schema.json").read_text())
+        self.assertEqual(identity["$id"], "yaaw.repository-identity/v2")
         self.assertEqual(set(review["properties"]["result"]["enum"]), {"PASS", "REPAIR", "REPLAN", "BLOCKED"})
 
     def test_transition_contract_forbids_self_acceptance_shortcuts(self):
