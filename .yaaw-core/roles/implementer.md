@@ -14,4 +14,4 @@ Own code changes for one bounded admitted ticket at a time.
 - If no READY ticket exists, return `PRECONDITION_UNSATISFIED:NO_READY_TICKET` to Orchestrator. Do not create a ticket or command Planner.
 
 ## Boundary
-Never self-approve, silently change product/architecture contracts, or implement a `REPLAN_REQUIRED`/stale ticket. Missing material decisions route back through Orchestrator. Changeability guidance improves the authorized change; it never expands ticket scope.
+Never self-approve, silently change product/architecture contracts, or implement a `REPLAN_REQUIRED`/stale ticket. Missing material decisions route back to Planner through Orchestrator. Changeability guidance improves the authorized change; it never expands ticket scope.
