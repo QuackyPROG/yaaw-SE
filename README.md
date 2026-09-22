@@ -1,77 +1,155 @@
-# YAAW-SE v2
+# YAAW-SE
 
-YAAW-SE v2 is an artifact-first autonomous software-engineering workflow.
+YAAW-SE is an artifact-first autonomous software-engineering workflow with durable project memory and thin coding-tool entrypoints.
 
 > **Agents are disposable. Artifacts are durable.**
 
-`skills/` is the public workflow API. `.yaaw-core/` is the canonical implementation. A consuming project stores durable memory under `.yaaw/`.
+## Install into any project
 
-## Public skills
-Core smart entrypoints:
-- `@yaaw-orchestrator` — reconstruct reality and continue/recover autonomously.
-- `@yaaw-prd` — create/continue product definition, challenge material product assumptions, and route clarification/revision work.
-- `@yaaw-planner` — continue repository-backed engineering planning, challenge material technical assumptions, and advance readiness/spec/ticket work.
-- `@yaaw-implement` — implement one admitted ticket.
-- `@yaaw-review` — independently review current work.
+```bash
+cd my-project
+npx yaaw-se install
+```
 
-Direct shortcuts using the same canonical workflows:
-- `@yaaw-revise-prd`
-- `@yaaw-refine-prd`
-- `@yaaw-planning-review`
-- `@yaaw-create-spec`
-- `@yaaw-create-ticket`
-- `@yaaw-create-tickets`
-- `@yaaw-repair`
+The installer defaults to the current directory, lets you select coding tools and public skill entrypoints, previews filesystem changes, and keeps every permanent write inside the selected project.
 
-## Core model
-Each execution composes **Role** (authority) + **Workflow** (process) + applicable **Shared Rules** (cross-cutting behavior) + relevant **Expertise** (specialist knowledge). Shared rules and expertise never grant authority or create lifecycle stages.
+Tier-1 integrations:
 
-PRD challenges whether the product meaning is coherent enough to plan. Planner first inspects repository reality, then challenges material technical assumptions and resolves only the current engineering frontier. Accepted conclusions are written to durable artifacts rather than retained as conversation transcripts.
+- Codex
+- Claude Code
+- Gemini CLI
+- Cline
 
-## Project memory
+Headless example:
+
+```bash
+npx yaaw-se install --directory . --tools codex,claude-code --skills standard --yes
+```
+
+Preview without writing:
+
+```bash
+npx yaaw-se install --tools codex --dry-run
+```
+
+## What gets installed
+
+A consuming project has exactly one canonical YAAW root:
+
 ```text
-.yaaw/
-├── product.md
-├── engineering.md
-├── state.json
-├── specs/
-├── tickets/
-├── reviews/
-├── evidence/
+.yaaw-core/
+├── core/            package-managed workflow contracts
+├── roles/
+├── workflows/
+├── expertise/
 ├── rules/
-└── runtime/
-    ├── observed-state.json
-    └── handoff.json
+├── registries/
+├── schemas/
+├── templates/
+├── project/         durable project-owned YAAW memory
+│   ├── product.md
+│   ├── engineering.md
+│   ├── state.json
+│   ├── specs/
+│   ├── tickets/
+│   ├── reviews/
+│   ├── evidence/
+│   └── rules/
+├── runtime/         replaceable coordination state
+└── install/         installer metadata
 ```
 
-State is a claim/routing cache. Product intent, engineering contracts, repository reality, and fresh review evidence have domain-specific authority. Runtime files are replaceable coordination caches and must be revalidated before use.
-
-## Initialize a target project
-From a YAAW checkout:
+Selected coding tools receive only adapters:
 
 ```text
-python scripts/init_project.py /path/to/project
+.agents/skills/yaaw-*/       Codex
+.claude/skills/yaaw-*/       Claude Code
+.gemini/skills/yaaw-*/       Gemini CLI
+.cline/skills/yaaw-*/        Cline
 ```
 
-Initialization is idempotent: it creates the durable `.yaaw/` layout and canonical starting artifacts without overwriting existing project memory.
+Codex, Claude Code, and Gemini receive a small managed block in their project instruction file. Cline receives the namespaced `.cline/rules/yaaw-se.md`. Provider folders never contain a second YAAW workflow engine.
 
-## Behavioral conformance
-YAAW keeps deterministic **validation infrastructure** for the lifecycle without turning that validator into a second runtime orchestrator.
+## Public YAAW entrypoints
 
-- `.yaaw-core/registries/routing-policy.json` — machine-readable routing precedence used by conformance tests.
-- `.yaaw-core/registries/transitions.json` — machine-readable legal ticket transition table.
-- `tests/fixtures/lifecycle_cases.json` — A–Q lifecycle/recovery scenarios.
-- `tests/fixtures/fresh_context_project/` — a complete durable artifact graph proving fresh-context reconstruction.
-- `tests/fixtures/assumption_challenge_fresh_context/` — a focused example proving challenged conclusions survive without the original question wording.
-- `scripts/behavior_oracle.py` — deterministic fixture oracle; validation-only, never semantic runtime authority.
+Smart entrypoints:
 
-Run:
+- `yaaw-orchestrator` — reconstruct project reality and choose the next valid workflow.
+- `yaaw-prd` — create/continue product definition.
+- `yaaw-planner` — continue repository-backed engineering planning.
+- `yaaw-implement` — implement one admitted ticket.
+- `yaaw-review` — independently review current work.
 
-```text
+Direct shortcuts:
+
+- `yaaw-revise-prd`
+- `yaaw-refine-prd`
+- `yaaw-planning-review`
+- `yaaw-create-spec`
+- `yaaw-create-ticket`
+- `yaaw-create-tickets`
+- `yaaw-repair`
+
+The Standard profile exposes all public entrypoints. Core exposes the five smart entrypoints. Custom changes only which shortcuts a coding tool discovers; it never removes canonical workflows from `.yaaw-core`.
+
+## Update, modify, repair
+
+Rerun the installer:
+
+```bash
+npx yaaw-se install
+```
+
+Existing installations offer Quick Update, Modify Installation, Repair Installation, or safe Uninstall.
+
+Headless examples:
+
+```bash
+npx yaaw-se install --action quick-update --yes
+npx yaaw-se install --action modify --tools codex,gemini-cli --skills core --yes
+npx yaaw-se doctor --repair
+```
+
+Managed files are hashed. Local modifications block headless replacement unless `--force-managed` is explicit. That flag applies only to installer-managed files/sections and never authorizes overwriting `.yaaw-core/project`.
+
+Safe uninstall removes package-managed framework files and adapters but preserves durable `.yaaw-core/project` data.
+
+## Diagnostics
+
+```bash
+npx yaaw-se status
+npx yaaw-se doctor
+```
+
+`status` reports installation health and managed-file drift. `doctor` performs read-only checks for manifest integrity, path ownership, missing/modified managed files, and the one-root path registry.
+
+## Architecture
+
+Each execution composes **Role** (authority) + **Workflow** (process) + applicable **Shared Rules** + relevant **Expertise**. Shared rules and expertise never grant authority.
+
+The npm installer owns distribution mechanics. The YAAW Orchestrator owns semantic lifecycle continuity. Neither is a second implementation of the other.
+
+See:
+
+- `docs/distribution.md`
+- `docs/integrations.md`
+- `docs/releasing.md`
+
+## Development
+
+Python still validates the canonical semantic engine during the migration period. The published npm package does not require Python.
+
+```bash
 python scripts/validate_core.py
 python scripts/validate_behavior.py
 python scripts/behavior_oracle.py
+python scripts/validate_distribution.py
 python -m unittest discover -s tests -v
+
+npm install
+npm test
+npm run build
+npm pack --dry-run
 ```
 
-See `.yaaw-core/README.md` for lifecycle, transition, invalidation, recovery, shared-rule, and authority contracts.
+The first npm release is intentionally published manually.
