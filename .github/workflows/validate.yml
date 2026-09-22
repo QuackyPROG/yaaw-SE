@@ -21,6 +21,10 @@ on:
       - 'AGENTS.md'
       - 'README.md'
 
+concurrency:
+  group: yaaw-validate-publish-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -113,7 +117,20 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 
+      - name: Confirm commit is current branch head
+        id: freshness
+        shell: bash
+        run: |
+          CURRENT_HEAD="$(git ls-remote origin refs/heads/yaaw-SEv2 | awk '{print $1}')"
+          if [ "${CURRENT_HEAD}" = "${GITHUB_SHA}" ]; then
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            echo "Skipping stale commit ${GITHUB_SHA}; current branch head is ${CURRENT_HEAD}."
+          fi
+
       - name: Create unique prerelease version
+        if: steps.freshness.outputs.publish == 'true'
         shell: bash
         run: |
           BASE_VERSION="$(node -p "require('./package.json').version")"
@@ -122,6 +139,7 @@ jobs:
           echo "Publishing yaaw-se@${PUBLISH_VERSION} to dist-tag next"
 
       - name: Publish to npm next
+        if: steps.freshness.outputs.publish == 'true'
         run: npm publish --tag next --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
