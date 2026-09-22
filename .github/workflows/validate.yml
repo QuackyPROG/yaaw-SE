@@ -43,6 +43,13 @@ jobs:
       - name: Install Node dependencies
         run: npm install --ignore-scripts
 
+      - name: Capture generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-package-lock
+          path: package-lock.json
+          retention-days: 1
+
       - name: Test npm installer
         run: npm test
 
