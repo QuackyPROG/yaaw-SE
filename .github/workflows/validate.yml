@@ -3,6 +3,8 @@ name: Validate YAAW Core and Distribution
 on:
   push:
     branches: [yaaw-SEv2]
+    tags:
+      - 'v*'
   pull_request:
     paths:
       - '.yaaw-core/**'
@@ -92,3 +94,75 @@ jobs:
         run: npm run test:cli
       - name: Smoke exact packed tarball
         run: node scripts/smoke_npm_tarball.mjs
+
+  publish-next:
+    name: Publish npm prerelease (next)
+    needs: [validate, node-floor, platform-smoke]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/yaaw-SEv2'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Create unique prerelease version
+        shell: bash
+        run: |
+          BASE_VERSION="$(node -p "require('./package.json').version")"
+          PUBLISH_VERSION="${BASE_VERSION}-dev.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
+          npm version "${PUBLISH_VERSION}" --no-git-tag-version
+          echo "Publishing yaaw-se@${PUBLISH_VERSION} to dist-tag next"
+
+      - name: Publish to npm next
+        run: npm publish --tag next --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-release:
+    name: Publish npm stable release (latest)
+    needs: [validate, node-floor, platform-smoke]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "${TAG_VERSION}" != "${PACKAGE_VERSION}" ]; then
+            echo "Tag v${TAG_VERSION} does not match package.json version ${PACKAGE_VERSION}." >&2
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Publish stable release
+        shell: bash
+        run: |
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if npm view "yaaw-se@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            echo "yaaw-se@${PACKAGE_VERSION} already exists; ensuring latest points to it."
+            npm dist-tag add "yaaw-se@${PACKAGE_VERSION}" latest
+          else
+            npm publish --tag latest --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
