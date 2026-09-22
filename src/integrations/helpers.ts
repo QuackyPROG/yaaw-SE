@@ -3,6 +3,8 @@ import { constants } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { join } from "node:path";
+import { renderAgentSkill } from "../renderers/agent-skill.js";
+import { renderBootstrapTemplate } from "../renderers/bootstrap-block.js";
 import type { CanonicalSkill, DetectionResult, IntegrationAdapter, IntegrationContext, IntegrationId, IntegrationVerification } from "./types.js";
 import type { InstallOperation } from "../installer/types.js";
 
@@ -50,7 +52,7 @@ export function makeAdapter(config: {
           type: "update-managed-section",
           path: join(ctx.projectRoot, config.bootstrapRel),
           sectionId: "yaaw-se",
-          content: await readFile(source, "utf8"),
+          content: await renderBootstrapTemplate(source),
           owner: `integration:${config.id}`
         }];
       }
@@ -62,12 +64,16 @@ export function makeAdapter(config: {
       }];
     },
     async planSkills(ctx: IntegrationContext, skills: CanonicalSkill[]): Promise<InstallOperation[]> {
-      return skills.map(skill => ({
-        type: "copy-managed-file",
-        source: skill.source,
-        path: join(ctx.projectRoot, config.skillsRel, skill.id, "SKILL.md"),
-        owner: `integration:${config.id}`
-      }));
+      const operations: InstallOperation[] = [];
+      for (const skill of skills) {
+        operations.push({
+          type: "write-managed-file",
+          path: join(ctx.projectRoot, config.skillsRel, skill.id, "SKILL.md"),
+          content: await renderAgentSkill(skill.source, skill.id),
+          owner: `integration:${config.id}`
+        });
+      }
+      return operations;
     },
     async verify(ctx: IntegrationContext, selectedSkillIds: string[]): Promise<IntegrationVerification> {
       const issues: string[] = [];

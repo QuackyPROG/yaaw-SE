@@ -11,6 +11,7 @@ import { verifyInstalledState } from "../../installer/verify.js";
 import { integrationIds } from "../../integrations/registry.js";
 import type { IntegrationId } from "../../integrations/types.js";
 import type { ConflictPolicy, InstallAction, InstallContext } from "../../installer/types.js";
+import semver from "semver";
 import { selectDirectory } from "../../tui/select-directory.js";
 import { selectTools } from "../../tui/select-tools.js";
 import { selectSkills } from "../../tui/select-skills.js";
@@ -86,6 +87,11 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     throw new Error("Legacy .yaaw project state detected. Automatic migration is intentionally not performed; move/validate it before installing the one-root distribution.");
   }
 
+  const allowedActions = new Set(["fresh","quick-update","modify","repair","uninstall"]);
+  if (options.action && !allowedActions.has(options.action)) {
+    throw new Error(`Unknown install action: ${options.action}`);
+  }
+
   let action: InstallAction;
   if (options.action) action = options.action;
   else if (existing.kind === "valid") {
@@ -101,13 +107,25 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   }
 
   if (action === "uninstall") {
-    const ctx: InstallContext = {
+    let conflictPolicy: ConflictPolicy = options.forceManaged ? "replace" : "fail";
+    const makeUninstallContext = async (): Promise<InstallContext> => ({
       packageVersion: await packageVersion(), payloadRoot, requestedDirectory: requested, projectRoot,
       mode: interactive ? "interactive" : "headless", selectedIntegrations: [], selectedSkills: [],
       action, dryRun: Boolean(options.dryRun), forceManaged: Boolean(options.forceManaged),
-      conflictPolicy: options.forceManaged ? "replace" : "fail"
-    };
-    const { plan } = await buildInstallPlan(ctx, existing.manifest);
+      conflictPolicy
+    });
+    let ctx = await makeUninstallContext();
+    let uninstallBuilt;
+    try {
+      uninstallBuilt = await buildInstallPlan(ctx, existing.manifest);
+    } catch (error) {
+      if (!(error instanceof ManagedConflictError) || !interactive) throw error;
+      conflictPolicy = await chooseConflictPolicy(error.conflicts);
+      if (conflictPolicy === "fail") throw error;
+      ctx = await makeUninstallContext();
+      uninstallBuilt = await buildInstallPlan(ctx, existing.manifest);
+    }
+    const { plan } = uninstallBuilt;
     if (options.dryRun) {
       const result = { ...plan, operations: plan.operations.map(({type,path,...rest}: any)=>({type,path: path ? path.replace(projectRoot, ".") : undefined, ...rest, content: undefined})) };
       console.log(options.json ? JSON.stringify(result,null,2) : formatPlan(plan));
@@ -143,6 +161,9 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     action, dryRun: Boolean(options.dryRun), forceManaged: Boolean(options.forceManaged), conflictPolicy
   });
   const version = await packageVersion();
+  if (existing.manifest && semver.valid(existing.manifest.yaawVersion) && semver.valid(version) && semver.gt(existing.manifest.yaawVersion, version)) {
+    throw new Error(`Refusing implicit downgrade from ${existing.manifest.yaawVersion} to ${version}.`);
+  }
   let ctx = makeContext();
   ctx.packageVersion = version;
 
