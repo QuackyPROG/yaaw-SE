@@ -55,6 +55,22 @@ function rel(projectRoot: string, path: string) {
   return relative(projectRoot, path).replaceAll("\\", "/");
 }
 
+function queueEmptyParentCleanup(operations: InstallOperation[], projectRoot: string, path: string, owner: string) {
+  const protectedDirs = new Set([
+    projectRoot,
+    join(projectRoot, ".yaaw-core"),
+    join(projectRoot, ".yaaw-core", "project"),
+    join(projectRoot, ".yaaw-core", "install")
+  ]);
+  let current = dirname(path);
+  while (current !== projectRoot && !protectedDirs.has(current)) {
+    if (!operations.some(op => op.type === "remove-empty-dir" && op.path === current)) {
+      operations.push({ type: "remove-empty-dir", path: current, owner });
+    }
+    current = dirname(current);
+  }
+}
+
 async function currentFileHash(path: string): Promise<string | null> {
   try { return sha256Bytes(await readFile(path)); } catch { return null; }
 }
@@ -164,6 +180,7 @@ async function protectRemoval(params: {
     operations.push({ type: "write-managed-file", path: backupPath, content: await readFile(path), owner: "installer:backup" });
   }
   operations.push({ type: "remove-managed-file", path, owner: record.owner });
+  queueEmptyParentCleanup(operations, ctx.projectRoot, path, record.owner);
 }
 
 async function protectSectionRemoval(params: {

@@ -80,6 +80,8 @@ describe("headless installation", () => {
     await runInstall({ directory: root, action: "uninstall", yes: true });
     expect(await readFile(product, "utf8")).toBe("preserve me\n");
     expect(await exists(join(root, ".agents/skills/yaaw-orchestrator/SKILL.md"))).toBe(false);
+    expect(await exists(join(root, ".agents"))).toBe(false);
+    expect(await exists(join(root, ".yaaw-core", "core"))).toBe(false);
     expect(await readFile(join(root, "AGENTS.md"), "utf8")).toBe("keep me\n");
     expect(await exists(join(root, ".yaaw-core/install/uninstalled.json"))).toBe(true);
 
@@ -90,6 +92,26 @@ describe("headless installation", () => {
   it("requires explicit tools for a fresh headless install", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-no-tools-"));
     await expect(runInstall({ directory: root, yes: true })).rejects.toThrow(/requires --tools/i);
+  });
+
+  it("dry-run performs no mutation", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-dry-"));
+    await runInstall({ directory: root, tools: "codex", yes: true, dryRun: true });
+    expect(await exists(join(root, ".yaaw-core"))).toBe(false);
+    expect(await exists(join(root, ".agents"))).toBe(false);
+  });
+
+  it("doctor reports a corrupt manifest without crashing or rewriting it", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-corrupt-"));
+    await mkdir(join(root, ".yaaw-core", "install"), { recursive: true });
+    const manifest = join(root, ".yaaw-core", "install", "manifest.json");
+    await writeFile(manifest, "{not-json\n");
+    const report: any = await runDoctor({ directory: root, json: true });
+    expect(report.installed).toBe(true);
+    expect(report.manifestValid).toBe(false);
+    expect(report.healthy).toBe(false);
+    expect(await readFile(manifest, "utf8")).toBe("{not-json\n");
+    await expect(runInstall({ directory: root, action: "repair", tools: "codex", yes: true })).rejects.toThrow(/Partial YAAW\/provider state|valid manifest/i);
   });
 
   it("blocks ambiguous legacy state instead of merging roots", async () => {

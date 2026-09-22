@@ -9,13 +9,32 @@ async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
 }
 
+const emptyCounts = () => ({ healthy: 0, modified: 0, missing: 0, localOverrides: 0 });
+
 export async function inspectStatus(projectRoot: string) {
-  const manifest = await readManifest(projectRoot);
+  let manifest;
+  try {
+    manifest = await readManifest(projectRoot);
+  } catch (error: any) {
+    return {
+      installed: true,
+      manifestValid: false,
+      projectRoot,
+      version: null,
+      integrations: [],
+      skills: [],
+      projectMemory: await exists(join(projectRoot, ".yaaw-core", "project")),
+      managedFiles: emptyCounts(),
+      managedSections: emptyCounts(),
+      healthy: false,
+      issues: [`invalid installation manifest: ${error.message}`]
+    };
+  }
   if (!manifest) {
-    return { installed: false, projectRoot, healthy: false, message: "No valid YAAW-SE installation manifest." };
+    return { installed: false, manifestValid: false, projectRoot, healthy: false, message: "No YAAW-SE installation manifest." };
   }
 
-  const managedFiles = { healthy: 0, modified: 0, missing: 0, localOverrides: 0 };
+  const managedFiles = emptyCounts();
   const issues: string[] = [];
   for (const [rel, record] of Object.entries(manifest.managedFiles)) {
     try {
@@ -36,7 +55,7 @@ export async function inspectStatus(projectRoot: string) {
     }
   }
 
-  const managedSections = { healthy: 0, modified: 0, missing: 0, localOverrides: 0 };
+  const managedSections = emptyCounts();
   for (const [rel, sections] of Object.entries(manifest.managedSections)) {
     try {
       const path = await assertRelativeManifestPath(projectRoot, rel);
@@ -62,6 +81,7 @@ export async function inspectStatus(projectRoot: string) {
 
   return {
     installed: true,
+    manifestValid: true,
     projectRoot,
     version: manifest.yaawVersion,
     integrations: Object.keys(manifest.integrations),
@@ -75,10 +95,21 @@ export async function inspectStatus(projectRoot: string) {
 }
 
 export async function doctor(projectRoot: string) {
-  const status = await inspectStatus(projectRoot);
-  if (!status.installed) return { ...status, checks: [] };
-  const checks: {name:string; ok:boolean; detail?:string}[] = [];
+  const status: any = await inspectStatus(projectRoot);
+  if (!status.installed) {
+    return { ...status, checks: [{ name: "manifest", ok: false, detail: status.message }] };
+  }
+  if (!status.manifestValid) {
+    return {
+      ...status,
+      checks: [
+        { name: "manifest", ok: false, detail: status.issues?.[0] ?? "invalid manifest" },
+        { name: "project-memory", ok: Boolean(status.projectMemory) }
+      ]
+    };
+  }
 
+  const checks: {name:string; ok:boolean; detail?:string}[] = [];
   checks.push({ name: "manifest", ok: true });
   checks.push({ name: "managed-files", ok: status.managedFiles.modified === 0 && status.managedFiles.missing === 0 });
   checks.push({ name: "managed-sections", ok: status.managedSections.modified === 0 && status.managedSections.missing === 0 });

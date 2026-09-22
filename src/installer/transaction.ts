@@ -66,6 +66,7 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
 
   const backups = new Map<string, Backup>();
   const createdDirs = new Set<string>();
+  const removedDirs = new Set<string>();
   const changed: string[] = [];
   let count = 0;
 
@@ -111,6 +112,16 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
         if (await exists(op.path)) {
           await mutateFile(op.path, async () => unlink(op.path));
         }
+      } else if (op.type === "remove-empty-dir") {
+        if (await exists(op.path)) {
+          try {
+            await rmdir(op.path);
+            removedDirs.add(op.path);
+            changed.push(relative(plan.projectRoot, op.path).replaceAll("\\", "/") + "/");
+          } catch (error: any) {
+            if (!["ENOTEMPTY", "ENOENT"].includes(error?.code)) throw error;
+          }
+        }
       }
 
       count += 1;
@@ -132,6 +143,10 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
         if (backup.existed) await atomicWrite(path, backup.bytes!);
         else await rm(path, { force: true });
       } catch {}
+    }
+    const removed = [...removedDirs].sort((a,b)=>a.length-b.length);
+    for (const dir of removed) {
+      try { await mkdir(dir, { recursive: true }); } catch {}
     }
     const dirs = [...createdDirs].sort((a,b)=>b.length-a.length);
     for (const dir of dirs) {

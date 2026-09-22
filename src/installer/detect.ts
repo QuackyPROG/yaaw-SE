@@ -14,7 +14,12 @@ export interface ExistingInstallation {
 
 export async function detectExistingInstallation(projectRoot: string): Promise<ExistingInstallation> {
   const signals: string[] = [];
-  const manifest = await readManifest(projectRoot);
+  let manifest = null;
+  try {
+    manifest = await readManifest(projectRoot);
+  } catch (error: any) {
+    signals.push(`invalid-manifest: ${error.message}`);
+  }
   if (manifest) return { kind: "valid", manifest, signals: ["manifest"] };
 
   if (await exists(join(projectRoot, ".yaaw-core/install/uninstalled.json"))) {
