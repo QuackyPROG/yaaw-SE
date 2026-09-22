@@ -1,25 +1,28 @@
-# Repository identity
+# Repository capability and identity
 
-Acceptance and recovery bind to **application/publication identity**, not the local YAAW control plane.
+Repository capability and repository identity are related but distinct.
 
-## Canonical identity
+## Capability
+Resolve the YAAW workspace root using `core/execution-context.md`, then inspect Git with root-anchored commands.
 
-Repository identity uses schema `yaaw.repository-identity/v2` and records `head_commit`, `branch`, `dirty_publishable`, `publishable_worktree_digest`, and optional integration/base identity.
+Record one status:
+- `READY`: Git repository exists and exact workspace identity is trustworthy.
+- `UNVERSIONED`: workspace is valid but not versioned.
+- `UNAVAILABLE`: Git or required host permission is unavailable.
+- `ROOT_MISMATCH`: workspace/repository ownership cannot be reconciled safely.
+- `IDENTITY_FAILED`: repository exists but identity calculation failed.
 
-The deterministic VCS path classifier decides whether a path participates. No reviewer, role, hook, bootstrap routine, or workflow keeps a competing path list.
+Also record `workspace_scope`, `git_root_relation` (`same`, `ancestor`, `none`, or `unknown`), and a safe diagnostic in `error` when status is not `READY`.
 
-## Excluded control-plane state
+## Identity
+When status is `READY`, record `head_commit`, `dirty`, and `worktree_digest`.
 
-Protected YAAW local artifacts do not change application identity: `.yaaw/**`, YAAW-owned planning/spec/rule documents, project-local YAAW control-plane files, local Git guard metadata, VCS config, reviews, evidence, runtime handoffs, and state.
+Recommended digest inputs, always executed with `git -C <WORKSPACE_ROOT>`:
+1. `git status --porcelain=v1 -z -- .`;
+2. `git diff --binary HEAD -- .`;
+3. `git diff --cached --binary HEAD -- .`;
+4. sorted untracked paths inside the workspace scope and their byte hashes where accessible.
 
-A project workspace with only YAAW-local mutation has `dirty_publishable = false`.
+When the Git top-level is an ancestor, unrelated sibling changes are outside the identity scope unless the active ticket explicitly includes them.
 
-## Included publication state
-
-The digest covers only publishable tracked/staged/untracked application changes relative to HEAD, including path identity and file content/diff sufficient to distinguish the exact state.
-
-## Review immutability
-
-Reviewer PASS belongs to the exact publishable base/head identity. Amend, rebase, squash, cherry-pick, merge conflict repair, or any application change that creates a different accepted head makes the prior review stale. Reverify and review again.
-
-Writing YAAW-local state does not invalidate review.
+If trustworthy identity cannot be produced for a workflow requiring `IDENTITY`, return a typed prerequisite/blocker rather than pretending the state is uniquely identified.

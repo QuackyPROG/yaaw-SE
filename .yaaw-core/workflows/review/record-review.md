@@ -1,21 +1,18 @@
 # Record review
 
 ## Purpose
-Persist immutable acceptance history without letting Reviewer write lifecycle state.
-
-## Inputs
-Exact handoff; final `PASS`/`REPAIR`/`REPLAN`/`BLOCKED` classification; concrete findings; exact ticket/spec revisions; reviewed repository identity; and exact immutable evidence references used by the review.
+Persist immutable acceptance history and update current ticket state legally.
 
 ## Procedure
-1. Create the next immutable `.yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md` from the review template at the exact handoff-authorized path.
-2. Frontmatter records ticket/review round, result, ticket/spec revisions, reviewed repository identity, and exact evidence references.
-3. Body records findings, verification, evidence interpretation, and next action rationale.
+1. Create the next immutable `.yaaw-core/project/reviews/TASK-NNN-RK.md` from the review template.
+2. Frontmatter records ticket/review round, result, ticket/spec revisions, reviewed repository identity, and evidence references.
+3. Body records findings, verification, evidence interpretation, and next action.
 4. Never overwrite prior review rounds.
-5. Return exactly one classification: `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`.
-6. Orchestrator validates the immutable review and persists the corresponding legal ticket transition/provenance.
+5. Apply exactly one legal transition:
+   - `PASS` -> ticket `PASS`;
+   - `REPAIR` -> `REPAIR_REQUIRED`;
+   - `REPLAN` -> `REPLAN_REQUIRED`;
+   - `BLOCKED` -> `BLOCKED`.
+6. Write state-transition provenance.
 
 A prior PASS remains historical but becomes stale when repository/source revisions invalidate its basis.
-
-## Publication basis
-
-Record `repository_identity_schema`, reviewed branch/head, publishable dirty flag/digest, and review base commit. The review artifact itself is local-only and writing it must not alter the reviewed application identity.

@@ -1,46 +1,18 @@
 # Orchestrator role
 
 ## Authority
-Own continuity, desired intent, observed-state reconstruction, evidence-backed reconciliation, lifecycle persistence, context-policy assignment, and next-workflow routing.
-
-## Reads
-- `registries/artifacts.json`, `registries/role-io.json`, `registries/context-policy.json`, routing/transitions/workflow/expertise registries.
-- `.yaaw/state.json`, `.yaaw/runtime/**`, durable artifact metadata, review/evidence metadata, and repository reality.
-- Semantic artifact bodies only as needed to resolve references/revisions; Orchestrator must not make their semantic decisions.
-
-## Writes
-- `.yaaw/runtime/intent.json`.
-- `.yaaw/runtime/observed-state.json`.
-- `.yaaw/runtime/handoff.json`.
-- `.yaaw/state.json`.
-- lifecycle metadata on `.yaaw/tickets/**` when a legal evidence-backed transition requires it.
-
-## Must not write
-Orchestrator must not author product decisions, architecture, implementation, acceptance, engineering/spec/ticket semantic content, application code/tests, implementation evidence, or reviewer findings.
-
-## Project-memory boundary
-Orchestrator must not query semantic project memory to decide routing, reconcile state, admit a ticket, or determine completion. It copies the target role's context policy from `registries/context-policy.json` into the handoff without interpreting remembered content. Memory is never state-transition evidence.
+Own continuity, workspace/repository reconstruction, evidence-backed reconciliation, invalidation coordination, and next-workflow routing.
 
 ## Boot sequence
-1. Ensure canonical project structure exists idempotently.
-2. Persist/refresh desired intent from the invoked public skill.
-3. Inspect durable claims and repository reality.
-4. Reconcile only evidence-backed inconsistencies.
-5. Determine exactly one next canonical workflow or terminal state.
-6. Build an exact handoff with `reads`, `writes`, `forbidden_writes`, revisions, repository identity, context policy, and expected results.
-7. Persist required lifecycle admission immediately before dispatch when applicable.
-8. Dispatch one role workflow in a fresh/self-contained task context when practical.
-9. Validate its durable output and typed result; persist the legal lifecycle transition.
-10. Return to inspection and repeat until human input, `BLOCKED`, or `COMPLETE`.
-
-## Team rule
-Roles never command each other. Every semantic role returns control here. Orchestrator is the team lead/traffic controller and the only router.
+1. Resolve the YAAW workspace root using `core/execution-context.md`; never assume provider CWD.
+2. Inspect repository capability with root-anchored commands and record `READY`, `UNVERSIONED`, `UNAVAILABLE`, `ROOT_MISMATCH`, or `IDENTITY_FAILED`.
+3. Inspect durable claims, active artifacts, runtime caches, and repository/application reality.
+4. Revalidate or discard stale runtime handoffs.
+5. Reconcile only evidence-backed inconsistencies using legal transitions.
+6. Determine exactly one next canonical workflow or terminal state.
+7. Populate a structured handoff from `role-io.json`, `execution-policy.json`, exact artifact references, and current repository basis.
+8. Dispatch that one workflow.
+9. After its durable output/typed result, return to inspection and repeat until a stop condition.
 
 ## Boundary
-Orchestrator is not a super-agent. It must not author product decisions, architecture, implementation, or acceptance.
-
-## Project VCS operational authority
-
-Read `.yaaw-core/core/vcs-boundary.md`. VCS is operational authority only: ensure project protection, coordinate local topic/worktree branches, execute exact-path checkpoint commits supplied by Implementer, perform local integration, run publication audits, and push only an allowed integration ref.
-
-Do not invent checkpoint semantics, code scope, architecture, acceptance, or commit meaning. Never publish a topic/worktree branch, set its upstream, bypass hooks, force history, or treat a rewritten reviewed commit as still accepted.
+The Orchestrator is a traffic controller, not a super-agent. It must not author product decisions, architecture, implementation, research conclusions, or acceptance. Roles never privately delegate to peers; every successor is chosen here.

@@ -1,43 +1,36 @@
 # Artifact model
 
-YAAW separates durable project knowledge from autonomous execution state. Canonical patterns are machine-readable in `registries/artifacts.json`; prose must not invent alternate locations.
+Canonical consumer workspace root is the directory containing the active YAAW installation. Canonical durable **project memory root** is `.yaaw-core/project/`.
 
-## Durable knowledge: `docs/`
+Ownership is separated under one YAAW root:
 
-- `docs/product/product.md`: human-approved product intent and unresolved product questions.
-- `docs/engineering/engineering.md`: durable engineering understanding, `ENG-*` decisions, assumptions, risks, frontier, fog, and readiness.
-- `docs/engineering/decisions/ENG-*.md`: expanded durable engineering decisions.
-- `docs/specs/<SPEC-ID>.md`: coherent accepted engineering contracts referencing product/decision revisions.
-- `docs/rules/**`: project-specific reusable invariants promoted from real evidence.
+- `.yaaw-core/core/`, `roles/`, `workflows/`, `expertise/`, `rules/`, `registries/`, `schemas/`, and `templates/`: package-managed framework content.
+- `.yaaw-core/project/`: durable project-owned semantic memory.
+- `.yaaw-core/runtime/`: replaceable coordination state.
+- `.yaaw-core/install/`: installer metadata only.
 
-## Workflow state: `.yaaw/`
+Durable project artifacts:
 
-- `.yaaw/tickets/<SPEC-ID>/<TASK-ID>.md`: bounded implementation contracts created from accepted specs.
-- `.yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json`: immutable machine-readable verification evidence tied to repository identity.
-- `.yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md`: immutable review rounds tied to exact source and repository revisions.
-- `.yaaw/runtime/intent.json`: current public-skill desired intent while Orchestrator resolves prerequisites.
-- `.yaaw/runtime/observed-state.json`: replaceable orchestration snapshot.
-- `.yaaw/runtime/handoff.json`: exact one-dispatch role communication contract, including the role's context policy.
-- `.yaaw/state.json`: reconstructable routing cache and last transition provenance.
+- `product.md`: human-approved product intent and unresolved product questions.
+- `engineering.md`: durable engineering understanding, `ENG-*` decisions, assumptions, risks, frontier, future fog, and readiness.
+- `research/RSH-*.md`: bounded external engineering research owned by Planner; research facts are not engineering decisions until promoted through normal planning.
+- `specs/SPEC-*.md`: coherent engineering contracts referencing product/decision revisions.
+- `tickets/TASK-*.md`: bounded implementation contracts.
+- `reviews/TASK-*-R*.md`: immutable review rounds tied to exact source and repository revisions.
+- `evidence/*.json`: machine-readable verification evidence tied to repository identity.
+- `rules/`: project-specific reusable invariants promoted from real evidence.
+- `state.json`: reconstructable routing cache and last transition provenance.
 
-Application source/tests remain in their native repository locations; the active ticket and handoff delimit which paths an Implementer may change.
+Replaceable runtime artifacts:
 
-## Derived project memory
+- `.yaaw-core/runtime/observed-state.json`: observed orchestration snapshot including repository capability.
+- `.yaaw-core/runtime/handoff.json`: exact dispatch contract.
+- `.yaaw-core/runtime/intent.json`: optional desired-outcome cache used while prerequisites are resolved.
 
-An optional external/local project-memory provider may retain git rationale, past sessions, architecture observations, conventions, initiatives, and other historical context. That memory is not a canonical YAAW artifact root and has no semantic or lifecycle ownership. It is an advisory cache governed by `core/project-memory.md`; deleting or disabling it must not make the artifact graph unreconstructable.
+Installer metadata:
 
-Markdown artifacts use YAML frontmatter for machine-readable identity/revision/status and a human-readable body for durable reasoning. Schemas validate metadata; core validation rules define required Markdown sections.
+- `.yaaw-core/install/manifest.json`: package/integration ownership and version state. It is never semantic project truth.
 
-Folder ownership is normative in `core/folder-ownership.md`; read/write behavior is normative in `core/io-contract.md`.
+Markdown artifacts use YAML frontmatter for machine-readable identity/revision/status and a human-readable body for durable reasoning. Machine-readable ownership patterns live in `registries/artifacts.json`.
 
-Conversation may be retained by an optional project-memory provider, but conversation is never an artifact of record and never the only location of an accepted decision.
-
-## Project publication dimension
-
-Durable does not mean Git-tracked. In project mode, durable YAAW project knowledge is local contractual state and is intentionally excluded from application publication history. Application documentation and YAAW planning documentation may both be Markdown; classification comes from the artifact registry plus installation ownership, not file extension or a generic `docs/**` rule.
-
-A fresh model/session on the same initialized workspace can reconstruct the project from local artifacts. A fresh clone does not automatically contain that local YAAW state; learned memory is not promoted to authority to compensate.
-
-
-## Engineering research artifacts
-`docs/engineering/research/RSH-*.md` is durable Planner-owned semantic evidence. It is separate from project memory, runtime handoff, implementation evidence, and product authority. Other roles may read an RSH only when the exact current handoff/spec/ticket references it; only Planner authors its meaning.
+Conversation is never an artifact of record. Package update logic must never treat `.yaaw-core/project/` as replaceable framework content.

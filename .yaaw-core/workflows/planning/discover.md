@@ -1,23 +1,21 @@
 # Planning discovery
 
 ## Purpose
-Establish repository-backed engineering facts before asking technical questions, while avoiding repeated broad rediscovery of knowledge the project already accumulated.
+Establish workspace/repository-backed engineering facts before asking technical questions or performing vendor-specific research.
 
 ## Inputs
-Current product revision, existing engineering artifact, project rules, relevant specs/tickets, repository, exact handoff, and optional project memory according to `context_policy`.
+Current product revision, existing engineering artifact, project rules, observed repository capability, relevant specs/tickets, repository/application files when available, and `.yaaw-core/rules/assumption-challenge.md`.
 
 ## Procedure
-1. Read the exact current product/engineering references and identify the current frontier/context question.
-2. When memory is enabled, search curated project knowledge first for the relevant components, conventions, historical decisions, prior initiatives, and known traps. Read a page or use deep history only if the focused search is insufficient and policy allows it.
-3. Treat retrieved memory as historical leads, not current facts. Verify any claim that will influence planning against current repository/application reality or current canonical artifacts.
-4. Inspect targeted repository structure, language/framework/tooling, entry points, interfaces/data boundaries, tests, deployment/migration constraints, and implementation areas relevant to the frontier.
-5. Expand repository exploration beyond those targets only when unresolved material gaps remain; do not read every file merely to rebuild a component map already available in memory.
-6. Distinguish current observed facts, current authoritative decisions, assumptions, and historical remembered context.
-7. Identify product requirements that interact with existing system constraints; do not ask engineering questions yet.
+- resolve workspace/repository context through `core/execution-context.md`;
+- when repository status is `READY`, inspect with root-anchored, workspace-scoped commands;
+- when status is `UNVERSIONED`, inspect filesystem/application reality without inventing Git history and record that limitation explicitly;
+- inspect structure, language/framework/tooling, existing interfaces/data boundaries, tests, deployment/migration constraints, and relevant implementation areas;
+- distinguish observed facts from assumptions;
+- identify product requirements that interact with existing system constraints;
+- apply the assumption-challenge rule to identify contradictions and challenge candidates;
+- do not ask the user anything yet;
+- do not perform vendor/framework web research yet; admission belongs to `planning.decision-frontier`.
 
 ## Output
-Repository/system observations with evidence references, plus any useful historical leads clearly separated from verified current facts, for `planning.write-understanding`.
-
-
-## Evidence separation
-Reported claim ≠ verified repository fact. Distinguish what product says, what repository proves, what project memory suggests, what external documentation says, and what Planner is assuming. For bug-like claims, record whether current repository reality verifies the claim; never invent a reproduction result.
+Repository/system observations, assumptions, contradictions/constraints, challenge candidates, capability limitations, and evidence references for `planning.write-understanding`.

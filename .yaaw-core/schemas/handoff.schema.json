@@ -1,34 +1,38 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "yaaw.handoff/v3",
+  "$id": "yaaw.handoff/v2",
   "type": "object",
-  "required": ["schema", "role", "workflow", "desired_intent", "active_artifact", "reads", "writes", "forbidden_writes", "references", "revisions", "expertise", "context_policy", "expected_results", "repository", "transition_sequence"],
+  "required": ["schema", "role", "workflow", "desired_intent", "active_artifact", "references", "reads", "writes", "forbidden_writes", "revisions", "expertise", "host_expertise", "expected_output", "result_vocabulary", "repository_requirement", "repository", "transition_sequence"],
   "properties": {
-    "schema": {"const": "yaaw.handoff/v3"},
+    "schema": {"const": "yaaw.handoff/v2"},
     "role": {"enum": ["prd", "planner", "implementer", "reviewer", "orchestrator"]},
     "workflow": {"type": "string", "minLength": 1},
-    "desired_intent": {"enum": ["AUTO", "PRODUCT", "PRODUCT_REVISE", "PRODUCT_REFINE", "PLANNING", "PLANNING_REVIEW", "SPEC", "TICKETS", "IMPLEMENTATION", "REPAIR", "REVIEW"]},
+    "desired_intent": {"type": ["string", "null"]},
     "active_artifact": {"type": ["string", "null"]},
-    "reads": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "writes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "forbidden_writes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "references": {"type": "array", "items": {"type": "string"}},
+    "reads": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "writes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "forbidden_writes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
     "revisions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
-    "expertise": {"type": "array", "items": {"type": "string"}},
-    "context_policy": {
+    "expertise": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "host_expertise": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "expected_output": {"type": "string", "minLength": 1},
+    "result_vocabulary": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+    "repository_requirement": {"enum": ["NONE", "INSPECT", "IDENTITY"]},
+    "repository": {
       "type": "object",
-      "required": ["strategy", "memory_mode", "memory_phase", "memory_target_tokens", "deep_history_allowed"],
+      "required": ["status", "workspace_scope", "git_root_relation", "head_commit", "dirty", "worktree_digest", "error"],
       "properties": {
-        "strategy": {"const": "minimum-necessary"},
-        "memory_mode": {"enum": ["disabled", "light", "standard", "secondary"]},
-        "memory_phase": {"enum": ["never", "before-reasking", "before-broad-discovery", "after-primary-evidence-review"]},
-        "memory_target_tokens": {"type": "integer", "minimum": 0, "maximum": 8192},
-        "deep_history_allowed": {"type": "boolean"}
+        "status": {"enum": ["READY", "UNVERSIONED", "UNAVAILABLE", "ROOT_MISMATCH", "IDENTITY_FAILED"]},
+        "workspace_scope": {"type": "string", "minLength": 1},
+        "git_root_relation": {"enum": ["same", "ancestor", "none", "unknown"]},
+        "head_commit": {"type": ["string", "null"]},
+        "dirty": {"type": ["boolean", "null"]},
+        "worktree_digest": {"type": ["string", "null"]},
+        "error": {"type": ["string", "null"]}
       },
       "additionalProperties": false
     },
-    "expected_results": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "repository": {"$ref": "repository-identity.schema.json"},
     "transition_sequence": {"type": "integer", "minimum": 0}
   },
   "additionalProperties": false

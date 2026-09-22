@@ -1,23 +1,22 @@
 # Engineering question round
 
 ## Purpose
-Resolve material engineering decisions at the current frontier without forcing fake precision into future fog or re-asking questions the project already answered.
+Resolve material engineering decisions at the current frontier without forcing fake precision into future fog.
 
 ## Inputs
-Current product/engineering revisions, verified repository observations, current decision frontier, and optional historical context already retrieved under the Planner context policy.
+Current product/engineering revisions, repository observations/evidence relevant to the current frontier, `.yaaw-core/rules/assumption-challenge.md`, and `.yaaw-core/rules/question-format.md`.
 
 ## Procedure
-1. Before asking, check current `ENG-*` decisions and, when memory is enabled, search relevant project memory for prior discussions/decisions that could make a question redundant or sharpen the alternatives.
-2. A remembered answer that is not present in current authoritative engineering artifacts is a historical lead, not a settled decision. Verify/reconfirm it through current evidence or human authority as appropriate.
-3. Ask at most 10 engineering questions answerable now.
-4. Use A/B/C plus recommendation/reason when useful; accept free-form alternatives.
-5. Cover architecture, data, interfaces, failures, security, UX constraints, migration, observability, or testing only when material.
-6. Do not ask the human to decide routine reversible implementation details the Planner owns.
-7. Do not reopen settled `ENG-*` decisions without new evidence or explicit request.
+1. Load only the current decision frontier plus the accepted product/engineering revisions and evidence needed to reason about it.
+2. Apply the assumption-challenge rule to detect contradictions, unsupported engineering assumptions, premature architecture, and material scenario/failure/data/security/migration/testing/operability gaps.
+3. Eliminate questions answerable from repository facts.
+4. Eliminate routine reversible implementation decisions the Planner owns.
+5. Eliminate questions whose prerequisites are unresolved or that belong in future fog.
+6. If a question is actually a missing product decision, return it to PRD/human authority rather than inventing product intent.
+7. Do not reopen settled `ENG-*` decisions without new evidence, contradiction, changed upstream intent, or explicit request.
+8. Ask only currently answerable material engineering questions; prefer fewer high-leverage questions over a full batch.
+9. Format at most 10 using `question-format.md`; include recommendation plus a short reason when analysis supports one and accept free-form alternatives.
+10. Stop for human input.
 
 ## Output
-Question round awaiting human answers, with duplicate historical questions avoided where possible.
-
-
-## Question discipline
-Ask humans only for product authority or materially consequential tradeoffs. Repository facts must be inspected; external facts that authoritative sources can answer must become RSH research. Use concrete scenarios to stress ambiguous domain language. Do not create a separate domain-modeling authority.
+A bounded current-frontier question round awaiting human answers.

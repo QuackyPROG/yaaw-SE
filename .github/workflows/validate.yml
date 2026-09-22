@@ -1,33 +1,186 @@
-name: Validate YAAW Core
+name: Validate YAAW Core and Distribution
 
 on:
   push:
-    branches: [main, yaaw-SEv2]
+    branches: [yaaw-SEv2]
+    tags:
+      - 'v*'
   pull_request:
     paths:
       - '.yaaw-core/**'
-      - '.codex/**'
       - 'skills/**'
       - 'scripts/**'
+      - 'src/**'
+      - 'installer/**'
       - 'tests/**'
+      - 'docs/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'vitest.config.ts'
       - 'AGENTS.md'
       - 'README.md'
-      - 'WORKFLOW.md'
-      - '.github/workflows/validate.yml'
+
+concurrency:
+  group: yaaw-validate-publish-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Validate contracts, manifests, schemas, and templates
-        run: python scripts/validate_core.py
-      - name: Validate lifecycle behavior
-        run: python scripts/validate_behavior.py
-      - name: Run lifecycle fixture oracle
-        run: python scripts/behavior_oracle.py
-      - name: Run contract and behavioral tests
-        run: python -m unittest discover -s tests -v
+
+      - name: Validate semantic core
+        run: |
+          python scripts/validate_core.py
+          python scripts/validate_behavior.py
+          python scripts/behavior_oracle.py
+          python scripts/validate_distribution.py
+          python -m unittest discover -s tests -v
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Node dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Test npm installer
+        run: npm test
+
+      - name: Build npm payload
+        run: npm run build
+
+      - name: Inspect package contents
+        run: npm pack --dry-run
+
+      - name: Smoke exact packed tarball
+        run: node scripts/smoke_npm_tarball.mjs
+
+      - name: Smoke tarball-to-tarball update
+        run: node scripts/smoke_npm_update.mjs
+
+  node-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.12.0'
+      - name: Install Node dependencies
+        run: npm ci --ignore-scripts
+      - name: Build at minimum supported Node version
+        run: npm run build
+      - name: Smoke exact package at minimum supported Node version
+        run: node scripts/smoke_npm_tarball.mjs
+
+  platform-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Node dependencies
+        run: npm ci --ignore-scripts
+      - name: Build npm package
+        run: npm run build
+      - name: Run installer unit/integration tests
+        run: npm run test:cli
+      - name: Smoke exact packed tarball
+        run: node scripts/smoke_npm_tarball.mjs
+
+  publish-next:
+    name: Publish npm prerelease (next)
+    needs: [validate, node-floor, platform-smoke]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/yaaw-SEv2'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Confirm commit is current branch head
+        id: freshness
+        shell: bash
+        run: |
+          CURRENT_HEAD="$(git ls-remote origin refs/heads/yaaw-SEv2 | awk '{print $1}')"
+          if [ "${CURRENT_HEAD}" = "${GITHUB_SHA}" ]; then
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            echo "Skipping stale commit ${GITHUB_SHA}; current branch head is ${CURRENT_HEAD}."
+          fi
+
+      - name: Create unique prerelease version
+        if: steps.freshness.outputs.publish == 'true'
+        shell: bash
+        run: |
+          BASE_VERSION="$(node -p "require('./package.json').version")"
+          PUBLISH_VERSION="${BASE_VERSION}-dev.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
+          npm version "${PUBLISH_VERSION}" --no-git-tag-version
+          echo "Publishing yaaw-se@${PUBLISH_VERSION} to dist-tag next"
+
+      - name: Publish to npm next
+        if: steps.freshness.outputs.publish == 'true'
+        run: npm publish --tag next --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-release:
+    name: Publish npm stable release (latest)
+    needs: [validate, node-floor, platform-smoke]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "${TAG_VERSION}" != "${PACKAGE_VERSION}" ]; then
+            echo "Tag v${TAG_VERSION} does not match package.json version ${PACKAGE_VERSION}." >&2
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Publish stable release
+        shell: bash
+        run: |
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if npm view "yaaw-se@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            echo "yaaw-se@${PACKAGE_VERSION} already exists; ensuring latest points to it."
+            npm dist-tag add "yaaw-se@${PACKAGE_VERSION}" latest
+          else
+            npm publish --tag latest --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

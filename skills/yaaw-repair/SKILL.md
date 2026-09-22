@@ -1,11 +1,10 @@
 ---
 name: yaaw-repair
-description: Request repair through Orchestrator without bypassing ticket state, review findings, or upstream contract validity.
+description: Repair a YAAW ticket in REPAIR_REQUIRED state while preserving its accepted product and engineering contract.
 ---
 # YAAW Repair
-ROLE: `orchestrator`
-WORKFLOW: `orchestration.route`
-INTENT: `REPAIR`
+ROLE: `implementer`
+WORKFLOW: `implementation.repair-ticket`
 
 ## Execute
-Enter Orchestrator with repair intent; repair runs only for a valid REPAIR_REQUIRED ticket and exact latest review findings.
+Load `.yaaw-core/roles/implementer.md`, resolve `implementation.repair-ticket` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

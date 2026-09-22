@@ -1,6 +1,6 @@
 # State model
 
-Canonical machine-readable project state is `.yaaw/state.json` using `yaaw.project-state/v1`.
+Canonical machine-readable project state is `.yaaw-core/project/state.json` using `yaaw.project-state/v1`.
 
 State is a routing cache and claim ledger. It is never trusted blindly over stronger domain evidence.
 
@@ -21,6 +21,6 @@ Every mutation increments `transition_sequence` and writes `last_transition` wit
 
 `BLOCKED` state records a blocker summary and exact missing evidence/decision.
 
-`.yaaw/runtime/observed-state.json` and `.yaaw/runtime/handoff.json` are replaceable caches used to survive interruption inside orchestration. Their bases must be revalidated before use.
+`.yaaw-core/runtime/observed-state.json` and `.yaaw-core/runtime/handoff.json` are replaceable caches used to survive interruption inside orchestration. Their bases must be revalidated before use.
 
 Legal transitions are defined in `core/transitions.md`.

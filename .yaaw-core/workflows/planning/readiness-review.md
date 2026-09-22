@@ -1,31 +1,33 @@
 # Planning readiness review
 
 ## Purpose
-Use a fresh Planner review to decide whether the current frontier is implementable and verifiable without invention.
+Use a fresh planning-review context to decide whether the next bounded frontier is implementable without invention.
 
 ## Inputs
-Exact current product/engineering revisions, target frontier ID, all current-frontier RSH/ENG references, repository evidence, relevant rules/spec context, and selected expertise.
+Current product/engineering revisions, target frontier ID, relevant repository evidence/capability, all research artifacts referenced as blocking by the frontier, current project rules, and `.yaaw-core/rules/assumption-challenge.md`.
 
-## Readiness questions
-A PASS requires affirmative evidence that:
-- a fresh Implementer can execute without inventing product or architecture decisions;
-- all current-frontier external facts are resolved;
-- material assumptions are verified or explicitly accepted;
-- important terms, states, failure transitions, migration/compatibility/rollback requirements, and dependencies are precise when material;
-- an appropriate test seam exists;
-- the oracle is independent;
-- the verification mode fits the work and the expected behavior is actually falsifiable/observable;
-- Planner did not convert a product gap into an engineering decision;
-- Planner did not pre-plan Future Fog as fake precision.
+## Primary question
+Could a fresh Implementer execute the next frontier without inventing material product or architecture decisions?
+
+## Supporting checks
+- Is the frontier bounded and durably explicit?
+- Does the contract depend on an untested material assumption?
+- Is any blocking `RSH-*` still `PENDING`, `BLOCKED`, or stale?
+- Does accepted engineering contradict repository evidence?
+- Is terminology ambiguous enough to produce materially different implementations?
+- Is an important failure or state transition undefined?
+- Did Planning accidentally convert a product gap into an engineering decision?
+- Are there hidden dependencies between current-frontier decisions?
+- If the next route will create executable tickets, can trustworthy repository identity be obtained? If not, readiness cannot claim immediate implementation admission.
+
+Apply the assumption-challenge rule without expanding scope or reopening settled decisions gratuitously.
 
 ## Results
-- `PASS`: frontier executable;
+- `PASS`: bounded frontier executable and no blocking research/product/engineering gap remains;
 - `MISSING_DECISIONS`: Planner must resolve engineering questions;
-- `PRODUCT_GAP`: return to PRD/human authority through Orchestrator;
+- `PRODUCT_GAP`: return to PRD/human authority;
 - `REPLAN`: accepted planning conflicts with later evidence;
-- `BLOCKED`: required evidence unavailable.
-
-Research must already be resolved before readiness can PASS; there is no special readiness RESEARCH result.
+- `BLOCKED`: required evidence/repository capability unavailable.
 
 ## Mutations
-Record the result, frontier ID, source revisions, reason, and evidence in Planner-owned engineering state and return it to Orchestrator. A PASS becomes stale when its product/engineering/research basis changes.
+Record result, frontier ID, source revisions, reason, and evidence durably in `engineering.md`/state. A PASS is stale if its product/engineering/research basis changes.

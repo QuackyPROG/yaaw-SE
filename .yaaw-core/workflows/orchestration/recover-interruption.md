@@ -8,15 +8,10 @@ Active/recent artifact, state claims, runtime caches, repository identity/histor
 
 ## Procedure
 1. Discard stale runtime handoffs/snapshots.
-2. Identify the last trustworthy completed boundary from current artifacts, repository identity/history/diff, verification evidence, and review evidence.
-3. Do not use project-memory recollection as proof that work completed or a lifecycle boundary was crossed.
-4. If implementation exists, prefer verification/review over reimplementation when evidence supports it.
-5. Reconcile only via legal transitions with provenance.
-6. If the boundary cannot be proven, return `BLOCKED` with exact missing evidence.
-7. Return control to `orchestration.route` for normal next-action selection.
+2. Identify the last trustworthy completed boundary.
+3. If implementation exists, prefer verification/review over reimplementation when evidence supports it.
+4. Reconcile only via legal transitions with provenance.
+5. If the boundary cannot be proven, return `BLOCKED` with exact missing evidence.
+6. Return control to `orchestration.route` for normal next-action selection.
 
 Never repeat destructive work merely because a context ended.
-
-## Checkpoint-aware recovery
-
-Distinguish uncommitted publishable implementation, checkpoint intent with missing commit, checkpoint commit already present, verification missing, review missing, integration pending, and publication pending. If a checkpoint candidate is valid but its commit is missing, validate and create the local commit rather than asking Implementer to rewrite the code. Already committed work is never reimplemented merely because lifecycle state lagged.

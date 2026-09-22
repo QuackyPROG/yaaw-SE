@@ -1,7 +1,8 @@
 {
   "schema": "yaaw.intent/v1",
-  "desired_intent": "AUTO",
-  "source_skill": "yaaw-orchestrator",
-  "requested_at_transition_sequence": 0,
-  "target_artifact": null
+  "source": "yaaw-orchestrator",
+  "desired_outcome": "CONTINUE",
+  "target_artifact": null,
+  "completion_condition": "advance to the next valid durable boundary",
+  "created_from_transition_sequence": 0
 }

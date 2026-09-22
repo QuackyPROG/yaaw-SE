@@ -1,11 +1,10 @@
 ---
 name: yaaw-planning-review
-description: Request a fresh engineering-readiness assessment through Orchestrator after required planning prerequisites are satisfied.
+description: Freshly assess whether the current YAAW engineering frontier is ready for implementation without material invention.
 ---
 # YAAW Planning Review
-ROLE: `orchestrator`
-WORKFLOW: `orchestration.route`
-INTENT: `PLANNING_REVIEW`
+ROLE: `planner`
+WORKFLOW: `planning.readiness-review`
 
 ## Execute
-Enter Orchestrator with readiness-review intent; unresolved product/engineering prerequisites run first.
+Load `.yaaw-core/roles/planner.md`, resolve `planning.readiness-review` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

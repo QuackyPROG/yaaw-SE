@@ -3,27 +3,18 @@
 ## Purpose
 Translate one current accepted spec into bounded dependency-aware implementation contracts.
 
-## Inputs
-Exact accepted `docs/specs/<SPEC-ID>.md`, its current product/engineering decision references, relevant rules, and only repository context needed for decomposition.
-
 ## Preconditions
-Source spec is `ACCEPTED` and its product/engineering revisions remain current.
+Source spec is `ACCEPTED`, product/engineering revisions remain current, and repository requirement `IDENTITY` is satisfied with repository status `READY`.
 
 ## Procedure
-1. Split work into coherent `TASK-NNN` units sized for a fresh Implementer.
-2. Create each semantic contract at `.yaaw/tickets/<SPEC-ID>/TASK-NNN.md` with initial lifecycle status `DRAFT`.
-3. Each ticket metadata records source spec/revision, product revision, engineering decision IDs, dependencies, expertise, and ticket revision.
-4. Body records product requirements, relevant areas, required behavior, allowed scope, non-goals, acceptance criteria, and required tests.
-5. Source ticket meaning from the accepted spec/current decisions, not directly from project memory or prior conversation. Historical context may have informed planning earlier, but the ticket must be executable without it.
-6. Treat the ticket as the Implementer's bounded handoff contract: Planner owns contract meaning; Implementer may not silently alter it.
+1. If exact repository identity is unavailable, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE`; do not admit executable tickets.
+2. Split work into coherent `TASK-NNN` units sized for a fresh Implementer.
+3. Apply `.yaaw-core/rules/changeability.md` while defining boundaries.
+4. Each ticket metadata records source spec/revision, product revision, engineering decision IDs, dependencies, expertise, ticket revision, and status.
+5. Body records product requirements, relevant areas, required behavior, allowed scope, non-goals, acceptance criteria, required tests, and relevant engineering/changeability constraints.
+6. Ensure supporting refactors are admitted only when necessary for safe implementation or verification.
 7. Validate ticket template/metadata.
-8. Determine which `DRAFT` tickets are admission-ready. Orchestrator alone persists legal `DRAFT -> READY` lifecycle transitions.
-9. After the accepted spec has been decomposed into valid tickets, optionally synchronize an in-flight learned-memory initiative according to `core/project-memory.md` and the active provider adapter. Include frontier/feature, SPEC id+revision, important `ENG-*` ids, goal/scope/non-goals, and current TASK frontier. This best-effort side effect is non-authoritative and non-blocking; failure cannot change ticket readiness/admission results.
-10. Return the ticket identities and admission results to Orchestrator.
+8. Set `READY` only when dependencies, planning admission, and repository identity are current; otherwise `DRAFT`.
 
 ## Output
-Dependency-aware `.yaaw/tickets/<SPEC-ID>/TASK-NNN.md` contracts plus admission results requiring no planning-chat or project-memory dependency.
-
-
-## Hardened decomposition contract
-Prefer `slice_type: tracer`. New tickets use `contract_version: 2` and declare one verification mode: `red_green`, `bug_repro`, `characterization`, or `verification_only`. Admission requires an observable outcome, bounded scope/non-goals, test seam, independent oracle, verification mode, required baseline signal, and required final signal. `verification_only` requires a written reason and is never a convenience escape hatch.
+Dependency-aware tickets requiring no planning-chat memory and preserving focused, reviewable change boundaries.

@@ -1,24 +1,20 @@
 # Review ticket
 
 ## Purpose
-Independently determine whether current implementation satisfies the exact current contract with meaningful evidence and acceptable engineering quality.
-
-## Inputs
-Exact handoff; one ticket in `REVIEW_REQUIRED`; exact current ticket/spec/product/ENG/rule/RSH revisions; immutable implementation evidence and prior reviews; selected expertise; actual admitted repository diff/state. Learned memory is optional only after all three primary lenses.
+Independently determine whether current implementation satisfies the current ticket contract.
 
 ## Preconditions
-Handoff names exactly one current ticket plus exact source revisions, evidence, and final repository identity.
+Ticket is `REVIEW_REQUIRED`; source revisions and evidence are current enough to review.
 
 ## Procedure
 1. Use a fresh review context when practical.
-2. Execute `review.inspect-change` preflight against actual current repository state.
-3. Execute `review.inspect-contract`.
-4. Execute `review.inspect-test-validity`.
-5. Execute `review.inspect-engineering-quality`.
-6. Only now may optional learned project memory be consulted for verified historical leads; memory is never acceptance evidence and cannot manufacture `PASS`.
+2. Execute `review.inspect-change`.
+3. Check every acceptance criterion and required test/evidence.
+4. Inspect regressions, failure paths, security, UX/accessibility, migration, and compatibility when relevant.
+5. Apply `.yaaw-core/rules/changeability.md` to the changed surface. Assess only materially relevant principles and distinguish concrete engineering defects from style preferences.
+6. For any blocking changeability finding, record the principle, concrete location/evidence, expected property, actual implementation, engineering impact, and bounded repair/replan action.
 7. Execute `review.classify-findings`.
-8. Execute `review.record-review` to write the next immutable review round.
-9. Return exactly `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED` to Orchestrator; never mutate ticket lifecycle or dispatch a peer.
+8. Execute `review.record-review`.
 
-## Review immutability
-PASS binds to the exact reviewed publishable application identity. Any changed application HEAD requires fresh verification and review.
+## Output
+Exactly one result: `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`. Style preference alone cannot produce a failing result.

@@ -1,26 +1,18 @@
-# Create spec
+# Create specification
 
 ## Purpose
-Materialize one implementation-ready engineering contract from a current readiness-passed frontier.
-
-## Inputs
-Exact handoff reads including current `docs/product/product.md`, `docs/engineering/engineering.md`, relevant `docs/engineering/decisions/ENG-*.md`, project rules, and repository references.
+Materialize one coherent ready engineering frontier as a durable implementation contract.
 
 ## Preconditions
-Current frontier readiness is `PASS` and its product/engineering revisions still match.
+Current frontier readiness is `PASS`; its product/engineering revisions remain current; all blocking research is `RESOLVED`; the bounded frontier sections are complete.
 
 ## Procedure
-1. Allocate the next `SPEC-NNN` and create `docs/specs/SPEC-NNN.md` from the canonical template.
+1. Allocate the next `SPEC-NNN` and only now load/create from the canonical spec template.
 2. Record metadata: revision, product revision, engineering revision, frontier ID, decision IDs, and status.
 3. Write goal, repository context, boundaries, behavior, data/state, interfaces, failure modes, security, UX/accessibility, tests, observability, migration/compatibility, non-goals, risks, and acceptance conditions as relevant.
-4. Source contract meaning only from current accepted product/engineering decisions/rules and verified repository context. Do not place a remembered historical claim directly into a spec; promote/verify it through the owning engineering artifact first if it matters.
-5. Reference `ENG-*` decisions rather than copying planning or memory history.
-6. Validate the spec against the canonical template/schema.
-7. Return the exact spec path/revision to Orchestrator; do not create implementation code or choose the next role.
+4. Reference `ENG-*` decisions and material `RSH-*` provenance rather than copying planning history.
+5. Validate required metadata/sections and confirm no unresolved material decision was invented.
+6. Mark spec `ACCEPTED`; otherwise leave `DRAFT`/route back to planning.
 
 ## Output
-One current accepted `docs/specs/SPEC-NNN.md` or explicit `PRECONDITION_UNSATISFIED` / `BLOCKED` result.
-
-
-## Hardened verification design
-Before ticketing, the spec defines the stable behavior observation seam, independent oracle, verification strategy/mode guidance, failure modes, migration/compatibility when material, slicing strategy, and any external RSH basis. Avoid private implementation seams unless they are explicit module contracts.
+One current accepted spec or an explicit planning gap.

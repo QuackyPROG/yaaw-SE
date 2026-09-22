@@ -1,6 +1,14 @@
 {
   "schema": "yaaw.observed-state/v2",
-  "repository": {"identity_schema": "yaaw.repository-identity/v2", "head_commit": "COMMIT", "branch": "main", "dirty_publishable": false, "publishable_worktree_digest": "sha256:DIGEST", "integration_branch": "main", "base_commit": null},
+  "repository": {
+    "status": "UNVERSIONED",
+    "workspace_scope": ".",
+    "git_root_relation": "none",
+    "head_commit": null,
+    "dirty": null,
+    "worktree_digest": null,
+    "error": null
+  },
   "transition_sequence": 0,
   "claims": {},
   "artifacts": {},

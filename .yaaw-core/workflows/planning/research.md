@@ -1,19 +1,20 @@
 # Planning research
 
 ## Purpose
-Resolve exactly one pending engineering research question from high-trust primary sources in a fresh Planner dispatch.
+Resolve exactly one admitted external engineering fact that blocks the current decision frontier.
 
 ## Inputs
-Exact current `docs/engineering/research/RSH-NNN.md`, current product and engineering revisions, its frontier ID, only relevant repository context, and selected expertise when needed.
+Exact current `.yaaw-core/project/research/RSH-NNN.md`, current product/engineering revisions, current frontier ID, only relevant repository context, `.yaaw-core/rules/research-admission.md`, and selected expertise when admitted.
 
 ## Procedure
-1. Require the RSH status to be `PENDING` and its product/engineering/frontier basis to be current.
-2. Prefer official documentation, official specifications, upstream source, first-party APIs, and authoritative release notes. Secondary sources may discover primary sources but do not replace them.
-3. Source every material claim. Record version/date for version-sensitive facts and record conflicts instead of choosing silently.
-4. If evidence is insufficient, mark the RSH `BLOCKED` and state exactly what proof is missing.
-5. If resolved, write findings/source ledger, mark `RESOLVED`, and remove its ID from `engineering.research_pending`.
-6. Do not create an `ENG-*` decision merely because research finished. A later fresh Planner promotes verified facts through normal planning.
-7. Return the durable result to Orchestrator. Planner never spawns a researcher/peer.
+1. Require the research artifact status to be `PENDING` and its product/engineering/frontier basis to remain current.
+2. Verify its vendor/framework/platform scope has a valid admission basis from `research-admission.md`.
+3. Prefer official documentation, specifications, upstream source, first-party APIs, authoritative release notes, and package-registry metadata.
+4. Source every material claim. Record version/date for version-sensitive facts and record conflicts rather than choosing silently.
+5. If evidence is insufficient, mark the artifact `BLOCKED` and state exactly what proof is missing.
+6. If resolved, record findings/source ledger and mark `RESOLVED`.
+7. Do not create an `ENG-*` decision merely because research finished. Return to `planning.decision-frontier` so a fresh Planner promotes only relevant verified facts through normal planning.
+8. Planner never spawns a research peer; this is a Planner workflow.
 
 ## Output
-`RESOLVED` or `BLOCKED` research artifact plus a typed result to Orchestrator.
+One durable `RESOLVED` or `BLOCKED` research artifact and a typed result to Orchestrator.

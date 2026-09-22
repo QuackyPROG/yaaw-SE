@@ -5,7 +5,20 @@
   "required": ["schema", "repository", "transition_sequence", "claims", "artifacts", "inconsistencies", "candidate_actions"],
   "properties": {
     "schema": {"const": "yaaw.observed-state/v2"},
-    "repository": {"$ref": "repository-identity.schema.json"},
+    "repository": {
+      "type": "object",
+      "required": ["status", "workspace_scope", "git_root_relation", "head_commit", "dirty", "worktree_digest", "error"],
+      "properties": {
+        "status": {"enum": ["READY", "UNVERSIONED", "UNAVAILABLE", "ROOT_MISMATCH", "IDENTITY_FAILED"]},
+        "workspace_scope": {"type": "string", "minLength": 1},
+        "git_root_relation": {"enum": ["same", "ancestor", "none", "unknown"]},
+        "head_commit": {"type": ["string", "null"]},
+        "dirty": {"type": ["boolean", "null"]},
+        "worktree_digest": {"type": ["string", "null"]},
+        "error": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
     "transition_sequence": {"type": "integer", "minimum": 0},
     "claims": {"type": "object"},
     "artifacts": {"type": "object"},

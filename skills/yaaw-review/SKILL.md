@@ -1,11 +1,10 @@
 ---
 name: yaaw-review
-description: Request independent review through Orchestrator; missing implementation prerequisites are completed before review can run.
+description: Independently review actual YAAW implementation and classify PASS, REPAIR, REPLAN, or BLOCKED against current evidence.
 ---
 # YAAW Review
-ROLE: `orchestrator`
-WORKFLOW: `orchestration.route`
-INTENT: `REVIEW`
+ROLE: `reviewer`
+WORKFLOW: `review.review-ticket`
 
 ## Execute
-Enter Orchestrator with review intent; a ticket must reach REVIEW_REQUIRED with current evidence before Reviewer is dispatched.
+Load `.yaaw-core/roles/reviewer.md`, resolve `review.review-ticket` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

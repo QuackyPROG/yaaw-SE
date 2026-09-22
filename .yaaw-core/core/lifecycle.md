@@ -18,20 +18,16 @@ all accepted scope complete with fresh acceptance -> COMPLETE
 ```
 
 ## Fresh-context invariant
-Every workflow must be resumable from durable artifacts and repository evidence without previous chat history or any project-memory provider. Optional memory may accelerate context reconstruction but cannot be required for correctness.
+Every workflow must be resumable from durable artifacts and repository evidence without previous chat history.
 
 ## Admission invariant
 Implementation may begin only for a bounded `READY` ticket whose source spec/frontier is currently valid.
 
 ## Acceptance invariant
-A ticket is accepted only by a fresh review tied to the exact repository identity and the current ticket/spec revisions. Project memory is never acceptance evidence and can never justify `PASS`.
+A ticket is accepted only by a fresh review tied to the exact repository identity and the current ticket/spec revisions.
 
 ## Transition invariant
-Every state transition follows `core/transitions.md`, records provenance in `.yaaw/state.json`, and cites the evidence or artifact that justified it. Memory results are not transition evidence.
+Every state transition follows `core/transitions.md`, records provenance in `.yaaw-core/project/state.json`, and cites the evidence or artifact that justified it.
 
 ## Invalidation invariant
 Changed product intent or engineering decisions propagate through `core/invalidation.md`; historical artifacts are preserved but stale acceptance is never treated as current.
-
-
-## Planning research cycle
-Planning may temporarily cycle `frontier -> research -> frontier` without changing ticket lifecycle. Research always returns through Orchestrator and a fresh Planner context.

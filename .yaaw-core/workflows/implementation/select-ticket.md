@@ -1,17 +1,17 @@
 # Select ticket
 
 ## Purpose
-Let Orchestrator choose exactly one safe implementation unit before an Implementer dispatch. The legacy workflow ID is retained for compatibility, but authority is Orchestrator.
+Choose exactly one safe implementation unit.
 
 ## Inputs
-Canonical ticket paths from the artifact registry, ticket lifecycle state, dependencies, current source revisions, repository reality, and optional specifically requested target artifact.
+Ticket states, dependencies, current source revisions, repository status/identity, and optional specifically requested ticket.
 
 ## Procedure
-1. If state/repository disagree, route to orchestration recovery first.
-2. Reject `DRAFT`, `BLOCKED`, `REPLAN_REQUIRED`, `REPAIR_REQUIRED`, `REVIEW_REQUIRED`, `PASS`, or stale-source tickets for normal implementation.
-3. Choose the specifically requested eligible ticket, otherwise the next dependency-satisfied `READY` ticket.
-4. Revalidate exact source spec/product/engineering revisions immediately before admission.
-5. If no eligible ticket exists, return `PRECONDITION_UNSATISFIED` with `NO_READY_TICKET`; do not dispatch Implementer.
+1. Require repository status `READY`; otherwise return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE` to Orchestrator.
+2. If state/repository disagree, return control to orchestration recovery first.
+3. Reject `DRAFT`, `BLOCKED`, `REPLAN_REQUIRED`, `REPAIR_REQUIRED`, `REVIEW_REQUIRED`, `PASS`, or stale-source tickets for normal implementation.
+4. Choose the specifically requested eligible ticket, otherwise the next dependency-satisfied `READY` ticket.
+5. Revalidate source spec/product/engineering revisions immediately before admission.
 
 ## Output
-One exact admitted `.yaaw/tickets/<SPEC-ID>/<TASK-ID>.md` or a no-ticket/blocker result.
+One admitted `READY` ticket, or `PRECONDITION_UNSATISFIED:NO_READY_TICKET` / another exact blocker result for Orchestrator.

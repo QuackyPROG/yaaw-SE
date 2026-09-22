@@ -1,30 +1,20 @@
 # Inspect state
 
 ## Purpose
-Create a non-mutating observed-reality snapshot that separates claims from evidence.
+Create a non-mutating observed-reality snapshot that separates claims from evidence and classifies repository capability safely.
 
 ## Inputs
-Canonical paths from `registries/artifacts.json`; `.yaaw/state.json`; `.yaaw/runtime/intent.json` when present; active durable artifacts; project rules; and repository status/diff/log/branch.
+Resolved workspace root, `.yaaw-core/project/state.json`, product/engineering/research/spec/ticket/review/evidence/runtime files, project rules, and available repository/application reality.
 
 ## Procedure
-1. Direct callers must run the idempotent project initializer first; normal Orchestrator entry already guarantees this before inspection.
-2. Compute current repository identity.
-3. Resolve current artifact identities through `registries/artifacts.json`; do not guess alternate locations.
-4. Read machine-readable artifact metadata and only the semantic bodies needed to determine current references/status.
-5. Compare state claims with artifact/repository/review/evidence reality without repairing yet.
-6. Do not query or use project memory as observed-state evidence. Memory is advisory historical context and is deliberately excluded from routing/reconciliation truth.
-7. List inconsistencies, missing prerequisites, stale artifacts/handoffs, blockers, and candidate next states.
-8. Write replaceable `.yaaw/runtime/observed-state.json` conforming to the observed-state schema.
+1. Resolve `WORKSPACE_ROOT` using `core/execution-context.md`; never trust ambient CWD.
+2. Probe Git only with root-anchored commands such as `git -C <WORKSPACE_ROOT> rev-parse --show-toplevel`.
+3. Classify repository status using `rules/repository-identity.md`. A failed `rev-parse` becomes `UNVERSIONED` or another explicit status; do not leak a raw Git fatal error as successful identity.
+4. When status is `READY`, compute workspace-scoped repository identity. If Git root is an ancestor, scope status/diff/untracked hashing to the workspace.
+5. Read machine-readable artifact metadata and active durable artifacts.
+6. Compare state claims with artifact/repository/review evidence without repairing yet.
+7. List inconsistencies, stale artifacts/handoffs, blockers, and candidate next states.
+8. Write replaceable `.yaaw-core/runtime/observed-state.json` conforming to observed-state v2.
 
 ## Output
 Observed-state snapshot only; no semantic or ticket-state mutation.
-
-## Project VCS observations
-
-When project mode is active, also inspect and persist operational facts in `.yaaw/runtime/vcs-observed.json`: project policy health, current/integration branch, publishable dirtiness/digest, protected staged paths, upstream presence, pending checkpoint candidates, outgoing contamination, hook health, and remote-policy conflicts. These are observed facts only; they do not create semantic authority.
-
-A non-integration local topic/worktree branch with an upstream is a VCS policy violation.
-
-
-## Pending engineering research
-Inspect `engineering.research_pending`, referenced RSH status, and product/engineering/frontier basis revisions. Pending or stale RSH state is observed planning prerequisite evidence, never project-memory evidence.

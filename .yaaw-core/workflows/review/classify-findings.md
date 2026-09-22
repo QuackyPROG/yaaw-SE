@@ -1,18 +1,17 @@
 # Classify findings
 
 ## Purpose
-Convert concrete observations from all three review lenses into one acceptance classification.
-
-## Inputs
-Contract-lens, test-validity-lens, and engineering-quality-lens observations; exact current contract; evidence; and repository identity.
-
-## Finding contract
-Each finding uses `F-NNN` and records: `lens`, severity, exact contract/source, expected, actual, evidence, and bounded action.
+Convert concrete review evidence into one authoritative outcome.
 
 ## Classification
-- `PASS`: all required lenses support acceptance.
-- `REPAIR`: ticket/spec are valid but implementation or test evidence is wrong/incomplete (including concrete bug, missing required negative test, tautological test, or missing failure handling).
-- `REPLAN`: ticket/spec/seam/oracle/architecture contract is itself invalid or insufficient.
-- `BLOCKED`: acceptance cannot be determined because required evidence/access is unavailable.
+- `PASS`: current contract satisfied with adequate evidence.
+- `REPAIR`: implementation defect; ticket/spec remain valid. This includes bounded changeability defects supported by concrete engineering impact.
+- `REPLAN`: ticket/spec/engineering contract is materially invalid or insufficient.
+- `BLOCKED`: required evidence is unavailable.
 
-Style preference or heuristic smell alone cannot force failure. Do not choose REPAIR when satisfying the finding requires changing accepted product/architecture meaning.
+## Findings
+Assign durable `F-NNN` IDs and severity. Each finding records category, concrete evidence, expected behavior/property, actual behavior/implementation, and required repair/replan action.
+
+For changeability findings, also record the violated principle and why the issue is more than a style preference. Valid categories include `CORRECTNESS`, `SECURITY`, `REGRESSION`, `CONTRACT`, `CHANGEABILITY`, `TESTING`, `COMPATIBILITY`, and `UX`.
+
+Do not choose `REPAIR` when satisfying the finding requires changing accepted product/architecture meaning. Do not fail a review for personal style preference alone.

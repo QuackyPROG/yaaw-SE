@@ -1,0 +1,49 @@
+{
+  "name": "yaaw-se",
+  "version": "0.1.0",
+  "description": "Artifact-first autonomous software engineering workflow installer.",
+  "type": "module",
+  "bin": {
+    "yaaw-se": "./dist/cli/main.js"
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "scripts": {
+    "clean": "node scripts/clean_dist.mjs",
+    "build:ts": "tsc -p tsconfig.json",
+    "build:payload": "node scripts/build_npm_payload.mjs",
+    "verify:payload": "node scripts/verify_npm_payload.mjs",
+    "build": "npm run clean && npm run build:ts && npm run build:payload && npm run verify:payload",
+    "validate:core": "python scripts/validate_core.py && python scripts/validate_behavior.py && python scripts/behavior_oracle.py",
+    "validate:distribution": "python scripts/validate_distribution.py",
+    "test:python": "python -m unittest discover -s tests -v",
+    "test:cli": "npm run build:payload && vitest run tests/cli",
+    "test": "npm run validate:core && npm run validate:distribution && npm run test:python && npm run test:cli",
+    "prepack": "npm run test && npm run build",
+    "smoke:tarball": "npm run build && node scripts/smoke_npm_tarball.mjs",
+    "smoke:update": "npm run build && node scripts/smoke_npm_update.mjs"
+  },
+  "dependencies": {
+    "@clack/prompts": "1.8.1",
+    "commander": "14.0.3",
+    "semver": "7.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuackyPROG/yaaw-SE.git"
+  },
+  "bugs": {
+    "url": "https://github.com/QuackyPROG/yaaw-SE/issues"
+  },
+  "homepage": "https://github.com/QuackyPROG/yaaw-SE#readme"
+}

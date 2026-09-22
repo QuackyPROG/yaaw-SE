@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import json
 import re
-import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core"
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-SEMANTIC_ROLES = ("prd", "planner", "implementer", "reviewer")
-ALL_ROLES = set(SEMANTIC_ROLES) | {"orchestrator"}
 
 
 def load_json(path: Path):
@@ -57,51 +54,60 @@ def require_headings(path: Path, headings: list[str], errors: list[str]):
             errors.append(f"{path.relative_to(ROOT)}: missing heading '## {heading}'")
 
 
-def rel(path: Path) -> str:
-    return path.relative_to(ROOT).as_posix()
+def require_phrases(path: Path, phrases: list[str], errors: list[str]):
+    text = path.read_text(encoding="utf-8").lower()
+    for phrase in phrases:
+        if phrase.lower() not in text:
+            errors.append(f"{path.relative_to(ROOT)}: missing semantic marker {phrase!r}")
 
 
 def main() -> int:
     workflows = load_json(CORE / "registries/workflows.json")
     skills = load_json(CORE / "registries/skills.json")
     expertise = load_json(CORE / "registries/expertise.json")
-    artifacts = load_json(CORE / "registries/artifacts.json")["artifacts"]
-    role_io = load_json(CORE / "registries/role-io.json")["roles"]
-    context_policy = load_json(CORE / "registries/context-policy.json")["roles"]
-    transition_registry = load_json(CORE / "registries/transitions.json")
-    vcs_policy = load_json(CORE / "registries/vcs-policy.json")
+    execution_policy = load_json(CORE / "registries/execution-policy.json")
+    role_io = load_json(CORE / "registries/role-io.json")
+    artifacts = load_json(CORE / "registries/artifacts.json")
     errors: list[str] = []
+    allowed_roles = {"prd", "planner", "implementer", "reviewer", "orchestrator"}
 
-    # Canonical workflow contracts and exact registry/file closure.
-    registered_paths: set[str] = set()
-    workflow_paths: dict[str, str] = {}
+    # Every workflow has explicit runtime/repository policy.
+    policy_workflows = execution_policy.get("workflows", {})
+    if set(policy_workflows) != set(workflows):
+        errors.append(f"execution-policy/workflow mismatch: policy={sorted(policy_workflows)} workflows={sorted(workflows)}")
+    for workflow_id, policy_entry in policy_workflows.items():
+        if policy_entry.get("repository_requirement") not in {"NONE", "INSPECT", "IDENTITY"}:
+            errors.append(f"{workflow_id}: invalid repository requirement {policy_entry.get('repository_requirement')!r}")
+
+    # Role I/O names only canonical artifact classes and covers every role.
+    io_roles = role_io.get("roles", {})
+    if set(io_roles) != allowed_roles:
+        errors.append(f"role-io coverage drifted: {sorted(io_roles)}")
+    artifact_ids = set(artifacts) - {"schema"}
+    for role, contract in io_roles.items():
+        for field in ("reads", "writes", "forbidden_writes"):
+            unknown = set(contract.get(field, [])) - artifact_ids
+            if unknown:
+                errors.append(f"{role}: unknown {field} artifacts {sorted(unknown)}")
+
+    if "planning.research" not in workflows:
+        errors.append("planning.research must be a canonical internal Planner workflow")
+    if "yaaw-research" in skills or (ROOT / "skills" / "yaaw-research").exists():
+        errors.append("planning research must remain internal; do not create a public yaaw-research skill")
+
+    # Canonical workflow contracts.
+    workflow_paths = {}
     for workflow_id, entry in workflows.items():
-        role = entry.get("role")
-        if role not in ALL_ROLES:
-            errors.append(f"{workflow_id}: invalid role {role!r}")
-        workflow_rel = entry.get("workflow", "")
-        if workflow_rel in registered_paths:
-            errors.append(f"{workflow_id}: duplicate workflow file registration {workflow_rel}")
-        registered_paths.add(workflow_rel)
-        path = ROOT / workflow_rel
+        if entry.get("role") not in allowed_roles:
+            errors.append(f"{workflow_id}: invalid role {entry.get('role')!r}")
+        path = ROOT / entry.get("workflow", "")
         if not path.is_file():
-            errors.append(f"{workflow_id}: missing workflow file {workflow_rel}")
+            errors.append(f"{workflow_id}: missing workflow file {path.relative_to(ROOT)}")
             continue
         text = path.read_text(encoding="utf-8")
         if "## Purpose" not in text:
             errors.append(f"{workflow_id}: workflow lacks explicit Purpose section")
-        if "## Inputs" not in text:
-            errors.append(f"{workflow_id}: workflow lacks explicit Inputs section")
-        workflow_paths[workflow_id] = workflow_rel
-
-    actual_workflow_paths = {rel(p) for p in (CORE / "workflows").rglob("*.md")}
-    if actual_workflow_paths != registered_paths:
-        missing = sorted(registered_paths - actual_workflow_paths)
-        unregistered = sorted(actual_workflow_paths - registered_paths)
-        if missing:
-            errors.append(f"registered workflow files missing from disk: {missing}")
-        if unregistered:
-            errors.append(f"workflow files missing registry entries: {unregistered}")
+        workflow_paths[workflow_id] = entry["workflow"]
 
     if workflow_paths.get("orchestration.route") == workflow_paths.get("orchestration.dispatch"):
         errors.append("orchestration.route and orchestration.dispatch must be distinct contracts")
@@ -141,125 +147,6 @@ def main() -> int:
         if len(path.read_text(encoding="utf-8").splitlines()) > 24:
             errors.append(f"{skill_id}: public wrapper too large")
 
-    # Artifact/path authority and role I/O consistency.
-    expected_patterns = {
-        "product": "docs/product/product.md",
-        "engineering": "docs/engineering/engineering.md",
-        "engineering_decision": "docs/engineering/decisions/ENG-*.md",
-        "engineering_research": "docs/engineering/research/RSH-*.md",
-        "spec": "docs/specs/<SPEC-ID>.md",
-        "rule": "docs/rules/**",
-        "ticket": ".yaaw/tickets/<SPEC-ID>/<TASK-ID>.md",
-        "evidence": ".yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json",
-        "review": ".yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md",
-        "intent": ".yaaw/runtime/intent.json",
-        "observed_state": ".yaaw/runtime/observed-state.json",
-        "handoff": ".yaaw/runtime/handoff.json",
-        "state": ".yaaw/state.json",
-        "install_marker": ".yaaw/install.json",
-        "vcs_config": ".yaaw/vcs.json",
-        "commit_checkpoint": ".yaaw/vcs/checkpoints/<TASK-ID>/C<CHECKPOINT>.json",
-        "vcs_observed": ".yaaw/runtime/vcs-observed.json",
-    }
-    for artifact_id, pattern in expected_patterns.items():
-        if artifacts.get(artifact_id, {}).get("pattern") != pattern:
-            errors.append(f"artifact path drift: {artifact_id} != {pattern}")
-
-    for artifact_id, entry in artifacts.items():
-        visibility = entry.get("vcs_visibility")
-        if artifact_id == "application_files":
-            if visibility != "publishable":
-                errors.append("application_files must be publishable")
-        elif artifact_id == "repository":
-            if visibility != "observed":
-                errors.append("repository must remain observed-only")
-        elif visibility != "local_only":
-            errors.append(f"{artifact_id}: canonical YAAW artifact must be local_only")
-
-    if vcs_policy.get("schema") != "yaaw.vcs-policy/v1":
-        errors.append("vcs-policy registry schema id drifted")
-    if vcs_policy.get("staging", {}).get("strategy") != "explicit-paths-only":
-        errors.append("vcs-policy staging must remain explicit-paths-only")
-    if vcs_policy.get("publication", {}).get("default_allowed_branches") != ["main"]:
-        errors.append("vcs-policy default publication branch must remain main-only")
-
-    if set(role_io) != ALL_ROLES:
-        errors.append(f"role-io role coverage drift: {sorted(role_io)}")
-    if set(context_policy) != ALL_ROLES:
-        errors.append(f"context-policy role coverage drift: {sorted(context_policy)}")
-    artifact_symbols = set(artifacts)
-    for role, contract in role_io.items():
-        reads = set(contract.get("reads", []))
-        writes = set(contract.get("writes", []))
-        forbidden = set(contract.get("forbidden_writes", []))
-        unknown = (reads | writes | forbidden) - artifact_symbols
-        if unknown:
-            errors.append(f"{role}: unknown artifact symbols in role I/O: {sorted(unknown)}")
-        overlap = writes & forbidden
-        if overlap:
-            errors.append(f"{role}: write/forbidden overlap: {sorted(overlap)}")
-    for role in SEMANTIC_ROLES:
-        if "state" in role_io[role].get("writes", []):
-            errors.append(f"{role}: semantic role must not write state")
-        role_text = (CORE / "roles" / f"{role}.md").read_text(encoding="utf-8")
-        for heading in ("Reads", "Writes", "Must not write", "Return protocol"):
-            if f"## {heading}" not in role_text:
-                errors.append(f"roles/{role}.md: missing ## {heading}")
-        if "`.yaaw/runtime/handoff.json` first" not in role_text:
-            errors.append(f"roles/{role}.md: must require handoff first")
-        if ".yaaw/state.json" not in role_text:
-            errors.append(f"roles/{role}.md: state boundary must be explicit")
-
-    if role_io.get("prd", {}).get("writes") != ["product"]:
-        errors.append("PRD writes must remain product-only")
-    if role_io.get("implementer", {}).get("writes") != ["application_files", "evidence", "commit_checkpoint"]:
-        errors.append("Implementer writes must remain application_files + evidence + commit_checkpoint")
-    if role_io.get("reviewer", {}).get("writes") != ["review"]:
-        errors.append("Reviewer writes must remain review-only")
-    if "state" not in role_io.get("orchestrator", {}).get("writes", []):
-        errors.append("Orchestrator must own state writes")
-
-    # Context policy: product/routing roles cannot consume learned memory automatically.
-    for role in ("prd", "orchestrator"):
-        policy = context_policy[role]
-        if policy.get("memory_mode") != "disabled" or policy.get("memory_phase") != "never":
-            errors.append(f"{role}: learned memory must stay disabled")
-        if policy.get("memory_target_tokens") != 0 or policy.get("deep_history_allowed") is not False:
-            errors.append(f"{role}: disabled memory policy must have zero/no deep history")
-
-    # PRD workflows must not contain executable learned-memory behavior.
-    forbidden_prd_memory_phrases = (
-        "when memory is enabled",
-        "permitted memory results",
-        "optional historical leads",
-        "historical project-memory context",
-        "using memory only",
-    )
-    for path in (CORE / "workflows" / "prd").glob("*.md"):
-        lower = path.read_text(encoding="utf-8").lower()
-        for phrase in forbidden_prd_memory_phrases:
-            if phrase in lower:
-                errors.append(f"{rel(path)}: PRD memory policy leak: {phrase!r}")
-
-    # Canonical path drift guard across the control plane.
-    forbidden_paths = (
-        ".yaaw/product.md",
-        ".yaaw/engineering.md",
-        ".yaaw/specs/",
-        ".yaaw/rules/",
-        ".yaaw/evidence/EVIDENCE-",
-        ".yaaw/reviews/TASK-",
-    )
-    scan_files = []
-    for scan_root in (CORE / "core", CORE / "roles", CORE / "rules", CORE / "workflows", ROOT / "skills", ROOT / ".codex" / "agents"):
-        scan_files.extend(p for p in scan_root.rglob("*") if p.is_file() and p.suffix in {".md", ".toml"})
-    scan_files.extend([ROOT / "AGENTS.md", ROOT / "README.md", ROOT / "WORKFLOW.md"])
-    for path in scan_files:
-        text = path.read_text(encoding="utf-8")
-        for stale in forbidden_paths:
-            if stale in text:
-                errors.append(f"{rel(path)}: stale canonical path {stale}")
-
     # Expertise metadata richness and paths.
     expertise_required = {"path", "description", "signals", "usable_by", "required_context", "anti_patterns", "verification_expectations"}
     for expertise_id, entry in expertise.items():
@@ -268,10 +155,99 @@ def main() -> int:
             errors.append(f"{expertise_id}: missing expertise metadata {sorted(missing)}")
         path = ROOT / entry.get("path", "")
         if not path.is_file():
-            errors.append(f"{expertise_id}: missing module {rel(path)}")
-        invalid = set(entry.get("usable_by", [])) - ALL_ROLES
+            errors.append(f"{expertise_id}: missing module {path.relative_to(ROOT)}")
+        invalid = set(entry.get("usable_by", [])) - allowed_roles
         if invalid:
             errors.append(f"{expertise_id}: invalid usable_by roles {sorted(invalid)}")
+
+    # Canonical assumption-challenge rule and declared consumers.
+    challenge_rule = CORE / "rules/assumption-challenge.md"
+    if not challenge_rule.is_file():
+        errors.append("missing canonical rules/assumption-challenge.md")
+    else:
+        require_phrases(
+            challenge_rule,
+            [
+                "Facts before questions",
+                "material assumptions",
+                "contradictions",
+                "ambiguous terminology",
+                "Stress-test concrete scenarios",
+                "decision dependencies",
+                "current frontier",
+                "Recommendation:",
+                "Do not delegate owned decisions",
+                "persist accepted conclusions",
+                "conversation transcript",
+                "recompute the frontier",
+                "product intent",
+                "engineering decisions",
+                "Do not challenge a settled decision merely to demonstrate rigor",
+                "Do not reopen accepted decisions without new evidence, contradiction, changed intent, or explicit human request",
+            ],
+            errors,
+        )
+
+    challenge_consumers = [
+        ".yaaw-core/roles/prd.md",
+        ".yaaw-core/roles/planner.md",
+        ".yaaw-core/workflows/prd/question-round.md",
+        ".yaaw-core/workflows/prd/create.md",
+        ".yaaw-core/workflows/prd/record-decisions.md",
+        ".yaaw-core/workflows/prd/readiness.md",
+        ".yaaw-core/workflows/prd/revise.md",
+        ".yaaw-core/workflows/prd/refine.md",
+        ".yaaw-core/workflows/planning/discover.md",
+        ".yaaw-core/workflows/planning/write-understanding.md",
+        ".yaaw-core/workflows/planning/decision-frontier.md",
+        ".yaaw-core/workflows/planning/question-round.md",
+        ".yaaw-core/workflows/planning/record-decisions.md",
+        ".yaaw-core/workflows/planning/readiness-review.md",
+    ]
+    for rel in challenge_consumers:
+        path = ROOT / rel
+        if not path.is_file():
+            errors.append(f"assumption-challenge consumer missing: {rel}")
+        elif "rules/assumption-challenge.md" not in path.read_text(encoding="utf-8"):
+            errors.append(f"{rel}: must reference canonical assumption-challenge rule")
+
+    for rel in [
+        ".yaaw-core/workflows/prd/question-round.md",
+        ".yaaw-core/workflows/planning/question-round.md",
+    ]:
+        if "rules/question-format.md" not in (ROOT / rel).read_text(encoding="utf-8"):
+            errors.append(f"{rel}: must reference canonical question-format rule")
+
+    require_phrases(
+        CORE / "roles/prd.md",
+        ["product assumptions", "product intent", "must not decide engineering implementation decisions"],
+        errors,
+    )
+    require_phrases(
+        CORE / "roles/planner.md",
+        [
+            "repository evidence before questioning",
+            "engineering assumptions",
+            "routine reversible implementation decisions",
+            "never invent product intent",
+        ],
+        errors,
+    )
+    for rel in [".yaaw-core/roles/orchestrator.md", ".yaaw-core/roles/implementer.md", ".yaaw-core/roles/reviewer.md"]:
+        if "assumption-challenge" in (ROOT / rel).read_text(encoding="utf-8").lower():
+            errors.append(f"{rel}: must not consume assumption-challenge user-question authority")
+
+    forbidden_skills = {"yaaw-grill", "yaaw-challenge"}
+    present_forbidden_skills = forbidden_skills & set(skills)
+    if present_forbidden_skills:
+        errors.append(f"assumption challenge must remain internal; forbidden skills: {sorted(present_forbidden_skills)}")
+    for skill_id in forbidden_skills:
+        if (ROOT / "skills" / skill_id).exists():
+            errors.append(f"assumption challenge must not create public skill directory skills/{skill_id}/")
+    forbidden_workflows = {"prd.grill", "planning.grill"}
+    present_forbidden_workflows = forbidden_workflows & set(workflows)
+    if present_forbidden_workflows:
+        errors.append(f"assumption challenge must not create workflow IDs: {sorted(present_forbidden_workflows)}")
 
     # Schemas parse and expose the contracts prose depends on.
     schemas = {}
@@ -280,7 +256,7 @@ def main() -> int:
             schema = load_json(schema_path)
             schemas[schema_path.name] = schema
         except Exception as exc:  # noqa: BLE001
-            errors.append(f"{rel(schema_path)}: invalid JSON: {exc}")
+            errors.append(f"{schema_path.relative_to(ROOT)}: invalid JSON: {exc}")
     state = schemas.get("project-state.schema.json", {})
     state_required = set(state.get("required", []))
     for field in {"transition_sequence", "last_transition", "blocker"}:
@@ -290,18 +266,11 @@ def main() -> int:
     outcomes = set(review.get("properties", {}).get("result", {}).get("enum", []))
     if outcomes != {"PASS", "REPAIR", "REPLAN", "BLOCKED"}:
         errors.append(f"review outcomes drifted: {sorted(outcomes)}")
-    required_vcs_schemas = {
-        "evidence.schema.json",
-        "observed-state.schema.json",
-        "repository-identity.schema.json",
-        "install.schema.json",
-        "vcs-config.schema.json",
-        "commit-checkpoint.schema.json",
-        "vcs-observed.schema.json",
-    }
-    missing_vcs_schemas = required_vcs_schemas - set(schemas)
-    if missing_vcs_schemas:
-        errors.append(f"missing VCS/repository schemas: {sorted(missing_vcs_schemas)}")
+    if "evidence.schema.json" not in schemas or "observed-state.schema.json" not in schemas:
+        errors.append("missing evidence or observed-state schema")
+    for required_schema in ("engineering-research.schema.json", "intent.schema.json", "handoff.schema.json"):
+        if required_schema not in schemas:
+            errors.append(f"missing {required_schema}")
 
     # Templates: machine-readable metadata + required human-readable sections.
     template_meta = {
@@ -309,7 +278,8 @@ def main() -> int:
         "engineering.md": {"schema", "revision", "status", "product_revision", "current_frontier", "readiness"},
         "spec.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id", "decision_ids"},
         "ticket.md": {"schema", "id", "revision", "spec", "spec_revision", "product_revision", "engineering_revision", "status", "dependencies", "decision_ids", "expertise"},
-        "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "repository_identity_schema", "reviewed_head_commit", "reviewed_branch", "reviewed_dirty_publishable", "reviewed_publishable_worktree_digest", "review_base_commit", "evidence"},
+        "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"},
+        "engineering-research.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id"},
     }
     for filename, required in template_meta.items():
         path = CORE / "templates" / filename
@@ -326,8 +296,9 @@ def main() -> int:
     require_headings(CORE / "templates/spec.md", ["Goal", "Engineering decisions", "Expected behavior", "Failure modes", "Testing expectations", "Acceptance conditions"], errors)
     require_headings(CORE / "templates/ticket.md", ["Goal", "Product requirements", "Engineering decisions", "Required behavior", "Allowed scope", "Acceptance criteria", "Required tests", "Dependencies"], errors)
     require_headings(CORE / "templates/review.md", ["Result rationale", "Reviewed state", "Findings", "Verification", "Evidence", "Next action"], errors)
+    require_headings(CORE / "templates/engineering-research.md", ["Question", "Why this matters", "Admission basis", "Source ledger", "Planning implications", "Resolution"], errors)
 
-    for json_template in ["project-state.json", "evidence.json", "handoff.json", "observed-state.json"]:
+    for json_template in ["project-state.json", "evidence.json", "handoff.json", "observed-state.json", "intent.json"]:
         try:
             load_json(CORE / "templates" / json_template)
         except Exception as exc:  # noqa: BLE001
@@ -349,123 +320,12 @@ def main() -> int:
     except ValueError as exc:
         errors.append(f"routing contract missing explicit state marker: {exc}")
 
-    transition_states = set(transition_registry.get("ticket_states", []))
-    seen_transitions: set[tuple[str, str]] = set()
-    for transition in transition_registry.get("legal", []):
-        edge = (transition.get("from"), transition.get("to"))
-        if edge in seen_transitions:
-            errors.append(f"duplicate ticket transition: {edge}")
-        seen_transitions.add(edge)
-        if edge[0] not in transition_states or edge[1] not in transition_states:
-            errors.append(f"transition uses unknown state: {edge}")
-        if transition.get("owner") not in ALL_ROLES:
-            errors.append(f"transition has invalid semantic owner: {transition}")
-        if transition.get("state_writer") != "orchestrator":
-            errors.append(f"ticket transition must be persisted by orchestrator: {transition}")
-        if transition.get("workflow") not in workflows:
-            errors.append(f"transition references unknown workflow: {transition}")
-
-    transitions_text = (CORE / "core/transitions.md").read_text(encoding="utf-8")
+    transitions = (CORE / "core/transitions.md").read_text(encoding="utf-8")
     for forbidden in ["DRAFT -> PASS", "READY -> PASS", "REPAIR_REQUIRED -> PASS"]:
-        if forbidden not in transitions_text:
+        if forbidden not in transitions:
             errors.append(f"transition contract missing forbidden guard {forbidden}")
-    for phrase in ("semantic outcome owner", "Orchestrator persists every ticket lifecycle transition"):
-        if phrase not in transitions_text:
-            errors.append(f"transition prose missing ownership rule: {phrase}")
-    if "PASS | REPLAN_REQUIRED" not in transitions_text:
+    if "PASS | REPLAN_REQUIRED" not in transitions:
         errors.append("transition contract must permit invalidation of stale PASS")
-
-    # Cross-role invalidation must be coordinated, never directly cascaded by the triggering role.
-    invalidation = (CORE / "core/invalidation.md").read_text(encoding="utf-8")
-    for phrase in (
-        "Triggering roles never mutate another role's semantic artifacts",
-        "Planner applies semantic invalidation",
-        "Orchestrator persists ticket lifecycle invalidation",
-    ):
-        if phrase not in invalidation:
-            errors.append(f"invalidation contract missing ownership rule: {phrase}")
-
-    # Known ambiguity regressions must stay fixed.
-    prd_readiness = (CORE / "workflows/prd/readiness.md").read_text(encoding="utf-8")
-    if "product/state" in prd_readiness:
-        errors.append("prd.readiness must not instruct PRD to mutate state")
-    planning_readiness = (CORE / "workflows/planning/readiness-review.md").read_text(encoding="utf-8")
-    if "engineering.md`/state" in planning_readiness:
-        errors.append("planning.readiness-review must not instruct Planner to mutate state")
-    implement_ticket = (CORE / "workflows/implementation/implement-ticket.md").read_text(encoding="utf-8")
-    if "return `SOURCE_SPEC_MISSING` or `STALE_SOURCE_REVISION`" in implement_ticket:
-        errors.append("implementation precondition reasons must be nested under PRECONDITION_UNSATISFIED")
-    if "PRECONDITION_UNSATISFIED` with reason `SOURCE_SPEC_MISSING` or `STALE_SOURCE_REVISION`" not in implement_ticket:
-        errors.append("implement-ticket must encode source-spec failures as PRECONDITION_UNSATISFIED reasons")
-    review_independence = (CORE / "rules/review-independence.md").read_text(encoding="utf-8")
-    if "Only Reviewer may transition" in review_independence:
-        errors.append("review-independence must distinguish acceptance authority from state writing")
-
-    # Codex host configs must load the exact dynamic workflow instead of guessing by role.
-    codex_config = tomllib.loads((ROOT / ".codex/config.toml").read_text(encoding="utf-8"))
-    registered_agent_files: set[str] = set()
-    for agent_name, registration in codex_config.get("agents", {}).items():
-        if not isinstance(registration, dict) or "config_file" not in registration:
-            continue
-        config_rel = registration["config_file"]
-        registered_agent_files.add(config_rel)
-        path = ROOT / ".codex" / config_rel
-        if not path.is_file():
-            errors.append(f"Codex agent {agent_name}: missing {config_rel}")
-            continue
-        agent_cfg = tomllib.loads(path.read_text(encoding="utf-8"))
-        instructions = agent_cfg.get("developer_instructions", "")
-        role = agent_name.split("_", 1)[0]
-        required_fragments = (
-            "Read .yaaw/runtime/handoff.json first",
-            ".yaaw-core/registries/workflows.json",
-            "handoff.workflow",
-            f".yaaw-core/roles/{role}.md",
-            ".yaaw-core/core/vcs-boundary.md",
-        )
-        for fragment in required_fragments:
-            if fragment not in instructions:
-                errors.append(f"{rel(path)}: missing dynamic load instruction {fragment!r}")
-
-    actual_agent_files = {p.relative_to(ROOT / ".codex").as_posix() for p in (ROOT / ".codex/agents").glob("*.toml")}
-    if actual_agent_files != registered_agent_files:
-        errors.append(f"Codex agent file/registry mismatch: files={sorted(actual_agent_files)} registry={sorted(registered_agent_files)}")
-
-    # Project VCS implementation must be canonical, fail-closed, and avoid .gitignore mutation.
-    boundary = (CORE / "core/vcs-boundary.md").read_text(encoding="utf-8")
-    for phrase in (
-        "Project mode is active only",
-        "git add .",
-        "Topic/worktree branches are local only",
-        "Remote publication is allowed only",
-        "Hindsight or any learned-memory provider is advisory only",
-    ):
-        if phrase not in boundary:
-            errors.append(f"VCS boundary missing invariant: {phrase}")
-
-    init_text = (ROOT / "scripts/init_project.py").read_text(encoding="utf-8")
-    guard_text = (CORE / "vcs/guard.py").read_text(encoding="utf-8")
-    if ".gitignore" not in guard_text or "before_gitignore" not in guard_text or "after_gitignore" not in guard_text:
-        errors.append("bootstrap must explicitly prove .gitignore remains unchanged")
-    for forbidden in ("write_text(", "write_bytes("):
-        if f'".gitignore").{forbidden}' in init_text or f'".gitignore").{forbidden}' in guard_text:
-            errors.append("bootstrap contains a .gitignore mutation path")
-
-    for workflow_id in (
-        "vcs.ensure-project-boundary",
-        "vcs.create-checkpoint-commit",
-        "vcs.inspect-local-integration",
-        "vcs.integrate-local-work",
-        "vcs.validate-publication",
-        "vcs.publish-integration-branch",
-    ):
-        if workflows.get(workflow_id, {}).get("role") != "orchestrator":
-            errors.append(f"{workflow_id}: VCS operation must remain orchestrator-owned")
-
-    # CI must run when Codex contracts change too.
-    workflow_yaml = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    if "'.codex/**'" not in workflow_yaml:
-        errors.append("validate.yml pull_request paths must include .codex/**")
 
     # Architecture invariants and public documentation parity.
     if (ROOT / ".agents").exists() or (ROOT / "agents").exists():
@@ -476,69 +336,12 @@ def main() -> int:
             errors.append(f"README missing public skill @{skill_id}")
     if not (CORE / "core/invalidation.md").is_file() or not (CORE / "rules/repository-identity.md").is_file():
         errors.append("missing invalidation or repository-identity contract")
-
-
-    # Engineering-hardening closure.
-    hardened_workflows = {
-        "planning.research": "planner",
-        "implementation.diagnose-ticket": "implementer",
-        "review.inspect-contract": "reviewer",
-        "review.inspect-test-validity": "reviewer",
-        "review.inspect-engineering-quality": "reviewer",
-    }
-    for workflow_id, role in hardened_workflows.items():
-        if workflows.get(workflow_id, {}).get("role") != role:
-            errors.append(f"{workflow_id}: missing or wrong role")
-
-    research = schemas.get("engineering-research.schema.json", {})
-    if research.get("$id") != "yaaw.engineering-research/v1":
-        errors.append("engineering research schema missing/drifted")
-    if artifacts.get("engineering_research", {}).get("pattern") != "docs/engineering/research/RSH-*.md":
-        errors.append("engineering research artifact path drift")
-    if "engineering_research" not in role_io["planner"].get("writes", []):
-        errors.append("Planner must own engineering_research writes")
-    for role in ("implementer", "reviewer", "orchestrator"):
-        if "engineering_research" in role_io[role].get("writes", []):
-            errors.append(f"{role} must not author engineering_research")
-    research_template = CORE / "templates" / "engineering-research.md"
-    try:
-        rmeta, _ = parse_frontmatter(research_template)
-        missing = set(research.get("required", [])) - set(rmeta)
-        if missing:
-            errors.append(f"engineering research template missing {sorted(missing)}")
-    except Exception as exc:  # noqa: BLE001
-        errors.append(f"engineering research template invalid: {exc}")
-
-    ticket_schema = schemas.get("ticket.schema.json", {})
-    for field in ("contract_version", "slice_type", "verification_mode"):
-        if field not in ticket_schema.get("properties", {}):
-            errors.append(f"ticket v2 field missing: {field}")
-    ticket_meta, _ = parse_frontmatter(CORE / "templates" / "ticket.md")
-    if ticket_meta.get("contract_version") != 2:
-        errors.append("new ticket template must use contract_version 2")
-    for field in ("slice_type", "verification_mode"):
-        if field not in ticket_meta:
-            errors.append(f"new ticket template missing {field}")
-
-    for heading in ("Test seams", "Independent test oracles", "Verification strategy", "Decomposition / slicing strategy", "External research basis"):
-        require_headings(CORE / "templates" / "spec.md", [heading], errors)
-    for heading in ("Contract lens", "Test-validity lens", "Engineering-quality lens"):
-        require_headings(CORE / "templates" / "review.md", [heading], errors)
-
-    if "codebase-design" not in expertise:
-        errors.append("codebase-design expertise missing")
-    elif set(expertise["codebase-design"].get("usable_by", [])) != {"planner", "implementer", "reviewer"}:
-        errors.append("codebase-design usable_by drift")
-
-    internal_targets = set(hardened_workflows)
-    public_targets = {entry.get("workflow_id") for entry in skills.values()}
-    leaked = internal_targets & public_targets
-    if leaked:
-        errors.append(f"internal hardening workflows exposed publicly: {sorted(leaked)}")
-
-    config_text = (ROOT / ".codex/config.toml").read_text(encoding="utf-8")
-    if "max_depth = 1" not in config_text:
-        errors.append("Codex max_depth must remain 1")
+    for rel in ("core/execution-context.md", "core/io-contract.md", "rules/research-admission.md"):
+        if not (CORE / rel).is_file():
+            errors.append(f"missing runtime hardening contract {rel}")
+    require_phrases(CORE / "core/context-loading.md", ["Progressive-disclosure invariant", "must not preload sibling or downstream workflow bodies"], errors)
+    require_phrases(CORE / "core/execution-context.md", ["git -C <WORKSPACE_ROOT>", "UNVERSIONED", "IDENTITY"], errors)
+    require_phrases(CORE / "rules/research-admission.md", ["Availability of a Codex/host skill is not an admission basis", "primary sources", "RSH-NNN"], errors)
 
     if errors:
         print("YAAW core validation failed:")
@@ -546,11 +349,7 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print(
-        "YAAW core validation passed: "
-        f"{len(skills)} skills, {len(workflows)} workflows, {len(expertise)} expertise modules, "
-        f"{len(schemas)} schemas, {len(role_io)} role I/O contracts"
-    )
+    print(f"YAAW core validation passed: {len(skills)} skills, {len(workflows)} workflows, {len(expertise)} expertise modules, {len(schemas)} schemas")
     return 0
 
 

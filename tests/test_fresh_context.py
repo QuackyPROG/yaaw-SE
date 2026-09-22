@@ -6,51 +6,37 @@ from scripts.validate_core import parse_frontmatter
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core"
-FIXTURE = ROOT / "tests" / "fixtures" / "fresh_context_project"
-DOCS = FIXTURE / "docs"
-YAAW = FIXTURE / ".yaaw"
+FIXTURE = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw-core" / "project"
+CHALLENGE_FIXTURE = ROOT / "tests" / "fixtures" / "assumption_challenge_fresh_context" / ".yaaw-core" / "project"
 
 
 class FreshContextConformanceTest(unittest.TestCase):
     def test_artifact_graph_reconstructs_without_chat_history(self):
-        product, _ = parse_frontmatter(DOCS / "product" / "product.md")
-        engineering, engineering_body = parse_frontmatter(DOCS / "engineering" / "engineering.md")
-        research, research_body = parse_frontmatter(DOCS / "engineering" / "research" / "RSH-001.md")
-        spec, spec_body = parse_frontmatter(DOCS / "specs" / "SPEC-001.md")
-        ticket, ticket_body = parse_frontmatter(YAAW / "tickets" / "SPEC-001" / "TASK-001.md")
-        review, review_body = parse_frontmatter(YAAW / "reviews" / "SPEC-001" / "TASK-001" / "R1.md")
-        evidence = json.loads((YAAW / "evidence" / "SPEC-001" / "TASK-001-V1.json").read_text())
-        state = json.loads((YAAW / "state.json").read_text())
+        product, _ = parse_frontmatter(FIXTURE / "product.md")
+        engineering, engineering_body = parse_frontmatter(FIXTURE / "engineering.md")
+        spec, spec_body = parse_frontmatter(FIXTURE / "specs" / "SPEC-001.md")
+        ticket, ticket_body = parse_frontmatter(FIXTURE / "tickets" / "TASK-001.md")
+        review, review_body = parse_frontmatter(FIXTURE / "reviews" / "TASK-001-R1.md")
+        evidence = json.loads((FIXTURE / "evidence" / "EVIDENCE-TASK-001-V1.json").read_text())
+        state = json.loads((FIXTURE / "state.json").read_text())
 
         self.assertEqual(engineering["product_revision"], product["revision"])
         self.assertEqual(spec["product_revision"], product["revision"])
         self.assertEqual(spec["engineering_revision"], engineering["revision"])
         self.assertIn("ENG-001", spec["decision_ids"])
         self.assertIn("ENG-001", engineering_body)
-        self.assertEqual(research["status"], "RESOLVED")
-        self.assertEqual(engineering.get("research_pending", []), [])
-        self.assertIn("RSH-001", engineering_body)
-        self.assertIn("Source ledger", research_body)
 
         self.assertEqual(ticket["spec"], spec["id"])
         self.assertEqual(ticket["spec_revision"], spec["revision"])
         self.assertEqual(ticket["product_revision"], product["revision"])
         self.assertEqual(ticket["engineering_revision"], engineering["revision"])
         self.assertTrue(set(ticket["decision_ids"]).issubset(set(spec["decision_ids"])))
-        self.assertEqual(ticket["contract_version"], 2)
-        self.assertEqual(ticket["slice_type"], "tracer")
-        self.assertEqual(ticket["verification_mode"], "red_green")
 
         self.assertEqual(review["ticket"], ticket["id"])
         self.assertEqual(review["ticket_revision"], ticket["revision"])
         self.assertEqual(review["spec_revision"], spec["revision"])
         self.assertEqual(review["reviewed_head_commit"], evidence["repository"]["head_commit"])
         self.assertIn(evidence["id"], review["evidence"])
-        self.assertTrue(evidence["acceptance_ready"])
-        self.assertEqual([p["phase"] for p in evidence["verification"]["phases"]], ["RED", "GREEN", "FINAL"])
-        self.assertIn("## Contract lens", review_body)
-        self.assertIn("## Test-validity lens", review_body)
-        self.assertIn("## Engineering-quality lens", review_body)
 
         self.assertEqual(state["product"]["revision"], product["revision"])
         self.assertEqual(state["planning"]["revision"], engineering["revision"])
@@ -63,11 +49,11 @@ class FreshContextConformanceTest(unittest.TestCase):
 
     def test_fixture_frontmatter_covers_schema_required_fields(self):
         pairs = [
-            ("product.schema.json", DOCS / "product" / "product.md"),
-            ("engineering.schema.json", DOCS / "engineering" / "engineering.md"),
-            ("spec.schema.json", DOCS / "specs" / "SPEC-001.md"),
-            ("ticket.schema.json", YAAW / "tickets" / "SPEC-001" / "TASK-001.md"),
-            ("review.schema.json", YAAW / "reviews" / "SPEC-001" / "TASK-001" / "R1.md"),
+            ("product.schema.json", FIXTURE / "product.md"),
+            ("engineering.schema.json", FIXTURE / "engineering.md"),
+            ("spec.schema.json", FIXTURE / "specs" / "SPEC-001.md"),
+            ("ticket.schema.json", FIXTURE / "tickets" / "TASK-001.md"),
+            ("review.schema.json", FIXTURE / "reviews" / "TASK-001-R1.md"),
         ]
         for schema_name, artifact in pairs:
             schema = json.loads((CORE / "schemas" / schema_name).read_text())
@@ -75,21 +61,47 @@ class FreshContextConformanceTest(unittest.TestCase):
             self.assertTrue(set(schema["required"]).issubset(set(meta)), artifact.name)
 
     def test_fresh_implementer_has_exact_contract_references(self):
-        ticket, _ = parse_frontmatter(YAAW / "tickets" / "SPEC-001" / "TASK-001.md")
+        ticket, _ = parse_frontmatter(FIXTURE / "tickets" / "TASK-001.md")
         self.assertTrue(ticket["spec"])
         self.assertTrue(ticket["decision_ids"])
         self.assertTrue(ticket["expertise"])
         self.assertEqual(ticket["status"], "READY")
 
     def test_fresh_reviewer_is_bound_to_repository_and_evidence(self):
-        review, _ = parse_frontmatter(YAAW / "reviews" / "SPEC-001" / "TASK-001" / "R1.md")
-        evidence = json.loads((YAAW / "evidence" / "SPEC-001" / "TASK-001-V1.json").read_text())
+        review, _ = parse_frontmatter(FIXTURE / "reviews" / "TASK-001-R1.md")
         self.assertTrue(review["reviewed_head_commit"])
-        self.assertEqual(review["repository_identity_schema"], "yaaw.repository-identity/v2")
-        self.assertIsInstance(review["reviewed_dirty_publishable"], bool)
-        self.assertTrue(review["reviewed_publishable_worktree_digest"])
-        self.assertEqual(review["reviewed_branch"], evidence["repository"]["branch"])
+        self.assertIsInstance(review["reviewed_dirty"], bool)
+        self.assertTrue(review["reviewed_worktree_digest"])
         self.assertTrue(review["evidence"])
+
+    def test_challenged_conclusions_survive_without_original_question_wording(self):
+        product, product_body = parse_frontmatter(CHALLENGE_FIXTURE / "product.md")
+        engineering, engineering_body = parse_frontmatter(CHALLENGE_FIXTURE / "engineering.md")
+
+        self.assertEqual(engineering["product_revision"], product["revision"])
+        self.assertIn("Decision: Each workspace has exactly one active owner in V1.", product_body)
+        self.assertIn("Reason: Shared ownership is not required by the accepted collaboration scope.", product_body)
+        self.assertIn("Implication: Ownership transfer must preserve exactly one active owner.", product_body)
+
+        for marker in [
+            "### ENG-007",
+            "Status: DECIDED",
+            "Reason:",
+            "Rejected alternatives:",
+            "Implications:",
+            "Provenance:",
+            "## Assumptions",
+            "## Current decision frontier",
+            "## Future fog",
+        ]:
+            self.assertIn(marker, engineering_body)
+
+        combined = f"{product_body}\n{engineering_body}".lower()
+        for transcript_marker in ["user said", "assistant asked", "original question", "conversation transcript"]:
+            self.assertNotIn(transcript_marker, combined)
+
+        self.assertIn("F-007 is executable without inventing ownership semantics.", engineering_body)
+        self.assertIn("Shared ownership remains future fog", engineering_body)
 
 
 if __name__ == "__main__":

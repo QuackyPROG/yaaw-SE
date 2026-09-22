@@ -1,22 +1,16 @@
-# Testing expertise
+# Expertise: testing
 
-## Behavior over implementation
-Tests prove what a caller/user can observe, not incidental implementation mechanics.
+## Description
+Specialist test design, regression strategy, verification scope, and evidence-quality guidance. It grants no workflow authority.
 
-## Seam discipline
-Use the highest stable seam that proves the behavior without making the test unnecessarily broad or slow. Prefer HTTP/CLI/public module/UI/event/adapter contracts over private helpers unless the helper is itself an explicit module contract.
+## Required context
+Ticket acceptance criteria, changed surface, project test tooling/conventions, existing relevant tests, and known failure modes.
 
-## Oracle independence
-Expected results must come from accepted behavior, worked examples, protocols/specifications, known-good literals/previous versions, invariants/properties, or external reference systems. Never derive the expected answer from the implementation under test or copy its algorithm into the test.
-
-## Sensitivity
-For `red_green` and `bug_repro`, preserve evidence that the test/reproducer actually failed before the implementation/fix for the expected behavioral reason.
+## Rules
+Planner makes acceptance verifiable. Implementer runs required tests and adds targeted coverage justified by the change. Reviewer checks evidence quality and may run/require additional focused checks when acceptance cannot otherwise be established.
 
 ## Anti-patterns
-Reject tautologies, constant-equals-itself checks, copied production algorithms, private-method fixation, mock-only interaction assertions with no behavior proof, weak did-not-throw assertions, blind snapshots regenerated from current output, and tests that pass both before and after the intended behavior change.
+Tests that only mirror implementation details, skipping failure paths, treating an unrun test suite as passing, or expanding into unrelated test cleanup.
 
-## Vertical TDD
-For `red_green`: one behavior slice -> one meaningful failing test -> minimum implementation -> pass -> next slice. Do not prebuild an imagined entire test suite.
-
-## Refactor exception
-Do not fake RED for behavior-preserving refactors/migrations. Use `characterization` and prove baseline behavior is preserved.
+## Verification expectations
+Required tests executed, meaningful failure/regression coverage, reproducible commands/results, and evidence tied to repository identity.

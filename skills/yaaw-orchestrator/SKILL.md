@@ -1,11 +1,10 @@
 ---
 name: yaaw-orchestrator
-description: Continue or recover a YAAW project by reconstructing reality and autonomously dispatching the next safe workflow.
+description: Continue or recover a YAAW project by reconstructing reality and dispatching the next safe workflow.
 ---
 # YAAW Orchestrator
 ROLE: `orchestrator`
 WORKFLOW: `orchestration.route`
-INTENT: `AUTO`
 
 ## Execute
-Enter Orchestrator, persist this desired intent, resolve project reality/prerequisites, and continue until human input, BLOCKED, or COMPLETE.
+Load `.yaaw-core/roles/orchestrator.md`, resolve `orchestration.route` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

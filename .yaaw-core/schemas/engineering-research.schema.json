@@ -2,47 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "yaaw.engineering-research/v1",
   "type": "object",
-  "required": [
-    "schema",
-    "id",
-    "revision",
-    "status",
-    "product_revision",
-    "engineering_revision",
-    "frontier_id"
-  ],
+  "required": ["schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id"],
   "properties": {
-    "schema": {
-      "const": "yaaw.engineering-research/v1"
-    },
-    "id": {
-      "type": "string",
-      "pattern": "^RSH-[0-9]+$"
-    },
-    "revision": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "status": {
-      "enum": [
-        "PENDING",
-        "RESOLVED",
-        "STALE",
-        "BLOCKED"
-      ]
-    },
-    "product_revision": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "engineering_revision": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "frontier_id": {
-      "type": "string",
-      "minLength": 1
-    }
+    "schema": {"const": "yaaw.engineering-research/v1"},
+    "id": {"type": "string", "pattern": "^RSH-[0-9]+$"},
+    "revision": {"type": "integer", "minimum": 1},
+    "status": {"enum": ["PENDING", "RESOLVED", "STALE", "BLOCKED"]},
+    "product_revision": {"type": "integer", "minimum": 1},
+    "engineering_revision": {"type": "integer", "minimum": 1},
+    "frontier_id": {"type": "string", "minLength": 1}
   },
   "additionalProperties": false
 }

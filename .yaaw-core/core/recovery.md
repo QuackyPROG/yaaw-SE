@@ -1,6 +1,6 @@
 # Recovery policy
 
-Recovery compares claimed state with observed reality and returns to the last trustworthy boundary.
+Recovery compares claimed state with observed reality and returns to the last trustworthy boundary. Resolve the workspace root first and use only root-anchored, workspace-scoped repository evidence from `core/execution-context.md`.
 
 ## Evidence authority
 - Product intent: current accepted `product.md` revision.
@@ -9,22 +9,13 @@ Recovery compares claimed state with observed reality and returns to the last tr
 - Acceptance: fresh review evidence tied to the exact ticket/spec revisions and repository identity.
 - Routing cache: `state.json`, reconciled against stronger evidence.
 
-Project memory is not recovery evidence. A remembered statement that work completed, tests passed, or a review happened may suggest where to inspect, but recovery must prove the boundary from current artifacts/repository/evidence/reviews before changing state.
-
 ## Rules
 - Never reimplement solely because state is stale.
-- `IN_PROGRESS` + implementation + acceptance-ready final verification tied to the current application identity + no review -> reconcile to `REVIEW_REQUIRED`.
+- `IN_PROGRESS` + implementation + required verification evidence + no review -> reconcile to `REVIEW_REQUIRED`.
 - `READY` + implementation already present -> inspect/recover rather than duplicate the change.
 - `PASS` + missing/stale review, source revision mismatch, or repository identity mismatch -> invalidate current PASS and route to review/replan as appropriate.
-- A stale `.yaaw/runtime/handoff.json` is discarded, not executed.
+- A stale `.yaaw-core/runtime/handoff.json` is discarded, not executed.
+- If repository identity is required but status is not `READY`, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE` or `BLOCKED` with exact missing proof.
 - If the last trustworthy boundary cannot be proven, return `BLOCKED` with exact missing proof.
 
 Every reconciliation uses a legal transition and records its reason/evidence in state provenance.
-
-## VCS-aware recovery
-
-Repository evidence is split by authority domain. Application/publication identity is evidence for implemented code; local YAAW artifacts are evidence for control-plane state. Recovery understands pending checkpoint intent, local commit presence, current branch position, integration status, publication status, and protected-path violations without turning Git mechanics into ticket states.
-
-
-## Acceptance-ready boundary
-For hardened contract-v2 tickets, verification presence is not verification completion. Diagnosis evidence, RED-only evidence, and failed verification are never completion evidence. Only final `acceptance_ready: true` verification whose top-level repository identity matches the publication-clean current application identity can prove the `REVIEW_REQUIRED` boundary. Legacy tickets retain their documented legacy interpretation.

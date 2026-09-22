@@ -3,38 +3,21 @@
 ## Purpose
 Continuously restore project reality and execute one safe canonical workflow at a time until a true stop condition.
 
-## Inputs
-Current public-skill invocation/desired intent; canonical skills/workflows/artifacts/role-I/O/routing/context-policy/transition registries; current repository reality; and existing canonical `docs/` / `.yaaw/` artifacts when present. Project learned memory is never an orchestration routing input.
-
-## Entry contract
-Every public YAAW skill enters this workflow. Resolve its `desired_intent` from `registries/skills.json` and persist `.yaaw/runtime/intent.json`. A desired intent is a destination request, never permission to skip prerequisites.
-
-Before entering the loop, ensure the canonical project structure exists. Use the idempotent project initializer equivalent to `python scripts/init_project.py .`; create missing pieces only and never overwrite durable content.
+## Progressive routing
+Selection is metadata-first. Do not preload candidate target workflow bodies, templates, or expertise before `orchestration.determine-next-action` chooses exactly one workflow.
 
 ## Procedure
 Repeat:
 1. execute `orchestration.inspect-state`;
 2. execute `orchestration.reconcile-state` when inconsistencies exist;
-3. execute `orchestration.determine-next-action` using observed reality plus active desired intent;
+3. execute `orchestration.determine-next-action`;
 4. if terminal/blocked/human-input stop condition is returned, stop;
-5. persist any legal lifecycle admission required before dispatch;
-6. execute `orchestration.dispatch` for the one persisted exact handoff;
-7. validate the target role's durable output and typed result;
-8. Orchestrator alone persists the justified lifecycle transition/state provenance;
-9. consume the handoff and return to step 1.
-
-When the requested destination has been validly reached, mark that intent satisfied and continue with normal autonomous routing until another true stop condition.
+5. execute `orchestration.dispatch` for the one persisted handoff;
+6. require the dispatched workflow to persist its artifact/state/evidence output or typed prerequisite result;
+7. discard the consumed handoff and return to step 1 before loading another target workflow.
 
 ## Loop safety
-If the same repository identity, state, intent, handoff, and expected output repeat without durable mutation/evidence change, stop as `BLOCKED` with `no_progress` rather than spinning.
+If the same repository capability/identity, state, handoff, and expected output repeat without any durable mutation/evidence change, stop as `BLOCKED` with `no_progress` rather than spinning.
 
 ## Stop conditions
-Human product/engineering answer required; evidence/permission unavailable; host requires approval for consequential action; accepted scope is terminal `COMPLETE`; or an unrecoverable `BLOCKED` condition exists.
-
-## Project publication loop
-
-Project VCS setup is an operational prerequisite before checkpoint or publication work. After Reviewer PASS, route through local integration eligibility, local integration, identity validation, re-verification/review if integration changed identity, final publication audit, then push only the configured integration branch. Topic/worktree refs stay local.
-
-
-## RESEARCH_REQUIRED loop
-`RESEARCH_REQUIRED` is non-terminal and does not mutate ticket lifecycle. Consume the Planner result, re-inspect reality, then dispatch a fresh Planner with `planning.research` and the exact RSH artifact. After research returns, re-inspect and continue normal planning.
+Human product/engineering answer required; evidence/permission unavailable; target workflow requires repository `IDENTITY` but status is not `READY`; host requires approval for consequential action; or accepted scope is terminal `COMPLETE`.

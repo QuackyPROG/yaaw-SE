@@ -27,13 +27,3 @@ decision_ids: []
 ## Non-goals
 ## Open risks
 ## Acceptance conditions
-
-## Test seams
-
-## Independent test oracles
-
-## Verification strategy
-
-## Decomposition / slicing strategy
-
-## External research basis

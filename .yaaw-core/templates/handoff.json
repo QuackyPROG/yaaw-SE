@@ -1,17 +1,27 @@
 {
-  "schema": "yaaw.handoff/v3",
+  "schema": "yaaw.handoff/v2",
   "role": "implementer",
   "workflow": "implementation.implement-ticket",
-  "desired_intent": "IMPLEMENTATION",
-  "active_artifact": ".yaaw/tickets/SPEC-001/TASK-001.md",
-  "reads": [".yaaw/tickets/SPEC-001/TASK-001.md", "docs/specs/SPEC-001.md", "docs/product/product.md", ".yaaw/vcs.json", ".yaaw/runtime/vcs-observed.json"],
-  "writes": ["<ticket-admitted application paths>", ".yaaw/evidence/SPEC-001/TASK-001-V1.json", ".yaaw/vcs/checkpoints/TASK-001/C1.json"],
-  "forbidden_writes": ["docs/product/**", "docs/engineering/**", "docs/specs/**", ".yaaw/tickets/**", ".yaaw/reviews/**", ".yaaw/runtime/**", ".yaaw/state.json", ".yaaw/vcs.json"],
-  "references": ["docs/specs/SPEC-001.md"],
+  "desired_intent": "IMPLEMENT",
+  "active_artifact": ".yaaw-core/project/tickets/TASK-000.md",
+  "references": [],
+  "reads": [],
+  "writes": [],
+  "forbidden_writes": [],
   "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
   "expertise": [],
-  "context_policy": {"strategy": "minimum-necessary", "memory_mode": "standard", "memory_phase": "before-broad-discovery", "memory_target_tokens": 1200, "deep_history_allowed": true},
-  "expected_results": ["CHECKPOINT_READY", "REVIEW_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PRECONDITION_UNSATISFIED"],
-  "repository": {"identity_schema": "yaaw.repository-identity/v2", "head_commit": "COMMIT", "branch": "feature/local-only", "dirty_publishable": false, "publishable_worktree_digest": "sha256:DIGEST", "integration_branch": "main", "base_commit": "BASE"},
-  "transition_sequence": 1
+  "host_expertise": [],
+  "expected_output": "implementation_evidence",
+  "result_vocabulary": ["SUCCESS", "REVIEW_REQUIRED", "REPLAN_REQUIRED", "PRECONDITION_UNSATISFIED", "BLOCKED"],
+  "repository_requirement": "IDENTITY",
+  "repository": {
+    "status": "READY",
+    "workspace_scope": ".",
+    "git_root_relation": "same",
+    "head_commit": "COMMIT",
+    "dirty": false,
+    "worktree_digest": "DIGEST",
+    "error": null
+  },
+  "transition_sequence": 0
 }

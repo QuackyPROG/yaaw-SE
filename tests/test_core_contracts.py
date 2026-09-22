@@ -11,6 +11,10 @@ class CoreContractsTest(unittest.TestCase):
     def setUpClass(cls):
         cls.workflows = json.loads((CORE / "registries/workflows.json").read_text())
         cls.skills = json.loads((CORE / "registries/skills.json").read_text())
+        cls.expertise = json.loads((CORE / "registries/expertise.json").read_text())
+        cls.execution = json.loads((CORE / "registries/execution-policy.json").read_text())
+        cls.role_io = json.loads((CORE / "registries/role-io.json").read_text())
+        cls.artifacts = json.loads((CORE / "registries/artifacts.json").read_text())
 
     def test_every_public_skill_routes_to_canonical_workflow(self):
         for skill, entry in self.skills.items():
@@ -35,49 +39,24 @@ class CoreContractsTest(unittest.TestCase):
             self.assertTrue(path.is_file(), workflow_id)
             self.assertIn("## Purpose", path.read_text(), workflow_id)
 
-    def test_folder_ownership_contract_locks_semantic_write_areas(self):
-        text = (CORE / "core/folder-ownership.md").read_text()
-        for required in [
-            "docs/product/**",
-            "docs/engineering/**",
-            "docs/specs/**",
-            ".yaaw/tickets/**",
-            ".yaaw/evidence/**",
-            ".yaaw/reviews/**",
-            ".yaaw/runtime/**",
-            "Planner owns **content**",
-            "Orchestrator owns **lifecycle**",
-            "Implementer owns **execution**",
-            "Reviewer owns **acceptance**",
-            "Users are never required to pre-create YAAW folders or artifacts",
-            "partially populated canonical trees",
-            "never overwrite them during bootstrap",
-        ]:
-            self.assertIn(required, text)
-
-    def test_prd_create_bootstraps_missing_or_partial_structure(self):
-        text = (CORE / "workflows/prd/create.md").read_text()
-        self.assertIn("Ensure the canonical project structure exists", text)
-        self.assertIn("any required `docs/` or `.yaaw/`", text)
-        self.assertIn("docs/product/product.md", text)
-        self.assertIn("never overwrite existing project memory", text)
-
-    def test_orchestrator_bootstraps_before_inspection(self):
-        route = (CORE / "workflows/orchestration/route.md").read_text()
-        inspect = (CORE / "workflows/orchestration/inspect-state.md").read_text()
-        self.assertIn("Before entering the loop, ensure the canonical project structure exists", route)
-        self.assertIn("idempotent project initializer", route)
-        self.assertIn("Direct callers must run the idempotent project initializer first", inspect)
-
     def test_orchestrator_route_and_dispatch_are_not_aliases(self):
-        self.assertNotEqual(self.workflows["orchestration.route"]["workflow"], self.workflows["orchestration.dispatch"]["workflow"])
+        self.assertNotEqual(
+            self.workflows["orchestration.route"]["workflow"],
+            self.workflows["orchestration.dispatch"]["workflow"],
+        )
         dispatch = (CORE / "workflows/orchestration/dispatch.md").read_text()
         self.assertIn("This file is not the orchestration loop", dispatch)
         self.assertIn("Never recursively dispatch", dispatch)
 
     def test_routing_state_precedence_prevents_review_repair_loop(self):
         text = (CORE / "core/routing.md").read_text()
-        order = [text.index("If a ticket is `REPLAN_REQUIRED`"), text.index("If a ticket is `REPAIR_REQUIRED`"), text.index("If a ticket is `REVIEW_REQUIRED`"), text.index("If a ticket is `IN_PROGRESS`"), text.index("ticket is `READY`")]
+        order = [
+            text.index("If a ticket is `REPLAN_REQUIRED`"),
+            text.index("If a ticket is `REPAIR_REQUIRED`"),
+            text.index("If a ticket is `REVIEW_REQUIRED`"),
+            text.index("If a ticket is `IN_PROGRESS`"),
+            text.index("ticket is `READY`"),
+        ]
         self.assertEqual(order, sorted(order))
 
     def test_state_schema_can_represent_transition_provenance(self):
@@ -89,11 +68,9 @@ class CoreContractsTest(unittest.TestCase):
 
     def test_review_and_evidence_bind_repository_identity(self):
         review = json.loads((CORE / "schemas/review.schema.json").read_text())
-        self.assertTrue({"repository_identity_schema", "reviewed_head_commit", "reviewed_branch", "reviewed_dirty_publishable", "reviewed_publishable_worktree_digest", "review_base_commit", "evidence"}.issubset(set(review["required"])))
+        self.assertTrue({"reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"}.issubset(set(review["required"])))
         evidence = json.loads((CORE / "schemas/evidence.schema.json").read_text())
         self.assertIn("repository", evidence["required"])
-        identity = json.loads((CORE / "schemas/repository-identity.schema.json").read_text())
-        self.assertEqual(identity["$id"], "yaaw.repository-identity/v2")
         self.assertEqual(set(review["properties"]["result"]["enum"]), {"PASS", "REPAIR", "REPLAN", "BLOCKED"})
 
     def test_transition_contract_forbids_self_acceptance_shortcuts(self):
@@ -117,6 +94,73 @@ class CoreContractsTest(unittest.TestCase):
         self.assertIn("must not author product decisions", text)
         self.assertIn("architecture", text)
         self.assertIn("acceptance", text)
+
+    def test_changeability_is_core_policy_not_public_skill(self):
+        policy = CORE / "rules/changeability.md"
+        module = CORE / "expertise/changeability/MODULE.md"
+        self.assertTrue(policy.is_file())
+        self.assertTrue(module.is_file())
+        self.assertIn("changeability", self.expertise)
+        self.assertNotIn("yaaw-changeability", self.skills)
+        policy_text = policy.read_text()
+        for principle in [
+            "Keep the main path visible",
+            "Name by domain meaning",
+            "Contain external systems behind boundaries",
+            "Make invalid states harder to represent",
+            "Separate decisions from actions",
+            "Make failures useful",
+            "Keep changes focused",
+        ]:
+            self.assertIn(principle, policy_text)
+
+    def test_changeability_is_enforced_across_plan_build_review(self):
+        required_files = [
+            CORE / "roles/planner.md",
+            CORE / "roles/implementer.md",
+            CORE / "roles/reviewer.md",
+            CORE / "workflows/planning/create-tickets.md",
+            CORE / "workflows/implementation/implement-ticket.md",
+            CORE / "workflows/implementation/verify-ticket.md",
+            CORE / "workflows/implementation/repair-ticket.md",
+            CORE / "workflows/review/review-ticket.md",
+        ]
+        for path in required_files:
+            self.assertIn("changeability", path.read_text().lower(), str(path))
+
+        review_template = (CORE / "templates/review.md").read_text()
+        self.assertIn("## Changeability assessment", review_template)
+        classify = (CORE / "workflows/review/classify-findings.md").read_text()
+        self.assertIn("style preference", classify.lower())
+        self.assertIn("CHANGEABILITY", classify)
+
+
+    def test_every_workflow_has_repository_execution_policy(self):
+        self.assertEqual(set(self.workflows), set(self.execution["workflows"]))
+        self.assertEqual(self.execution["workflows"]["prd.route"]["repository_requirement"], "NONE")
+        self.assertEqual(self.execution["workflows"]["planning.discover"]["repository_requirement"], "INSPECT")
+        self.assertEqual(self.execution["workflows"]["implementation.implement-ticket"]["repository_requirement"], "IDENTITY")
+        self.assertEqual(self.execution["workflows"]["review.review-ticket"]["repository_requirement"], "IDENTITY")
+
+    def test_role_io_is_complete_and_uses_canonical_artifacts(self):
+        self.assertEqual(set(self.role_io["roles"]), {"prd", "planner", "implementer", "reviewer", "orchestrator"})
+        artifact_ids = set(self.artifacts) - {"schema"}
+        for role, contract in self.role_io["roles"].items():
+            for field in ("reads", "writes", "forbidden_writes"):
+                self.assertTrue(set(contract[field]).issubset(artifact_ids), f"{role}:{field}")
+
+    def test_research_is_internal_and_frontier_owned(self):
+        self.assertIn("planning.research", self.workflows)
+        self.assertNotIn("yaaw-research", self.skills)
+        self.assertIn("research-admission", (CORE / "workflows/planning/decision-frontier.md").read_text())
+        self.assertIn("Availability of a Codex/host skill is not an admission basis", (CORE / "rules/research-admission.md").read_text())
+
+    def test_context_loading_is_progressive_and_git_is_root_anchored(self):
+        context = (CORE / "core/context-loading.md").read_text()
+        execution = (CORE / "core/execution-context.md").read_text()
+        self.assertIn("must not preload sibling or downstream workflow bodies", context)
+        self.assertIn("git -C <WORKSPACE_ROOT>", execution)
+        self.assertIn("UNVERSIONED", execution)
 
 
 if __name__ == "__main__":

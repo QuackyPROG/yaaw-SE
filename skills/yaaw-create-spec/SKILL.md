@@ -1,11 +1,10 @@
 ---
 name: yaaw-create-spec
-description: Request specification creation through Orchestrator; unresolved product or engineering prerequisites are completed first.
+description: Create the next YAAW specification from an engineering frontier whose readiness is currently PASS.
 ---
 # YAAW Create Spec
-ROLE: `orchestrator`
-WORKFLOW: `orchestration.route`
-INTENT: `SPEC`
+ROLE: `planner`
+WORKFLOW: `planning.create-spec`
 
 ## Execute
-Enter Orchestrator with spec intent; create a spec only after current product/engineering readiness proves it is legal.
+Load `.yaaw-core/roles/planner.md`, resolve `planning.create-spec` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

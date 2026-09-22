@@ -1,19 +1,20 @@
 # Record PRD decisions
 
 ## Purpose
-Turn current human answers into durable product truth before conversation continues.
+Turn human answers into durable product truth before conversation continues.
 
 ## Inputs
-Exact handoff, current product artifact, and the latest current human answers. Learned project memory is not an accepted product answer.
+Current product artifact, latest human answers, and `.yaaw-core/rules/assumption-challenge.md`.
 
 ## Procedure
-1. Interpret only what the current human answers and existing authoritative product artifact support.
-2. Update the relevant product sections and accepted product decisions.
-3. Remove settled questions and add newly discovered unresolved questions.
-4. Preserve explicit corrections and non-goals.
-5. If accepted product meaning changed, increment product `revision` and record provenance.
-6. If the changed intent may invalidate downstream planning/spec/ticket acceptance, return the invalidation requirement to Orchestrator with the changed product revision and requirement/provenance; do not read or mutate Planner/Reviewer/Implementer-owned artifacts to perform the cascade yourself.
-7. Only after the product write completes may another question round begin.
+1. Interpret only what the answers support and validate the conclusion against PRD product authority.
+2. Persist supported meaning in the relevant product sections and accepted product decisions; record conclusions rather than challenge/question transcripts.
+3. Remove settled questions and check the accepted answer for impact on previous accepted product decisions, scope, constraints, behavior, and non-goals.
+4. Preserve explicit corrections and non-goals; if a contradiction/correction changes accepted meaning, update product truth explicitly rather than silently merging both meanings.
+5. Increment product `revision` and record provenance only when accepted product meaning materially changes.
+6. If downstream planning/spec/ticket artifacts already depend on changed intent, execute the invalidation policy in `core/invalidation.md`.
+7. Reapply the assumption-challenge rule to discover newly exposed questions and recompute the unresolved current product frontier.
+8. Only after the durable write and frontier recomputation may another question round begin.
 
 ## Output
-Updated `docs/product/product.md`, current product revision/status, and `SUCCESS` plus an `invalidation_required` flag/provenance when downstream trust must be reconsidered.
+Updated `product.md`, product revision/status, recomputed unresolved product frontier, and any invalidation result.

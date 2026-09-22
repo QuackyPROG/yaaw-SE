@@ -1,176 +1,162 @@
-# YAAW-SE v2
+# YAAW-SE
 
-YAAW-SE is an artifact-first autonomous software-engineering workflow.
+YAAW-SE is an artifact-first autonomous software-engineering workflow with durable project memory and thin coding-tool entrypoints.
 
-> **Agents are disposable. Artifacts are durable. Learned experience may also persist. Only authoritative artifacts/evidence determine workflow truth.**
+> **Agents are disposable. Artifacts are durable.**
+
+## Install into any project
+
+```bash
+cd my-project
+npx yaaw-se install
+```
+
+The installer defaults to the current directory, lets you select coding tools and public skill entrypoints, previews filesystem changes, and keeps every permanent write inside the selected project.
+
+Tier-1 integrations:
+
+- Codex
+- Claude Code
+- Gemini CLI
+- Cline
+
+Headless example:
+
+```bash
+npx yaaw-se install --directory . --tools codex,claude-code --skills standard --yes
+```
+
+Preview without writing:
+
+```bash
+npx yaaw-se install --tools codex --dry-run
+```
+
+## What gets installed
+
+A consuming project has exactly one canonical YAAW root:
+
+```text
+.yaaw-core/
+├── core/            package-managed workflow contracts
+├── roles/
+├── workflows/
+├── expertise/
+├── rules/
+├── registries/
+├── schemas/
+├── templates/
+├── project/         durable project-owned YAAW memory
+│   ├── product.md
+│   ├── engineering.md
+│   ├── state.json
+│   ├── research/        admitted Planner research (RSH-*)
+│   ├── specs/
+│   ├── tickets/
+│   ├── reviews/
+│   ├── evidence/
+│   └── rules/
+├── runtime/         replaceable coordination state
+└── install/         installer metadata
+```
+
+Selected coding tools receive only adapters:
+
+```text
+.agents/skills/yaaw-*/       Codex
+.claude/skills/yaaw-*/       Claude Code
+.gemini/skills/yaaw-*/       Gemini CLI
+.cline/skills/yaaw-*/        Cline
+```
+
+Codex, Claude Code, and Gemini receive a small managed block in their project instruction file. Cline receives the namespaced `.cline/rules/yaaw-se.md`. Provider folders never contain a second YAAW workflow engine.
+
+## Public YAAW entrypoints
+
+Smart entrypoints:
+
+- `@yaaw-orchestrator` — reconstruct project reality and choose the next valid workflow.
+- `@yaaw-prd` — create/continue product definition.
+- `@yaaw-planner` — continue repository-backed engineering planning.
+- `@yaaw-implement` — implement one admitted ticket.
+- `@yaaw-review` — independently review current work.
+
+Direct shortcuts:
+
+- `@yaaw-revise-prd`
+- `@yaaw-refine-prd`
+- `@yaaw-planning-review`
+- `@yaaw-create-spec`
+- `@yaaw-create-ticket`
+- `@yaaw-create-tickets`
+- `@yaaw-repair`
+
+The Standard profile exposes all public entrypoints. Core exposes the five smart entrypoints. Custom changes only which shortcuts a coding tool discovers; it never removes canonical workflows from `.yaaw-core`.
+
+## Update, modify, repair
+
+Rerun the installer:
+
+```bash
+npx yaaw-se install
+```
+
+Existing installations offer Quick Update, Modify Installation, Repair Installation, or safe Uninstall.
+
+Headless examples:
+
+```bash
+npx yaaw-se install --action quick-update --yes
+npx yaaw-se install --action modify --tools codex,gemini-cli --skills core --yes
+npx yaaw-se doctor --repair
+```
+
+Managed files are hashed. Local modifications block headless replacement unless `--force-managed` is explicit. That flag applies only to installer-managed files/sections and never authorizes overwriting `.yaaw-core/project`.
+
+Safe uninstall removes package-managed framework files and adapters but preserves durable `.yaaw-core/project` data.
+
+## Diagnostics
+
+```bash
+npx yaaw-se status
+npx yaaw-se doctor
+```
+
+`status` reports installation health and managed-file drift. `doctor` performs read-only checks for manifest integrity, path ownership, missing/modified managed files, and the one-root path registry.
 
 ## Architecture
 
-```text
-skills/        -> public desired-intent entrypoints
-.yaaw-core/    -> canonical workflow implementation
-docs/          -> durable authoritative project knowledge
-.yaaw/         -> autonomous execution state
-project memory -> optional learned historical context (Hindsight is the first adapter)
-```
+Each execution composes **Role** (authority) + **Workflow** (process) + applicable **Shared Rules** + relevant **Expertise**. Shared rules and expertise never grant authority.
 
-There are five semantic authority roles: PRD, Planner, Implementer, Reviewer, and Orchestrator. Orchestrator is the team lead/traffic controller: it reconstructs reality, resolves prerequisites, persists lifecycle state, assigns an exact context policy, and dispatches exactly one semantic workflow at a time. It does not author product meaning, architecture, implementation, or acceptance.
+The npm installer owns distribution mechanics. The YAAW Orchestrator owns semantic lifecycle continuity. Neither is a second implementation of the other.
 
-Core rule:
+See:
 
-> **Roles do work. Orchestrator decides work. Memory explains history; it never decides truth.**
+- `docs/distribution.md`
+- `docs/integrations.md`
+- `docs/releasing.md`
 
-Roles do not privately spawn each other. They communicate through durable artifacts, exact `.yaaw/runtime/handoff.json` contracts, and typed results returned to Orchestrator.
+## Development
 
-## Canonical artifacts
+Python still validates the canonical semantic engine during the migration period. The published npm package does not require Python.
 
-```text
-docs/product/product.md
-docs/engineering/engineering.md
-docs/engineering/decisions/ENG-*.md
-docs/specs/<SPEC-ID>.md
-docs/rules/**
-
-.yaaw/tickets/<SPEC-ID>/<TASK-ID>.md
-.yaaw/evidence/<SPEC-ID>/<TASK-ID>-V<VERSION>.json
-.yaaw/reviews/<SPEC-ID>/<TASK-ID>/R<ROUND>.md
-.yaaw/runtime/intent.json
-.yaaw/runtime/observed-state.json
-.yaaw/runtime/handoff.json
-.yaaw/state.json
-```
-
-`registries/artifacts.json` is the machine-readable path authority; `registries/role-io.json` defines role I/O authority; `registries/context-policy.json` defines when each role may use optional project memory and its target context budget. Every dispatch resolves these contracts into an exact handoff, so semantic roles do not wander the project looking for workflow artifacts or dump the whole project history into context.
-
-For tickets:
-
-> **Planner owns content. Orchestrator owns lifecycle. Implementer owns execution. Reviewer owns acceptance.**
-
-## Contractual memory vs learned memory
-
-YAAW has two deliberately different continuity layers:
-
-```text
-DURABLE CONTRACTUAL MEMORY
-docs/ + .yaaw/ + repository/evidence
-→ authoritative current project/workflow truth
-
-LEARNED EXPERIENTIAL MEMORY
-optional provider such as Hindsight
-→ historical rationale, conventions, prior attempts, failures, similar work, initiatives
-```
-
-Hindsight is a reference adapter, not a dependency. YAAW never installs or enables it, never stores its credentials, and never changes routing/lifecycle semantics based on its output.
-
-## Context-efficient disposable roles
-
-A fresh semantic role uses one deterministic loading chain:
-
-```text
-exact .yaaw/runtime/handoff.json FIRST
-        ↓
-AGENTS.md + exact role contract
-        ↓
-handoff.workflow → registries/workflows.json
-        ↓
-exact workflow contract + its ## Inputs
-        ↓
-exact handoff reads + selected expertise + admitted repository/evidence
-        ↓
-quarantine/release learned memory only when context_policy allows
-        ↓
-targeted current verification
-        ↓
-broad repository discovery only if the workflow admits it and a gap remains
-        ↓
-work
-```
-
-No semantic role guesses a workflow path from its role name, searches for alternate YAAW artifact locations, or broadens an internal same-role subworkflow beyond the persisted handoff.
-
-Planner and Implementer may use focused learned memory after understanding their current contract. Reviewer performs its primary acceptance/evidence inspection before memory. PRD and Orchestrator automatic learned-memory use is disabled.
-
-Memory is always advisory and should remain visibly labeled/provenanced as learned context. Current human authority, current YAAW artifacts, and current repository/evidence reality win. Memory cannot establish an `ENG-*` decision, expand an implementation ticket, satisfy acceptance evidence, create lifecycle state, or determine routing.
-
-Memory absence, disablement, unavailability, timeout, empty results, staleness, or error must degrade to the normal authoritative YAAW context without changing correctness.
-
-See `.yaaw-core/core/project-memory.md` for the provider-neutral contract and `.yaaw-core/integrations/hindsight.md` for the Hindsight adapter.
-
-## Autonomous prerequisite chain
-
-A public skill names a desired destination, not permission to skip prerequisites. For example `@yaaw-implement` means “get the project safely to implementation and continue the valid lifecycle,” not “run Implementer immediately.”
-
-```text
-product missing/unready
-→ PRD
-→ engineering unresolved
-→ Planner
-→ readiness PASS, no spec
-→ create spec
-→ accepted spec, no executable ticket
-→ create tickets
-→ one READY ticket
-→ Implementer
-→ Reviewer
-→ repair / replan / next ticket / next frontier / COMPLETE
-```
-
-Implementer has a hard gate: without one exact admitted ticket and current source spec, it makes no code changes and returns `PRECONDITION_UNSATISFIED`. Orchestrator then resolves the missing prerequisite.
-
-## Skills
-
-All public skills enter Orchestrator with a desired intent:
-
-- `@yaaw-orchestrator` — autonomous continuation (`AUTO`)
-- `@yaaw-prd` — product intent
-- `@yaaw-revise-prd` — product revision
-- `@yaaw-refine-prd` — product clarity refinement
-- `@yaaw-planner` — engineering planning
-- `@yaaw-planning-review` — readiness review
-- `@yaaw-create-spec` — specification
-- `@yaaw-create-ticket`
-- `@yaaw-create-tickets` — ticket decomposition
-- `@yaaw-implement` — implementation
-- `@yaaw-repair` — repair
-- `@yaaw-review` — independent review
-
-Prerequisites always outrank desired intent.
-
-## Bootstrap
-
-The user never needs to pre-create `docs/` or `.yaaw/`. Entry workflows ensure the canonical tree exists idempotently, equivalent to:
-
-```text
-python scripts/init_project.py /path/to/project
-```
-
-Existing durable content is never overwritten. Learned-memory availability is not part of bootstrap and never blocks YAAW.
-
-## Verification
-
-```text
+```bash
 python scripts/validate_core.py
 python scripts/validate_behavior.py
 python scripts/behavior_oracle.py
+python scripts/validate_distribution.py
 python -m unittest discover -s tests -v
+
+npm ci
+npm test
+npm run build
+npm pack --dry-run
 ```
 
-See `WORKFLOW.md` for the lifecycle and `.yaaw-core/core/io-contract.md`, `artifact-model.md`, `folder-ownership.md`, `authority.md`, `routing.md`, `context-loading.md`, `project-memory.md`, plus `.yaaw-core/integrations/hindsight.md` for normative contracts.
+The dependency graph is committed in `package-lock.json`; CI and release verification use `npm ci`. The first npm release is intentionally published manually.
 
-## Project Git boundary
+## Deterministic runtime context
 
-YAAW now separates two durable domains:
+YAAW distinguishes the consumer **workspace root** from `.yaaw-core/project/`, the durable **project memory root**. Repository commands are rooted explicitly at the workspace rather than inheriting a provider shell CWD. Product work can continue in an unversioned greenfield directory; workflows that create/review executable code require exact repository identity.
 
-```text
-YAAW control plane   -> local-authoritative, never application Git history
-Application Git      -> publishable product/source history
-Learned memory       -> optional advisory context only
-```
-
-Project isolation activates only after `scripts/init_project.py` initializes `.yaaw/install.json` with project mode. Bootstrap leaves the application's `.gitignore` untouched, maintains local visibility through the Git common directory, installs fail-closed commit/push guards, and defaults remote publication to `main` only. Topic/worktree branches stay local.
-
-“Agents are disposable. Artifacts are durable.” still holds; **durable does not imply versioned in the project application's Git repository**.
-
-
-## Engineering hardening invariants
-YAAW keeps the same public skills and authority roles. The hardened engineering loop adds Planner-owned primary-source research (`RSH-*`), planning destination/current frontier/Future Fog classification, tracer tickets, explicit test seams and independent oracles, verification modes (`red_green`, `bug_repro`, `characterization`, `verification_only`), acceptance-ready verification, and Reviewer contract/test-validity/engineering-quality lenses. Research returns through Orchestrator; roles never spawn peers; Reviewer remains acceptance authority; Orchestrator remains routing/lifecycle authority; `max_depth = 1` remains unchanged.
+Planning uses progressive disclosure: routers select one canonical workflow before loading its body/templates/expertise. Vendor-specific research or host skills require an explicit repository/product/engineering/current-candidate basis and material blocking research is stored under `.yaaw-core/project/research/`.

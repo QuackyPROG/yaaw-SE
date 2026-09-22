@@ -15,6 +15,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core"
 DEFAULT_POLICY = CORE / "registries" / "routing-policy.json"
+DEFAULT_EXECUTION_POLICY = CORE / "registries" / "execution-policy.json"
 
 
 def load_json(path: Path) -> Any:
@@ -30,8 +31,6 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
         source_current = ticket.get("source_current", True)
         implementation = ticket.get("implementation_present", False)
         verification = ticket.get("verification_present", False)
-        contract_version = ticket.get("contract_version", 1)
-        acceptance_ready = ticket.get("acceptance_ready_verification", False) if contract_version == 2 else verification
         fresh_review = ticket.get("fresh_review", False)
 
         if state == "PASS" and (not source_current or not fresh_review):
@@ -44,7 +43,7 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
             })
             continue
 
-        if state == "IN_PROGRESS" and implementation and acceptance_ready and not fresh_review:
+        if state == "IN_PROGRESS" and implementation and verification and not fresh_review:
             ticket["state"] = "REVIEW_REQUIRED"
             changes.append({
                 "ticket": ticket_id,
@@ -55,7 +54,7 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
             continue
 
         if state == "READY" and implementation:
-            next_state = "REVIEW_REQUIRED" if acceptance_ready else "IN_PROGRESS"
+            next_state = "REVIEW_REQUIRED" if verification else "IN_PROGRESS"
             ticket["state"] = next_state
             changes.append({
                 "ticket": ticket_id,
@@ -67,7 +66,7 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
     return current, changes
 
 
-def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+def _determine_next_unchecked(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     """Return one canonical workflow or terminal state after safe reconciliation."""
     reconciled, changes = reconcile_observed(observed)
 
@@ -98,20 +97,6 @@ def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str
             continue
         if any(ticket["state"] == state for ticket in tickets.values()):
             return {"workflow": state_rule["workflow"], "terminal": None, "reconciliations": changes}
-
-    if reconciled.get("readiness") == "PRODUCT_GAP" or reconciled.get("planning_status") == "product_gap":
-        return {
-            "workflow": policy["planning_unready_workflow"],
-            "terminal": None,
-            "reconciliations": changes,
-        }
-
-    if reconciled.get("research_pending", False):
-        return {
-            "workflow": policy["planning_research_workflow"],
-            "terminal": None,
-            "reconciliations": changes,
-        }
 
     if (
         reconciled.get("planning_status", "missing") != "ready"
@@ -181,6 +166,24 @@ def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str
         "terminal": None,
         "reconciliations": changes,
     }
+
+
+def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+    """Route, then enforce the selected workflow repository requirement."""
+    result = _determine_next_unchecked(observed, policy)
+    workflow = result.get("workflow")
+    if workflow:
+        execution = load_json(DEFAULT_EXECUTION_POLICY)
+        requirement = execution["workflows"][workflow]["repository_requirement"]
+        repository_status = observed.get("repository_status", "READY")
+        if requirement == "IDENTITY" and repository_status != "READY":
+            return {
+                "workflow": None,
+                "terminal": "BLOCKED",
+                "reason": "REPOSITORY_IDENTITY_UNAVAILABLE",
+                "reconciliations": result.get("reconciliations", []),
+            }
+    return result
 
 
 def run_fixture_cases(fixtures_path: Path, policy_path: Path = DEFAULT_POLICY) -> list[str]:

@@ -1,21 +1,26 @@
 # Write engineering understanding
 
 ## Purpose
-Create the durable checkpoint from which a fresh Planner can continue without depending on chat or project memory.
+Create the durable repository-backed checkpoint from which a fresh Planner can continue.
 
 ## Inputs
-Product interpretation plus discovery observations, verified current repository evidence, and any advisory historical leads retrieved during discovery.
+Product interpretation, discovery observations, repository capability, and `.yaaw-core/rules/assumption-challenge.md` results.
 
 ## Procedure
-1. Promote only current verified repository facts and Planner-owned current engineering judgments into authoritative engineering understanding.
-2. Use remembered history only as provenance/context after verifying material claims; never copy a memory summary into current truth merely because retrieval ranked it highly.
-3. Update `docs/engineering/engineering.md` with product interpretation, existing-system facts, engineering constraints, problems requiring decisions, known decisions, assumptions, risks, current frontier, future fog, and architecture spine.
-4. Increment engineering revision when the durable engineering contract/understanding materially changes.
-5. Record provenance for repository observations and product dependencies. When historical rationale materially informed a decision, cite/describe the verified rationale without making the memory provider itself authoritative.
+Update `.yaaw-core/project/engineering.md` using existing semantic sections:
+- repository observations -> Existing system;
+- unsupported beliefs -> Assumptions;
+- actual unresolved decisions -> Unresolved questions;
+- future-dependent issues -> Future fog;
+- material dangers -> Risks;
+- accepted engineering solutions -> `ENG-*` decisions;
+- compatibility-critical structure -> Architecture spine.
+
+Preserve repository capability limitations explicitly. Never store challenge/debate transcripts. Do not create vendor-specific research simply from available host skills.
+
+Increment engineering revision when durable engineering understanding materially changes. Record provenance for repository observations and product dependencies.
+
+After the durable write, mark the frontier as needing recomputation and return to `planning.route`; `planning.decision-frontier` owns the canonical partition.
 
 ## Output
-Updated engineering artifact ready for frontier analysis or questioning and sufficient for a future role even if project memory is unavailable.
-
-
-## Hardened durable checkpoint
-Always record the Planning destination, Research state, and Out-of-scope boundary alongside the current frontier/fog.
+Updated engineering artifact requiring frontier analysis or normal continuation.

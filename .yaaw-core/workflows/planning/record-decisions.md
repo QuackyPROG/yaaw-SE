@@ -4,18 +4,16 @@
 Convert accepted engineering answers into durable, independently resumable decisions.
 
 ## Inputs
-Exact handoff, current product/engineering revisions, latest accepted engineering answers, and the current repository evidence/provenance referenced by those answers.
+Current engineering artifact, latest accepted engineering answers, current product authority, repository evidence, resolved research referenced by the frontier, and `.yaaw-core/rules/assumption-challenge.md`.
 
 ## Procedure
-1. Create/update `ENG-NNN` entries with Status, Decision, Reason, material rejected alternatives, implications, and product/repository provenance.
-2. Increment engineering revision for material contract changes.
-3. Update unresolved questions, assumptions, risks, current frontier, future fog, and architecture spine.
-4. If an existing accepted decision/spec/ticket basis is superseded, apply only Planner-owned semantic invalidation allowed by the handoff to engineering/spec contract artifacts and return any ticket lifecycle invalidation requirement to Orchestrator; never mutate `.yaaw/state.json`, runtime routing state, reviews, evidence, or application files.
-5. Record durable decisions before another question round.
+1. Validate the accepted answer against current repository facts and role authority.
+2. If the answer changes or supplies missing product meaning, return `PRODUCT_GAP` to PRD/human authority.
+3. If it conflicts with an accepted `ENG-*` decision, supersede that decision explicitly and execute invalidation/replan semantics.
+4. Otherwise create/update `ENG-NNN` entries with Status, Decision, Reason, material rejected alternatives, implications, and product/repository/research provenance.
+5. Increment engineering revision for material contract changes.
+6. Record durable conclusions rather than the challenge/question transcript.
+7. Mark the current frontier/readiness stale and return to `planning.route`; `planning.decision-frontier` must recompute the canonical frontier before another question round or readiness check.
 
 ## Output
-Updated Planner-owned engineering/spec contract artifacts with stable decision IDs and provenance, plus any lifecycle invalidation request for Orchestrator.
-
-
-## Research promotion rule
-A resolved RSH does not become an engineering decision automatically. When a source-backed finding affects the current plan, Planner explicitly promotes the verified fact into the appropriate `ENG-NNN` decision with RSH/source provenance; conflicts or stale basis remain visible.
+Updated `engineering.md` with stable decision IDs/provenance and a stale frontier requiring recomputation.
