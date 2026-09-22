@@ -22,7 +22,7 @@ Roles own semantic authority. Workflows own process. Shared rules provide reusab
 - Orchestrator: continuity, reconciliation, invalidation coordination, and routing.
 
 ## Durable project root
-`.yaaw/` stores product/engineering/spec/ticket/review/evidence/rules plus `state.json`. `.yaaw/runtime/` stores replaceable observed-state and handoff caches used only for coordination.
+`.yaaw-core/project/` stores product/engineering/spec/ticket/review/evidence/rules plus `state.json`. `.yaaw-core/runtime/` stores replaceable observed-state and handoff caches used only for coordination.
 
 ## Canonical lifecycle
 `PRD -> planning -> readiness -> spec -> tickets -> implement -> review -> repair/replan/pass -> next frontier -> COMPLETE`.

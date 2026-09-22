@@ -27,7 +27,7 @@ Implementation may begin only for a bounded `READY` ticket whose source spec/fro
 A ticket is accepted only by a fresh review tied to the exact repository identity and the current ticket/spec revisions.
 
 ## Transition invariant
-Every state transition follows `core/transitions.md`, records provenance in `.yaaw/state.json`, and cites the evidence or artifact that justified it.
+Every state transition follows `core/transitions.md`, records provenance in `.yaaw-core/project/state.json`, and cites the evidence or artifact that justified it.
 
 ## Invalidation invariant
 Changed product intent or engineering decisions propagate through `core/invalidation.md`; historical artifacts are preserved but stale acceptance is never treated as current.

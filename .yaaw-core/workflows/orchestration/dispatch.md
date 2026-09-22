@@ -4,7 +4,7 @@
 Execute exactly one already-selected canonical workflow. This file is not the orchestration loop.
 
 ## Inputs
-`.yaaw/runtime/handoff.json` created by `orchestration.determine-next-action`.
+`.yaaw-core/runtime/handoff.json` created by `orchestration.determine-next-action`.
 
 ## Procedure
 1. Validate handoff schema, workflow registry entry, role, source artifact revisions, transition-sequence basis, and repository identity.

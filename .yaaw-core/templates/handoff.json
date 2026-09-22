@@ -2,7 +2,7 @@
   "schema": "yaaw.handoff/v1",
   "role": "implementer",
   "workflow": "implementation.implement-ticket",
-  "active_artifact": ".yaaw/tickets/TASK-000.md",
+  "active_artifact": ".yaaw-core/project/tickets/TASK-000.md",
   "references": [],
   "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
   "expertise": [],

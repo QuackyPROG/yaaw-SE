@@ -20,4 +20,4 @@ Do not automatically load every PRD revision, ticket, review, expertise module, 
 ## Handoff freshness
 A handoff names exact artifact paths, revisions, selected expertise, expected output, and the repository identity observed when it was created. Before executing it, verify those bases still match current reality. If they do not, discard the stale handoff and re-enter orchestration inspection.
 
-Runtime handoffs and observed-state snapshots live under `.yaaw/runtime/`; they are coordination caches, not semantic sources of truth.
+Runtime handoffs and observed-state snapshots live under `.yaaw-core/runtime/`; they are coordination caches, not semantic sources of truth.

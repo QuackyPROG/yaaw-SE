@@ -1,0 +1,15 @@
+{
+  "schema": "yaaw.paths/v1",
+  "core_root": ".yaaw-core",
+  "project_root": ".yaaw-core/project",
+  "runtime_root": ".yaaw-core/runtime",
+  "install_root": ".yaaw-core/install",
+  "product": ".yaaw-core/project/product.md",
+  "engineering": ".yaaw-core/project/engineering.md",
+  "state": ".yaaw-core/project/state.json",
+  "specs": ".yaaw-core/project/specs",
+  "tickets": ".yaaw-core/project/tickets",
+  "reviews": ".yaaw-core/project/reviews",
+  "evidence": ".yaaw-core/project/evidence",
+  "project_rules": ".yaaw-core/project/rules"
+}
