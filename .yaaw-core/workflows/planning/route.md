@@ -4,7 +4,7 @@
 Choose and execute the next canonical planning workflow from durable product/planning/repository state.
 
 ## Inputs
-Current `product.md`, `engineering.md` if present, `.yaaw/state.json`, relevant specs/tickets, project rules, and repository reality.
+Current `product.md`, `engineering.md` if present, `.yaaw-core/project/state.json`, relevant specs/tickets, project rules, and repository reality.
 
 ## Priority
 1. missing/stale repository understanding -> execute `planning.discover`, then `planning.write-understanding`, then re-evaluate;

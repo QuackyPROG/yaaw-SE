@@ -4,7 +4,7 @@
 Persist immutable acceptance history and update current ticket state legally.
 
 ## Procedure
-1. Create the next immutable `.yaaw/reviews/TASK-NNN-RK.md` from the review template.
+1. Create the next immutable `.yaaw-core/project/reviews/TASK-NNN-RK.md` from the review template.
 2. Frontmatter records ticket/review round, result, ticket/spec revisions, reviewed repository identity, and evidence references.
 3. Body records findings, verification, evidence interpretation, and next action.
 4. Never overwrite prior review rounds.

@@ -7,7 +7,7 @@ Create the durable checkpoint from which a fresh Planner can continue.
 Product interpretation, discovery observations, and `.yaaw-core/rules/assumption-challenge.md` results.
 
 ## Procedure
-Update `.yaaw/engineering.md` using existing semantic sections rather than adding a challenge log:
+Update `.yaaw-core/project/engineering.md` using existing semantic sections rather than adding a challenge log:
 - repository observations -> Existing system;
 - unsupported beliefs -> Assumptions;
 - actual unresolved decisions -> Unresolved questions / Current decision frontier;

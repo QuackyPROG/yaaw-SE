@@ -6,8 +6,8 @@ from scripts.validate_core import parse_frontmatter
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core"
-FIXTURE = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw"
-CHALLENGE_FIXTURE = ROOT / "tests" / "fixtures" / "assumption_challenge_fresh_context" / ".yaaw"
+FIXTURE = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw-core" / "project"
+CHALLENGE_FIXTURE = ROOT / "tests" / "fixtures" / "assumption_challenge_fresh_context" / ".yaaw-core" / "project"
 
 
 class FreshContextConformanceTest(unittest.TestCase):

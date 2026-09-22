@@ -7,8 +7,8 @@ Initialize product memory and drive product discovery until the current frontier
 Human's product goal, product template, current state, and `.yaaw-core/rules/assumption-challenge.md`.
 
 ## Procedure
-1. If `.yaaw/` is absent, initialize the canonical durable layout and starting artifacts (equivalent to `python scripts/init_project.py .`); never overwrite existing project memory.
-2. If `product.md` is absent inside an existing `.yaaw/`, create it from the canonical template and set product state to `draft`.
+1. If the canonical YAAW layout is incomplete, create missing `.yaaw-core/project/`, `.yaaw-core/runtime/`, and required durable artifacts from `.yaaw-core/templates/`; never overwrite existing project memory.
+2. If `product.md` is absent inside an existing `.yaaw-core/project/`, create it from the canonical template and set product state to `draft`.
 3. Capture the supplied goal without technicalizing it.
 4. Identify the highest-value unresolved product questions by applying the assumption-challenge rule to the supplied goal and any already-accepted product context.
 5. Execute `prd.question-round`; do not create a second interrogation loop in this workflow.

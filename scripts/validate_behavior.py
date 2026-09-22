@@ -97,7 +97,7 @@ def main() -> int:
 
     errors.extend(run_fixture_cases(FIXTURES))
 
-    fresh_root = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw"
+    fresh_root = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw-core" / "project"
     for relative in (
         "product.md",
         "engineering.md",

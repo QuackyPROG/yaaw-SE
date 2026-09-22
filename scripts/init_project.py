@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize the durable .yaaw artifact root in a target project."""
+"""Development/conformance initializer for the one-root YAAW project layout."""
 from __future__ import annotations
 
 import argparse
@@ -13,17 +13,21 @@ TEMPLATES = ROOT / ".yaaw-core" / "templates"
 
 def initialize_project(project_root: Path) -> list[Path]:
     project_root = project_root.resolve()
-    yaaw = project_root / ".yaaw"
+    core = project_root / ".yaaw-core"
+    project = core / "project"
+    runtime = core / "runtime"
+    install = core / "install"
     created: list[Path] = []
 
     for directory in (
-        yaaw,
-        yaaw / "specs",
-        yaaw / "tickets",
-        yaaw / "reviews",
-        yaaw / "evidence",
-        yaaw / "rules",
-        yaaw / "runtime",
+        project,
+        project / "specs",
+        project / "tickets",
+        project / "reviews",
+        project / "evidence",
+        project / "rules",
+        runtime,
+        install,
     ):
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
@@ -33,12 +37,12 @@ def initialize_project(project_root: Path) -> list[Path]:
         ("product.md", "product.md"),
         ("engineering.md", "engineering.md"),
     ):
-        destination = yaaw / destination_name
+        destination = project / destination_name
         if not destination.exists():
             shutil.copyfile(TEMPLATES / template_name, destination)
             created.append(destination)
 
-    state_path = yaaw / "state.json"
+    state_path = project / "state.json"
     if not state_path.exists():
         state = json.loads((TEMPLATES / "project-state.json").read_text(encoding="utf-8"))
         state["product"]["status"] = "draft"
@@ -54,7 +58,9 @@ def initialize_project(project_root: Path) -> list[Path]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Initialize .yaaw durable project state.")
+    parser = argparse.ArgumentParser(
+        description="Development-only initializer for .yaaw-core/project durable state."
+    )
     parser.add_argument("project_root", nargs="?", default=".", type=Path)
     args = parser.parse_args()
     created = initialize_project(args.project_root)
