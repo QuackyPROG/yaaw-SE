@@ -64,9 +64,10 @@ function queueEmptyParentCleanup(operations: InstallOperation[], projectRoot: st
   ]);
   let current = dirname(path);
   while (current !== projectRoot && !protectedDirs.has(current)) {
-    if (!operations.some(op => op.type === "remove-empty-dir" && op.path === current)) {
-      operations.push({ type: "remove-empty-dir", path: current, owner });
-    }
+    // Cleanup is intentionally repeatable. Earlier attempts may see sibling
+    // managed files that are removed later in the same transaction; the final
+    // attempt then removes the now-empty adapter/framework directory.
+    operations.push({ type: "remove-empty-dir", path: current, owner });
     current = dirname(current);
   }
 }

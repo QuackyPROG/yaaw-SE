@@ -102,8 +102,8 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     } else action = "quick-update";
   } else action = "fresh";
 
-  if (existing.kind === "partial" && action === "fresh") {
-    throw new Error(`Partial YAAW/provider state exists without a valid manifest: ${existing.signals.join(", ")}. Use repair only after restoring a valid manifest or clean the partial package-owned files explicitly.`);
+  if (existing.kind === "partial") {
+    throw new Error(`Partial YAAW/provider state exists without a valid manifest: ${existing.signals.join(", ")}. Ownership cannot be reconstructed safely; restore a valid manifest or clean the partial package-owned files explicitly before reinstalling.`);
   }
 
   if (action === "uninstall") {
