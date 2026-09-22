@@ -27,6 +27,16 @@ async function walk(dir) {
   return result;
 }
 
+const textExtensions = new Set([".md", ".json"]);
+const copiedFiles = await walk(out);
+for (const file of copiedFiles) {
+  const lower = file.toLowerCase();
+  if ([...textExtensions].some(ext => lower.endsWith(ext))) {
+    const text = await readFile(file, "utf8");
+    await writeFile(file, text.replace(/\r\n/g, "\n"), "utf8");
+  }
+}
+
 const files = (await walk(out)).filter(p => !p.endsWith("payload-files.json")).sort();
 const manifest = [];
 for (const file of files) {

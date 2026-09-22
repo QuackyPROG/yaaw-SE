@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, symlink } from "node:fs/promises";
+import { mkdtemp, mkdir, realpath, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -20,6 +20,7 @@ describe("project boundary", () => {
   it("canonicalizes a not-yet-created child using its real parent", async () => {
     const parent = await mkdtemp(join(tmpdir(), "yaaw-parent-"));
     const child = join(parent, "new project");
-    expect(await resolveProjectRoot(child)).toBe(child);
+    const canonicalParent = await realpath(parent);
+    expect(await resolveProjectRoot(child)).toBe(join(canonicalParent, "new project"));
   });
 });

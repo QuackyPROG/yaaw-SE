@@ -66,8 +66,8 @@ jobs:
         run: npm install --ignore-scripts
       - name: Build at minimum supported Node version
         run: npm run build
-      - name: Run installer tests at minimum supported Node version
-        run: npm run test:cli
+      - name: Smoke exact package at minimum supported Node version
+        run: node scripts/smoke_npm_tarball.mjs
 
   platform-smoke:
     strategy:
