@@ -49,6 +49,8 @@ export async function assertSafeDestination(projectRoot: string, destination: st
   }
 
   const rootReal = await realpath(root);
+  if (target === root || target === rootReal) return;
+
   const existingParent = await closestExisting(dirname(target));
   const parentReal = await realpath(existingParent);
   if (!isWithin(rootReal, parentReal)) {
