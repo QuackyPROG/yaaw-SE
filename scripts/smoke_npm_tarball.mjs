@@ -2,15 +2,22 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 const root = resolve(fileURLToPath(new URL("../", import.meta.url)));
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+
+const npmCliCandidates = [
+  process.env.npm_execpath,
+  join(dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js"),
+  join(dirname(process.execPath), "..", "lib", "node_modules", "npm", "bin", "npm-cli.js")
+].filter(Boolean);
+const npmCli = npmCliCandidates.find(candidate => existsSync(candidate));
+if (!npmCli) throw new Error(`Could not locate npm CLI beside Node: ${process.execPath}`);
 
 function run(args, options = {}) {
-  const result = spawnSync(npm, args, {
+  const result = spawnSync(process.execPath, [npmCli, ...args], {
     cwd: options.cwd ?? root,
     encoding: "utf8",
     stdio: options.capture ? "pipe" : "inherit",
@@ -18,7 +25,8 @@ function run(args, options = {}) {
   });
   if (result.status !== 0) {
     const details = [result.stdout, result.stderr].filter(Boolean).join("\n");
-    throw new Error(`Command failed (${result.status}): npm ${args.join(" ")}\n${details}`);
+    const launch = result.error ? `\nLaunch error: ${result.error.message}` : "";
+    throw new Error(`Command failed (${result.status}): npm ${args.join(" ")}\n${details}${launch}`);
   }
   return result.stdout ?? "";
 }
