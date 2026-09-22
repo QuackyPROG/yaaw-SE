@@ -31,6 +31,7 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Package-owned files and managed instruction sections are hash-tracked.
 - Verification happens before the installation manifest is committed.
 - The installer owns distribution mechanics only; it must never make semantic project-lifecycle decisions.
+- `package-lock.json` is committed release metadata; keep it synchronized with `package.json` and use `npm ci` in validation.
 - npm publishing is manual for the first release.
 
 ## Change discipline
@@ -47,7 +48,7 @@ python scripts/validate_behavior.py
 python scripts/behavior_oracle.py
 python scripts/validate_distribution.py
 python -m unittest discover -s tests -v
-npm install
+npm ci
 npm test
 npm run build
 ```

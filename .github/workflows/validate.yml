@@ -13,6 +13,7 @@ on:
       - 'tests/**'
       - 'docs/**'
       - 'package.json'
+      - 'package-lock.json'
       - 'tsconfig.json'
       - 'vitest.config.ts'
       - 'AGENTS.md'
@@ -20,8 +21,6 @@ on:
 
 jobs:
   validate:
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,19 +42,7 @@ jobs:
           node-version: '22'
 
       - name: Install Node dependencies
-        run: npm install --ignore-scripts
-
-      - name: Commit generated lockfile
-        if: github.event_name == 'push' && github.ref == 'refs/heads/yaaw-SEv2'
-        shell: bash
-        run: |
-          if [ -n "$(git status --porcelain -- package-lock.json)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json
-            git commit -m "Lock npm dependency graph"
-            git push origin HEAD:yaaw-SEv2
-          fi
+        run: npm ci --ignore-scripts
 
       - name: Test npm installer
         run: npm test
@@ -80,7 +67,7 @@ jobs:
         with:
           node-version: '20.12.0'
       - name: Install Node dependencies
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
       - name: Build at minimum supported Node version
         run: npm run build
       - name: Smoke exact package at minimum supported Node version
@@ -98,7 +85,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install Node dependencies
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
       - name: Build npm package
         run: npm run build
       - name: Run installer unit/integration tests

@@ -146,10 +146,10 @@ python scripts/behavior_oracle.py
 python scripts/validate_distribution.py
 python -m unittest discover -s tests -v
 
-npm install
+npm ci
 npm test
 npm run build
 npm pack --dry-run
 ```
 
-The first npm release is intentionally published manually.
+The dependency graph is committed in `package-lock.json`; CI and release verification use `npm ci`. The first npm release is intentionally published manually.

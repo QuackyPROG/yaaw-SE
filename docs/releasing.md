@@ -12,7 +12,7 @@ python scripts/behavior_oracle.py
 python scripts/validate_distribution.py
 python -m unittest discover -s tests -v
 
-npm install
+npm ci
 npm test
 npm run build
 npm pack --dry-run
@@ -45,7 +45,7 @@ npm view yaaw-se
 npm publish --dry-run
 ```
 
-The registry name was unclaimed during implementation on 2026-09-22, but this check must be repeated immediately before publishing.
+The registry name was unclaimed during implementation on 2026-09-22, but this check must be repeated immediately before publishing. Keep `package.json` and `package-lock.json` synchronized; release verification uses `npm ci` so lock drift fails instead of being silently resolved.
 
 ## Publish
 
