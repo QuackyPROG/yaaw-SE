@@ -26,6 +26,28 @@ readiness: pending
 
 ## Current decision frontier
 
+### Frontier ID
+
+### Goal
+
+### Why this frontier is current
+
+### Included scope
+
+### Explicitly deferred
+
+### Preconditions
+
+### Repository facts
+
+### Blocking engineering decisions
+
+### Blocking external research
+
+### Product gaps
+
+### Readiness basis
+
 ## Future fog
 
 ## Architecture spine

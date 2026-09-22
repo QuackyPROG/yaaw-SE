@@ -21,6 +21,7 @@ def initialize_project(project_root: Path) -> list[Path]:
 
     for directory in (
         project,
+        project / "research",
         project / "specs",
         project / "tickets",
         project / "reviews",

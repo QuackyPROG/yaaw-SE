@@ -1,6 +1,8 @@
 # Routing contract
 
-Routing chooses exactly one next canonical workflow from observed reality. Explicit state beats broad heuristics.
+Routing chooses exactly one next canonical workflow from observed reality. Explicit state beats broad heuristics. Workflow selection is metadata-first; target workflow bodies are loaded only after selection.
+
+Before dispatch, enforce the selected workflow repository requirement from `registries/execution-policy.json`. `IDENTITY` workflows require repository status `READY`; `INSPECT` workflows may represent an `UNVERSIONED` workspace; `NONE` workflows do not require Git.
 
 The machine-readable precedence used by conformance tests lives in `.yaaw-core/registries/routing-policy.json`. This document explains the same semantics; CI must fail if the machine contract drifts from the workflow registry or lifecycle fixtures.
 

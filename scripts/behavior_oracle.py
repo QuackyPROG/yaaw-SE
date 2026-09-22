@@ -15,6 +15,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core"
 DEFAULT_POLICY = CORE / "registries" / "routing-policy.json"
+DEFAULT_EXECUTION_POLICY = CORE / "registries" / "execution-policy.json"
 
 
 def load_json(path: Path) -> Any:
@@ -65,7 +66,7 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
     return current, changes
 
 
-def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+def _determine_next_unchecked(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     """Return one canonical workflow or terminal state after safe reconciliation."""
     reconciled, changes = reconcile_observed(observed)
 
@@ -165,6 +166,24 @@ def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str
         "terminal": None,
         "reconciliations": changes,
     }
+
+
+def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+    """Route, then enforce the selected workflow repository requirement."""
+    result = _determine_next_unchecked(observed, policy)
+    workflow = result.get("workflow")
+    if workflow:
+        execution = load_json(DEFAULT_EXECUTION_POLICY)
+        requirement = execution["workflows"][workflow]["repository_requirement"]
+        repository_status = observed.get("repository_status", "READY")
+        if requirement == "IDENTITY" and repository_status != "READY":
+            return {
+                "workflow": None,
+                "terminal": "BLOCKED",
+                "reason": "REPOSITORY_IDENTITY_UNAVAILABLE",
+                "reconciliations": result.get("reconciliations", []),
+            }
+    return result
 
 
 def run_fixture_cases(fixtures_path: Path, policy_path: Path = DEFAULT_POLICY) -> list[str]:

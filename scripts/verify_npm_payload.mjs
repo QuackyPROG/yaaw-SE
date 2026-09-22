@@ -33,6 +33,19 @@ for (const rel of rels) {
   if (/\.(pem|key|p12|pfx)$/i.test(rel) || /(^|\/)(\.env|id_rsa|id_ed25519)$/i.test(rel)) errors.push(`possible secret shipped: ${rel}`);
 }
 
+for (const rel of [
+  "yaaw-core/core/execution-context.md",
+  "yaaw-core/core/io-contract.md",
+  "yaaw-core/rules/research-admission.md",
+  "yaaw-core/registries/execution-policy.json",
+  "yaaw-core/registries/role-io.json",
+  "yaaw-core/registries/artifacts.json",
+  "yaaw-core/schemas/engineering-research.schema.json",
+  "yaaw-core/schemas/intent.schema.json"
+]) {
+  if (!rels.includes(rel)) errors.push(`missing runtime hardening payload: ${rel}`);
+}
+
 const skills = JSON.parse(await readFile(join(payload, "yaaw-core", "registries", "skills.json"), "utf8"));
 const workflows = JSON.parse(await readFile(join(payload, "yaaw-core", "registries", "workflows.json"), "utf8"));
 const skillDirs = (await readdir(join(payload, "skills"), { withFileTypes: true })).filter(x=>x.isDirectory()).map(x=>x.name).sort();

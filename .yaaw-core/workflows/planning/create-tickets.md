@@ -4,16 +4,17 @@
 Translate one current accepted spec into bounded dependency-aware implementation contracts.
 
 ## Preconditions
-Source spec is `ACCEPTED` and its product/engineering revisions remain current.
+Source spec is `ACCEPTED`, product/engineering revisions remain current, and repository requirement `IDENTITY` is satisfied with repository status `READY`.
 
 ## Procedure
-1. Split work into coherent `TASK-NNN` units sized for a fresh Implementer.
-2. Apply `.yaaw-core/rules/changeability.md` while defining boundaries. Encode only changeability constraints that are materially relevant to the ticket; do not turn stylistic preferences or speculative refactors into requirements.
-3. Each ticket metadata records source spec/revision, product revision, engineering decision IDs, dependencies, expertise, ticket revision, and status.
-4. Body records product requirements, relevant areas, required behavior, allowed scope, non-goals, acceptance criteria, required tests, and relevant engineering/changeability constraints when needed.
-5. Ensure scope remains focused: supporting refactors are admitted only when necessary for safe implementation or verification of the ticket behavior; unrelated cleanup remains outside the ticket.
-6. Validate ticket template/metadata.
-7. Set `READY` only when dependencies and planning admission are satisfied; otherwise `DRAFT`.
+1. If exact repository identity is unavailable, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE`; do not admit executable tickets.
+2. Split work into coherent `TASK-NNN` units sized for a fresh Implementer.
+3. Apply `.yaaw-core/rules/changeability.md` while defining boundaries.
+4. Each ticket metadata records source spec/revision, product revision, engineering decision IDs, dependencies, expertise, ticket revision, and status.
+5. Body records product requirements, relevant areas, required behavior, allowed scope, non-goals, acceptance criteria, required tests, and relevant engineering/changeability constraints.
+6. Ensure supporting refactors are admitted only when necessary for safe implementation or verification.
+7. Validate ticket template/metadata.
+8. Set `READY` only when dependencies, planning admission, and repository identity are current; otherwise `DRAFT`.
 
 ## Output
-Dependency-aware tickets that require no planning-chat memory and preserve focused, reviewable change boundaries.
+Dependency-aware tickets requiring no planning-chat memory and preserving focused, reviewable change boundaries.

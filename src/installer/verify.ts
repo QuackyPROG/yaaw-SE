@@ -16,6 +16,7 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
     ".yaaw-core/templates",
     ".yaaw-core/project/product.md",
     ".yaaw-core/project/engineering.md",
+    ".yaaw-core/project/research",
     ".yaaw-core/project/state.json",
     ".yaaw-core/runtime",
     ".yaaw-core/install"
@@ -34,7 +35,7 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
 
   try {
     const paths = JSON.parse(await readFile(join(projectRoot, ".yaaw-core", "registries", "paths.json"), "utf8"));
-    if (paths.project_root !== ".yaaw-core/project" || paths.runtime_root !== ".yaaw-core/runtime") {
+    if (paths.workspace_root !== "." || paths.project_memory_root !== ".yaaw-core/project" || paths.research !== ".yaaw-core/project/research" || paths.runtime_root !== ".yaaw-core/runtime") {
       issues.push("installed paths registry violates one-root distribution contract");
     }
   } catch {

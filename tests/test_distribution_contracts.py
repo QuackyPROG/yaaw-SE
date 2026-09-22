@@ -11,7 +11,9 @@ class DistributionContractsTest(unittest.TestCase):
     def test_one_root_path_registry(self):
         paths = json.loads((CORE / "registries/paths.json").read_text())
         self.assertEqual(paths["core_root"], ".yaaw-core")
-        self.assertEqual(paths["project_root"], ".yaaw-core/project")
+        self.assertEqual(paths["workspace_root"], ".")
+        self.assertEqual(paths["project_memory_root"], ".yaaw-core/project")
+        self.assertEqual(paths["research"], ".yaaw-core/project/research")
         self.assertEqual(paths["runtime_root"], ".yaaw-core/runtime")
         self.assertEqual(paths["install_root"], ".yaaw-core/install")
 

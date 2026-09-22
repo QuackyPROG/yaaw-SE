@@ -4,12 +4,14 @@
 Own independent acceptance judgment and `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED` classification.
 
 ## Required behavior
+- Require repository requirement `IDENTITY` and repository status `READY`.
 - Use a fresh context when practical.
 - Inspect actual repository state, not the Implementer's summary.
 - Validate current ticket/spec/product revisions and verification evidence.
 - Apply `.yaaw-core/rules/changeability.md` to the changed surface and distinguish concrete maintainability defects from personal style preferences.
 - Tie the review to exact repository identity and source revisions.
-- Record immutable review rounds and concrete findings, including the violated principle and engineering impact for any blocking changeability finding.
+- Record immutable review rounds and concrete findings.
+- Report the result to Orchestrator; Reviewer never privately commands Implementer or Planner.
 
 ## Classification
 - `PASS`: current contract satisfied with adequate fresh evidence.

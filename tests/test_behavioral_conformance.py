@@ -20,7 +20,7 @@ class BehavioralConformanceTest(unittest.TestCase):
 
     def test_fixture_suite_covers_required_lifecycle_cases(self):
         ids = {case["id"] for case in self.fixtures}
-        required_prefixes = set("ABCDEFGHIJKLMNOPQ")
+        required_prefixes = set("ABCDEFGHIJKLMNOPQRSTU")
         covered = {case_id.split("-", 1)[0] for case_id in ids}
         self.assertTrue(required_prefixes.issubset(covered))
 
@@ -47,6 +47,19 @@ class BehavioralConformanceTest(unittest.TestCase):
         result = determine_next(case["observed"], self.policy)
         self.assertEqual(result["workflow"], "planning.replan")
         self.assertEqual(result["reconciliations"][0]["from"], "PASS")
+
+
+    def test_unversioned_product_and_planning_are_allowed_but_identity_work_blocks(self):
+        for case_id, workflow, terminal in [
+            ("R-unversioned-product-work", "prd.route", None),
+            ("S-unversioned-planning-inspection", "planning.route", None),
+            ("T-unversioned-implementation-blocked", None, "BLOCKED"),
+            ("U-unversioned-ticket-admission-blocked", None, "BLOCKED"),
+        ]:
+            case = next(case for case in self.fixtures if case["id"] == case_id)
+            result = determine_next(case["observed"], self.policy)
+            self.assertEqual(result["workflow"], workflow)
+            self.assertEqual(result["terminal"], terminal)
 
 
 if __name__ == "__main__":

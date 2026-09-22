@@ -12,6 +12,9 @@ class CoreContractsTest(unittest.TestCase):
         cls.workflows = json.loads((CORE / "registries/workflows.json").read_text())
         cls.skills = json.loads((CORE / "registries/skills.json").read_text())
         cls.expertise = json.loads((CORE / "registries/expertise.json").read_text())
+        cls.execution = json.loads((CORE / "registries/execution-policy.json").read_text())
+        cls.role_io = json.loads((CORE / "registries/role-io.json").read_text())
+        cls.artifacts = json.loads((CORE / "registries/artifacts.json").read_text())
 
     def test_every_public_skill_routes_to_canonical_workflow(self):
         for skill, entry in self.skills.items():
@@ -130,6 +133,34 @@ class CoreContractsTest(unittest.TestCase):
         classify = (CORE / "workflows/review/classify-findings.md").read_text()
         self.assertIn("style preference", classify.lower())
         self.assertIn("CHANGEABILITY", classify)
+
+
+    def test_every_workflow_has_repository_execution_policy(self):
+        self.assertEqual(set(self.workflows), set(self.execution["workflows"]))
+        self.assertEqual(self.execution["workflows"]["prd.route"]["repository_requirement"], "NONE")
+        self.assertEqual(self.execution["workflows"]["planning.discover"]["repository_requirement"], "INSPECT")
+        self.assertEqual(self.execution["workflows"]["implementation.implement-ticket"]["repository_requirement"], "IDENTITY")
+        self.assertEqual(self.execution["workflows"]["review.review-ticket"]["repository_requirement"], "IDENTITY")
+
+    def test_role_io_is_complete_and_uses_canonical_artifacts(self):
+        self.assertEqual(set(self.role_io["roles"]), {"prd", "planner", "implementer", "reviewer", "orchestrator"})
+        artifact_ids = set(self.artifacts) - {"schema"}
+        for role, contract in self.role_io["roles"].items():
+            for field in ("reads", "writes", "forbidden_writes"):
+                self.assertTrue(set(contract[field]).issubset(artifact_ids), f"{role}:{field}")
+
+    def test_research_is_internal_and_frontier_owned(self):
+        self.assertIn("planning.research", self.workflows)
+        self.assertNotIn("yaaw-research", self.skills)
+        self.assertIn("research-admission", (CORE / "workflows/planning/decision-frontier.md").read_text())
+        self.assertIn("Availability of a Codex/host skill is not an admission basis", (CORE / "rules/research-admission.md").read_text())
+
+    def test_context_loading_is_progressive_and_git_is_root_anchored(self):
+        context = (CORE / "core/context-loading.md").read_text()
+        execution = (CORE / "core/execution-context.md").read_text()
+        self.assertIn("must not preload sibling or downstream workflow bodies", context)
+        self.assertIn("git -C <WORKSPACE_ROOT>", execution)
+        self.assertIn("UNVERSIONED", execution)
 
 
 if __name__ == "__main__":

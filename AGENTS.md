@@ -17,6 +17,9 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Provider folders such as `.agents/`, `.claude/`, `.gemini/`, and `.cline/` are generated discovery adapters only. They must not contain canonical workflow logic.
 - Do not copy this repository-development `AGENTS.md` into consumer projects. Use `installer/templates/bootstrap/`.
 - Roles define authority; workflows define process; shared rules/expertise provide reusable reasoning only.
+- Resolve the consumer workspace root before shell/repository work; never assume ambient CWD and use `git -C <WORKSPACE_ROOT>` semantics from `.yaaw-core/core/execution-context.md`.
+- Workflow routing is progressive: do not preload sibling/downstream workflow bodies, templates, or expertise before exactly one route is selected.
+- External/vendor research and host skills require the durable admission basis in `.yaaw-core/rules/research-admission.md`.
 - Orchestrator owns routing/reconciliation, never product/architecture/implementation/acceptance semantics.
 - Implementer never self-approves. Acceptance requires independent review tied to repository/source identity.
 - Conversation must never be the only location of an accepted decision.
@@ -36,7 +39,7 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 
 ## Change discipline
 
-When changing a skill, update registry/description together rather than copying workflow logic. When changing lifecycle states, routing, review outcomes, artifact metadata, evidence identity, recovery semantics, or installation ownership, update schemas/templates/rules/machine contracts/fixtures/tests together.
+When changing a skill, update registry/description together rather than copying workflow logic. When changing lifecycle states, routing, review outcomes, artifact metadata, evidence identity, repository requirements, role I/O, recovery semantics, or installation ownership, update schemas/templates/rules/machine contracts/fixtures/tests together.
 
 When changing cross-role decision interaction behavior, update the canonical shared reasoning rule and every declared consumer together. Do not duplicate the complete shared rule into role/workflow files.
 

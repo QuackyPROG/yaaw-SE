@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.intent/v1",
+  "type": "object",
+  "required": ["schema", "source", "desired_outcome", "target_artifact", "completion_condition", "created_from_transition_sequence"],
+  "properties": {
+    "schema": {"const": "yaaw.intent/v1"},
+    "source": {"type": "string", "minLength": 1},
+    "desired_outcome": {"type": "string", "minLength": 1},
+    "target_artifact": {"type": ["string", "null"]},
+    "completion_condition": {"type": "string", "minLength": 1},
+    "created_from_transition_sequence": {"type": "integer", "minimum": 0}
+  },
+  "additionalProperties": false
+}

@@ -60,6 +60,7 @@ try {
   const durableFiles = {
     "product.md": "product sentinel\n",
     "engineering.md": "engineering sentinel\n",
+    "research/RSH-001.md": "research sentinel\n",
     "state.json": "{\"sentinel\":\"state\"}\n",
     "specs/SPEC-001.md": "spec sentinel\n",
     "tickets/TASK-001.md": "ticket sentinel\n",

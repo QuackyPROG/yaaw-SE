@@ -39,3 +39,10 @@ Read these contracts together:
 - `rules/question-format.md` when PRD/Planner presents a question round
 
 Any workflow context may disappear after durable output without destroying project understanding.
+
+## Runtime hardening
+- `core/execution-context.md` resolves the consumer workspace root and requires root-anchored Git.
+- `registries/execution-policy.json` classifies every workflow as `NONE`, `INSPECT`, or `IDENTITY` for repository requirements.
+- `core/context-loading.md` requires metadata-first progressive workflow loading.
+- `core/io-contract.md` + `registries/role-io.json` keep peer roles from privately delegating or searching for alternate YAAW artifact locations.
+- Planner owns admitted primary-source research through `project/research/RSH-*.md`; `rules/research-admission.md` prevents host skill availability from choosing architecture.

@@ -83,6 +83,7 @@ const expectedProjectEntries = [
   "engineering.md",
   "evidence",
   "product.md",
+  "research",
   "reviews",
   "rules",
   "specs",

@@ -1,6 +1,14 @@
 {
-  "schema": "yaaw.observed-state/v1",
-  "repository": {"head_commit": "COMMIT", "dirty": false, "worktree_digest": "DIGEST"},
+  "schema": "yaaw.observed-state/v2",
+  "repository": {
+    "status": "UNVERSIONED",
+    "workspace_scope": ".",
+    "git_root_relation": "none",
+    "head_commit": null,
+    "dirty": null,
+    "worktree_digest": null,
+    "error": null
+  },
   "transition_sequence": 0,
   "claims": {},
   "artifacts": {},
