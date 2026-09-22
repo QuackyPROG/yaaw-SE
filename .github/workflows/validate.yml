@@ -54,3 +54,37 @@ jobs:
 
       - name: Smoke exact packed tarball
         run: node scripts/smoke_npm_tarball.mjs
+
+  node-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.12.0'
+      - name: Install Node dependencies
+        run: npm install --ignore-scripts
+      - name: Build at minimum supported Node version
+        run: npm run build
+      - name: Run installer tests at minimum supported Node version
+        run: npm run test:cli
+
+  platform-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Node dependencies
+        run: npm install --ignore-scripts
+      - name: Build npm package
+        run: npm run build
+      - name: Run installer unit/integration tests
+        run: npm run test:cli
+      - name: Smoke exact packed tarball
+        run: node scripts/smoke_npm_tarball.mjs
