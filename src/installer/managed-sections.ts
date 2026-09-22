@@ -14,9 +14,10 @@ export function renderManagedSection(original: string, sectionId: string, conten
   const finish = original.indexOf(end);
 
   if (start === -1 && finish === -1) {
-    const prefix = original.length && !original.endsWith("\n") ? "\n" : "";
-    const spacer = original.trim().length ? "\n" : "";
-    return `${original}${prefix}${spacer}${block}\n`;
+    // Add no unmanaged separator bytes: uninstall can then restore the
+    // pre-existing file byte-for-byte. Files that already end in a newline
+    // render naturally; a non-newline-terminated file keeps its bytes exact.
+    return `${original}${block}\n`;
   }
   if (start === -1 || finish === -1 || finish < start) {
     throw new Error(`Malformed managed section ${sectionId}`);
@@ -31,11 +32,11 @@ export function removeManagedSection(original: string, sectionId: string): strin
   if (start === -1) return original;
   const finish = original.indexOf(end, start);
   if (finish === -1) throw new Error(`Malformed managed section ${sectionId}`);
-  let before = original.slice(0, start);
+  const before = original.slice(0, start);
   let after = original.slice(finish + end.length);
-  if (before.endsWith("\n\n") && after.startsWith("\n")) after = after.slice(1);
-  const merged = before + after;
-  return merged.replace(/\n{3,}/g, "\n\n");
+  // The canonical managed block owns one terminating newline.
+  if (after.startsWith("\n")) after = after.slice(1);
+  return before + after;
 }
 
 export function extractManagedSection(original: string, sectionId: string): string | null {
