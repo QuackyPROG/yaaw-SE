@@ -47,6 +47,8 @@ export interface ManagedFileRecord {
 export interface ManagedSectionRecord {
   owner: string;
   sha256: string;
+  packageSha256?: string;
+  localOverride?: boolean;
 }
 
 export interface InstallationManifest {

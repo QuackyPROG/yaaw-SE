@@ -104,10 +104,11 @@ async function chooseManagedSection(params: {
   previous: InstallationManifest | null;
   op: Extract<InstallOperation,{type:"update-managed-section"}>;
   sectionRecords: InstallationManifest["managedSections"];
+  operations: InstallOperation[];
   conflicts: string[];
   backupStamp: string;
 }) {
-  const { ctx, previous, op, sectionRecords, conflicts, backupStamp } = params;
+  const { ctx, previous, op, sectionRecords, operations, conflicts, backupStamp } = params;
   const pathRel = rel(ctx.projectRoot, op.path);
   let original = "";
   try { original = await readFile(op.path, "utf8"); } catch {}
@@ -115,7 +116,7 @@ async function chooseManagedSection(params: {
   const expectedHash = managedSectionHash(op.content);
   const prior = previous?.managedSections?.[pathRel]?.[op.sectionId];
   const existingHash = existing === null ? null : managedSectionHash(existing);
-  const conflict = existing !== null && (prior ? existingHash !== prior.sha256 : existingHash !== expectedHash);
+  const conflict = existing !== null && (prior ? (prior.localOverride === true || existingHash !== prior.sha256) : existingHash !== expectedHash);
 
   if (conflict && ctx.conflictPolicy === "fail") {
     conflicts.push(`${pathRel}#${op.sectionId}`);
@@ -123,7 +124,7 @@ async function chooseManagedSection(params: {
   }
   if (conflict && ctx.conflictPolicy === "keep") {
     sectionRecords[pathRel] ??= {};
-    sectionRecords[pathRel][op.sectionId] = { owner: op.owner, sha256: existingHash! };
+    sectionRecords[pathRel][op.sectionId] = { owner: op.owner, sha256: existingHash!, packageSha256: expectedHash, localOverride: true };
     return;
   }
   if (conflict && ctx.conflictPolicy === "backup-replace") {
@@ -206,7 +207,7 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
         desiredFilePaths.add(rel(ctx.projectRoot, op.path));
         await chooseManagedFile({ ctx, previous, path: op.path, owner: op.owner, content: op.content, operations, records: manifest.managedFiles, conflicts, backupStamp });
       } else if (op.type === "update-managed-section") {
-        await chooseManagedSection({ ctx, previous, op, sectionRecords: manifest.managedSections, conflicts, backupStamp });
+        await chooseManagedSection({ ctx, previous, op, sectionRecords: manifest.managedSections, operations, conflicts, backupStamp });
       }
     }
   }
