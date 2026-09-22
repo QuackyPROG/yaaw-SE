@@ -25,7 +25,8 @@
     "test:cli": "npm run build:payload && vitest run tests/cli",
     "test": "npm run validate:core && npm run validate:distribution && npm run test:python && npm run test:cli",
     "prepack": "npm run test && npm run build",
-    "smoke:tarball": "npm run build && node scripts/smoke_npm_tarball.mjs"
+    "smoke:tarball": "npm run build && node scripts/smoke_npm_tarball.mjs",
+    "smoke:update": "npm run build && node scripts/smoke_npm_update.mjs"
   },
   "dependencies": {
     "@clack/prompts": "1.8.1",

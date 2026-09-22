@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "dist", "payload");
 const coreOut = join(out, "yaaw-core");
+const packageMetadata = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 const approved = ["core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates"];
 
 await rm(out, { recursive: true, force: true });
@@ -47,7 +48,7 @@ for (const file of files) {
     bytes: bytes.length
   });
 }
-await writeFile(join(out, "payload.json"), JSON.stringify({ schema: "yaaw.payload/v1", version: "0.1.0" }, null, 2) + "\n");
+await writeFile(join(out, "payload.json"), JSON.stringify({ schema: "yaaw.payload/v1", version: packageMetadata.version }, null, 2) + "\n");
 const payloadBytes = await readFile(join(out, "payload.json"));
 manifest.push({
   path: "payload.json",

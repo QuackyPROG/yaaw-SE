@@ -33,6 +33,8 @@ npx /path/to/yaaw-se-0.1.0.tgz doctor
 
 The repository also includes `node scripts/smoke_npm_tarball.mjs`, which packs the exact built artifact and exercises Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, and durable-state sentinels through `npm exec --package=<tarball>`.
 
+`node scripts/smoke_npm_update.mjs` additionally builds a synthetic `0.1.1` tarball, updates a real `0.1.0` installation, verifies package-managed core changed, and proves product, engineering, state, spec, ticket, review, evidence, and project-rule sentinels survive byte-for-byte.
+
 Repeat any additional host-native/manual smoke checks needed for the release environment, especially Windows before claiming Windows support.
 
 Before the first publish, confirm npm identity and package-name availability:

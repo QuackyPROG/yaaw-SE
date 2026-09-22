@@ -55,6 +55,9 @@ jobs:
       - name: Smoke exact packed tarball
         run: node scripts/smoke_npm_tarball.mjs
 
+      - name: Smoke tarball-to-tarball update
+        run: node scripts/smoke_npm_update.mjs
+
   node-floor:
     runs-on: ubuntu-latest
     steps:

@@ -5,6 +5,11 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const payload = join(root, "dist", "payload");
 const errors = [];
+const packageMetadata = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+const payloadMetadata = JSON.parse(await readFile(join(payload, "payload.json"), "utf8"));
+if (payloadMetadata.version !== packageMetadata.version) {
+  errors.push(`payload version ${payloadMetadata.version} does not match package version ${packageMetadata.version}`);
+}
 
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
