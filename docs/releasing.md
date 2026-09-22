@@ -31,7 +31,9 @@ npx /path/to/yaaw-se-0.1.0.tgz status
 npx /path/to/yaaw-se-0.1.0.tgz doctor
 ```
 
-Repeat for Claude Code, Gemini CLI, Cline, all Tier-1 providers together, rerun/idempotence, modified managed files, repair, and durable-state sentinels.
+The repository also includes `node scripts/smoke_npm_tarball.mjs`, which packs the exact built artifact and exercises Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, and durable-state sentinels through `npm exec --package=<tarball>`.
+
+Repeat any additional host-native/manual smoke checks needed for the release environment, especially Windows before claiming Windows support.
 
 Before the first publish, confirm npm identity and package-name availability:
 

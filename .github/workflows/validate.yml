@@ -51,3 +51,6 @@ jobs:
 
       - name: Inspect package contents
         run: npm pack --dry-run
+
+      - name: Smoke exact packed tarball
+        run: node scripts/smoke_npm_tarball.mjs
