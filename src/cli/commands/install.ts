@@ -1,0 +1,188 @@
+import * as p from "@clack/prompts";
+import { access, mkdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { detectExistingInstallation } from "../../installer/detect.js";
+import { packageVersion, payloadRoot as getPayloadRoot } from "../../installer/context.js";
+import { buildInstallPlan, ManagedConflictError, resolveSkillSelection } from "../../installer/plan.js";
+import { MANIFEST_RELATIVE_PATH, serializeManifest } from "../../installer/manifest.js";
+import { resolveProjectRoot } from "../../installer/boundary.js";
+import { executePlan, preflightPlan } from "../../installer/transaction.js";
+import { verifyInstalledState } from "../../installer/verify.js";
+import { integrationIds } from "../../integrations/registry.js";
+import type { IntegrationId } from "../../integrations/types.js";
+import type { ConflictPolicy, InstallAction, InstallContext } from "../../installer/types.js";
+import { selectDirectory } from "../../tui/select-directory.js";
+import { selectTools } from "../../tui/select-tools.js";
+import { selectSkills } from "../../tui/select-skills.js";
+import { selectExistingAction } from "../../tui/existing-install.js";
+import { confirmPlan, formatPlan } from "../../tui/confirm-plan.js";
+import { showSuccess } from "../../tui/result.js";
+
+export interface InstallCommandOptions {
+  directory?: string;
+  tools?: string;
+  skills?: string;
+  yes?: boolean;
+  action?: InstallAction;
+  dryRun?: boolean;
+  listTools?: boolean;
+  listSkills?: boolean;
+  forceManaged?: boolean;
+  json?: boolean;
+}
+
+function parseTools(raw?: string): IntegrationId[] {
+  if (!raw) return [];
+  const values = raw.split(",").map(x=>x.trim()).filter(Boolean);
+  const unknown = values.filter(x=>!integrationIds.includes(x as IntegrationId));
+  if (unknown.length) throw new Error(`Unknown tool IDs: ${unknown.join(", ")}`);
+  return [...new Set(values)] as IntegrationId[];
+}
+
+async function legacyExists(root: string) {
+  try { await access(join(root, ".yaaw")); return true; } catch { return false; }
+}
+
+async function chooseConflictPolicy(conflicts: string[]): Promise<ConflictPolicy> {
+  p.note(conflicts.join("\n"), "Modified YAAW-managed files found");
+  const result = await p.select({
+    message: "How should these managed changes be handled?",
+    options: [
+      { value: "keep", label: "Keep local files/sections" },
+      { value: "replace", label: "Replace with package version" },
+      { value: "backup-replace", label: "Backup local content and replace" },
+      { value: "fail", label: "Abort update" }
+    ]
+  });
+  if (p.isCancel(result)) return "fail";
+  return result as ConflictPolicy;
+}
+
+export async function runInstall(options: InstallCommandOptions = {}) {
+  const payloadRoot = getPayloadRoot();
+
+  if (options.listTools) {
+    const result = integrationIds;
+    console.log(options.json ? JSON.stringify(result) : result.join("\n"));
+    return result;
+  }
+  if (options.listSkills) {
+    const registry = JSON.parse(await readFile(join(payloadRoot, "yaaw-core", "registries", "skills.json"), "utf8"));
+    const result = Object.keys(registry);
+    console.log(options.json ? JSON.stringify(result) : result.join("\n"));
+    return result;
+  }
+
+  const interactive = !options.yes;
+  if (interactive) p.intro("YAAW-SE — Artifact-first autonomous software engineering");
+
+  const requested = interactive
+    ? await selectDirectory(options.directory ?? process.cwd())
+    : (options.directory ?? process.cwd());
+  const projectRoot = await resolveProjectRoot(requested);
+  const existing = await detectExistingInstallation(projectRoot);
+
+  if (await legacyExists(projectRoot)) {
+    throw new Error("Legacy .yaaw project state detected. Automatic migration is intentionally not performed; move/validate it before installing the one-root distribution.");
+  }
+
+  let action: InstallAction;
+  if (options.action) action = options.action;
+  else if (existing.kind === "valid") {
+    if (interactive) {
+      const selected = await selectExistingAction();
+      if (selected === "cancel") return;
+      action = selected;
+    } else action = "quick-update";
+  } else action = "fresh";
+
+  if (existing.kind === "partial" && action === "fresh") {
+    throw new Error(`Partial YAAW/provider state exists without a valid manifest: ${existing.signals.join(", ")}. Use repair only after restoring a valid manifest or clean the partial package-owned files explicitly.`);
+  }
+
+  if (action === "uninstall") {
+    const ctx: InstallContext = {
+      packageVersion: await packageVersion(), payloadRoot, requestedDirectory: requested, projectRoot,
+      mode: interactive ? "interactive" : "headless", selectedIntegrations: [], selectedSkills: [],
+      action, dryRun: Boolean(options.dryRun), forceManaged: Boolean(options.forceManaged),
+      conflictPolicy: options.forceManaged ? "replace" : "fail"
+    };
+    const { plan } = await buildInstallPlan(ctx, existing.manifest);
+    if (options.dryRun) {
+      const result = { ...plan, operations: plan.operations.map(({type,path,...rest}: any)=>({type,path: path ? path.replace(projectRoot, ".") : undefined, ...rest, content: undefined})) };
+      console.log(options.json ? JSON.stringify(result,null,2) : formatPlan(plan));
+      return result;
+    }
+    if (interactive && !(await confirmPlan(plan))) return;
+    await executePlan(plan);
+    if (interactive) p.outro("YAAW-SE framework/adapters removed; .yaaw-core/project was preserved.");
+    return;
+  }
+
+  let tools = parseTools(options.tools);
+  if (!tools.length && existing.manifest && ["quick-update","repair"].includes(action)) {
+    tools = Object.keys(existing.manifest.integrations) as IntegrationId[];
+  }
+  if (interactive && (action === "fresh" || action === "modify")) {
+    tools = await selectTools(projectRoot, tools.length ? tools : (Object.keys(existing.manifest?.integrations ?? {}) as IntegrationId[]));
+  }
+  if (!tools.length) {
+    throw new Error("Fresh/headless installation requires --tools; no provider is guessed.");
+  }
+
+  let skills: string[];
+  if (options.skills) skills = await resolveSkillSelection(payloadRoot, options.skills);
+  else if (existing.manifest && ["quick-update","repair"].includes(action)) skills = existing.manifest.skills;
+  else if (interactive) skills = await selectSkills(payloadRoot, existing.manifest?.skills);
+  else skills = await resolveSkillSelection(payloadRoot, "standard");
+
+  let conflictPolicy: ConflictPolicy = options.forceManaged ? "replace" : "fail";
+  const makeContext = (): InstallContext => ({
+    packageVersion: "", payloadRoot, requestedDirectory: requested, projectRoot,
+    mode: interactive ? "interactive" : "headless", selectedIntegrations: tools, selectedSkills: skills,
+    action, dryRun: Boolean(options.dryRun), forceManaged: Boolean(options.forceManaged), conflictPolicy
+  });
+  const version = await packageVersion();
+  let ctx = makeContext();
+  ctx.packageVersion = version;
+
+  let built;
+  try {
+    built = await buildInstallPlan(ctx, existing.manifest);
+  } catch (error) {
+    if (!(error instanceof ManagedConflictError) || !interactive) throw error;
+    conflictPolicy = await chooseConflictPolicy(error.conflicts);
+    if (conflictPolicy === "fail") throw error;
+    ctx = makeContext();
+    ctx.packageVersion = version;
+    built = await buildInstallPlan(ctx, existing.manifest);
+  }
+
+  await preflightPlan(built.plan);
+  if (options.dryRun) {
+    const result = {
+      action,
+      projectRoot,
+      tools,
+      skills,
+      operations: built.plan.operations.map((op:any)=>({ type:op.type, path:op.path ? op.path.replace(projectRoot, ".") : undefined, reason:op.reason }))
+    };
+    console.log(options.json ? JSON.stringify(result,null,2) : formatPlan(built.plan));
+    return result;
+  }
+
+  if (interactive && !(await confirmPlan(built.plan))) return;
+  const spinner = interactive ? p.spinner() : null;
+  spinner?.start("Installing YAAW-SE");
+  const manifestPath = join(projectRoot, MANIFEST_RELATIVE_PATH);
+  const changed = await executePlan(built.plan, {
+    manifestPath,
+    manifestContent: serializeManifest(built.manifest!),
+    beforeManifest: async () => verifyInstalledState(projectRoot, tools, skills)
+  } as any);
+  spinner?.stop("Installation verified");
+  if (options.json) console.log(JSON.stringify({ok:true,projectRoot,version,tools,skills,changed},null,2));
+  else if (interactive) showSuccess(projectRoot, tools);
+  else console.log(`YAAW-SE ${version} installed in ${projectRoot}.`);
+  return { ok:true, projectRoot, version, tools, skills, changed };
+}
