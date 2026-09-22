@@ -16,7 +16,7 @@ Update `.yaaw-core/project/engineering.md` using existing semantic sections:
 - accepted engineering solutions -> `ENG-*` decisions;
 - compatibility-critical structure -> Architecture spine.
 
-Preserve repository capability limitations explicitly. Do not create vendor-specific research simply from available host skills.
+Preserve repository capability limitations explicitly. Never store challenge/debate transcripts. Do not create vendor-specific research simply from available host skills.
 
 Increment engineering revision when durable engineering understanding materially changes. Record provenance for repository observations and product dependencies.
 
