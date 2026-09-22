@@ -126,7 +126,7 @@ export async function doctor(projectRoot: string) {
 
   try {
     const paths = JSON.parse(await readFile(join(projectRoot, ".yaaw-core", "registries", "paths.json"), "utf8"));
-    checks.push({ name: "path-registry", ok: paths.project_root === ".yaaw-core/project" && paths.runtime_root === ".yaaw-core/runtime" && paths.install_root === ".yaaw-core/install" });
+    checks.push({ name: "path-registry", ok: paths.workspace_root === "." && paths.project_memory_root === ".yaaw-core/project" && paths.research === ".yaaw-core/project/research" && paths.runtime_root === ".yaaw-core/runtime" && paths.install_root === ".yaaw-core/install" });
   } catch {
     checks.push({ name: "path-registry", ok: false, detail: "missing or invalid paths registry" });
   }

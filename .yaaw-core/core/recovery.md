@@ -1,6 +1,6 @@
 # Recovery policy
 
-Recovery compares claimed state with observed reality and returns to the last trustworthy boundary.
+Recovery compares claimed state with observed reality and returns to the last trustworthy boundary. Resolve the workspace root first and use only root-anchored, workspace-scoped repository evidence from `core/execution-context.md`.
 
 ## Evidence authority
 - Product intent: current accepted `product.md` revision.
@@ -15,6 +15,7 @@ Recovery compares claimed state with observed reality and returns to the last tr
 - `READY` + implementation already present -> inspect/recover rather than duplicate the change.
 - `PASS` + missing/stale review, source revision mismatch, or repository identity mismatch -> invalidate current PASS and route to review/replan as appropriate.
 - A stale `.yaaw-core/runtime/handoff.json` is discarded, not executed.
+- If repository identity is required but status is not `READY`, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE` or `BLOCKED` with exact missing proof.
 - If the last trustworthy boundary cannot be proven, return `BLOCKED` with exact missing proof.
 
 Every reconciliation uses a legal transition and records its reason/evidence in state provenance.

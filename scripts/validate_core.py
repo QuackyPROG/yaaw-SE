@@ -65,8 +65,35 @@ def main() -> int:
     workflows = load_json(CORE / "registries/workflows.json")
     skills = load_json(CORE / "registries/skills.json")
     expertise = load_json(CORE / "registries/expertise.json")
+    execution_policy = load_json(CORE / "registries/execution-policy.json")
+    role_io = load_json(CORE / "registries/role-io.json")
+    artifacts = load_json(CORE / "registries/artifacts.json")
     errors: list[str] = []
     allowed_roles = {"prd", "planner", "implementer", "reviewer", "orchestrator"}
+
+    # Every workflow has explicit runtime/repository policy.
+    policy_workflows = execution_policy.get("workflows", {})
+    if set(policy_workflows) != set(workflows):
+        errors.append(f"execution-policy/workflow mismatch: policy={sorted(policy_workflows)} workflows={sorted(workflows)}")
+    for workflow_id, policy_entry in policy_workflows.items():
+        if policy_entry.get("repository_requirement") not in {"NONE", "INSPECT", "IDENTITY"}:
+            errors.append(f"{workflow_id}: invalid repository requirement {policy_entry.get('repository_requirement')!r}")
+
+    # Role I/O names only canonical artifact classes and covers every role.
+    io_roles = role_io.get("roles", {})
+    if set(io_roles) != allowed_roles:
+        errors.append(f"role-io coverage drifted: {sorted(io_roles)}")
+    artifact_ids = set(artifacts) - {"schema"}
+    for role, contract in io_roles.items():
+        for field in ("reads", "writes", "forbidden_writes"):
+            unknown = set(contract.get(field, [])) - artifact_ids
+            if unknown:
+                errors.append(f"{role}: unknown {field} artifacts {sorted(unknown)}")
+
+    if "planning.research" not in workflows:
+        errors.append("planning.research must be a canonical internal Planner workflow")
+    if "yaaw-research" in skills or (ROOT / "skills" / "yaaw-research").exists():
+        errors.append("planning research must remain internal; do not create a public yaaw-research skill")
 
     # Canonical workflow contracts.
     workflow_paths = {}
@@ -241,6 +268,9 @@ def main() -> int:
         errors.append(f"review outcomes drifted: {sorted(outcomes)}")
     if "evidence.schema.json" not in schemas or "observed-state.schema.json" not in schemas:
         errors.append("missing evidence or observed-state schema")
+    for required_schema in ("engineering-research.schema.json", "intent.schema.json", "handoff.schema.json"):
+        if required_schema not in schemas:
+            errors.append(f"missing {required_schema}")
 
     # Templates: machine-readable metadata + required human-readable sections.
     template_meta = {
@@ -249,6 +279,7 @@ def main() -> int:
         "spec.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id", "decision_ids"},
         "ticket.md": {"schema", "id", "revision", "spec", "spec_revision", "product_revision", "engineering_revision", "status", "dependencies", "decision_ids", "expertise"},
         "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"},
+        "engineering-research.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id"},
     }
     for filename, required in template_meta.items():
         path = CORE / "templates" / filename
@@ -265,8 +296,9 @@ def main() -> int:
     require_headings(CORE / "templates/spec.md", ["Goal", "Engineering decisions", "Expected behavior", "Failure modes", "Testing expectations", "Acceptance conditions"], errors)
     require_headings(CORE / "templates/ticket.md", ["Goal", "Product requirements", "Engineering decisions", "Required behavior", "Allowed scope", "Acceptance criteria", "Required tests", "Dependencies"], errors)
     require_headings(CORE / "templates/review.md", ["Result rationale", "Reviewed state", "Findings", "Verification", "Evidence", "Next action"], errors)
+    require_headings(CORE / "templates/engineering-research.md", ["Question", "Why this matters", "Admission basis", "Source ledger", "Planning implications", "Resolution"], errors)
 
-    for json_template in ["project-state.json", "evidence.json", "handoff.json", "observed-state.json"]:
+    for json_template in ["project-state.json", "evidence.json", "handoff.json", "observed-state.json", "intent.json"]:
         try:
             load_json(CORE / "templates" / json_template)
         except Exception as exc:  # noqa: BLE001
@@ -304,6 +336,12 @@ def main() -> int:
             errors.append(f"README missing public skill @{skill_id}")
     if not (CORE / "core/invalidation.md").is_file() or not (CORE / "rules/repository-identity.md").is_file():
         errors.append("missing invalidation or repository-identity contract")
+    for rel in ("core/execution-context.md", "core/io-contract.md", "rules/research-admission.md"):
+        if not (CORE / rel).is_file():
+            errors.append(f"missing runtime hardening contract {rel}")
+    require_phrases(CORE / "core/context-loading.md", ["Progressive-disclosure invariant", "must not preload sibling or downstream workflow bodies"], errors)
+    require_phrases(CORE / "core/execution-context.md", ["git -C <WORKSPACE_ROOT>", "UNVERSIONED", "IDENTITY"], errors)
+    require_phrases(CORE / "rules/research-admission.md", ["Availability of a Codex/host skill is not an admission basis", "primary sources", "RSH-NNN"], errors)
 
     if errors:
         print("YAAW core validation failed:")

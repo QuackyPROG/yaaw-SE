@@ -25,6 +25,8 @@ def main() -> int:
 
     if policy.get("schema") != "yaaw.routing-policy/v1":
         errors.append("routing-policy schema id drifted")
+    if set(execution.get("workflows", {})) != set(workflows):
+        errors.append("execution-policy must cover every registered workflow exactly once")
 
     expected_precedence = [
         ("REPLAN_REQUIRED", "planning.replan"),
@@ -91,7 +93,7 @@ def main() -> int:
     if len(ids) != len(set(ids)):
         errors.append("lifecycle fixture IDs must be unique")
     covered = {case_id.split("-", 1)[0] for case_id in ids if isinstance(case_id, str)}
-    required = set("ABCDEFGHIJKLMNOPQ")
+    required = set("ABCDEFGHIJKLMNOPQRSTU")
     if not required.issubset(covered):
         errors.append(f"lifecycle fixtures missing required cases {sorted(required - covered)}")
 

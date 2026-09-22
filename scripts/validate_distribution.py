@@ -26,11 +26,13 @@ def main() -> int:
     paths = load(CORE / "registries" / "paths.json")
     expected = {
         "core_root": ".yaaw-core",
-        "project_root": ".yaaw-core/project",
+        "workspace_root": ".",
+        "project_memory_root": ".yaaw-core/project",
         "runtime_root": ".yaaw-core/runtime",
         "install_root": ".yaaw-core/install",
         "product": ".yaaw-core/project/product.md",
         "engineering": ".yaaw-core/project/engineering.md",
+        "research": ".yaaw-core/project/research",
         "state": ".yaaw-core/project/state.json",
         "specs": ".yaaw-core/project/specs",
         "tickets": ".yaaw-core/project/tickets",

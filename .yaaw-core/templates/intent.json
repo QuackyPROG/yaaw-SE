@@ -1,0 +1,8 @@
+{
+  "schema": "yaaw.intent/v1",
+  "source": "yaaw-orchestrator",
+  "desired_outcome": "CONTINUE",
+  "target_artifact": null,
+  "completion_condition": "advance to the next valid durable boundary",
+  "created_from_transition_sequence": 0
+}

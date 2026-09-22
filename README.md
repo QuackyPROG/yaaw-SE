@@ -50,6 +50,7 @@ A consuming project has exactly one canonical YAAW root:
 │   ├── product.md
 │   ├── engineering.md
 │   ├── state.json
+│   ├── research/        admitted Planner research (RSH-*)
 │   ├── specs/
 │   ├── tickets/
 │   ├── reviews/
@@ -153,3 +154,9 @@ npm pack --dry-run
 ```
 
 The dependency graph is committed in `package-lock.json`; CI and release verification use `npm ci`. The first npm release is intentionally published manually.
+
+## Deterministic runtime context
+
+YAAW distinguishes the consumer **workspace root** from `.yaaw-core/project/`, the durable **project memory root**. Repository commands are rooted explicitly at the workspace rather than inheriting a provider shell CWD. Product work can continue in an unversioned greenfield directory; workflows that create/review executable code require exact repository identity.
+
+Planning uses progressive disclosure: routers select one canonical workflow before loading its body/templates/expertise. Vendor-specific research or host skills require an explicit repository/product/engineering/current-candidate basis and material blocking research is stored under `.yaaw-core/project/research/`.

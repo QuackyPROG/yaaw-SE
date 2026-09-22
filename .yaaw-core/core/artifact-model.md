@@ -1,8 +1,8 @@
 # Artifact model
 
-Canonical durable project root: `.yaaw-core/project/`.
+Canonical consumer workspace root is the directory containing the active YAAW installation. Canonical durable **project memory root** is `.yaaw-core/project/`.
 
-Ownership is separated by subdirectory under one YAAW root:
+Ownership is separated under one YAAW root:
 
 - `.yaaw-core/core/`, `roles/`, `workflows/`, `expertise/`, `rules/`, `registries/`, `schemas/`, and `templates/`: package-managed framework content.
 - `.yaaw-core/project/`: durable project-owned semantic memory.
@@ -12,7 +12,8 @@ Ownership is separated by subdirectory under one YAAW root:
 Durable project artifacts:
 
 - `product.md`: human-approved product intent and unresolved product questions.
-- `engineering.md`: durable engineering understanding, `ENG-*` decisions, assumptions, risks, frontier, fog, and readiness.
+- `engineering.md`: durable engineering understanding, `ENG-*` decisions, assumptions, risks, frontier, future fog, and readiness.
+- `research/RSH-*.md`: bounded external engineering research owned by Planner; research facts are not engineering decisions until promoted through normal planning.
 - `specs/SPEC-*.md`: coherent engineering contracts referencing product/decision revisions.
 - `tickets/TASK-*.md`: bounded implementation contracts.
 - `reviews/TASK-*-R*.md`: immutable review rounds tied to exact source and repository revisions.
@@ -22,14 +23,14 @@ Durable project artifacts:
 
 Replaceable runtime artifacts:
 
-- `.yaaw-core/runtime/observed-state.json`: observed orchestration snapshot.
-- `.yaaw-core/runtime/handoff.json`: dispatch contract.
-- `.yaaw-core/runtime/intent.json`: optional current intent cache.
+- `.yaaw-core/runtime/observed-state.json`: observed orchestration snapshot including repository capability.
+- `.yaaw-core/runtime/handoff.json`: exact dispatch contract.
+- `.yaaw-core/runtime/intent.json`: optional desired-outcome cache used while prerequisites are resolved.
 
 Installer metadata:
 
 - `.yaaw-core/install/manifest.json`: package/integration ownership and version state. It is never semantic project truth.
 
-Markdown artifacts use YAML frontmatter for machine-readable identity/revision/status and a human-readable body for durable reasoning. Schemas validate metadata; core validation rules define required Markdown sections.
+Markdown artifacts use YAML frontmatter for machine-readable identity/revision/status and a human-readable body for durable reasoning. Machine-readable ownership patterns live in `registries/artifacts.json`.
 
 Conversation is never an artifact of record. Package update logic must never treat `.yaaw-core/project/` as replaceable framework content.

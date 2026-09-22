@@ -10,6 +10,7 @@ export async function planProjectInitialization(payloadRoot: string, projectRoot
 
   for (const path of [
     project,
+    join(project, "research"),
     join(project, "specs"),
     join(project, "tickets"),
     join(project, "reviews"),

@@ -14,7 +14,7 @@ class BootstrapTest(unittest.TestCase):
             core = root / ".yaaw-core"
             project = core / "project"
             self.assertTrue(created)
-            for directory in ("specs", "tickets", "reviews", "evidence", "rules"):
+            for directory in ("research", "specs", "tickets", "reviews", "evidence", "rules"):
                 self.assertTrue((project / directory).is_dir(), directory)
             self.assertTrue((core / "runtime").is_dir())
             self.assertTrue((core / "install").is_dir())
