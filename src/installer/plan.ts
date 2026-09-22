@@ -136,6 +136,68 @@ async function chooseManagedSection(params: {
   sectionRecords[pathRel][op.sectionId] = { owner: op.owner, sha256: expectedHash };
 }
 
+
+async function protectRemoval(params: {
+  ctx: InstallContext;
+  previous: InstallationManifest;
+  pathRel: string;
+  record: ManagedFileRecord;
+  operations: InstallOperation[];
+  conflicts: string[];
+  backupStamp: string;
+}) {
+  const { ctx, previous, pathRel, record, operations, conflicts, backupStamp } = params;
+  const path = join(ctx.projectRoot, pathRel);
+  const diskHash = await currentFileHash(path);
+  if (diskHash === null) return;
+  const modified = record.localOverride === true || diskHash !== record.sha256;
+  if (modified && ctx.conflictPolicy === "fail") {
+    conflicts.push(pathRel);
+    return;
+  }
+  if (modified && ctx.conflictPolicy === "keep") {
+    operations.push({ type: "preserve", path, reason: "local managed-file override retained during removal" });
+    return;
+  }
+  if (modified && ctx.conflictPolicy === "backup-replace") {
+    const backupPath = join(ctx.projectRoot, ".yaaw-core", "install", "backups", backupStamp, pathRel);
+    operations.push({ type: "write-managed-file", path: backupPath, content: await readFile(path), owner: "installer:backup" });
+  }
+  operations.push({ type: "remove-managed-file", path, owner: record.owner });
+}
+
+async function protectSectionRemoval(params: {
+  ctx: InstallContext;
+  previous: InstallationManifest;
+  pathRel: string;
+  sectionId: string;
+  record: any;
+  operations: InstallOperation[];
+  conflicts: string[];
+  backupStamp: string;
+}) {
+  const { ctx, pathRel, sectionId, record, operations, conflicts, backupStamp } = params;
+  const path = join(ctx.projectRoot, pathRel);
+  let original = "";
+  try { original = await readFile(path, "utf8"); } catch { return; }
+  const existing = extractManagedSection(original, sectionId);
+  if (existing === null) return;
+  const modified = record.localOverride === true || managedSectionHash(existing) !== record.sha256;
+  if (modified && ctx.conflictPolicy === "fail") {
+    conflicts.push(`${pathRel}#${sectionId}`);
+    return;
+  }
+  if (modified && ctx.conflictPolicy === "keep") {
+    operations.push({ type: "preserve", path, reason: "local managed-section override retained during removal" });
+    return;
+  }
+  if (modified && ctx.conflictPolicy === "backup-replace") {
+    const backupPath = join(ctx.projectRoot, ".yaaw-core", "install", "backups", backupStamp, pathRel);
+    operations.push({ type: "write-managed-file", path: backupPath, content: original, owner: "installer:backup" });
+  }
+  operations.push({ type: "remove-managed-section", path, sectionId, owner: record.owner });
+}
+
 export async function buildInstallPlan(ctx: InstallContext, previous: InstallationManifest | null): Promise<{plan: InstallPlan; manifest: InstallationManifest | null}> {
   const warnings: string[] = [];
   const operations: InstallOperation[] = [{ type: "mkdir", path: ctx.projectRoot, owner: "layout" }];
@@ -146,14 +208,15 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
   if (ctx.action === "uninstall") {
     if (!previous) throw new Error("Cannot uninstall: no valid YAAW manifest");
     for (const [pathRel, record] of Object.entries(previous.managedFiles)) {
-      if (pathRel === MANIFEST_RELATIVE_PATH) continue;
-      operations.push({ type: "remove-managed-file", path: join(ctx.projectRoot, pathRel), owner: record.owner });
+      if (pathRel === MANIFEST_RELATIVE_PATH || record.owner === "installer:backup") continue;
+      await protectRemoval({ ctx, previous, pathRel, record, operations, conflicts, backupStamp });
     }
     for (const [pathRel, sections] of Object.entries(previous.managedSections)) {
       for (const [sectionId, record] of Object.entries(sections)) {
-        operations.push({ type: "remove-managed-section", path: join(ctx.projectRoot, pathRel), sectionId, owner: record.owner });
+        await protectSectionRemoval({ ctx, previous, pathRel, sectionId, record, operations, conflicts, backupStamp });
       }
     }
+    if (conflicts.length) throw new ManagedConflictError(conflicts);
     operations.push({ type: "remove-managed-file", path: join(ctx.projectRoot, MANIFEST_RELATIVE_PATH), owner: "installer" });
     operations.push({
       type: "write-managed-file",
@@ -215,13 +278,13 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
   if (previous) {
     for (const [pathRel, record] of Object.entries(previous.managedFiles)) {
       if (!desiredFilePaths.has(pathRel) && record.owner !== "installer:backup") {
-        operations.push({ type: "remove-managed-file", path: join(ctx.projectRoot, pathRel), owner: record.owner });
+        await protectRemoval({ ctx, previous, pathRel, record, operations, conflicts, backupStamp });
       }
     }
     for (const [pathRel, sections] of Object.entries(previous.managedSections)) {
       for (const [sectionId, record] of Object.entries(sections)) {
         if (!manifest.managedSections[pathRel]?.[sectionId]) {
-          operations.push({ type: "remove-managed-section", path: join(ctx.projectRoot, pathRel), sectionId, owner: record.owner });
+          await protectSectionRemoval({ ctx, previous, pathRel, sectionId, record, operations, conflicts, backupStamp });
         }
       }
     }

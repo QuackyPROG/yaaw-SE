@@ -6,7 +6,12 @@ import { removeManagedSection, renderManagedSection } from "./managed-sections.j
 import type { InstallPlan, InstallOperation } from "./types.js";
 
 interface Backup { existed: boolean; bytes?: Buffer; }
-interface ExecuteOptions { manifestPath?: string; manifestContent?: string; failAfterOperations?: number; }
+interface ExecuteOptions {
+  manifestPath?: string;
+  manifestContent?: string;
+  failAfterOperations?: number;
+  beforeManifest?: () => Promise<void>;
+}
 
 async function exists(path: string): Promise<boolean> {
   try { await lstat(path); return true; } catch { return false; }
@@ -113,6 +118,8 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
         throw new Error("Simulated installer transaction failure");
       }
     }
+
+    if (options.beforeManifest) await options.beforeManifest();
 
     if (options.manifestPath && options.manifestContent !== undefined) {
       await mutateFile(options.manifestPath, async () => atomicWrite(options.manifestPath!, options.manifestContent!));

@@ -17,6 +17,10 @@ export async function detectExistingInstallation(projectRoot: string): Promise<E
   const manifest = await readManifest(projectRoot);
   if (manifest) return { kind: "valid", manifest, signals: ["manifest"] };
 
+  if (await exists(join(projectRoot, ".yaaw-core/install/uninstalled.json"))) {
+    return { kind: "none", manifest: null, signals: ["preserved-project-archive"] };
+  }
+
   for (const rel of [
     ".yaaw-core/core",
     ".yaaw-core/project",
