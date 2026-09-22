@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
@@ -42,8 +42,141 @@ function execTarball(args, capture = false) {
   return run(["exec", "--yes", `--package=${tarball}`, "--", "yaaw-se", ...args], { capture });
 }
 
+const providerSurfaces = {
+  codex: {
+    providerRoot: ".agents",
+    skillsRoot: ".agents/skills",
+    bootstrap: "AGENTS.md"
+  },
+  "claude-code": {
+    providerRoot: ".claude",
+    skillsRoot: ".claude/skills",
+    bootstrap: "CLAUDE.md"
+  },
+  "gemini-cli": {
+    providerRoot: ".gemini",
+    skillsRoot: ".gemini/skills",
+    bootstrap: "GEMINI.md"
+  },
+  cline: {
+    providerRoot: ".cline",
+    skillsRoot: ".cline/skills",
+    bootstrap: ".cline/rules/yaaw-se.md"
+  }
+};
+
+const allProviderIds = Object.keys(providerSurfaces);
+const expectedCoreEntries = [
+  "core",
+  "expertise",
+  "install",
+  "project",
+  "registries",
+  "roles",
+  "rules",
+  "runtime",
+  "schemas",
+  "templates",
+  "workflows"
+].sort();
+const expectedProjectEntries = [
+  "engineering.md",
+  "evidence",
+  "product.md",
+  "reviews",
+  "rules",
+  "specs",
+  "state.json",
+  "tickets"
+].sort();
+
 async function assertExists(path, description) {
   if (!existsSync(path)) throw new Error(`Missing ${description}: ${path}`);
+}
+
+async function entries(path) {
+  return (await readdir(path)).sort();
+}
+
+function firstSegment(path) {
+  return path.split("/")[0];
+}
+
+function assertSameEntries(actual, expected, description) {
+  const left = JSON.stringify([...actual].sort());
+  const right = JSON.stringify([...expected].sort());
+  if (left !== right) {
+    throw new Error(`${description}: expected ${right}, got ${left}`);
+  }
+}
+
+async function assertConsumerLayout(project, tools) {
+  const manifest = JSON.parse(await readFile(join(project, ".yaaw-core", "install", "manifest.json"), "utf8"));
+  assertSameEntries(Object.keys(manifest.integrations), tools, "manifest provider selection");
+  if (!Array.isArray(manifest.skills) || manifest.skills.length === 0) {
+    throw new Error("manifest must contain the selected public skills");
+  }
+
+  const expectedRoot = new Set([".yaaw-core"]);
+  for (const id of tools) {
+    const surface = providerSurfaces[id];
+    expectedRoot.add(surface.providerRoot);
+    const bootstrapTop = firstSegment(surface.bootstrap);
+    if (bootstrapTop !== surface.providerRoot) expectedRoot.add(bootstrapTop);
+  }
+  assertSameEntries(await entries(project), [...expectedRoot], "consumer project root");
+  if (existsSync(join(project, ".yaaw"))) throw new Error("legacy .yaaw root leaked into consumer install");
+
+  assertSameEntries(await entries(join(project, ".yaaw-core")), expectedCoreEntries, ".yaaw-core top-level");
+  assertSameEntries(await entries(join(project, ".yaaw-core", "project")), expectedProjectEntries, ".yaaw-core/project");
+  assertSameEntries(await entries(join(project, ".yaaw-core", "runtime")), [], ".yaaw-core/runtime");
+  assertSameEntries(await entries(join(project, ".yaaw-core", "install")), ["manifest.json"], ".yaaw-core/install");
+
+  const manifestOwners = [
+    ...Object.values(manifest.managedFiles).map(record => record.owner),
+    ...Object.values(manifest.managedSections).flatMap(sections =>
+      Object.values(sections).map(record => record.owner)
+    )
+  ];
+
+  for (const id of allProviderIds) {
+    const surface = providerSurfaces[id];
+    if (tools.includes(id)) {
+      const expectedProviderEntries = id === "cline" ? ["rules", "skills"] : ["skills"];
+      assertSameEntries(await entries(join(project, surface.providerRoot)), expectedProviderEntries, `${id} provider root`);
+      assertSameEntries(await entries(join(project, surface.skillsRoot)), manifest.skills, `${id} public skills`);
+
+      for (const skill of manifest.skills) {
+        const skillDir = join(project, surface.skillsRoot, skill);
+        assertSameEntries(await entries(skillDir), ["SKILL.md"], `${id}/${skill}`);
+        const skillText = await readFile(join(skillDir, "SKILL.md"), "utf8");
+        if (!skillText.includes(`\nname: ${skill}\n`)) {
+          throw new Error(`${id}/${skill}: generated skill name is incorrect`);
+        }
+        if (!skillText.includes(".yaaw-core/")) {
+          throw new Error(`${id}/${skill}: generated skill does not route to canonical .yaaw-core`);
+        }
+      }
+
+      const bootstrapText = await readFile(join(project, surface.bootstrap), "utf8");
+      if (!bootstrapText.includes(".yaaw-core/")) {
+        throw new Error(`${id}: bootstrap does not route to canonical .yaaw-core`);
+      }
+      if (!manifestOwners.includes(`integration:${id}`)) {
+        throw new Error(`${id}: manifest does not own the selected provider surface`);
+      }
+    } else {
+      if (existsSync(join(project, surface.providerRoot))) {
+        throw new Error(`${id}: unselected provider directory leaked into install`);
+      }
+      if (firstSegment(surface.bootstrap) !== surface.providerRoot && existsSync(join(project, surface.bootstrap))) {
+        throw new Error(`${id}: unselected provider bootstrap leaked into install`);
+      }
+      if (manifestOwners.includes(`integration:${id}`)) {
+        throw new Error(`${id}: unselected provider leaked into manifest ownership`);
+      }
+    }
+  }
 }
 
 async function smokeCase(name, tools, expectedPaths, { pathWithSpaces = false, unicode = false } = {}) {
@@ -63,6 +196,7 @@ async function smokeCase(name, tools, expectedPaths, { pathWithSpaces = false, u
     await assertExists(join(project, ".yaaw-core", "project", "engineering.md"), "durable engineering artifact");
     await assertExists(join(project, ".yaaw-core", "install", "manifest.json"), "installation manifest");
     for (const rel of expectedPaths) await assertExists(join(project, rel), rel);
+    await assertConsumerLayout(project, tools);
 
     const product = join(project, ".yaaw-core", "project", "product.md");
     await writeFile(product, `durable sentinel: ${name}\n`);
@@ -72,6 +206,7 @@ async function smokeCase(name, tools, expectedPaths, { pathWithSpaces = false, u
     if (durable !== `durable sentinel: ${name}\n`) {
       throw new Error(`${name}: quick update changed durable project memory`);
     }
+    await assertConsumerLayout(project, tools);
 
     const status = JSON.parse(execTarball(["status", "--directory", project, "--json"], true));
     if (!status.installed || !status.healthy) {
