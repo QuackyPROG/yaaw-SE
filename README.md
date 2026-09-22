@@ -74,21 +74,21 @@ Codex, Claude Code, and Gemini receive a small managed block in their project in
 
 Smart entrypoints:
 
-- `yaaw-orchestrator` — reconstruct project reality and choose the next valid workflow.
-- `yaaw-prd` — create/continue product definition.
-- `yaaw-planner` — continue repository-backed engineering planning.
-- `yaaw-implement` — implement one admitted ticket.
-- `yaaw-review` — independently review current work.
+- `@yaaw-orchestrator` — reconstruct project reality and choose the next valid workflow.
+- `@yaaw-prd` — create/continue product definition.
+- `@yaaw-planner` — continue repository-backed engineering planning.
+- `@yaaw-implement` — implement one admitted ticket.
+- `@yaaw-review` — independently review current work.
 
 Direct shortcuts:
 
-- `yaaw-revise-prd`
-- `yaaw-refine-prd`
-- `yaaw-planning-review`
-- `yaaw-create-spec`
-- `yaaw-create-ticket`
-- `yaaw-create-tickets`
-- `yaaw-repair`
+- `@yaaw-revise-prd`
+- `@yaaw-refine-prd`
+- `@yaaw-planning-review`
+- `@yaaw-create-spec`
+- `@yaaw-create-ticket`
+- `@yaaw-create-tickets`
+- `@yaaw-repair`
 
 The Standard profile exposes all public entrypoints. Core exposes the five smart entrypoints. Custom changes only which shortcuts a coding tool discovers; it never removes canonical workflows from `.yaaw-core`.
 
