@@ -7,4 +7,4 @@ ROLE: `implementer`
 WORKFLOW: `implementation.repair-ticket`
 
 ## Execute
-Load the Implementer role, latest review findings, and canonical repair workflow. Route to replan if satisfying the finding changes the contract.
+Load `.yaaw-core/roles/implementer.md`, resolve `implementation.repair-ticket` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

@@ -7,4 +7,4 @@ ROLE: `implementer`
 WORKFLOW: `implementation.implement-ticket`
 
 ## Execute
-Load the Implementer role and canonical workflow. Implement exactly one admitted ticket; never self-approve or silently change its contract.
+Load `.yaaw-core/roles/implementer.md`, resolve `implementation.implement-ticket` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

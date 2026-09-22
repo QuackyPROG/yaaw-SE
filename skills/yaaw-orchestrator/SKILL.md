@@ -7,4 +7,4 @@ ROLE: `orchestrator`
 WORKFLOW: `orchestration.route`
 
 ## Execute
-Load `.yaaw-core/roles/orchestrator.md`, resolve the workflow ID through `.yaaw-core/registries/workflows.json`, and execute the canonical orchestration loop until a defined stop condition. Keep routing logic in `.yaaw-core`.
+Load `.yaaw-core/roles/orchestrator.md`, resolve `orchestration.route` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

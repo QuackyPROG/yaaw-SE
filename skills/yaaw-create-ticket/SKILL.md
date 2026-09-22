@@ -7,4 +7,4 @@ ROLE: `planner`
 WORKFLOW: `planning.create-tickets`
 
 ## Execute
-Load the Planner role and canonical ticket-creation workflow. This shortcut uses the same implementation as `yaaw-create-tickets`.
+Load `.yaaw-core/roles/planner.md`, resolve `planning.create-tickets` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

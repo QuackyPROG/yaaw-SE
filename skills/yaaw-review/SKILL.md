@@ -7,4 +7,4 @@ ROLE: `reviewer`
 WORKFLOW: `review.review-ticket`
 
 ## Execute
-Load the Reviewer role and canonical workflow in a fresh context when practical. Review actual repository work and evidence; never accept an implementation summary as proof.
+Load `.yaaw-core/roles/reviewer.md`, resolve `review.review-ticket` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

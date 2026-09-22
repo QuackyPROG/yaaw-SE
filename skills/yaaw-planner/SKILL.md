@@ -7,4 +7,4 @@ ROLE: `planner`
 WORKFLOW: `planning.route`
 
 ## Execute
-Load the Planner role, resolve `planning.route` through the workflow registry, and execute the selected canonical planning workflow from current artifacts and repository reality.
+Load `.yaaw-core/roles/planner.md`, resolve `planning.route` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

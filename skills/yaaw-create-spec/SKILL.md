@@ -7,4 +7,4 @@ ROLE: `planner`
 WORKFLOW: `planning.create-spec`
 
 ## Execute
-Load the Planner role and canonical create-spec workflow. Do not invent unresolved decisions while materializing the accepted frontier.
+Load `.yaaw-core/roles/planner.md`, resolve `planning.create-spec` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

@@ -7,4 +7,4 @@ ROLE: `planner`
 WORKFLOW: `planning.readiness-review`
 
 ## Execute
-Load the Planner role and readiness workflow in a fresh context when practical. Record the frontier, source revisions, result, reason, and evidence durably.
+Load `.yaaw-core/roles/planner.md`, resolve `planning.readiness-review` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

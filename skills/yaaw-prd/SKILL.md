@@ -7,4 +7,4 @@ ROLE: `prd`
 WORKFLOW: `prd.route`
 
 ## Execute
-Load the PRD role, resolve `prd.route` through the canonical workflow registry, and execute the selected product workflow rather than stopping after classification.
+Load `.yaaw-core/roles/prd.md`, resolve `prd.route` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

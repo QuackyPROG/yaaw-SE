@@ -7,4 +7,4 @@ ROLE: `prd`
 WORKFLOW: `prd.refine`
 
 ## Execute
-Load the PRD role and canonical refine workflow. If meaning would change, switch to the revision workflow instead of silently editing intent.
+Load `.yaaw-core/roles/prd.md`, resolve `prd.refine` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.

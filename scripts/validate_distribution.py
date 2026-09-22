@@ -47,6 +47,11 @@ def main() -> int:
     for root in scan_roots:
         candidates = [root] if root.is_file() else [p for p in root.rglob("*") if p.is_file()]
         for path in candidates:
+            if path.resolve() in {
+                (ROOT / "scripts" / "validate_distribution.py").resolve(),
+                (ROOT / "tests" / "test_distribution_contracts.py").resolve(),
+            }:
+                continue
             if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in {"AGENTS.md", "README.md"}:
                 continue
             text = path.read_text(encoding="utf-8", errors="ignore")
