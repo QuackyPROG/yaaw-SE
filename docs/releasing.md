@@ -1,0 +1,68 @@
+# Manual npm release
+
+npm publishing is manual for the first YAAW-SE release. There is intentionally no publish GitHub Action.
+
+## Verify
+
+```bash
+git status
+python scripts/validate_core.py
+python scripts/validate_behavior.py
+python scripts/behavior_oracle.py
+python scripts/validate_distribution.py
+python -m unittest discover -s tests -v
+
+npm install
+npm test
+npm run build
+npm pack --dry-run
+```
+
+Inspect the pack list. It should contain `package.json`, `README.md`, `dist/cli/**`, and `dist/payload/**`, and must not contain tests, git metadata, repository-development `AGENTS.md`, project memory, environment files, or private keys.
+
+## Test the exact tarball
+
+```bash
+npm pack
+mkdir -p /tmp/yaaw-codex-test
+cd /tmp/yaaw-codex-test
+npm exec --package=/path/to/yaaw-se-0.1.0.tgz -- yaaw-se install --directory . --tools codex --skills standard --yes
+npx /path/to/yaaw-se-0.1.0.tgz status
+npx /path/to/yaaw-se-0.1.0.tgz doctor
+```
+
+Repeat for Claude Code, Gemini CLI, Cline, all Tier-1 providers together, rerun/idempotence, modified managed files, repair, and durable-state sentinels.
+
+Before the first publish, confirm npm identity and package-name availability:
+
+```bash
+npm whoami
+npm view yaaw-se
+npm publish --dry-run
+```
+
+The registry name was unclaimed during implementation on 2026-09-22, but this check must be repeated immediately before publishing.
+
+## Publish
+
+For a normal public release:
+
+```bash
+npm publish
+```
+
+For prerelease testing:
+
+```bash
+npm publish --tag next
+```
+
+After publishing, smoke-test from a directory with no YAAW checkout:
+
+```bash
+mkdir /tmp/yaaw-public-smoke
+cd /tmp/yaaw-public-smoke
+npx yaaw-se@0.1.0 install
+```
+
+A release is not distribution-ready until the exact published package installs, discovers `yaaw-orchestrator`, and reaches the canonical `.yaaw-core` workflow without Python or the source checkout.
