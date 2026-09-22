@@ -19,6 +19,7 @@ def load_json(path: Path):
 def main() -> int:
     workflows = load_json(CORE / "registries" / "workflows.json")
     policy = load_json(CORE / "registries" / "routing-policy.json")
+    execution = load_json(CORE / "registries" / "execution-policy.json")
     transitions = load_json(CORE / "registries" / "transitions.json")
     fixtures = load_json(FIXTURES)
     errors: list[str] = []
