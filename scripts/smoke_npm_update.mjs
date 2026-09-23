@@ -63,6 +63,19 @@ try {
 
   execTarball(oldTarball, ["install", "--directory", project, "--tools", "codex", "--skills", "core", "--yes"]);
 
+  // Convert the first install into the actual pre-feature Codex baseline:
+  // adapter v1, no YAAW-owned .codex runtime surface, existing durable project memory intact.
+  await rm(join(project, ".codex"), { recursive: true, force: true });
+  const legacyManifestPath = join(project, ".yaaw-core", "install", "manifest.json");
+  const legacyManifest = JSON.parse(await readFile(legacyManifestPath, "utf8"));
+  legacyManifest.integrations.codex.adapterVersion = 1;
+  delete legacyManifest.integrations.codex.runtime;
+  legacyManifest.managedFiles = Object.fromEntries(
+    Object.entries(legacyManifest.managedFiles).filter(([rel]) => !rel.startsWith(".codex/"))
+  );
+  delete legacyManifest.managedConfigKeys;
+  await writeFile(legacyManifestPath, JSON.stringify(legacyManifest, null, 2) + "\n");
+
   const durableFiles = {
     "product.md": "product sentinel\n",
     "engineering.md": "engineering sentinel\n",
@@ -103,11 +116,22 @@ try {
   if (manifest.yaawVersion !== currentVersion) {
     throw new Error(`Expected manifest ${currentVersion}, got ${manifest.yaawVersion}`);
   }
+  if (manifest.integrations?.codex?.adapterVersion !== 2) {
+    throw new Error(`Expected Codex adapter v2 after migration, got ${manifest.integrations?.codex?.adapterVersion}`);
+  }
+  if (manifest.integrations?.codex?.runtime?.mode !== "auto") {
+    throw new Error("Legacy Codex migration did not default to auto runtime");
+  }
+  if (!existsSync(join(project, ".codex", "yaaw-runtime.md")) ||
+      !existsSync(join(project, ".codex", "agents", "yaaw-reviewer.toml")) ||
+      !existsSync(join(project, ".codex", "config.toml"))) {
+    throw new Error("Legacy Codex migration did not install the v2 runtime surface");
+  }
 
   const doctor = JSON.parse(execTarball(currentTarball, ["doctor", "--directory", project, "--json"], true));
   if (!doctor.healthy) throw new Error(`Doctor failed after tarball update: ${JSON.stringify(doctor)}`);
 
-  console.log(`✓ tarball update ${oldVersion} -> ${currentVersion} preserved all durable-state sentinels`);
+  console.log(`✓ tarball update ${oldVersion} -> ${currentVersion} migrated Codex v1 -> v2 and preserved all durable-state sentinels`);
 } finally {
   await writeFile(packagePath, originalPackage);
   await writeFile(coreSourcePath, originalCore);
