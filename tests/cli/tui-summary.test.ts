@@ -5,7 +5,7 @@ import { formatSuccess } from "../../src/tui/result.js";
 import type { InstallPlan } from "../../src/installer/types.js";
 
 describe("installer user-facing summaries", () => {
-  it("describes planned impact without exposing internal transaction opcodes", () => {
+  it("shows a concise, human-facing change summary", () => {
     const root = join(process.cwd(), "example-project");
     const plan: InstallPlan = {
       action: "quick-update",
@@ -38,21 +38,26 @@ describe("installer user-facing summaries", () => {
           sectionId: "yaaw-se",
           content: "managed",
           owner: "integration:codex"
+        },
+        {
+          type: "remove-managed-file",
+          path: join(root, ".yaaw-core", "core", "lifecycle.md"),
+          owner: "package:legacy"
         }
       ]
     };
 
     const output = formatPlan(plan);
-    expect(output).toContain("Action: Quick update");
-    expect(output).toContain("Managed files to reconcile: 2");
-    expect(output).toContain("Project files created only if missing: 1");
-    expect(output).toContain("Managed file sections to update: 1");
-    expect(output).toContain("YAAW engine (.yaaw-core/system): 1 file");
-    expect(output).toContain("Codex skill entrypoints: 1 file");
-    expect(output).toContain("AGENTS.md [yaaw-se]");
-    expect(output).toContain("Existing durable project memory overwritten: 0");
+    expect(output).toContain(`Project: ${root}`);
+    expect(output).toContain("Codex · 2 skills");
+    expect(output).toContain("Refresh the YAAW-SE engine and Codex skills");
+    expect(output).toContain("Remove obsolete YAAW-managed files");
+    expect(output).toContain("Ensure durable project memory defaults exist");
+    expect(output).toContain("Preserve project memory and user-owned content");
+    expect(output).not.toContain("Managed files to reconcile");
+    expect(output).not.toContain("Directories prepared/cleaned");
+    expect(output).not.toContain(".yaaw-core/core/lifecycle.md");
     expect(output).not.toContain("copy-managed-file");
-    expect(output).not.toContain("write-managed-file");
   });
 
   it("reports what actually changed after execution", () => {
