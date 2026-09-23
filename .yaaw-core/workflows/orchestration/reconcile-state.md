@@ -18,3 +18,9 @@ Reconciled state or `BLOCKED` when the last trustworthy boundary cannot be prove
 ## Cause-aware PASS reconciliation
 
 For `PASS`: source revision mismatch -> `REPLAN_REQUIRED`. Otherwise missing/stale/unverifiable review or verification -> `REVIEW_REQUIRED`. Repository identity mismatch alone is acceptance invalidation, never automatic replan.
+
+## Framework boundary
+
+Reconciliation is forbidden when the observed framework integrity status is not `HEALTHY`. Return the typed framework stop without changing ticket/project lifecycle state. A contradiction among canonical framework contracts is `FRAMEWORK_CONTRACT_INCONSISTENCY`; do not resolve it by editing the governing files.
+
+Reviewer-owned acceptance results are applied to `state.json` by Orchestrator only after the immutable review artifact is fresh and valid. Orchestrator records exactly the target implied by the review result and never invents an acceptance result.
