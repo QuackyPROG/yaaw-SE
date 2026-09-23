@@ -65,6 +65,13 @@ export function formatSuccess(summary: SuccessSummary): string {
   const entryPoints = summary.selected.map(id =>
     `  ${integrations[id].displayName}: ${integrations[id].invocationHint("yaaw-orchestrator")}`
   );
+  const codexRuntimeChanged = summary.selected.includes("codex") && changed.some(path => path.startsWith(".codex/"));
+  const codexNote = codexRuntimeChanged ? [
+    "",
+    "Codex runtime configuration changed:",
+    "  Start a new Codex session/task for project .codex settings to load.",
+    "  Codex loads project .codex configuration only for trusted projects."
+  ] : [];
 
   return [
     `Version: ${summary.version}`,
@@ -81,7 +88,8 @@ export function formatSuccess(summary: SuccessSummary): string {
     "  User-owned content outside YAAW-managed sections was left intact",
     "",
     "Start here:",
-    ...entryPoints
+    ...entryPoints,
+    ...codexNote
   ].join("\n");
 }
 

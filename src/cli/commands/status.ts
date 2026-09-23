@@ -13,6 +13,7 @@ export async function runStatus(options: {directory?:string;json?:boolean} = {})
     console.log(`Project memory: ${status.projectMemory ? "present" : "missing"}`);
     console.log(`Integrations: ${status.integrations.join(", ") || "none"}`);
     console.log(`Managed files: ${status.managedFiles.healthy} healthy, ${status.managedFiles.modified} modified, ${status.managedFiles.missing} missing, ${status.managedFiles.localOverrides} local overrides`);
+    if (status.managedConfigKeys) console.log(`Managed config keys: ${status.managedConfigKeys.healthy} healthy, ${status.managedConfigKeys.modified} modified, ${status.managedConfigKeys.missing} missing, ${status.managedConfigKeys.localOverrides} local overrides`);
     if (status.issues.length) for (const issue of status.issues) console.log(`- ${issue}`);
   }
   return status;

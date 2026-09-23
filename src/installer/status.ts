@@ -164,6 +164,38 @@ export async function doctor(projectRoot: string) {
     checks.push({ name: "path-registry", ok: false, detail: "missing or invalid paths registry" });
   }
 
+  if (manifest?.integrations?.codex) {
+    let codexConfig = "";
+    let configOk = false;
+    try {
+      codexConfig = await readFile(join(projectRoot, ".codex", "config.toml"), "utf8");
+      validateManagedToml(codexConfig);
+      configOk = true;
+    } catch {}
+    checks.push({ name: "codex-config-syntax", ok: configOk });
+    checks.push({ name: "codex-runtime-adapter", ok: await exists(join(projectRoot, ".codex", "yaaw-runtime.md")) });
+    const roleFiles = ["yaaw-prd.toml","yaaw-planner.toml","yaaw-implementer.toml","yaaw-reviewer.toml"];
+    checks.push({ name: "codex-role-files", ok: (await Promise.all(roleFiles.map(name => exists(join(projectRoot, ".codex", "agents", name))))).every(Boolean) });
+    const declarations = [
+      ["yaaw_prd","yaaw-prd.toml"],
+      ["yaaw_planner","yaaw-planner.toml"],
+      ["yaaw_implementer","yaaw-implementer.toml"],
+      ["yaaw_reviewer","yaaw-reviewer.toml"]
+    ];
+    checks.push({
+      name: "codex-role-declarations",
+      ok: configOk && declarations.every(([role,file]) => readTomlManagedValue(codexConfig, `agents.${role}.config_file`) === `agents/${file}`)
+    });
+    const codexOwned = manifest.managedConfigKeys?.[".codex/config.toml"] ?? {};
+    checks.push({
+      name: "codex-managed-config-ownership",
+      ok: declarations.every(([role]) => Boolean(codexOwned[`agents.${role}.description`]) && Boolean(codexOwned[`agents.${role}.config_file`]))
+    });
+    let bootstrap = "";
+    try { bootstrap = await readFile(join(projectRoot, "AGENTS.md"), "utf8"); } catch {}
+    checks.push({ name: "codex-bootstrap-runtime-reference", ok: bootstrap.includes(".codex/yaaw-runtime.md") });
+  }
+
   return {
     ...status,
     healthy: status.healthy && checks.every(c=>c.ok),

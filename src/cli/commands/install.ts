@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import { access, mkdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { detectExistingInstallation } from "../../installer/detect.js";
 import { packageVersion, payloadRoot as getPayloadRoot } from "../../installer/context.js";
 import { buildInstallPlan, ManagedConflictError, resolveSkillSelection } from "../../installer/plan.js";
@@ -18,6 +18,8 @@ import { selectSkills } from "../../tui/select-skills.js";
 import { selectExistingAction } from "../../tui/existing-install.js";
 import { confirmPlan, formatPlan } from "../../tui/confirm-plan.js";
 import { formatSuccess, showSuccess } from "../../tui/result.js";
+import { configureCodexRuntime } from "../../tui/configure-codex.js";
+import { defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, parseCodexInstallConfig, type CodexRuntimeSettings } from "../../integrations/codex-runtime.js";
 
 export interface InstallCommandOptions {
   directory?: string;
@@ -29,6 +31,13 @@ export interface InstallCommandOptions {
   listTools?: boolean;
   listSkills?: boolean;
   forceManaged?: boolean;
+  codexRuntime?: string;
+  codexRootModel?: string;
+  codexRootReasoning?: string;
+  codexWorkerModel?: string;
+  codexWorkerReasoning?: string;
+  codexMaxAgents?: string;
+  codexConfig?: string;
   json?: boolean;
 }
 
@@ -38,6 +47,52 @@ function parseTools(raw?: string): IntegrationId[] {
   const unknown = values.filter(x=>!integrationIds.includes(x as IntegrationId));
   if (unknown.length) throw new Error(`Unknown tool IDs: ${unknown.join(", ")}`);
   return [...new Set(values)] as IntegrationId[];
+}
+
+
+function inheritValue(value: string | undefined): string | null | undefined {
+  if (value === undefined) return undefined;
+  return value === "inherit" ? null : value;
+}
+
+async function resolveCodexRuntime(options: InstallCommandOptions, existing: unknown, interactive: boolean, action: InstallAction): Promise<CodexRuntimeSettings> {
+  let settings = normalizeCodexRuntimeSettings(existing ?? defaultCodexRuntimeSettings());
+
+  if (options.codexConfig) {
+    const file = resolve(options.codexConfig);
+    settings = parseCodexInstallConfig(JSON.parse(await readFile(file, "utf8")));
+  }
+
+  const overlay: any = {};
+  if (options.codexRuntime !== undefined) overlay.mode = options.codexRuntime;
+  const rootModel = inheritValue(options.codexRootModel);
+  const rootReasoning = inheritValue(options.codexRootReasoning);
+  if (rootModel !== undefined || rootReasoning !== undefined) {
+    overlay.orchestrator = {
+      ...(rootModel !== undefined ? { model: rootModel } : {}),
+      ...(rootReasoning !== undefined ? { reasoning: rootReasoning } : {})
+    };
+  }
+  const workerModel = inheritValue(options.codexWorkerModel);
+  const workerReasoning = inheritValue(options.codexWorkerReasoning);
+  if (workerModel !== undefined || workerReasoning !== undefined) {
+    overlay.defaultWorker = {
+      ...(workerModel !== undefined ? { model: workerModel } : {}),
+      ...(workerReasoning !== undefined ? { reasoning: workerReasoning } : {})
+    };
+  }
+  if (options.codexMaxAgents !== undefined) overlay.maxConcurrentThreads = options.codexMaxAgents === "inherit" ? null : options.codexMaxAgents;
+  settings = normalizeCodexRuntimeSettings(overlay, settings);
+
+  const explicit = Boolean(
+    options.codexConfig || options.codexRuntime !== undefined || options.codexRootModel !== undefined ||
+    options.codexRootReasoning !== undefined || options.codexWorkerModel !== undefined ||
+    options.codexWorkerReasoning !== undefined || options.codexMaxAgents !== undefined
+  );
+  if (interactive && !explicit && (action === "fresh" || action === "modify")) {
+    settings = await configureCodexRuntime(settings);
+  }
+  return settings;
 }
 
 async function legacyExists(root: string) {
@@ -111,6 +166,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     const makeUninstallContext = async (): Promise<InstallContext> => ({
       packageVersion: await packageVersion(), payloadRoot, requestedDirectory: requested, projectRoot,
       mode: interactive ? "interactive" : "headless", selectedIntegrations: [], selectedSkills: [],
+      integrationSettings: {},
       action, dryRun: Boolean(options.dryRun), forceManaged: Boolean(options.forceManaged),
       conflictPolicy
     });
@@ -154,10 +210,21 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   else if (interactive) skills = await selectSkills(payloadRoot, existing.manifest?.skills);
   else skills = await resolveSkillSelection(payloadRoot, "standard");
 
+  const integrationSettings: Partial<Record<IntegrationId, unknown>> = {};
+  if (tools.includes("codex")) {
+    integrationSettings.codex = await resolveCodexRuntime(
+      options,
+      existing.manifest?.integrations?.codex?.runtime,
+      interactive,
+      action
+    );
+  }
+
   let conflictPolicy: ConflictPolicy = options.forceManaged ? "replace" : "fail";
   const makeContext = (): InstallContext => ({
     packageVersion: "", payloadRoot, requestedDirectory: requested, projectRoot,
     mode: interactive ? "interactive" : "headless", selectedIntegrations: tools, selectedSkills: skills,
+    integrationSettings,
     action, dryRun: Boolean(options.dryRun), forceManaged: Boolean(options.forceManaged), conflictPolicy
   });
   const version = await packageVersion();
