@@ -31,6 +31,8 @@ class DistributionContractsTest(unittest.TestCase):
 
     def test_canonical_framework_layout_has_tools_and_no_system_root(self):
         self.assertTrue((CORE / "tools" / "repository-identity.mjs").is_file())
+        self.assertTrue((CORE / "tools" / "framework-integrity.mjs").is_file())
+        self.assertTrue((CORE / "core" / "framework-integrity.md").is_file())
         self.assertFalse((CORE / "system").exists())
 
     def test_provider_adapter_directories_are_generated_surfaces(self):
