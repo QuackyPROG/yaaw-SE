@@ -1,4 +1,5 @@
-import { access, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -68,6 +69,79 @@ describe("headless installation", () => {
     await expect(runInstall({ directory: root, action: "quick-update", yes: true })).rejects.toThrow(/managed files require a choice/i);
     await runInstall({ directory: root, action: "quick-update", yes: true, forceManaged: true });
     expect(await readFile(skill, "utf8")).toContain("name: yaaw-review");
+  });
+
+  it("installed framework integrity tool detects package drift", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-integrity-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+
+    const tool = join(root, ".yaaw-core", "tools", "framework-integrity.mjs");
+    const healthy = spawnSync(process.execPath, [tool, "--workspace", root], { encoding: "utf8" });
+    expect(healthy.status).toBe(0);
+    expect(JSON.parse(healthy.stdout).status).toBe("HEALTHY");
+
+    const lifecycle = join(root, ".yaaw-core", "core", "lifecycle.md");
+    await writeFile(lifecycle, (await readFile(lifecycle, "utf8")) + "\nincident self-edit\n");
+
+    const drifted = spawnSync(process.execPath, [tool, "--workspace", root], { encoding: "utf8" });
+    expect(drifted.status).toBe(2);
+    const report = JSON.parse(drifted.stdout);
+    expect(report.status).toBe("MODIFIED");
+    expect(report.modified).toContain(".yaaw-core/core/lifecycle.md");
+    expect(report.repair_required).toBe(true);
+  });
+
+  it("backup-replace repair restores framework, preserves project memory, backs up tainted bytes, and invalidates runtime", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-repair-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    await writeFile(product, "durable repair sentinel\n");
+
+    const lifecycle = join(root, ".yaaw-core", "core", "lifecycle.md");
+    const canonical = await readFile(lifecycle, "utf8");
+    const tainted = canonical + "\nincident framework self-edit\n";
+    await writeFile(lifecycle, tainted);
+
+    const runtime = join(root, ".yaaw-core", "runtime");
+    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+      await writeFile(join(runtime, name), JSON.stringify({ stale: name }) + "\n");
+    }
+
+    const before: any = await runDoctor({ directory: root, json: true });
+    expect(before.healthy).toBe(false);
+    expect(before.frameworkIntegrity.status).toBe("MODIFIED");
+    expect(before.frameworkIntegrity.modifiedPaths).toContain(".yaaw-core/core/lifecycle.md");
+
+    await runInstall({
+      directory: root,
+      action: "repair",
+      yes: true,
+      conflictPolicy: "backup-replace"
+    });
+
+    expect(await readFile(lifecycle, "utf8")).toBe(canonical);
+    expect(await readFile(product, "utf8")).toBe("durable repair sentinel\n");
+    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+      expect(await exists(join(runtime, name))).toBe(false);
+    }
+
+    const backupRoot = join(root, ".yaaw-core", "install", "backups");
+    const stamps = await readdir(backupRoot);
+    expect(stamps.length).toBeGreaterThan(0);
+    let foundBackup = false;
+    for (const stamp of stamps) {
+      const candidate = join(backupRoot, stamp, ".yaaw-core", "core", "lifecycle.md");
+      if (await exists(candidate)) {
+        expect(await readFile(candidate, "utf8")).toBe(tainted);
+        foundBackup = true;
+      }
+    }
+    expect(foundBackup).toBe(true);
+
+    const after: any = await runDoctor({ directory: root, json: true });
+    expect(after.healthy).toBe(true);
+    expect(after.frameworkIntegrity.status).toBe("HEALTHY");
   });
 
   it("safe uninstall preserves project memory and outside bootstrap bytes", async () => {
