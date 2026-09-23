@@ -1,4 +1,4 @@
-import { access, mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -112,6 +112,34 @@ describe("headless installation", () => {
     expect(report.healthy).toBe(false);
     expect(await readFile(manifest, "utf8")).toBe("{not-json\n");
     await expect(runInstall({ directory: root, action: "repair", tools: "codex", yes: true })).rejects.toThrow(/Partial YAAW\/provider state|valid manifest/i);
+  });
+
+  it("quick-update migrates manifest-owned legacy system layout to canonical root", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-system-migrate-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+
+    const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
+    const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    const canonicalRel = ".yaaw-core/core/lifecycle.md";
+    const legacyRel = ".yaaw-core/system/core/lifecycle.md";
+    const canonicalPath = join(root, canonicalRel);
+    const lifecycle = await readFile(canonicalPath);
+
+    await mkdir(join(root, ".yaaw-core", "system", "core"), { recursive: true });
+    await writeFile(join(root, legacyRel), lifecycle);
+    await rm(canonicalPath);
+    manifest.managedFiles[legacyRel] = manifest.managedFiles[canonicalRel];
+    delete manifest.managedFiles[canonicalRel];
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    await writeFile(product, "migration sentinel\n");
+
+    await runInstall({ directory: root, action: "quick-update", yes: true });
+
+    expect(await exists(canonicalPath)).toBe(true);
+    expect(await exists(join(root, ".yaaw-core", "system"))).toBe(false);
+    expect(await readFile(product, "utf8")).toBe("migration sentinel\n");
   });
 
   it("doctor rejects a parallel legacy .yaaw-core/system layout", async () => {
