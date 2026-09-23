@@ -64,7 +64,7 @@ A framework failure is distinct from a project `BLOCKED` ticket. Do not mutate t
 
 Orchestrator may recommend the installer repair command, but only installer authority may replace package-managed files.
 
-The safe repair pattern is backup-and-replace:
+The safe repair pattern is backup-and-replace. Package updates and repairs invalidate replaceable runtime handoff/observation/intent caches so no executable dispatch survives a framework basis change:
 
 ```text
 npx yaaw-se install --action repair --conflict-policy backup-replace --yes
