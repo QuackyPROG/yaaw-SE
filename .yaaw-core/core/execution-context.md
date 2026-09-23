@@ -8,6 +8,16 @@ Resolve the consumer workspace by walking toward ancestors until `.yaaw-core/ins
 
 The process CWD is never authoritative. `.yaaw-core/project/` is project memory, not the workspace root.
 
+## Framework integrity
+
+After resolving the workspace and before semantic project recovery, run:
+
+```text
+node .yaaw-core/tools/framework-integrity.mjs --workspace <WORKSPACE_ROOT>
+```
+
+Only `HEALTHY` permits semantic routing. Package drift, missing framework files, local framework overrides, legacy parallel layout, or an invalid manifest produce a typed framework stop and invalidate executable handoffs. Orchestrator reports the condition; it never repairs package-managed files itself.
+
 ## Repository capability
 - `READY`: repository exists and exact identity is trustworthy.
 - `UNVERSIONED`: valid workspace, no Git repository.
