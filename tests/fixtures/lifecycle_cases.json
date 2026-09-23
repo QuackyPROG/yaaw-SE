@@ -730,6 +730,48 @@
         "workflow": null,
         "terminal": "COMPLETE"
       }
+    },
+    {
+      "id": "AA-framework-modified-stops-routing",
+      "observed": {
+        "product_status": "ready",
+        "planning_status": "ready",
+        "readiness": "PASS",
+        "spec_status": "accepted",
+        "repository_status": "READY",
+        "tickets": {
+          "TASK-001": {
+            "state": "READY",
+            "dependencies_satisfied": true
+          }
+        },
+        "framework_status": "MODIFIED"
+      },
+      "expected": {
+        "workflow": null,
+        "terminal": "BLOCKED"
+      }
+    },
+    {
+      "id": "AB-framework-contract-inconsistency-stops-routing",
+      "observed": {
+        "product_status": "ready",
+        "planning_status": "ready",
+        "readiness": "PASS",
+        "spec_status": "accepted",
+        "repository_status": "READY",
+        "tickets": {
+          "TASK-001": {
+            "state": "READY",
+            "dependencies_satisfied": true
+          }
+        },
+        "framework_status": "CONTRACT_INCONSISTENT"
+      },
+      "expected": {
+        "workflow": null,
+        "terminal": "BLOCKED"
+      }
     }
   ]
 }
