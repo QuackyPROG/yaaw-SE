@@ -1,5 +1,11 @@
 {
-  "schema": "yaaw.handoff/v2",
+  "schema": "yaaw.handoff/v3",
+  "framework": {
+    "yaaw_version": "VERSION",
+    "installation_schema": 1,
+    "project_state_schema": 1,
+    "manifest_digest": "sha256:MANIFEST"
+  },
   "role": "implementer",
   "workflow": "implementation.implement-ticket",
   "desired_intent": "IMPLEMENT",
@@ -8,20 +14,41 @@
   "reads": [],
   "writes": [],
   "forbidden_writes": [],
-  "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
+  "revisions": {
+    "product": 1,
+    "engineering": 1,
+    "spec": 1,
+    "ticket": 1
+  },
   "expertise": [],
   "host_expertise": [],
   "expected_output": "implementation_evidence",
-  "result_vocabulary": ["SUCCESS", "REVIEW_REQUIRED", "REPLAN_REQUIRED", "PRECONDITION_UNSATISFIED", "BLOCKED"],
+  "result_vocabulary": [
+    "SUCCESS",
+    "REVIEW_REQUIRED",
+    "REPLAN_REQUIRED",
+    "PRECONDITION_UNSATISFIED",
+    "BLOCKED"
+  ],
   "repository_requirement": "IDENTITY",
   "repository": {
+    "schema": "yaaw.repository-identity/v2",
+    "algorithm": "yaaw-worktree-v1",
     "status": "READY",
     "workspace_scope": ".",
     "git_root_relation": "same",
     "head_commit": "COMMIT",
     "dirty": false,
-    "worktree_digest": "DIGEST",
+    "worktree_digest": "sha256:DIGEST",
+    "components": {
+      "status_sha256": "HASH",
+      "unstaged_diff_sha256": "HASH",
+      "staged_diff_sha256": "HASH",
+      "untracked_manifest_sha256": "HASH"
+    },
+    "changed_paths": [],
     "error": null
   },
-  "transition_sequence": 0
+  "transition_sequence": 0,
+  "cause": null
 }

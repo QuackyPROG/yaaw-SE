@@ -1,39 +1,165 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "yaaw.handoff/v2",
+  "$id": "yaaw.handoff/v3",
   "type": "object",
-  "required": ["schema", "role", "workflow", "desired_intent", "active_artifact", "references", "reads", "writes", "forbidden_writes", "revisions", "expertise", "host_expertise", "expected_output", "result_vocabulary", "repository_requirement", "repository", "transition_sequence"],
+  "required": [
+    "schema",
+    "framework",
+    "role",
+    "workflow",
+    "desired_intent",
+    "active_artifact",
+    "references",
+    "reads",
+    "writes",
+    "forbidden_writes",
+    "revisions",
+    "expertise",
+    "host_expertise",
+    "expected_output",
+    "result_vocabulary",
+    "repository_requirement",
+    "repository",
+    "transition_sequence",
+    "cause"
+  ],
   "properties": {
-    "schema": {"const": "yaaw.handoff/v2"},
-    "role": {"enum": ["prd", "planner", "implementer", "reviewer", "orchestrator"]},
-    "workflow": {"type": "string", "minLength": 1},
-    "desired_intent": {"type": ["string", "null"]},
-    "active_artifact": {"type": ["string", "null"]},
-    "references": {"type": "array", "items": {"type": "string"}},
-    "reads": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "writes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "forbidden_writes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "revisions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
-    "expertise": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "host_expertise": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "expected_output": {"type": "string", "minLength": 1},
-    "result_vocabulary": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
-    "repository_requirement": {"enum": ["NONE", "INSPECT", "IDENTITY"]},
-    "repository": {
+    "schema": {
+      "const": "yaaw.handoff/v3"
+    },
+    "framework": {
       "type": "object",
-      "required": ["status", "workspace_scope", "git_root_relation", "head_commit", "dirty", "worktree_digest", "error"],
+      "required": [
+        "yaaw_version",
+        "installation_schema",
+        "project_state_schema",
+        "manifest_digest"
+      ],
       "properties": {
-        "status": {"enum": ["READY", "UNVERSIONED", "UNAVAILABLE", "ROOT_MISMATCH", "IDENTITY_FAILED"]},
-        "workspace_scope": {"type": "string", "minLength": 1},
-        "git_root_relation": {"enum": ["same", "ancestor", "none", "unknown"]},
-        "head_commit": {"type": ["string", "null"]},
-        "dirty": {"type": ["boolean", "null"]},
-        "worktree_digest": {"type": ["string", "null"]},
-        "error": {"type": ["string", "null"]}
+        "yaaw_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "installation_schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "project_state_schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "manifest_digest": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
-    "transition_sequence": {"type": "integer", "minimum": 0}
+    "role": {
+      "enum": [
+        "prd",
+        "planner",
+        "implementer",
+        "reviewer",
+        "orchestrator"
+      ]
+    },
+    "workflow": {
+      "type": "string",
+      "minLength": 1
+    },
+    "desired_intent": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "active_artifact": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reads": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "writes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "forbidden_writes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "revisions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "expertise": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "host_expertise": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "expected_output": {
+      "type": "string",
+      "minLength": 1
+    },
+    "result_vocabulary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "repository_requirement": {
+      "enum": [
+        "NONE",
+        "INSPECT",
+        "IDENTITY"
+      ]
+    },
+    "repository": {
+      "$ref": "repository-identity.schema.json"
+    },
+    "transition_sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cause": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
   },
   "additionalProperties": false
 }
