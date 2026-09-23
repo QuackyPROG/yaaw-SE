@@ -4,7 +4,13 @@
     "yaaw_version": "VERSION",
     "installation_schema": 1,
     "project_state_schema": 1,
-    "manifest_digest": "sha256:MANIFEST"
+    "manifest_digest": "sha256:MANIFEST",
+    "integrity_status": "HEALTHY",
+    "modified": [],
+    "missing": [],
+    "local_overrides": [],
+    "legacy_paths": [],
+    "repair_required": false
   },
   "repository": {
     "schema": "yaaw.repository-identity/v2",
