@@ -13,3 +13,9 @@ Authority is semantic, not hierarchical.
 Expertise modules never grant authority. They may advise a role but cannot override the role contract.
 
 A downstream role may detect that an upstream contract is invalid, but it must return control to the owning role rather than silently rewriting that contract.
+
+## Framework authority
+
+Package-managed framework content is governed by `.yaaw-core/system/core/framework-integrity.md`. Semantic roles may report a framework defect but may not edit the framework to remove their own blocker. Installer authority is the only authority that may replace package-managed framework files in a consumer installation.
+
+Transition ownership is semantic decision ownership. Physical mutation of `.yaaw-core/project/state.json` is performed by Orchestrator after it verifies the durable output that authorized the transition.
