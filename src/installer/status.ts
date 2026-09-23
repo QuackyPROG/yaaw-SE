@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { assertRelativeManifestPath } from "./boundary.js";
 import { sha256Bytes } from "./hashing.js";
 import { extractManagedSection, managedSectionHash } from "./managed-sections.js";
+import { readTomlManagedValue, semanticConfigHash, validateManagedToml } from "./toml-managed.js";
 import { readManifest } from "./manifest.js";
 
 async function exists(path: string) {
@@ -29,6 +30,7 @@ export async function inspectStatus(projectRoot: string) {
       projectMemory: await exists(join(projectRoot, ".yaaw-core", "project")),
       managedFiles: emptyCounts(),
       managedSections: emptyCounts(),
+      managedConfigKeys: emptyCounts(),
       healthy: false,
       issues: [`invalid installation manifest: ${error.message}`]
     };
@@ -79,6 +81,28 @@ export async function inspectStatus(projectRoot: string) {
     }
   }
 
+  const managedConfigKeys = emptyCounts();
+  for (const [rel, keys] of Object.entries(manifest.managedConfigKeys ?? {})) {
+    try {
+      const path = await assertRelativeManifestPath(projectRoot, rel);
+      const text = (await exists(path)) ? await readFile(path, "utf8") : "";
+      validateManagedToml(text);
+      for (const [key, record] of Object.entries(keys)) {
+        const current = readTomlManagedValue(text, key);
+        if (current === undefined) {
+          managedConfigKeys.missing += 1;
+          issues.push(`missing managed config key: ${rel}#${key}`);
+        } else if (semanticConfigHash(current) !== record.sha256) {
+          managedConfigKeys.modified += 1;
+          issues.push(`modified managed config key: ${rel}#${key}`);
+        } else if (record.localOverride) managedConfigKeys.localOverrides += 1;
+        else managedConfigKeys.healthy += 1;
+      }
+    } catch (error: any) {
+      issues.push(`unsafe/invalid managed config ${rel}: ${error.message}`);
+    }
+  }
+
   const projectMemory = await exists(join(projectRoot, ".yaaw-core", "project"));
   if (!projectMemory) issues.push("durable project memory directory is missing");
 
@@ -95,6 +119,7 @@ export async function inspectStatus(projectRoot: string) {
     projectMemory,
     managedFiles,
     managedSections,
+    managedConfigKeys,
     healthy: issues.length === 0,
     issues
   };
@@ -119,6 +144,7 @@ export async function doctor(projectRoot: string) {
   checks.push({ name: "manifest", ok: true });
   checks.push({ name: "managed-files", ok: status.managedFiles.modified === 0 && status.managedFiles.missing === 0 });
   checks.push({ name: "managed-sections", ok: status.managedSections.modified === 0 && status.managedSections.missing === 0 });
+  checks.push({ name: "managed-config-keys", ok: status.managedConfigKeys.modified === 0 && status.managedConfigKeys.missing === 0 });
   checks.push({ name: "project-memory", ok: status.projectMemory });
   checks.push({ name: "system-root", ok: await exists(join(projectRoot, ".yaaw-core", "system")) });
 

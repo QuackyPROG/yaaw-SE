@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from "node:path";
 import { assertSafeDestination } from "./boundary.js";
 import { atomicWrite } from "./filesystem.js";
 import { removeManagedSection, renderManagedSection } from "./managed-sections.js";
+import { removeTomlManagedKeys, updateTomlManagedKeys, validateManagedToml } from "./toml-managed.js";
 import type { InstallPlan, InstallOperation } from "./types.js";
 
 interface Backup { existed: boolean; bytes?: Buffer; }
@@ -59,6 +60,8 @@ export async function preflightPlan(plan: InstallPlan): Promise<void> {
     "write-managed-file",
     "copy-managed-file",
     "update-managed-section",
+    "update-managed-config-keys",
+    "remove-managed-config-keys",
     "remove-managed-file",
     "remove-managed-section",
     "remove-empty-dir"
@@ -121,6 +124,23 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
         const original = (await exists(op.path)) ? await readFile(op.path, "utf8") : "";
         const updated = renderManagedSection(original, op.sectionId, op.content);
         if (updated !== original) await mutateFile(op.path, async () => atomicWrite(op.path, updated));
+      } else if (op.type === "update-managed-config-keys") {
+        const original = (await exists(op.path)) ? await readFile(op.path, "utf8") : "";
+        validateManagedToml(original);
+        const updated = updateTomlManagedKeys(original, op.entries);
+        validateManagedToml(updated);
+        if (updated !== original) await mutateFile(op.path, async () => atomicWrite(op.path, updated));
+      } else if (op.type === "remove-managed-config-keys") {
+        if (await exists(op.path)) {
+          const original = await readFile(op.path, "utf8");
+          validateManagedToml(original);
+          const updated = removeTomlManagedKeys(original, op.keys);
+          validateManagedToml(updated);
+          if (updated !== original) await mutateFile(op.path, async () => {
+            if (updated.trim().length === 0) await unlink(op.path);
+            else await atomicWrite(op.path, updated);
+          });
+        }
       } else if (op.type === "remove-managed-section") {
         if (await exists(op.path)) {
           const original = await readFile(op.path, "utf8");

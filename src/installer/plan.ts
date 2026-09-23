@@ -2,9 +2,10 @@ import { access, readFile, readdir } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { sha256Bytes } from "./hashing.js";
 import { extractManagedSection, managedSectionHash } from "./managed-sections.js";
+import { readTomlManagedValue, semanticConfigHash, validateManagedToml } from "./toml-managed.js";
 import { MANIFEST_RELATIVE_PATH, emptyManifest } from "./manifest.js";
 import { planProjectInitialization } from "./project-state.js";
-import type { InstallContext, InstallOperation, InstallPlan, InstallationManifest, ManagedFileRecord } from "./types.js";
+import type { InstallContext, InstallOperation, InstallPlan, InstallationManifest, ManagedConfigKeyRecord, ManagedFileRecord } from "./types.js";
 import { getIntegration } from "../integrations/registry.js";
 import { CURRENT_INSTALLATION_SCHEMA, CURRENT_PROJECT_SCHEMA, CURRENT_SYSTEM_SCHEMA, migrationPath } from "./migrations/index.js";
 import { projectMigrations } from "./migrations/project/index.js";
@@ -156,6 +157,126 @@ async function chooseManagedSection(params: {
 }
 
 
+async function chooseManagedConfigKeys(params: {
+  ctx: InstallContext;
+  previous: InstallationManifest | null;
+  op: Extract<InstallOperation,{type:"update-managed-config-keys"}>;
+  configRecords: InstallationManifest["managedConfigKeys"];
+  operations: InstallOperation[];
+  conflicts: string[];
+  backupStamp: string;
+}) {
+  const { ctx, previous, op, configRecords, operations, conflicts, backupStamp } = params;
+  const pathRel = rel(ctx.projectRoot, op.path);
+  let original = "";
+  try { original = await readFile(op.path, "utf8"); } catch {}
+  if (original) validateManagedToml(original);
+
+  const ownedEntries: typeof op.entries = [];
+  let backupQueued = false;
+  for (const entry of op.entries) {
+    const prior = previous?.managedConfigKeys?.[pathRel]?.[entry.key];
+    const current = readTomlManagedValue(original, entry.key);
+    const expectedHash = semanticConfigHash(entry.value);
+    const currentHash = current === undefined ? null : semanticConfigHash(current);
+    const namespacedRole = entry.key.startsWith("agents.yaaw_");
+
+    if (!prior) {
+      if (current === undefined) {
+        ownedEntries.push(entry);
+        configRecords[pathRel] ??= {};
+        configRecords[pathRel][entry.key] = { owner: op.owner, sha256: expectedHash, value: entry.value };
+        continue;
+      }
+      if (!namespacedRole && currentHash === expectedHash) {
+        // Compatible user-owned value satisfies the request. Do not claim ownership.
+        continue;
+      }
+      if (ctx.conflictPolicy === "fail" || ctx.conflictPolicy === "keep") {
+        conflicts.push(`${pathRel}#${entry.key}`);
+        continue;
+      }
+      if (ctx.conflictPolicy === "backup-replace" && !backupQueued) {
+        const backupPath = join(ctx.projectRoot, ".yaaw-core", "install", "backups", backupStamp, pathRel);
+        operations.push({ type: "write-managed-file", path: backupPath, content: original, owner: "installer:backup" });
+        backupQueued = true;
+      }
+      ownedEntries.push(entry);
+      configRecords[pathRel] ??= {};
+      configRecords[pathRel][entry.key] = { owner: op.owner, sha256: expectedHash, value: entry.value };
+      continue;
+    }
+
+    const modified = prior.localOverride === true || currentHash === null || currentHash !== prior.sha256;
+    if (modified && ctx.conflictPolicy === "fail") {
+      conflicts.push(`${pathRel}#${entry.key}`);
+      continue;
+    }
+    if (modified && ctx.conflictPolicy === "keep") {
+      if (current !== undefined) {
+        configRecords[pathRel] ??= {};
+        configRecords[pathRel][entry.key] = {
+          owner: op.owner,
+          sha256: currentHash!,
+          value: current,
+          packageSha256: expectedHash,
+          localOverride: true
+        };
+      }
+      continue;
+    }
+    if (modified && ctx.conflictPolicy === "backup-replace" && !backupQueued) {
+      const backupPath = join(ctx.projectRoot, ".yaaw-core", "install", "backups", backupStamp, pathRel);
+      operations.push({ type: "write-managed-file", path: backupPath, content: original, owner: "installer:backup" });
+      backupQueued = true;
+    }
+    ownedEntries.push(entry);
+    configRecords[pathRel] ??= {};
+    configRecords[pathRel][entry.key] = { owner: op.owner, sha256: expectedHash, value: entry.value };
+  }
+
+  if (ownedEntries.length) operations.push({ ...op, entries: ownedEntries });
+}
+
+async function protectConfigRemoval(params: {
+  ctx: InstallContext;
+  pathRel: string;
+  records: Record<string, ManagedConfigKeyRecord>;
+  operations: InstallOperation[];
+  conflicts: string[];
+  backupStamp: string;
+}) {
+  const { ctx, pathRel, records, operations, conflicts, backupStamp } = params;
+  const path = join(ctx.projectRoot, pathRel);
+  let original = "";
+  try { original = await readFile(path, "utf8"); } catch { return; }
+  validateManagedToml(original);
+  const removable: string[] = [];
+  let backupQueued = false;
+
+  for (const [key, record] of Object.entries(records)) {
+    const current = readTomlManagedValue(original, key);
+    if (current === undefined) continue;
+    const currentHash = semanticConfigHash(current);
+    const modified = record.localOverride === true || currentHash !== record.sha256;
+    if (modified && ctx.conflictPolicy === "fail") {
+      conflicts.push(`${pathRel}#${key}`);
+      continue;
+    }
+    if (modified && ctx.conflictPolicy === "keep") continue;
+    if (modified && ctx.conflictPolicy === "backup-replace" && !backupQueued) {
+      const backupPath = join(ctx.projectRoot, ".yaaw-core", "install", "backups", backupStamp, pathRel);
+      operations.push({ type: "write-managed-file", path: backupPath, content: original, owner: "installer:backup" });
+      backupQueued = true;
+    }
+    removable.push(key);
+  }
+  if (removable.length) {
+    operations.push({ type: "remove-managed-config-keys", path, format: "toml", keys: removable, owner: "integration:codex" });
+    queueEmptyParentCleanup(operations, ctx.projectRoot, path, "integration:codex");
+  }
+}
+
 async function protectRemoval(params: {
   ctx: InstallContext;
   previous: InstallationManifest;
@@ -236,6 +357,9 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
         await protectSectionRemoval({ ctx, previous, pathRel, sectionId, record, operations, conflicts, backupStamp });
       }
     }
+    for (const [pathRel, records] of Object.entries(previous.managedConfigKeys ?? {})) {
+      await protectConfigRemoval({ ctx, pathRel, records, operations, conflicts, backupStamp });
+    }
     if (conflicts.length) throw new ManagedConflictError(conflicts);
     operations.push({ type: "remove-managed-file", path: join(ctx.projectRoot, MANIFEST_RELATIVE_PATH), owner: "installer" });
     operations.push({
@@ -298,12 +422,15 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
 
   for (const integrationId of ctx.selectedIntegrations) {
     const adapter = getIntegration(integrationId);
-    const ictx = { projectRoot: ctx.projectRoot, payloadRoot: ctx.payloadRoot };
-    const adapterOps = [...await adapter.planSkills(ictx, selectedCanonical), ...await adapter.planBootstrap(ictx)];
+    const settings = ctx.integrationSettings?.[integrationId] ?? previous?.integrations?.[integrationId]?.runtime;
+    const ictx = { projectRoot: ctx.projectRoot, payloadRoot: ctx.payloadRoot, settings };
+    const runtimeOps = adapter.planRuntime ? await adapter.planRuntime(ictx) : [];
+    const adapterOps = [...await adapter.planSkills(ictx, selectedCanonical), ...await adapter.planBootstrap(ictx), ...runtimeOps];
     manifest.integrations[integrationId] = {
       adapterVersion: adapter.adapterVersion,
       skillsRoot: rel(ctx.projectRoot, adapter.skillsRoot(ctx.projectRoot)),
-      bootstrap: adapter.bootstrapRelativePath
+      bootstrap: adapter.bootstrapRelativePath,
+      ...(adapter.planRuntime ? { runtime: settings ?? null } : {})
     };
     for (const op of adapterOps) {
       if (op.type === "copy-managed-file") {
@@ -314,6 +441,8 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
         await chooseManagedFile({ ctx, previous, path: op.path, owner: op.owner, content: op.content, operations, records: manifest.managedFiles, conflicts, backupStamp });
       } else if (op.type === "update-managed-section") {
         await chooseManagedSection({ ctx, previous, op, sectionRecords: manifest.managedSections, operations, conflicts, backupStamp });
+      } else if (op.type === "update-managed-config-keys") {
+        await chooseManagedConfigKeys({ ctx, previous, op, configRecords: manifest.managedConfigKeys, operations, conflicts, backupStamp });
       }
     }
   }
@@ -329,6 +458,12 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
         if (!manifest.managedSections[pathRel]?.[sectionId]) {
           await protectSectionRemoval({ ctx, previous, pathRel, sectionId, record, operations, conflicts, backupStamp });
         }
+      }
+    }
+    for (const [pathRel, records] of Object.entries(previous.managedConfigKeys ?? {})) {
+      const obsolete = Object.fromEntries(Object.entries(records).filter(([key]) => !manifest.managedConfigKeys[pathRel]?.[key]));
+      if (Object.keys(obsolete).length) {
+        await protectConfigRemoval({ ctx, pathRel, records: obsolete, operations, conflicts, backupStamp });
       }
     }
   }
