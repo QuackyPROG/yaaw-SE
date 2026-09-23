@@ -93,6 +93,7 @@ const expectedSystemEntries = [
   "rules",
   "schemas",
   "templates",
+  "tools",
   "workflows"
 ].sort();
 
