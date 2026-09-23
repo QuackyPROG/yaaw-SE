@@ -17,7 +17,7 @@ import { selectTools } from "../../tui/select-tools.js";
 import { selectSkills } from "../../tui/select-skills.js";
 import { selectExistingAction } from "../../tui/existing-install.js";
 import { confirmPlan, formatPlan } from "../../tui/confirm-plan.js";
-import { showSuccess } from "../../tui/result.js";
+import { formatSuccess, showSuccess } from "../../tui/result.js";
 
 export interface InstallCommandOptions {
   directory?: string;
@@ -201,7 +201,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     manifestContent: serializeManifest(built.manifest!),
     beforeManifest: async () => verifyInstalledState(projectRoot, tools, skills)
   } as any);
-  spinner?.stop("Installation verified");
+  spinner?.stop("Changes applied and verified");
   if (options.json) console.log(JSON.stringify({ok:true,projectRoot,version,tools,skills,changed},null,2));
   else if (interactive) showSuccess(projectRoot, tools);
   else console.log(`YAAW-SE ${version} installed in ${projectRoot}.`);
