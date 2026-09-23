@@ -7,7 +7,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "dist", "payload");
 const coreOut = join(out, "yaaw-core", "system");
 const packageMetadata = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-const approved = ["core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates"];
+const approved = ["core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates", "tools"];
 
 await rm(out, { recursive: true, force: true });
 await mkdir(coreOut, { recursive: true });

@@ -2,9 +2,9 @@ import { resolveProjectRoot } from "../../installer/boundary.js";
 import { doctor } from "../../installer/status.js";
 import { runInstall } from "./install.js";
 
-export async function runDoctor(options: {directory?:string;json?:boolean;repair?:boolean;forceManaged?:boolean} = {}) {
+export async function runDoctor(options: {directory?:string;json?:boolean;repair?:boolean;forceManaged?:boolean;conflictPolicy?:"fail"|"keep"|"replace"|"backup-replace"} = {}) {
   if (options.repair) {
-    return runInstall({ directory: options.directory, action: "repair", yes: true, forceManaged: options.forceManaged, json: options.json });
+    return runInstall({ directory: options.directory, action: "repair", yes: true, forceManaged: options.forceManaged, conflictPolicy: options.conflictPolicy, json: options.json });
   }
   const root = await resolveProjectRoot(options.directory ?? process.cwd());
   const report = await doctor(root);

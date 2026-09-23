@@ -15,3 +15,6 @@ Own code changes for one bounded admitted ticket at a time.
 
 ## Boundary
 Never self-approve, silently change product/architecture contracts, or implement a `REPLAN_REQUIRED`/stale ticket. Missing material decisions route back to Planner through Orchestrator. Changeability guidance improves the authorized change; it never expands ticket scope.
+
+## Framework boundary
+Package-managed `.yaaw-core/system/**` is never a writable semantic-work surface. If a framework contract is missing, contradictory, or blocks valid work, do not edit YAAW to unblock yourself. Return `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, or `FRAMEWORK_CONTRACT_INCONSISTENCY` to Orchestrator with the exact evidence.

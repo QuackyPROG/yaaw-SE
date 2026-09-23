@@ -1,5 +1,13 @@
 {
   "schema": "yaaw.handoff/v2",
+  "framework": {
+    "yaaw_version": "VERSION",
+    "system_schema": 2,
+    "installation_schema": 1,
+    "project_schema": 1,
+    "manifest_digest": "sha256:MANIFEST",
+    "integrity_status": "HEALTHY"
+  },
   "role": "implementer",
   "workflow": "implementation.implement-ticket",
   "desired_intent": "IMPLEMENT",
@@ -8,11 +16,22 @@
   "reads": [],
   "writes": [],
   "forbidden_writes": [],
-  "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
+  "revisions": {
+    "product": 1,
+    "engineering": 1,
+    "spec": 1,
+    "ticket": 1
+  },
   "expertise": [],
   "host_expertise": [],
   "expected_output": "implementation_evidence",
-  "result_vocabulary": ["SUCCESS", "REVIEW_REQUIRED", "REPLAN_REQUIRED", "PRECONDITION_UNSATISFIED", "BLOCKED"],
+  "result_vocabulary": [
+    "SUCCESS",
+    "REVIEW_REQUIRED",
+    "REPLAN_REQUIRED",
+    "PRECONDITION_UNSATISFIED",
+    "BLOCKED"
+  ],
   "repository_requirement": "IDENTITY",
   "repository": {
     "status": "READY",

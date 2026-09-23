@@ -402,6 +402,17 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
 
   operations.push(...await planProjectInitialization(ctx.payloadRoot, ctx.projectRoot));
 
+  if (["quick-update", "modify", "repair"].includes(ctx.action)) {
+    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+      operations.push({
+        type: "remove-runtime-file",
+        path: join(ctx.projectRoot, ".yaaw-core", "runtime", name),
+        owner: "runtime:invalidate"
+      });
+    }
+    warnings.push("Replaceable YAAW runtime coordination caches will be invalidated after package changes.");
+  }
+
   if (previous) {
     for (const migration of migrationPath(projectMigrations, previous.projectSchema, CURRENT_PROJECT_SCHEMA)) {
       operations.push(...await migration.plan({

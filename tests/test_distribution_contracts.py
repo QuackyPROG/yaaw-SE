@@ -20,7 +20,7 @@ class DistributionContractsTest(unittest.TestCase):
         self.assertEqual(paths["install_root"], ".yaaw-core/install")
 
     def test_source_system_is_the_only_package_managed_subtree(self):
-        expected = {"core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates"}
+        expected = {"core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates", "tools"}
         self.assertEqual({p.name for p in SYSTEM.iterdir() if p.is_dir()}, expected)
         for name in expected | {"project", "runtime", "install"}:
             self.assertFalse((CORE_ROOT / name).exists(), name)
@@ -32,6 +32,10 @@ class DistributionContractsTest(unittest.TestCase):
             for path in base.rglob("*"):
                 if path.is_file() and path.suffix.lower() in {".md", ".json", ".ts"}:
                     self.assertIsNone(legacy.search(path.read_text(errors="ignore")), str(path))
+
+    def test_framework_integrity_is_package_managed(self):
+        self.assertTrue((SYSTEM / "core" / "framework-integrity.md").is_file())
+        self.assertTrue((SYSTEM / "tools" / "framework-integrity.mjs").is_file())
 
     def test_provider_adapter_directories_are_generated_surfaces(self):
         for name in (".agents", ".claude", ".gemini", ".cline"):

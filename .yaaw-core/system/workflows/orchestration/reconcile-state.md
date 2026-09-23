@@ -14,3 +14,9 @@ Current observed-state snapshot, state claims, artifact revisions, repository/ev
 
 ## Output
 Reconciled state or `BLOCKED` when the last trustworthy boundary cannot be proven.
+
+## Framework boundary
+
+Reconciliation is forbidden when the observed framework integrity status is not `HEALTHY`. Return the typed framework stop without changing ticket/project lifecycle state. A contradiction among canonical framework contracts is `FRAMEWORK_CONTRACT_INCONSISTENCY`; do not resolve it by editing the governing files.
+
+Reviewer-owned acceptance results are applied to `state.json` by Orchestrator only after the immutable review artifact is fresh and valid. Orchestrator records exactly the target implied by the review result and never invents an acceptance result.

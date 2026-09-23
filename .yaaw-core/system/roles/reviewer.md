@@ -20,3 +20,6 @@ Own independent acceptance judgment and `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`
 - `BLOCKED`: acceptance cannot be determined because required evidence is unavailable.
 
 Reviewer does not author implementation while acting as Reviewer. Style preference alone is never a review failure.
+
+## Framework boundary
+Package-managed `.yaaw-core/system/**` is never a writable semantic-work surface. If a framework contract is missing, contradictory, or blocks valid work, do not edit YAAW to unblock yourself. Return `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, or `FRAMEWORK_CONTRACT_INCONSISTENCY` to Orchestrator with the exact evidence.

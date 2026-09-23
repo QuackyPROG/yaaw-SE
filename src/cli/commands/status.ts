@@ -13,6 +13,10 @@ export async function runStatus(options: {directory?:string;json?:boolean} = {})
     console.log(`Project memory: ${status.projectMemory ? "present" : "missing"}`);
     console.log(`Integrations: ${status.integrations.join(", ") || "none"}`);
     console.log(`Managed files: ${status.managedFiles.healthy} healthy, ${status.managedFiles.modified} modified, ${status.managedFiles.missing} missing, ${status.managedFiles.localOverrides} local overrides`);
+    if (status.frameworkIntegrity) {
+      console.log(`Framework integrity: ${status.frameworkIntegrity.status}`);
+      if (status.frameworkIntegrity.repairRequired) console.log("Repair: npx yaaw-se install --action repair --conflict-policy backup-replace --yes");
+    }
     if (status.managedConfigKeys) console.log(`Managed config keys: ${status.managedConfigKeys.healthy} healthy, ${status.managedConfigKeys.modified} modified, ${status.managedConfigKeys.missing} missing, ${status.managedConfigKeys.localOverrides} local overrides`);
     if (status.issues.length) for (const issue of status.issues) console.log(`- ${issue}`);
   }

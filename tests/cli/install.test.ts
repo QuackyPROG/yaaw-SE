@@ -1,4 +1,5 @@
-import { access, mkdtemp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -68,6 +69,80 @@ describe("headless installation", () => {
     await expect(runInstall({ directory: root, action: "quick-update", yes: true })).rejects.toThrow(/managed files require a choice/i);
     await runInstall({ directory: root, action: "quick-update", yes: true, forceManaged: true });
     expect(await readFile(skill, "utf8")).toContain("name: yaaw-review");
+  });
+
+  it("installed system integrity tool detects package drift", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-integrity-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+
+    const tool = join(root, ".yaaw-core", "system", "tools", "framework-integrity.mjs");
+    const healthy = spawnSync(process.execPath, [tool, "--workspace", root], { encoding: "utf8" });
+    expect(healthy.status).toBe(0);
+    const healthyReport = JSON.parse(healthy.stdout);
+    expect(healthyReport.status).toBe("HEALTHY");
+    expect(healthyReport.system_schema).toBeGreaterThanOrEqual(1);
+
+    const lifecycle = join(root, ".yaaw-core", "system", "core", "lifecycle.md");
+    await writeFile(lifecycle, (await readFile(lifecycle, "utf8")) + "\nincident self-edit\n");
+
+    const drifted = spawnSync(process.execPath, [tool, "--workspace", root], { encoding: "utf8" });
+    expect(drifted.status).toBe(2);
+    const report = JSON.parse(drifted.stdout);
+    expect(report.status).toBe("MODIFIED");
+    expect(report.modified).toContain(".yaaw-core/system/core/lifecycle.md");
+    expect(report.repair_required).toBe(true);
+  });
+
+  it("backup-replace repair restores system framework, preserves project memory, backs up tainted bytes, and invalidates runtime", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-repair-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    await writeFile(product, "durable repair sentinel\n");
+
+    const lifecycle = join(root, ".yaaw-core", "system", "core", "lifecycle.md");
+    const canonical = await readFile(lifecycle, "utf8");
+    const tainted = canonical + "\nincident framework self-edit\n";
+    await writeFile(lifecycle, tainted);
+
+    const runtime = join(root, ".yaaw-core", "runtime");
+    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+      await writeFile(join(runtime, name), JSON.stringify({ stale: name }) + "\n");
+    }
+
+    const before: any = await runDoctor({ directory: root, json: true });
+    expect(before.healthy).toBe(false);
+    expect(before.frameworkIntegrity.status).toBe("MODIFIED");
+    expect(before.frameworkIntegrity.modifiedPaths).toContain(".yaaw-core/system/core/lifecycle.md");
+
+    await runInstall({
+      directory: root,
+      action: "repair",
+      yes: true,
+      conflictPolicy: "backup-replace"
+    });
+
+    expect(await readFile(lifecycle, "utf8")).toBe(canonical);
+    expect(await readFile(product, "utf8")).toBe("durable repair sentinel\n");
+    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+      expect(await exists(join(runtime, name))).toBe(false);
+    }
+
+    const backupRoot = join(root, ".yaaw-core", "install", "backups");
+    const stamps = await readdir(backupRoot);
+    let foundBackup = false;
+    for (const stamp of stamps) {
+      const candidate = join(backupRoot, stamp, ".yaaw-core", "system", "core", "lifecycle.md");
+      if (await exists(candidate)) {
+        expect(await readFile(candidate, "utf8")).toBe(tainted);
+        foundBackup = true;
+      }
+    }
+    expect(foundBackup).toBe(true);
+
+    const after: any = await runDoctor({ directory: root, json: true });
+    expect(after.healthy).toBe(true);
+    expect(after.frameworkIntegrity.status).toBe("HEALTHY");
   });
 
   it("safe uninstall preserves project memory and outside bootstrap bytes", async () => {
@@ -168,7 +243,7 @@ describe("headless installation", () => {
     expect(await exists(join(root, ".yaaw-core", "core"))).toBe(false);
     const upgraded: any = JSON.parse(await readFile(manifestPath, "utf8"));
     expect(upgraded.schema).toBe("yaaw.installation/v2");
-    expect(upgraded.systemSchema).toBe(1);
+    expect(upgraded.systemSchema).toBe(2);
     expect(upgraded.projectSchema).toBe(1);
     expect(upgraded.installationSchema).toBe(2);
   });

@@ -1,5 +1,17 @@
 {
   "schema": "yaaw.observed-state/v2",
+  "framework": {
+    "yaaw_version": "VERSION",
+    "system_schema": 2,
+    "installation_schema": 1,
+    "project_schema": 1,
+    "manifest_digest": "sha256:MANIFEST",
+    "integrity_status": "HEALTHY",
+    "modified": [],
+    "missing": [],
+    "local_overrides": [],
+    "repair_required": false
+  },
   "repository": {
     "status": "UNVERSIONED",
     "workspace_scope": ".",

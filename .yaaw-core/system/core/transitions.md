@@ -2,6 +2,8 @@
 
 State names are not enough; only the transitions below are legal unless an explicit recovery rule documents a narrower evidence-backed exception.
 
+In the machine registry, `owner` is the semantic decision authority and `state_writer` is the role permitted to persist the resulting lifecycle mutation. Project-state ledger writes are performed by Orchestrator after validating the durable basis. This does not transfer product, planning, implementation, or acceptance authority to Orchestrator.
+
 The machine-readable transition table used by conformance tests lives in `.yaaw-core/system/registries/transitions.json`. This document remains the human-readable explanation and CI checks the registry against workflow IDs and the project-state schema.
 
 ## Ticket transitions
@@ -23,8 +25,11 @@ The machine-readable transition table used by conformance tests lives in `.yaaw-
 | REPLAN_REQUIRED | DRAFT | Planner | contract revised but not yet re-admitted |
 | REPLAN_REQUIRED | READY | Planner | revised contract passes readiness and dependencies |
 | BLOCKED | DRAFT/READY/IN_PROGRESS/REVIEW_REQUIRED/REPAIR_REQUIRED/REPLAN_REQUIRED | owning role | blocker resolved and prior valid boundary proven |
-| PASS | REPLAN_REQUIRED | Orchestrator/Planner | upstream revision invalidates current acceptance |
+| PASS | REVIEW_REQUIRED | Orchestrator recovery | source contract remains current but review/verification repository basis is missing, stale, or unverifiable |
+| PASS | REPLAN_REQUIRED | Orchestrator/Planner | upstream source/contract revision invalidates current acceptance |
 | PASS | CANCELLED | Human/Planner | accepted scope explicitly removed; history preserved |
+
+Repository identity mismatch alone does not establish `REPLAN_REQUIRED`.
 
 Forbidden examples: `DRAFT -> PASS`, `READY -> PASS`, `REPAIR_REQUIRED -> PASS`, or Implementer-authored `PASS`.
 

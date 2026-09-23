@@ -12,6 +12,11 @@ async function exists(path: string) {
 
 const emptyCounts = () => ({ healthy: 0, modified: 0, missing: 0, localOverrides: 0 });
 
+function isFrameworkManaged(rel: string, record: any) {
+  const path = rel.replaceAll("\\", "/");
+  return record?.owner === "package:system" || path.startsWith(".yaaw-core/system/");
+}
+
 export async function inspectStatus(projectRoot: string) {
   let manifest;
   try {
@@ -31,6 +36,7 @@ export async function inspectStatus(projectRoot: string) {
       managedFiles: emptyCounts(),
       managedSections: emptyCounts(),
       managedConfigKeys: emptyCounts(),
+      frameworkIntegrity: { status: "MANIFEST_INVALID", repairRequired: true, modifiedPaths: [], missingPaths: [], localOverridePaths: [] },
       healthy: false,
       issues: [`invalid installation manifest: ${error.message}`]
     };
@@ -40,21 +46,50 @@ export async function inspectStatus(projectRoot: string) {
   }
 
   const managedFiles = emptyCounts();
+  const frameworkIntegrity = {
+    status: "HEALTHY",
+    repairRequired: false,
+    healthy: 0,
+    modified: 0,
+    missing: 0,
+    localOverrides: 0,
+    modifiedPaths: [] as string[],
+    missingPaths: [] as string[],
+    localOverridePaths: [] as string[]
+  };
   const issues: string[] = [];
   for (const [rel, record] of Object.entries(manifest.managedFiles)) {
     try {
       const path = await assertRelativeManifestPath(projectRoot, rel);
+      const frameworkOwned = isFrameworkManaged(rel, record);
       if (!(await exists(path))) {
         managedFiles.missing += 1;
         issues.push(`missing managed file: ${rel}`);
+        if (frameworkOwned) {
+          frameworkIntegrity.missing += 1;
+          frameworkIntegrity.missingPaths.push(rel);
+        }
         continue;
       }
       const hash = sha256Bytes(await readFile(path));
       if (hash !== record.sha256) {
         managedFiles.modified += 1;
         issues.push(`modified managed file: ${rel}`);
-      } else if (record.localOverride) managedFiles.localOverrides += 1;
-      else managedFiles.healthy += 1;
+        if (frameworkOwned) {
+          frameworkIntegrity.modified += 1;
+          frameworkIntegrity.modifiedPaths.push(rel);
+        }
+      } else if (record.localOverride) {
+        managedFiles.localOverrides += 1;
+        if (frameworkOwned) {
+          frameworkIntegrity.localOverrides += 1;
+          frameworkIntegrity.localOverridePaths.push(rel);
+          issues.push(`unsupported package framework local override: ${rel}`);
+        }
+      } else {
+        managedFiles.healthy += 1;
+        if (frameworkOwned) frameworkIntegrity.healthy += 1;
+      }
     } catch (error: any) {
       issues.push(`unsafe/invalid manifest file path ${rel}: ${error.message}`);
     }
@@ -106,6 +141,15 @@ export async function inspectStatus(projectRoot: string) {
   const projectMemory = await exists(join(projectRoot, ".yaaw-core", "project"));
   if (!projectMemory) issues.push("durable project memory directory is missing");
 
+  frameworkIntegrity.status = frameworkIntegrity.missing > 0
+    ? "MISSING"
+    : frameworkIntegrity.modified > 0
+      ? "MODIFIED"
+      : frameworkIntegrity.localOverrides > 0
+        ? "LOCAL_OVERRIDE"
+        : "HEALTHY";
+  frameworkIntegrity.repairRequired = frameworkIntegrity.status !== "HEALTHY";
+
   return {
     installed: true,
     manifestValid: true,
@@ -120,6 +164,7 @@ export async function inspectStatus(projectRoot: string) {
     managedFiles,
     managedSections,
     managedConfigKeys,
+    frameworkIntegrity,
     healthy: issues.length === 0,
     issues
   };
@@ -145,6 +190,13 @@ export async function doctor(projectRoot: string) {
   checks.push({ name: "managed-files", ok: status.managedFiles.modified === 0 && status.managedFiles.missing === 0 });
   checks.push({ name: "managed-sections", ok: status.managedSections.modified === 0 && status.managedSections.missing === 0 });
   checks.push({ name: "managed-config-keys", ok: status.managedConfigKeys.modified === 0 && status.managedConfigKeys.missing === 0 });
+  checks.push({
+    name: "framework-integrity",
+    ok: status.frameworkIntegrity?.status === "HEALTHY",
+    detail: status.frameworkIntegrity?.status === "HEALTHY"
+      ? undefined
+      : `${status.frameworkIntegrity?.status ?? "UNKNOWN"}; repair with: npx yaaw-se install --action repair --conflict-policy backup-replace --yes`
+  });
   checks.push({ name: "project-memory", ok: status.projectMemory });
   checks.push({ name: "system-root", ok: await exists(join(projectRoot, ".yaaw-core", "system")) });
 
