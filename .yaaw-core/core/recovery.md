@@ -1,21 +1,25 @@
 # Recovery policy
 
-Recovery compares claimed state with observed reality and returns to the last trustworthy boundary. Resolve the workspace root first and use only root-anchored, workspace-scoped repository evidence from `core/execution-context.md`.
+Recovery compares claimed state with observed reality and returns to the last trustworthy boundary.
 
 ## Evidence authority
-- Product intent: current accepted `product.md` revision.
-- Engineering decisions: current `engineering.md` decisions and accepted non-stale specs.
-- Implementation reality: repository contents plus repository identity/diff history.
-- Acceptance: fresh review evidence tied to the exact ticket/spec revisions and repository identity.
-- Routing cache: `state.json`, reconciled against stronger evidence.
+- Product intent: current accepted product revision.
+- Engineering meaning: current engineering decisions, spec revision, and ticket revision.
+- Implementation reality: current workspace plus canonical repository identity.
+- Acceptance: Reviewer-owned evidence bound to exact source revisions and repository identity.
+- state.json and runtime handoff: replaceable routing caches, never stronger than durable evidence.
 
-## Rules
-- Never reimplement solely because state is stale.
-- `IN_PROGRESS` + implementation + required verification evidence + no review -> reconcile to `REVIEW_REQUIRED`.
-- `READY` + implementation already present -> inspect/recover rather than duplicate the change.
-- `PASS` + missing/stale review, source revision mismatch, or repository identity mismatch -> invalidate current PASS and route to review/replan as appropriate.
-- A stale `.yaaw-core/runtime/handoff.json` is discarded, not executed.
-- If repository identity is required but status is not `READY`, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE` or `BLOCKED` with exact missing proof.
-- If the last trustworthy boundary cannot be proven, return `BLOCKED` with exact missing proof.
+## PASS recovery
+When ticket state is `PASS`:
+1. If current source revisions differ from the accepted source basis, record a contract-stale cause and reconcile `PASS -> REPLAN_REQUIRED`.
+2. Else if review is missing, reconcile `PASS -> REVIEW_REQUIRED` with `REVIEW_MISSING`.
+3. Else if legacy repository identity cannot be reproduced, reconcile `PASS -> REVIEW_REQUIRED` with `LEGACY_IDENTITY_UNVERIFIABLE`.
+4. Else if review repository basis differs, reconcile `PASS -> REVIEW_REQUIRED` with `REVIEW_REPOSITORY_STALE`.
+5. Else if required verification is missing or repository-stale, reconcile `PASS -> REVIEW_REQUIRED`.
+6. Otherwise keep `PASS`.
 
-Every reconciliation uses a legal transition and records its reason/evidence in state provenance.
+Never route a source-current PASS to Planner solely because repository identity changed.
+
+`IN_PROGRESS` plus implementation plus verification plus no current review reconciles to `REVIEW_REQUIRED`. `READY` plus existing implementation is recovered rather than reimplemented.
+
+A stale runtime handoff is discarded and regenerated. If repository identity is required but cannot be produced, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE` or `BLOCKED` with the missing proof.
