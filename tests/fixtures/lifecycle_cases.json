@@ -129,7 +129,8 @@
           {
             "ticket": "TASK-001",
             "from": "IN_PROGRESS",
-            "to": "REVIEW_REQUIRED"
+            "to": "REVIEW_REQUIRED",
+            "reason": "IMPLEMENTATION_VERIFIED_NOT_REVIEWED"
           }
         ]
       }
@@ -395,7 +396,8 @@
           {
             "ticket": "TASK-001",
             "from": "READY",
-            "to": "REVIEW_REQUIRED"
+            "to": "REVIEW_REQUIRED",
+            "reason": "IMPLEMENTATION_ALREADY_PRESENT"
           }
         ]
       }
@@ -429,7 +431,8 @@
           {
             "ticket": "TASK-001",
             "from": "READY",
-            "to": "IN_PROGRESS"
+            "to": "IN_PROGRESS",
+            "reason": "IMPLEMENTATION_ALREADY_PRESENT"
           }
         ]
       }

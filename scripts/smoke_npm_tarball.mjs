@@ -77,6 +77,7 @@ const expectedCoreEntries = [
   "runtime",
   "schemas",
   "templates",
+  "tools",
   "workflows"
 ].sort();
 const expectedProjectEntries = [
