@@ -1,4 +1,4 @@
-import { access, mkdtemp, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -132,22 +132,31 @@ describe("headless installation", () => {
       await rename(join(root, ".yaaw-core", "system", name), join(root, ".yaaw-core", name));
     }
 
+    // Model the real pre-runtime Codex v1 install: it had no YAAW .codex surface.
+    await rm(join(root, ".codex"), { recursive: true, force: true });
+
     const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
     const current: any = JSON.parse(await readFile(manifestPath, "utf8"));
     const legacyManaged: Record<string, any> = {};
     for (const [path, record] of Object.entries(current.managedFiles)) {
+      if (path.startsWith(".codex/")) continue;
       const legacyPath = (record as any).owner === "package:system"
         ? path.replace(".yaaw-core/system/", ".yaaw-core/")
         : path;
       legacyManaged[legacyPath] = record;
     }
+    const legacyIntegrations = structuredClone(current.integrations);
+    legacyIntegrations.codex.adapterVersion = 1;
+    delete legacyIntegrations.codex.runtime;
     const legacy: any = {
       ...current,
+      integrations: legacyIntegrations,
       schema: "yaaw.installation/v1",
       installationSchema: 1,
       projectStateSchema: 1,
       managedFiles: legacyManaged
     };
+    delete legacy.managedConfigKeys;
     delete legacy.systemSchema;
     delete legacy.projectSchema;
     await writeFile(manifestPath, JSON.stringify(legacy, null, 2) + "\n");

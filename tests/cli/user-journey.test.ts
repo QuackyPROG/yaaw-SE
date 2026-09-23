@@ -35,6 +35,9 @@ vi.mock("@clack/prompts", () => ({
     if (config.message === "Which YAAW entrypoints should be exposed?") {
       return promptState.profile;
     }
+    if (config.message === "Configure Codex runtime for YAAW-SE?") {
+      return "minimal";
+    }
     throw new Error(`Unexpected select prompt: ${config.message}`);
   }),
   confirm: vi.fn(async (config: any) => {
@@ -143,6 +146,7 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
   for (const id of selectedTools) {
     const surface = providerSurfaces[id];
     expectedRoot.add(surface.providerRoot);
+    if (id === "codex") expectedRoot.add(".codex");
     const bootstrapTop = firstSegment(surface.bootstrap);
     if (bootstrapTop !== surface.providerRoot) expectedRoot.add(bootstrapTop);
   }
@@ -181,12 +185,23 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
       const bootstrapText = await readFile(join(root, surface.bootstrap), "utf8");
       expect(bootstrapText).toContain(".yaaw-core/");
       expect(manifestOwners).toContain(`integration:${id}`);
+      if (id === "codex") {
+        expect(await entries(join(root, ".codex"))).toEqual(["agents", "config.toml", "yaaw-runtime.md"]);
+        expect(await entries(join(root, ".codex", "agents"))).toEqual([
+          "yaaw-implementer.toml",
+          "yaaw-planner.toml",
+          "yaaw-prd.toml",
+          "yaaw-reviewer.toml"
+        ]);
+        expect(await exists(join(root, ".codex", "agents", "yaaw-orchestrator.toml"))).toBe(false);
+      }
     } else {
       expect(await exists(join(root, surface.providerRoot))).toBe(false);
       if (firstSegment(surface.bootstrap) !== surface.providerRoot) {
         expect(await exists(join(root, surface.bootstrap))).toBe(false);
       }
       expect(manifestOwners).not.toContain(`integration:${id}`);
+      if (id === "codex") expect(await exists(join(root, ".codex"))).toBe(false);
     }
   }
 }
@@ -227,6 +242,7 @@ describe("interactive TUI consumer journeys", () => {
         "Where should YAAW-SE be installed?",
         "Which AI coding tools should use YAAW-SE?",
         "Which YAAW entrypoints should be exposed?",
+        ...(tools.includes("codex") ? ["Configure Codex runtime for YAAW-SE?"] : []),
         "Continue?"
       ]);
 
