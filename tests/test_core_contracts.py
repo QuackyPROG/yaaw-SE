@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / ".yaaw-core"
+CORE = ROOT / ".yaaw-core" / "system"
 
 
 class CoreContractsTest(unittest.TestCase):

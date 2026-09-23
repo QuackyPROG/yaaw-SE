@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / ".yaaw-core"
+CORE = ROOT / ".yaaw-core" / "system"
 DEFAULT_POLICY = CORE / "registries" / "routing-policy.json"
 DEFAULT_EXECUTION_POLICY = CORE / "registries" / "execution-policy.json"
 

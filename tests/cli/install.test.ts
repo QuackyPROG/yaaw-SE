@@ -1,4 +1,4 @@
-import { access, mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -81,7 +81,7 @@ describe("headless installation", () => {
     expect(await readFile(product, "utf8")).toBe("preserve me\n");
     expect(await exists(join(root, ".agents/skills/yaaw-orchestrator/SKILL.md"))).toBe(false);
     expect(await exists(join(root, ".agents"))).toBe(false);
-    expect(await exists(join(root, ".yaaw-core", "core"))).toBe(false);
+    expect(await exists(join(root, ".yaaw-core", "system", "core"))).toBe(false);
     expect(await readFile(join(root, "AGENTS.md"), "utf8")).toBe("keep me\n");
     expect(await exists(join(root, ".yaaw-core/install/uninstalled.json"))).toBe(true);
 
@@ -118,5 +118,76 @@ describe("headless installation", () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-legacy-"));
     await mkdir(join(root, ".yaaw"));
     await expect(runInstall({ directory: root, tools: "codex", yes: true })).rejects.toThrow(/Legacy .yaaw project state/);
+  });
+
+  it("upgrades a legacy v1 flat managed layout into system without touching project memory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-v1-upgrade-"));
+    await runInstall({ directory: root, tools: "codex", skills: "core", yes: true });
+
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    await writeFile(product, "legacy durable sentinel\n");
+
+    const systemDirs = ["core","roles","workflows","expertise","rules","registries","schemas","templates"];
+    for (const name of systemDirs) {
+      await rename(join(root, ".yaaw-core", "system", name), join(root, ".yaaw-core", name));
+    }
+
+    const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
+    const current: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    const legacyManaged: Record<string, any> = {};
+    for (const [path, record] of Object.entries(current.managedFiles)) {
+      const legacyPath = (record as any).owner === "package:system"
+        ? path.replace(".yaaw-core/system/", ".yaaw-core/")
+        : path;
+      legacyManaged[legacyPath] = record;
+    }
+    const legacy: any = {
+      ...current,
+      schema: "yaaw.installation/v1",
+      installationSchema: 1,
+      projectStateSchema: 1,
+      managedFiles: legacyManaged
+    };
+    delete legacy.systemSchema;
+    delete legacy.projectSchema;
+    await writeFile(manifestPath, JSON.stringify(legacy, null, 2) + "\n");
+
+    await runInstall({ directory: root, action: "quick-update", yes: true });
+
+    expect(await readFile(product, "utf8")).toBe("legacy durable sentinel\n");
+    expect(await exists(join(root, ".yaaw-core", "system", "core"))).toBe(true);
+    expect(await exists(join(root, ".yaaw-core", "core"))).toBe(false);
+    const upgraded: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    expect(upgraded.schema).toBe("yaaw.installation/v2");
+    expect(upgraded.systemSchema).toBe(1);
+    expect(upgraded.projectSchema).toBe(1);
+    expect(upgraded.installationSchema).toBe(2);
+  });
+
+  it("blocks a package that cannot understand the installed project schema", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-project-schema-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    await writeFile(product, "schema sentinel\n");
+    const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
+    const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.projectSchema = 99;
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+    await expect(runInstall({ directory: root, action: "quick-update", yes: true }))
+      .rejects.toThrow(/project schema 99.*newer/i);
+    expect(await readFile(product, "utf8")).toBe("schema sentinel\n");
+  });
+
+  it("blocks adapter downgrades instead of silently rewriting newer provider state", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-adapter-schema-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+    const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
+    const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.integrations.codex.adapterVersion = 99;
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+    await expect(runInstall({ directory: root, action: "quick-update", yes: true }))
+      .rejects.toThrow(/adapter v99.*newer/i);
   });
 });

@@ -4,26 +4,30 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / ".yaaw-core"
+CORE_ROOT = ROOT / ".yaaw-core"
+SYSTEM = CORE_ROOT / "system"
 
 
 class DistributionContractsTest(unittest.TestCase):
     def test_one_root_path_registry(self):
-        paths = json.loads((CORE / "registries/paths.json").read_text())
+        paths = json.loads((SYSTEM / "registries/paths.json").read_text())
         self.assertEqual(paths["core_root"], ".yaaw-core")
+        self.assertEqual(paths["system_root"], ".yaaw-core/system")
         self.assertEqual(paths["workspace_root"], ".")
         self.assertEqual(paths["project_memory_root"], ".yaaw-core/project")
         self.assertEqual(paths["research"], ".yaaw-core/project/research")
         self.assertEqual(paths["runtime_root"], ".yaaw-core/runtime")
         self.assertEqual(paths["install_root"], ".yaaw-core/install")
 
-    def test_source_core_does_not_contain_consumer_state(self):
-        for name in ("project", "runtime", "install"):
-            self.assertFalse((CORE / name).exists(), name)
+    def test_source_system_is_the_only_package_managed_subtree(self):
+        expected = {"core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates"}
+        self.assertEqual({p.name for p in SYSTEM.iterdir() if p.is_dir()}, expected)
+        for name in expected | {"project", "runtime", "install"}:
+            self.assertFalse((CORE_ROOT / name).exists(), name)
 
     def test_no_live_legacy_yaaw_root_references(self):
         legacy = re.compile(r"(?<!-)\.yaaw/")
-        roots = [CORE, ROOT / "skills", ROOT / "src", ROOT / "installer"]
+        roots = [CORE_ROOT, ROOT / "skills", ROOT / "src", ROOT / "installer"]
         for base in roots:
             for path in base.rglob("*"):
                 if path.is_file() and path.suffix.lower() in {".md", ".json", ".ts"}:
@@ -37,7 +41,7 @@ class DistributionContractsTest(unittest.TestCase):
         root = ROOT / "installer" / "templates" / "bootstrap"
         for name in ("codex.md", "claude-code.md", "gemini-cli.md", "cline.md"):
             text = (root / name).read_text()
-            self.assertIn(".yaaw-core/", text)
+            self.assertIn(".yaaw-core/system/", text)
             self.assertLessEqual(len(text.splitlines()), 30)
 
 

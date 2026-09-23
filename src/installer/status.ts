@@ -21,6 +21,9 @@ export async function inspectStatus(projectRoot: string) {
       manifestValid: false,
       projectRoot,
       version: null,
+      systemSchema: null,
+      projectSchema: null,
+      installationSchema: null,
       integrations: [],
       skills: [],
       projectMemory: await exists(join(projectRoot, ".yaaw-core", "project")),
@@ -84,6 +87,9 @@ export async function inspectStatus(projectRoot: string) {
     manifestValid: true,
     projectRoot,
     version: manifest.yaawVersion,
+    systemSchema: manifest.systemSchema,
+    projectSchema: manifest.projectSchema,
+    installationSchema: manifest.installationSchema,
     integrations: Object.keys(manifest.integrations),
     skills: manifest.skills,
     projectMemory,
@@ -114,6 +120,7 @@ export async function doctor(projectRoot: string) {
   checks.push({ name: "managed-files", ok: status.managedFiles.modified === 0 && status.managedFiles.missing === 0 });
   checks.push({ name: "managed-sections", ok: status.managedSections.modified === 0 && status.managedSections.missing === 0 });
   checks.push({ name: "project-memory", ok: status.projectMemory });
+  checks.push({ name: "system-root", ok: await exists(join(projectRoot, ".yaaw-core", "system")) });
 
   const manifest = await readManifest(projectRoot);
   const durablePrefix = ".yaaw-core/project/";
@@ -125,8 +132,8 @@ export async function doctor(projectRoot: string) {
   });
 
   try {
-    const paths = JSON.parse(await readFile(join(projectRoot, ".yaaw-core", "registries", "paths.json"), "utf8"));
-    checks.push({ name: "path-registry", ok: paths.workspace_root === "." && paths.project_memory_root === ".yaaw-core/project" && paths.research === ".yaaw-core/project/research" && paths.runtime_root === ".yaaw-core/runtime" && paths.install_root === ".yaaw-core/install" });
+    const paths = JSON.parse(await readFile(join(projectRoot, ".yaaw-core", "system", "registries", "paths.json"), "utf8"));
+    checks.push({ name: "path-registry", ok: paths.workspace_root === "." && paths.system_root === ".yaaw-core/system" && paths.project_memory_root === ".yaaw-core/project" && paths.research === ".yaaw-core/project/research" && paths.runtime_root === ".yaaw-core/runtime" && paths.install_root === ".yaaw-core/install" });
   } catch {
     checks.push({ name: "path-registry", ok: false, detail: "missing or invalid paths registry" });
   }

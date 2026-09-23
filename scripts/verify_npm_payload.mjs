@@ -34,20 +34,20 @@ for (const rel of rels) {
 }
 
 for (const rel of [
-  "yaaw-core/core/execution-context.md",
-  "yaaw-core/core/io-contract.md",
-  "yaaw-core/rules/research-admission.md",
-  "yaaw-core/registries/execution-policy.json",
-  "yaaw-core/registries/role-io.json",
-  "yaaw-core/registries/artifacts.json",
-  "yaaw-core/schemas/engineering-research.schema.json",
-  "yaaw-core/schemas/intent.schema.json"
+  "yaaw-core/system/core/execution-context.md",
+  "yaaw-core/system/core/io-contract.md",
+  "yaaw-core/system/rules/research-admission.md",
+  "yaaw-core/system/registries/execution-policy.json",
+  "yaaw-core/system/registries/role-io.json",
+  "yaaw-core/system/registries/artifacts.json",
+  "yaaw-core/system/schemas/engineering-research.schema.json",
+  "yaaw-core/system/schemas/intent.schema.json"
 ]) {
   if (!rels.includes(rel)) errors.push(`missing runtime hardening payload: ${rel}`);
 }
 
-const skills = JSON.parse(await readFile(join(payload, "yaaw-core", "registries", "skills.json"), "utf8"));
-const workflows = JSON.parse(await readFile(join(payload, "yaaw-core", "registries", "workflows.json"), "utf8"));
+const skills = JSON.parse(await readFile(join(payload, "yaaw-core", "system", "registries", "skills.json"), "utf8"));
+const workflows = JSON.parse(await readFile(join(payload, "yaaw-core", "system", "registries", "workflows.json"), "utf8"));
 const skillDirs = (await readdir(join(payload, "skills"), { withFileTypes: true })).filter(x=>x.isDirectory()).map(x=>x.name).sort();
 if (JSON.stringify(skillDirs) !== JSON.stringify(Object.keys(skills).sort())) errors.push("skill registry/payload directory mismatch");
 
@@ -62,7 +62,7 @@ for (const [skillId, entry] of Object.entries(skills)) {
 }
 for (const [id, entry] of Object.entries(workflows)) {
   const rel = String(entry.workflow).replace(/^\.yaaw-core\//, "");
-  try { await stat(join(payload, "yaaw-core", rel)); } catch { errors.push(`${id}: missing workflow ${entry.workflow}`); }
+  try { await stat(join(payload, "yaaw-core", "system", rel)); } catch { errors.push(`${id}: missing workflow ${entry.workflow}`); }
 }
 
 for (const file of all) {
@@ -75,7 +75,7 @@ for (const file of all) {
 
 for (const name of ["codex.md", "claude-code.md", "gemini-cli.md", "cline.md"]) {
   const text = await readFile(join(payload, "bootstrap", name), "utf8");
-  if (!text.includes(".yaaw-core/")) errors.push(`${name}: bootstrap must point to .yaaw-core`);
+  if (!text.includes(".yaaw-core/system/")) errors.push(`${name}: bootstrap must point to .yaaw-core/system`);
   if (text.split("\n").length > 30) errors.push(`${name}: bootstrap is not thin`);
 }
 

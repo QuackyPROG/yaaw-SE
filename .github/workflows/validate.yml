@@ -2,7 +2,7 @@ name: Validate YAAW Core and Distribution
 
 on:
   push:
-    branches: [yaaw-SEv2]
+    branches: [main, yaaw-SEv2]
     tags:
       - 'v*'
   pull_request:

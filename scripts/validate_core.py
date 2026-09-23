@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / ".yaaw-core"
+CORE = ROOT / ".yaaw-core" / "system"
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
@@ -189,20 +189,20 @@ def main() -> int:
         )
 
     challenge_consumers = [
-        ".yaaw-core/roles/prd.md",
-        ".yaaw-core/roles/planner.md",
-        ".yaaw-core/workflows/prd/question-round.md",
-        ".yaaw-core/workflows/prd/create.md",
-        ".yaaw-core/workflows/prd/record-decisions.md",
-        ".yaaw-core/workflows/prd/readiness.md",
-        ".yaaw-core/workflows/prd/revise.md",
-        ".yaaw-core/workflows/prd/refine.md",
-        ".yaaw-core/workflows/planning/discover.md",
-        ".yaaw-core/workflows/planning/write-understanding.md",
-        ".yaaw-core/workflows/planning/decision-frontier.md",
-        ".yaaw-core/workflows/planning/question-round.md",
-        ".yaaw-core/workflows/planning/record-decisions.md",
-        ".yaaw-core/workflows/planning/readiness-review.md",
+        ".yaaw-core/system/roles/prd.md",
+        ".yaaw-core/system/roles/planner.md",
+        ".yaaw-core/system/workflows/prd/question-round.md",
+        ".yaaw-core/system/workflows/prd/create.md",
+        ".yaaw-core/system/workflows/prd/record-decisions.md",
+        ".yaaw-core/system/workflows/prd/readiness.md",
+        ".yaaw-core/system/workflows/prd/revise.md",
+        ".yaaw-core/system/workflows/prd/refine.md",
+        ".yaaw-core/system/workflows/planning/discover.md",
+        ".yaaw-core/system/workflows/planning/write-understanding.md",
+        ".yaaw-core/system/workflows/planning/decision-frontier.md",
+        ".yaaw-core/system/workflows/planning/question-round.md",
+        ".yaaw-core/system/workflows/planning/record-decisions.md",
+        ".yaaw-core/system/workflows/planning/readiness-review.md",
     ]
     for rel in challenge_consumers:
         path = ROOT / rel
@@ -212,8 +212,8 @@ def main() -> int:
             errors.append(f"{rel}: must reference canonical assumption-challenge rule")
 
     for rel in [
-        ".yaaw-core/workflows/prd/question-round.md",
-        ".yaaw-core/workflows/planning/question-round.md",
+        ".yaaw-core/system/workflows/prd/question-round.md",
+        ".yaaw-core/system/workflows/planning/question-round.md",
     ]:
         if "rules/question-format.md" not in (ROOT / rel).read_text(encoding="utf-8"):
             errors.append(f"{rel}: must reference canonical question-format rule")
@@ -233,7 +233,7 @@ def main() -> int:
         ],
         errors,
     )
-    for rel in [".yaaw-core/roles/orchestrator.md", ".yaaw-core/roles/implementer.md", ".yaaw-core/roles/reviewer.md"]:
+    for rel in [".yaaw-core/system/roles/orchestrator.md", ".yaaw-core/system/roles/implementer.md", ".yaaw-core/system/roles/reviewer.md"]:
         if "assumption-challenge" in (ROOT / rel).read_text(encoding="utf-8").lower():
             errors.append(f"{rel}: must not consume assumption-challenge user-question authority")
 

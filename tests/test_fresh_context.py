@@ -5,7 +5,7 @@ from pathlib import Path
 from scripts.validate_core import parse_frontmatter
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / ".yaaw-core"
+CORE = ROOT / ".yaaw-core" / "system"
 FIXTURE = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw-core" / "project"
 CHALLENGE_FIXTURE = ROOT / "tests" / "fixtures" / "assumption_challenge_fresh_context" / ".yaaw-core" / "project"
 

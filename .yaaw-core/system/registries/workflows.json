@@ -1,0 +1,38 @@
+{
+  "prd.route": {"role": "prd", "workflow": ".yaaw-core/system/workflows/prd/route.md"},
+  "prd.create": {"role": "prd", "workflow": ".yaaw-core/system/workflows/prd/create.md"},
+  "prd.question-round": {"role": "prd", "workflow": ".yaaw-core/system/workflows/prd/question-round.md"},
+  "prd.record-decisions": {"role": "prd", "workflow": ".yaaw-core/system/workflows/prd/record-decisions.md"},
+  "prd.revise": {"role": "prd", "workflow": ".yaaw-core/system/workflows/prd/revise.md"},
+  "prd.refine": {"role": "prd", "workflow": ".yaaw-core/system/workflows/prd/refine.md"},
+  "prd.readiness": {"role": "prd", "workflow": ".yaaw-core/system/workflows/prd/readiness.md"},
+
+  "planning.route": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/route.md"},
+  "planning.discover": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/discover.md"},
+  "planning.write-understanding": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/write-understanding.md"},
+  "planning.decision-frontier": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/decision-frontier.md"},
+  "planning.research": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/research.md"},
+  "planning.question-round": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/question-round.md"},
+  "planning.record-decisions": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/record-decisions.md"},
+  "planning.readiness-review": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/readiness-review.md"},
+  "planning.create-spec": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/create-spec.md"},
+  "planning.create-tickets": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/create-tickets.md"},
+  "planning.replan": {"role": "planner", "workflow": ".yaaw-core/system/workflows/planning/replan.md"},
+
+  "implementation.select-ticket": {"role": "implementer", "workflow": ".yaaw-core/system/workflows/implementation/select-ticket.md"},
+  "implementation.implement-ticket": {"role": "implementer", "workflow": ".yaaw-core/system/workflows/implementation/implement-ticket.md"},
+  "implementation.verify-ticket": {"role": "implementer", "workflow": ".yaaw-core/system/workflows/implementation/verify-ticket.md"},
+  "implementation.repair-ticket": {"role": "implementer", "workflow": ".yaaw-core/system/workflows/implementation/repair-ticket.md"},
+
+  "review.inspect-change": {"role": "reviewer", "workflow": ".yaaw-core/system/workflows/review/inspect-change.md"},
+  "review.review-ticket": {"role": "reviewer", "workflow": ".yaaw-core/system/workflows/review/review-ticket.md"},
+  "review.classify-findings": {"role": "reviewer", "workflow": ".yaaw-core/system/workflows/review/classify-findings.md"},
+  "review.record-review": {"role": "reviewer", "workflow": ".yaaw-core/system/workflows/review/record-review.md"},
+
+  "orchestration.route": {"role": "orchestrator", "workflow": ".yaaw-core/system/workflows/orchestration/route.md"},
+  "orchestration.inspect-state": {"role": "orchestrator", "workflow": ".yaaw-core/system/workflows/orchestration/inspect-state.md"},
+  "orchestration.reconcile-state": {"role": "orchestrator", "workflow": ".yaaw-core/system/workflows/orchestration/reconcile-state.md"},
+  "orchestration.determine-next-action": {"role": "orchestrator", "workflow": ".yaaw-core/system/workflows/orchestration/determine-next-action.md"},
+  "orchestration.dispatch": {"role": "orchestrator", "workflow": ".yaaw-core/system/workflows/orchestration/dispatch.md"},
+  "orchestration.recover-interruption": {"role": "orchestrator", "workflow": ".yaaw-core/system/workflows/orchestration/recover-interruption.md"}
+}

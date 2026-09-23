@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATES = ROOT / ".yaaw-core" / "templates"
+TEMPLATES = ROOT / ".yaaw-core" / "system" / "templates"
 
 
 def initialize_project(project_root: Path) -> list[Path]:

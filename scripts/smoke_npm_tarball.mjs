@@ -67,14 +67,17 @@ const providerSurfaces = {
 
 const allProviderIds = Object.keys(providerSurfaces);
 const expectedCoreEntries = [
-  "core",
-  "expertise",
   "install",
   "project",
+  "runtime",
+  "system"
+].sort();
+const expectedSystemEntries = [
+  "core",
+  "expertise",
   "registries",
   "roles",
   "rules",
-  "runtime",
   "schemas",
   "templates",
   "workflows"
@@ -129,6 +132,7 @@ async function assertConsumerLayout(project, tools) {
   if (existsSync(join(project, ".yaaw"))) throw new Error("legacy .yaaw root leaked into consumer install");
 
   assertSameEntries(await entries(join(project, ".yaaw-core")), expectedCoreEntries, ".yaaw-core top-level");
+  assertSameEntries(await entries(join(project, ".yaaw-core", "system")), expectedSystemEntries, ".yaaw-core/system");
   assertSameEntries(await entries(join(project, ".yaaw-core", "project")), expectedProjectEntries, ".yaaw-core/project");
   assertSameEntries(await entries(join(project, ".yaaw-core", "runtime")), [], ".yaaw-core/runtime");
   assertSameEntries(await entries(join(project, ".yaaw-core", "install")), ["manifest.json"], ".yaaw-core/install");

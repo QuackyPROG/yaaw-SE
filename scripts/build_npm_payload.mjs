@@ -5,14 +5,14 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "dist", "payload");
-const coreOut = join(out, "yaaw-core");
+const coreOut = join(out, "yaaw-core", "system");
 const packageMetadata = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 const approved = ["core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates"];
 
 await rm(out, { recursive: true, force: true });
 await mkdir(coreOut, { recursive: true });
 for (const name of approved) {
-  await cp(join(root, ".yaaw-core", name), join(coreOut, name), { recursive: true });
+  await cp(join(root, ".yaaw-core", "system", name), join(coreOut, name), { recursive: true });
 }
 await cp(join(root, "skills"), join(out, "skills"), { recursive: true });
 await cp(join(root, "installer", "templates", "bootstrap"), join(out, "bootstrap"), { recursive: true });

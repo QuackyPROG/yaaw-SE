@@ -8,10 +8,26 @@ The supported distribution entrypoint is:
 npx yaaw-se install
 ```
 
-A consumer workspace has exactly one YAAW root: `.yaaw-core/`. The workspace root is the directory containing that installation; `.yaaw-core/project/` is project memory and is not called the workspace root.
+Users who explicitly want the newest published package can run:
 
-- `.yaaw-core/core|roles|workflows|expertise|rules|registries|schemas|templates` are **PACKAGE_MANAGED**.
-- `.yaaw-core/project/` is **PROJECT_DURABLE**. Package install/update/repair must never overwrite existing semantic project artifacts.
+```bash
+npx yaaw-se@latest install
+```
+
+A consumer workspace has exactly one YAAW root: `.yaaw-core/`.
+
+```text
+.yaaw-core/
+├── system/   package-owned, replaceable framework
+├── project/  durable semantic project memory
+├── runtime/  replaceable coordination state
+└── install/  installer metadata
+```
+
+### Ownership
+
+- `.yaaw-core/system/` is **PACKAGE_MANAGED** and contains `core/`, `roles/`, `workflows/`, `expertise/`, `rules/`, `registries/`, `schemas/`, and `templates/`.
+- `.yaaw-core/project/` is **PROJECT_DURABLE**. Normal install/update/repair/reconfiguration/uninstall must never overwrite or delete accepted project artifacts.
 - `.yaaw-core/runtime/` is **RUNTIME_REPLACEABLE** coordination state.
 - `.yaaw-core/install/` is **INSTALLER_MANAGED** metadata and never semantic project truth.
 
@@ -21,19 +37,61 @@ Provider folders are adapters only. They may contain thin `SKILL.md` wrappers an
 
 The user-selected project path is a hard permanent-write boundary. Every mutation is planned first, checked against the resolved project root and existing-parent realpaths, then executed transactionally. Symlink escapes, traversal, absolute-path injection, and manifest paths outside the project root are rejected.
 
-## Installer vs Orchestrator authority
+A second hard boundary protects durable memory: installer-managed write/remove operations targeting `.yaaw-core/project/` are rejected during preflight even if a future planner bug creates such an operation. Only explicit project initialization-if-missing and registered project-schema migrations may create or transform durable state.
 
-The npm CLI owns installation, package updates, adapters, managed-file hashes, repair, and uninstall mechanics.
+## Update model
 
-The YAAW Orchestrator owns project lifecycle reconstruction, routing, recovery, ticket selection, review routing, and semantic continuation.
+Quick Update reuses the installed provider/skill configuration and performs this sequence:
 
-Neither may take over the other's authority.
+```text
+read + normalize manifest
+        ↓
+check package/schema/adapter compatibility
+        ↓
+build complete update plan
+        ↓
+preflight path + durable-memory guards
+        ↓
+stage/apply package-owned system + adapter changes
+        ↓
+apply declared project migration operations, if any
+        ↓
+verify installed system and adapters
+        ↓
+commit manifest last
+```
 
-## Update invariant
+If an operation or verification fails, the transaction restores pre-existing bytes and removes newly created package files.
 
-`.yaaw-core/project/` is project data. Update, repair, reconfiguration, and uninstall code must never blanket-delete `.yaaw-core/`.
+The updater never performs `rm -rf .yaaw-core`. Old package-owned files are removed only when the prior manifest proves installer ownership.
 
-Package updates operate only on enumerated managed files/directories. The manifest is committed last.
+## Version domains
+
+The manifest tracks these independently:
+
+- `yaawVersion`: npm/YAAW release version.
+- `systemSchema`: package-system structural contract.
+- `installationSchema`: manifest/control-plane contract.
+- `projectSchema`: durable project-memory contract.
+- `integrations.<id>.adapterVersion`: provider adapter contract.
+
+A new YAAW package can therefore refresh `.yaaw-core/system/` without migrating project data when `projectSchema` is unchanged.
+
+If the installed project or adapter schema is newer than the running package understands, the update is blocked before mutation. Downgrades are not inferred.
+
+Project migrations are registered as adjacent schema steps and composed for skipped versions. For example, a future project schema `1 -> 4` must have a valid chain such as `1->2`, `2->3`, `3->4`.
+
+## Existing v1 installations
+
+The installer accepts `yaaw.installation/v1` manifests from the initial flat package layout. They are normalized in memory, then Quick Update:
+
+1. installs the current package under `.yaaw-core/system/`;
+2. preserves `.yaaw-core/project/`;
+3. removes old flat package-owned directories only when their v1 manifest hashes prove ownership;
+4. updates provider adapters;
+5. emits `yaaw.installation/v2`.
+
+No separate `.yaaw/` project root is introduced.
 
 ## Root instruction files
 
@@ -41,6 +99,14 @@ Package updates operate only on enumerated managed files/directories. The manife
 
 The repository-development `AGENTS.md` is never copied into consumer projects.
 
+## Installer vs Orchestrator authority
+
+The npm CLI owns installation, package updates, adapters, managed-file hashes, schema migration mechanics, repair, and uninstall mechanics.
+
+The YAAW Orchestrator owns project lifecycle reconstruction, routing, recovery, ticket selection, review routing, and semantic continuation.
+
+Neither may take over the other's authority.
+
 ## Runtime repository boundary
 
-Provider process CWD is not authoritative. YAAW resolves the consumer workspace and scopes repository commands with `git -C <WORKSPACE_ROOT>`. In monorepos, identity/diffs are scoped to the YAAW workspace so unrelated siblings do not automatically invalidate review. Repository capability is separate from installer health: an installation may be healthy while the workspace is intentionally `UNVERSIONED`; implementation/review still require exact `READY` identity.
+Provider process CWD is not authoritative. YAAW resolves the consumer workspace and scopes repository commands with `git -C <WORKSPACE_ROOT>`. In monorepos, identity/diffs are scoped to the YAAW workspace so unrelated siblings do not automatically invalidate review. Repository capability is separate from installer health.

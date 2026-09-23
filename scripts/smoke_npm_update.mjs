@@ -8,7 +8,7 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(fileURLToPath(new URL("../", import.meta.url)));
 const packagePath = join(root, "package.json");
-const coreSourcePath = join(root, ".yaaw-core", "core", "artifact-model.md");
+const coreSourcePath = join(root, ".yaaw-core", "system", "core", "artifact-model.md");
 const npmCliCandidates = [
   process.env.npm_execpath,
   join(dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js"),
@@ -91,7 +91,7 @@ try {
     if (actual !== expected) throw new Error(`Durable artifact changed during tarball update: ${rel}`);
   }
 
-  const installedCore = await readFile(join(project, ".yaaw-core", "core", "artifact-model.md"), "utf8");
+  const installedCore = await readFile(join(project, ".yaaw-core", "system", "core", "artifact-model.md"), "utf8");
   if (!installedCore.includes("synthetic-package-update-0.1.1")) {
     throw new Error("Package-managed core did not update from the 0.1.1 tarball");
   }

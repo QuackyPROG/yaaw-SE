@@ -5,7 +5,7 @@ from pathlib import Path
 from scripts.behavior_oracle import determine_next, load_json, run_fixture_cases
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / ".yaaw-core"
+CORE = ROOT / ".yaaw-core" / "system"
 FIXTURES = ROOT / "tests" / "fixtures" / "lifecycle_cases.json"
 
 

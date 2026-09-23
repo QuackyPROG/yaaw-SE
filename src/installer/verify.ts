@@ -9,11 +9,11 @@ async function exists(path: string) {
 
 export async function verifyInstalledState(projectRoot: string, integrations: IntegrationId[], skills: string[]): Promise<void> {
   const required = [
-    ".yaaw-core/core",
-    ".yaaw-core/roles",
-    ".yaaw-core/workflows",
-    ".yaaw-core/registries",
-    ".yaaw-core/templates",
+    ".yaaw-core/system/core",
+    ".yaaw-core/system/roles",
+    ".yaaw-core/system/workflows",
+    ".yaaw-core/system/registries",
+    ".yaaw-core/system/templates",
     ".yaaw-core/project/product.md",
     ".yaaw-core/project/engineering.md",
     ".yaaw-core/project/research",
@@ -28,14 +28,18 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
     issues.push("legacy .yaaw root exists; automatic merge is intentionally unsupported");
   }
 
+  for (const legacy of ["core","roles","workflows","expertise","rules","registries","schemas","templates"]) {
+    if (await exists(join(projectRoot, ".yaaw-core", legacy))) issues.push(`legacy flat package directory remains: .yaaw-core/${legacy}`);
+  }
+
   for (const id of integrations) {
     const result = await getIntegration(id).verify({ projectRoot, payloadRoot: "" }, skills);
     issues.push(...result.issues.map(issue=>`${id}: ${issue}`));
   }
 
   try {
-    const paths = JSON.parse(await readFile(join(projectRoot, ".yaaw-core", "registries", "paths.json"), "utf8"));
-    if (paths.workspace_root !== "." || paths.project_memory_root !== ".yaaw-core/project" || paths.research !== ".yaaw-core/project/research" || paths.runtime_root !== ".yaaw-core/runtime") {
+    const paths = JSON.parse(await readFile(join(projectRoot, ".yaaw-core", "system", "registries", "paths.json"), "utf8"));
+    if (paths.workspace_root !== "." || paths.system_root !== ".yaaw-core/system" || paths.project_memory_root !== ".yaaw-core/project" || paths.research !== ".yaaw-core/project/research" || paths.runtime_root !== ".yaaw-core/runtime") {
       issues.push("installed paths registry violates one-root distribution contract");
     }
   } catch {

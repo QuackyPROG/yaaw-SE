@@ -20,7 +20,7 @@ export async function planProjectInitialization(payloadRoot: string, projectRoot
     install
   ]) operations.push({ type: "mkdir", path, owner: "layout" });
 
-  const templates = join(payloadRoot, "yaaw-core", "templates");
+  const templates = join(payloadRoot, "yaaw-core", "system", "templates");
   for (const [template, name] of [["product.md","product.md"],["engineering.md","engineering.md"]] as const) {
     operations.push({
       type: "write-project-file-if-missing",

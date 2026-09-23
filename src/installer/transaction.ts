@@ -51,8 +51,23 @@ async function operationBytes(op: InstallOperation): Promise<Buffer | string | n
 }
 
 export async function preflightPlan(plan: InstallPlan): Promise<void> {
+  const durableRoot = resolve(plan.projectRoot, ".yaaw-core", "project");
+  const destructiveOrManaged = new Set([
+    "write-managed-file",
+    "copy-managed-file",
+    "update-managed-section",
+    "remove-managed-file",
+    "remove-managed-section",
+    "remove-empty-dir"
+  ]);
   for (const op of plan.operations) {
-    if ("path" in op) await assertSafeDestination(plan.projectRoot, op.path);
+    if ("path" in op) {
+      await assertSafeDestination(plan.projectRoot, op.path);
+      const candidate = resolve(op.path);
+      if (destructiveOrManaged.has(op.type) && (candidate === durableRoot || candidate.startsWith(durableRoot + "/") || candidate.startsWith(durableRoot + "\\"))) {
+        throw new Error(`Installer-managed operation cannot mutate durable project memory: ${op.type} ${op.path}`);
+      }
+    }
     if (op.type === "copy-managed-file") {
       const info = await stat(op.source);
       if (!info.isFile()) throw new Error(`Managed source is not a file: ${op.source}`);

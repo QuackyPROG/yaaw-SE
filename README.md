@@ -38,19 +38,20 @@ A consuming project has exactly one canonical YAAW root:
 
 ```text
 .yaaw-core/
-├── core/            package-managed workflow contracts
-├── roles/
-├── workflows/
-├── expertise/
-├── rules/
-├── registries/
-├── schemas/
-├── templates/
+├── system/          replaceable package-owned YAAW system
+│   ├── core/
+│   ├── roles/
+│   ├── workflows/
+│   ├── expertise/
+│   ├── rules/
+│   ├── registries/
+│   ├── schemas/
+│   └── templates/
 ├── project/         durable project-owned YAAW memory
 │   ├── product.md
 │   ├── engineering.md
 │   ├── state.json
-│   ├── research/        admitted Planner research (RSH-*)
+│   ├── research/
 │   ├── specs/
 │   ├── tickets/
 │   ├── reviews/
@@ -91,29 +92,41 @@ Direct shortcuts:
 - `@yaaw-create-tickets`
 - `@yaaw-repair`
 
-The Standard profile exposes all public entrypoints. Core exposes the five smart entrypoints. Custom changes only which shortcuts a coding tool discovers; it never removes canonical workflows from `.yaaw-core`.
+The Standard profile exposes all public entrypoints. Core exposes the five smart entrypoints. Custom changes only which shortcuts a coding tool discovers; it never removes canonical workflows from `.yaaw-core/system/`.
 
 ## Update, modify, repair
 
-Rerun the installer:
+To explicitly use the newest published package:
 
 ```bash
-npx yaaw-se install
+npx yaaw-se@latest install
 ```
 
 Existing installations offer Quick Update, Modify Installation, Repair Installation, or safe Uninstall.
 
+Quick Update reuses the installed provider/skill configuration and:
+
+- refreshes package-owned `.yaaw-core/system/`;
+- preserves `.yaaw-core/project/`;
+- refreshes generated provider adapters and managed instruction blocks;
+- removes obsolete files only when the manifest proves YAAW owns them;
+- runs declared project-schema migrations when required;
+- blocks unsupported package, project-schema, or adapter downgrades;
+- verifies the installation before committing the new manifest.
+
+The installer accepts the original `yaaw.installation/v1` manifest and upgrades it to the current manifest while moving old flat package-owned directories into `.yaaw-core/system/`.
+
 Headless examples:
 
 ```bash
-npx yaaw-se install --action quick-update --yes
+npx yaaw-se@latest install --action quick-update --yes
 npx yaaw-se install --action modify --tools codex,gemini-cli --skills core --yes
 npx yaaw-se doctor --repair
 ```
 
-Managed files are hashed. Local modifications block headless replacement unless `--force-managed` is explicit. That flag applies only to installer-managed files/sections and never authorizes overwriting `.yaaw-core/project`.
+Managed files are hashed. Local modifications block headless replacement unless `--force-managed` is explicit. That flag applies only to installer-managed files/sections and is hard-blocked from mutating `.yaaw-core/project/`.
 
-Safe uninstall removes package-managed framework files and adapters but preserves durable `.yaaw-core/project` data.
+Safe uninstall removes package-managed framework files and adapters but preserves durable `.yaaw-core/project/` data.
 
 ## Diagnostics
 
@@ -122,13 +135,13 @@ npx yaaw-se status
 npx yaaw-se doctor
 ```
 
-`status` reports installation health and managed-file drift. `doctor` performs read-only checks for manifest integrity, path ownership, missing/modified managed files, and the one-root path registry.
+`status` reports installation health, YAAW/system/project/install schema versions, integrations, and managed-file drift. `doctor` performs read-only checks for manifest integrity, path ownership, missing/modified managed files, and the one-root contract.
 
 ## Architecture
 
 Each execution composes **Role** (authority) + **Workflow** (process) + applicable **Shared Rules** + relevant **Expertise**. Shared rules and expertise never grant authority.
 
-The npm installer owns distribution mechanics. The YAAW Orchestrator owns semantic lifecycle continuity. Neither is a second implementation of the other.
+The canonical semantic implementation is `.yaaw-core/system/`. Durable project memory is `.yaaw-core/project/`. The npm installer owns distribution mechanics; the YAAW Orchestrator owns semantic lifecycle continuity. Neither is a second implementation of the other.
 
 See:
 
@@ -153,7 +166,7 @@ npm run build
 npm pack --dry-run
 ```
 
-The dependency graph is committed in `package-lock.json`; CI and release verification use `npm ci`. The first npm release is intentionally published manually.
+The dependency graph is committed in `package-lock.json`; CI and release verification use `npm ci`.
 
 ## Deterministic runtime context
 

@@ -76,14 +76,18 @@ const providerSurfaces: Record<IntegrationId, ProviderSurface> = {
 };
 
 const expectedCoreEntries = [
-  "core",
-  "expertise",
   "install",
   "project",
+  "runtime",
+  "system"
+].sort();
+
+const expectedSystemEntries = [
+  "core",
+  "expertise",
   "registries",
   "roles",
   "rules",
-  "runtime",
   "schemas",
   "templates",
   "workflows"
@@ -128,7 +132,10 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
   const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
   const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
 
-  expect(manifest.schema).toBe("yaaw.installation/v1");
+  expect(manifest.schema).toBe("yaaw.installation/v2");
+  expect(manifest.systemSchema).toBe(1);
+  expect(manifest.projectSchema).toBe(1);
+  expect(manifest.installationSchema).toBe(2);
   expect(Object.keys(manifest.integrations).sort()).toEqual([...selectedTools].sort());
   expect(manifest.skills.length).toBeGreaterThan(0);
 
@@ -144,6 +151,7 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
   expect(await exists(join(root, ".yaaw"))).toBe(false);
 
   expect(await entries(join(root, ".yaaw-core"))).toEqual(expectedCoreEntries);
+  expect(await entries(join(root, ".yaaw-core", "system"))).toEqual(expectedSystemEntries);
   expect(await entries(join(root, ".yaaw-core", "project"))).toEqual(expectedProjectEntries);
   expect(await entries(join(root, ".yaaw-core", "runtime"))).toEqual([]);
   expect(await entries(join(root, ".yaaw-core", "install"))).toEqual(["manifest.json"]);

@@ -19,7 +19,7 @@ describe("transaction rollback", () => {
       warnings: [],
       operations: [
         { type: "write-managed-file", path: existing, content: "changed\n", owner: "test" },
-        { type: "write-managed-file", path: join(root, ".yaaw-core", "core", "x.md"), content: "new\n", owner: "test" }
+        { type: "write-managed-file", path: join(root, ".yaaw-core", "system", "core", "x.md"), content: "new\n", owner: "test" }
       ]
     };
 
@@ -44,5 +44,22 @@ describe("transaction rollback", () => {
       beforeManifest: async () => { throw new Error("verification failed"); }
     })).rejects.toThrow(/verification failed/);
     await expect(readFile(path, "utf8")).rejects.toThrow();
+  });
+
+  it("hard-blocks installer-managed mutation of durable project memory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-durable-guard-"));
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    const plan: InstallPlan = {
+      action: "quick-update",
+      projectRoot: root,
+      selectedIntegrations: [],
+      selectedSkills: [],
+      warnings: [],
+      operations: [
+        { type: "remove-managed-file", path: product, owner: "package:system" }
+      ]
+    };
+
+    await expect(executePlan(plan)).rejects.toThrow(/cannot mutate durable project memory/i);
   });
 });

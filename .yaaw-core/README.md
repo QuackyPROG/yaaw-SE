@@ -1,20 +1,34 @@
 # `.yaaw-core`
 
-`.yaaw-core` is the canonical private implementation behind YAAW public skills.
+`.yaaw-core/` is the single project-local YAAW root.
 
-## Composition
+Its ownership boundaries are structural:
+
 ```text
-skills/ -> registry -> role + workflow + applicable shared rules + selected expertise
-        -> durable artifacts + repository reality
+.yaaw-core/
+├── system/   package-owned canonical YAAW implementation
+├── project/  durable project-owned semantic memory
+├── runtime/  replaceable coordination caches
+└── install/  installer metadata
+```
+
+Normal package updates refresh `.yaaw-core/system/`; they never replace the whole `.yaaw-core/` tree.
+
+## System composition
+
+```text
+skills/ -> system/registries -> role + workflow + applicable shared rules + selected expertise
+        -> durable project artifacts + repository reality
         -> evidence-backed state transition
         -> orchestration re-inspection
 ```
 
 Roles own semantic authority. Workflows own process. Shared rules provide reusable cross-cutting behavior without creating another authority or lifecycle layer. Expertise provides specialist knowledge only.
 
-`rules/assumption-challenge.md` is one such behavioral rule: PRD consumes it for product-semantics scrutiny and Planner consumes it for repository-backed engineering scrutiny. It is not a public skill, workflow phase, state, or durable artifact.
+The canonical assumption-challenge rule is `.yaaw-core/system/rules/assumption-challenge.md`. PRD consumes it for product-semantics scrutiny and Planner consumes it for repository-backed engineering scrutiny. It is not a public skill, workflow phase, state, or durable artifact.
 
 ## Authority
+
 - Human/PRD: product intent and scope.
 - Planner: engineering decisions, specs, readiness, tickets.
 - Implementer: bounded code changes within an admitted ticket.
@@ -22,27 +36,41 @@ Roles own semantic authority. Workflows own process. Shared rules provide reusab
 - Orchestrator: continuity, reconciliation, invalidation coordination, and routing.
 
 ## Durable project root
-`.yaaw-core/project/` stores product/engineering/spec/ticket/review/evidence/rules plus `state.json`. `.yaaw-core/runtime/` stores replaceable observed-state and handoff caches used only for coordination.
+
+`.yaaw-core/project/` stores product, engineering, admitted research, specs, tickets, reviews, evidence, project rules, and `state.json`.
+
+`.yaaw-core/runtime/` stores replaceable observed-state, handoff, and intent caches used only for coordination.
+
+`.yaaw-core/install/` stores package/install ownership and version metadata. Installer metadata is not semantic project truth.
 
 ## Canonical lifecycle
+
 `PRD -> planning -> readiness -> spec -> tickets -> implement -> review -> repair/replan/pass -> next frontier -> COMPLETE`.
 
-Read these contracts together:
-- `core/lifecycle.md`
-- `core/authority.md`
-- `core/routing.md`
-- `core/transitions.md`
-- `core/invalidation.md`
-- `core/recovery.md`
-- `core/context-loading.md`
-- `rules/assumption-challenge.md` when PRD/Planner must decide what deserves questioning
-- `rules/question-format.md` when PRD/Planner presents a question round
+Read these package contracts together:
+
+- `.yaaw-core/system/core/lifecycle.md`
+- `.yaaw-core/system/core/authority.md`
+- `.yaaw-core/system/core/routing.md`
+- `.yaaw-core/system/core/transitions.md`
+- `.yaaw-core/system/core/invalidation.md`
+- `.yaaw-core/system/core/recovery.md`
+- `.yaaw-core/system/core/context-loading.md`
+- `.yaaw-core/system/rules/assumption-challenge.md`
+- `.yaaw-core/system/rules/question-format.md`
 
 Any workflow context may disappear after durable output without destroying project understanding.
 
 ## Runtime hardening
-- `core/execution-context.md` resolves the consumer workspace root and requires root-anchored Git.
-- `registries/execution-policy.json` classifies every workflow as `NONE`, `INSPECT`, or `IDENTITY` for repository requirements.
-- `core/context-loading.md` requires metadata-first progressive workflow loading.
-- `core/io-contract.md` + `registries/role-io.json` keep peer roles from privately delegating or searching for alternate YAAW artifact locations.
-- Planner owns admitted primary-source research through `project/research/RSH-*.md`; `rules/research-admission.md` prevents host skill availability from choosing architecture.
+
+- `.yaaw-core/system/core/execution-context.md` resolves the consumer workspace root and requires root-anchored Git.
+- `.yaaw-core/system/registries/execution-policy.json` classifies every workflow as `NONE`, `INSPECT`, or `IDENTITY` for repository requirements.
+- `.yaaw-core/system/core/context-loading.md` requires metadata-first progressive workflow loading.
+- `.yaaw-core/system/core/io-contract.md` plus `.yaaw-core/system/registries/role-io.json` keep peer roles from privately delegating or searching for alternate YAAW artifact locations.
+- Planner owns admitted primary-source research through `.yaaw-core/project/research/RSH-*.md`; `.yaaw-core/system/rules/research-admission.md` prevents host skill availability from choosing architecture.
+
+## Update safety
+
+Current installers emit `yaaw.installation/v2` and accept the original v1 manifest for upgrade. The installer tracks YAAW/system/project/install/adapter versions independently, plans skipped-version project migrations through registered adjacent steps, blocks unsupported downgrades, verifies before manifest commit, and rolls back failed transactions.
+
+Installer-managed mutations beneath `.yaaw-core/project/` are rejected at preflight. Only initialization-if-missing and explicit registered project-schema migrations may transform durable project state.

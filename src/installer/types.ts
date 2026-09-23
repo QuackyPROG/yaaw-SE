@@ -53,10 +53,11 @@ export interface ManagedSectionRecord {
 }
 
 export interface InstallationManifest {
-  schema: "yaaw.installation/v1";
+  schema: "yaaw.installation/v2";
   yaawVersion: string;
-  installationSchema: 1;
-  projectStateSchema: 1;
+  systemSchema: number;
+  installationSchema: number;
+  projectSchema: number;
   installedAt: string;
   updatedAt: string;
   project: { root: "." };

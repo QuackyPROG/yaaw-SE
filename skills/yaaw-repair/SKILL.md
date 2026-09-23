@@ -7,4 +7,4 @@ ROLE: `implementer`
 WORKFLOW: `implementation.repair-ticket`
 
 ## Execute
-Load `.yaaw-core/roles/implementer.md`, resolve `implementation.repair-ticket` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.
+Load `.yaaw-core/system/roles/implementer.md`, resolve `implementation.repair-ticket` through `.yaaw-core/system/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/system/`; this skill is only an entrypoint.

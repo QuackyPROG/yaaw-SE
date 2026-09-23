@@ -6,6 +6,8 @@ import { MANIFEST_RELATIVE_PATH, emptyManifest } from "./manifest.js";
 import { planProjectInitialization } from "./project-state.js";
 import type { InstallContext, InstallOperation, InstallPlan, InstallationManifest, ManagedFileRecord } from "./types.js";
 import { getIntegration } from "../integrations/registry.js";
+import { CURRENT_INSTALLATION_SCHEMA, CURRENT_PROJECT_SCHEMA, CURRENT_SYSTEM_SCHEMA, migrationPath } from "./migrations/index.js";
+import { projectMigrations } from "./migrations/project/index.js";
 import type { CanonicalSkill, IntegrationId } from "../integrations/types.js";
 
 export class ManagedConflictError extends Error {
@@ -31,7 +33,7 @@ async function walk(dir: string): Promise<string[]> {
 }
 
 async function canonicalSkills(payloadRoot: string): Promise<CanonicalSkill[]> {
-  const registry = JSON.parse(await readFile(join(payloadRoot, "yaaw-core", "registries", "skills.json"), "utf8"));
+  const registry = JSON.parse(await readFile(join(payloadRoot, "yaaw-core", "system", "registries", "skills.json"), "utf8"));
   return Object.keys(registry).sort().map(id => ({ id, source: join(payloadRoot, "skills", id, "SKILL.md") }));
 }
 
@@ -248,21 +250,44 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
     };
   }
 
+  if (previous) {
+    if (previous.installationSchema > CURRENT_INSTALLATION_SCHEMA) throw new Error(`Installed manifest schema ${previous.installationSchema} is newer than this installer supports (${CURRENT_INSTALLATION_SCHEMA}).`);
+    if (previous.systemSchema > CURRENT_SYSTEM_SCHEMA) throw new Error(`Installed system schema ${previous.systemSchema} is newer than this package supports (${CURRENT_SYSTEM_SCHEMA}).`);
+    if (previous.projectSchema > CURRENT_PROJECT_SCHEMA) throw new Error(`Installed project schema ${previous.projectSchema} is newer than this package supports (${CURRENT_PROJECT_SCHEMA}); downgrade is blocked.`);
+    for (const integrationId of ctx.selectedIntegrations) {
+      const installed = previous.integrations[integrationId];
+      if (installed && installed.adapterVersion > getIntegration(integrationId).adapterVersion) {
+        throw new Error(`Installed ${integrationId} adapter v${installed.adapterVersion} is newer than this package supports; downgrade is blocked.`);
+      }
+    }
+  }
+
   const manifest = emptyManifest(ctx.packageVersion, previous?.installedAt ?? now);
   manifest.updatedAt = now;
   manifest.skills = [...ctx.selectedSkills];
 
-  const coreRoot = join(ctx.payloadRoot, "yaaw-core");
+  const coreRoot = join(ctx.payloadRoot, "yaaw-core", "system");
   const coreFiles = await walk(coreRoot);
   const desiredFilePaths = new Set<string>();
   for (const source of coreFiles) {
     const coreRel = relative(coreRoot, source);
-    const target = join(ctx.projectRoot, ".yaaw-core", coreRel);
+    const target = join(ctx.projectRoot, ".yaaw-core", "system", coreRel);
     desiredFilePaths.add(rel(ctx.projectRoot, target));
-    await chooseManagedFile({ ctx, previous, path: target, owner: "package:core", source, operations, records: manifest.managedFiles, conflicts, backupStamp });
+    await chooseManagedFile({ ctx, previous, path: target, owner: "package:system", source, operations, records: manifest.managedFiles, conflicts, backupStamp });
   }
 
   operations.push(...await planProjectInitialization(ctx.payloadRoot, ctx.projectRoot));
+
+  if (previous) {
+    for (const migration of migrationPath(projectMigrations, previous.projectSchema, CURRENT_PROJECT_SCHEMA)) {
+      operations.push(...await migration.plan({
+        projectRoot: ctx.projectRoot,
+        payloadRoot: ctx.payloadRoot,
+        fromVersion: migration.from,
+        toVersion: migration.to
+      }));
+    }
+  }
 
   const skillMap = new Map((await canonicalSkills(ctx.payloadRoot)).map(x=>[x.id,x]));
   const selectedCanonical = ctx.selectedSkills.map(id => {

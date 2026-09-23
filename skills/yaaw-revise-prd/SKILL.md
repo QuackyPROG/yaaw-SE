@@ -7,4 +7,4 @@ ROLE: `prd`
 WORKFLOW: `prd.revise`
 
 ## Execute
-Load `.yaaw-core/roles/prd.md`, resolve `prd.revise` through `.yaaw-core/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/`; this skill is only an entrypoint.
+Load `.yaaw-core/system/roles/prd.md`, resolve `prd.revise` through `.yaaw-core/system/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/system/`; this skill is only an entrypoint.

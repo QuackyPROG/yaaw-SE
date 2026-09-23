@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / ".yaaw-core"
+CORE = ROOT / ".yaaw-core" / "system"
 RULE = CORE / "rules" / "assumption-challenge.md"
 
 
@@ -46,8 +46,8 @@ class AssumptionChallengeContractTest(unittest.TestCase):
             self.assertIn(marker, text)
 
     def test_prd_consumes_rule_without_technicalizing_product_authority(self):
-        role = read(".yaaw-core/roles/prd.md").lower()
-        question = read(".yaaw-core/workflows/prd/question-round.md").lower()
+        role = read(".yaaw-core/system/roles/prd.md").lower()
+        question = read(".yaaw-core/system/workflows/prd/question-round.md").lower()
         self.assertIn("rules/assumption-challenge.md", role)
         self.assertIn("product assumptions", role)
         self.assertIn("must not decide engineering implementation decisions", role)
@@ -57,9 +57,9 @@ class AssumptionChallengeContractTest(unittest.TestCase):
         self.assertIn("prerequisites", question)
 
     def test_planner_consumes_rule_and_keeps_repository_facts_as_agent_work(self):
-        role = read(".yaaw-core/roles/planner.md").lower()
-        discover = read(".yaaw-core/workflows/planning/discover.md").lower()
-        question = read(".yaaw-core/workflows/planning/question-round.md").lower()
+        role = read(".yaaw-core/system/roles/planner.md").lower()
+        discover = read(".yaaw-core/system/workflows/planning/discover.md").lower()
+        question = read(".yaaw-core/system/workflows/planning/question-round.md").lower()
         self.assertIn("repository evidence before questioning", role)
         self.assertIn("engineering assumptions", role)
         self.assertIn("routine reversible implementation decisions", role)
@@ -70,10 +70,10 @@ class AssumptionChallengeContractTest(unittest.TestCase):
         self.assertIn("rules/question-format.md", question)
 
     def test_frontier_and_recording_preserve_durable_fresh_context(self):
-        frontier = read(".yaaw-core/workflows/planning/decision-frontier.md").lower()
-        recording = read(".yaaw-core/workflows/planning/record-decisions.md").lower()
-        product_recording = read(".yaaw-core/workflows/prd/record-decisions.md").lower()
-        understanding = read(".yaaw-core/workflows/planning/write-understanding.md").lower()
+        frontier = read(".yaaw-core/system/workflows/planning/decision-frontier.md").lower()
+        recording = read(".yaaw-core/system/workflows/planning/record-decisions.md").lower()
+        product_recording = read(".yaaw-core/system/workflows/prd/record-decisions.md").lower()
+        understanding = read(".yaaw-core/system/workflows/planning/write-understanding.md").lower()
         self.assertIn("known decisions", frontier)
         self.assertIn("current frontier", frontier)
         self.assertIn("future fog", frontier)
@@ -87,9 +87,9 @@ class AssumptionChallengeContractTest(unittest.TestCase):
         self.assertNotIn("challenge log", understanding.split("rather than adding a challenge log", 1)[-1])
 
     def test_question_quality_contract_prefers_fewer_questions_and_free_form_answers(self):
-        question_format = read(".yaaw-core/rules/question-format.md").lower()
-        prd_question = read(".yaaw-core/workflows/prd/question-round.md").lower()
-        planning_question = read(".yaaw-core/workflows/planning/question-round.md").lower()
+        question_format = read(".yaaw-core/system/rules/question-format.md").lower()
+        prd_question = read(".yaaw-core/system/workflows/prd/question-round.md").lower()
+        planning_question = read(".yaaw-core/system/workflows/planning/question-round.md").lower()
         self.assertIn("at most 10", question_format)
         self.assertIn("maximum is not a target", question_format)
         self.assertIn("zero questions is valid", question_format)
@@ -100,14 +100,14 @@ class AssumptionChallengeContractTest(unittest.TestCase):
 
     def test_authority_separation_excludes_orchestrator_implementer_and_reviewer(self):
         for rel in [
-            ".yaaw-core/roles/orchestrator.md",
-            ".yaaw-core/roles/implementer.md",
-            ".yaaw-core/roles/reviewer.md",
+            ".yaaw-core/system/roles/orchestrator.md",
+            ".yaaw-core/system/roles/implementer.md",
+            ".yaaw-core/system/roles/reviewer.md",
         ]:
             self.assertNotIn("assumption-challenge", read(rel).lower(), rel)
-        self.assertIn("traffic controller, not a super-agent", read(".yaaw-core/roles/orchestrator.md").lower())
-        self.assertIn("missing material decisions route back to planner", read(".yaaw-core/roles/implementer.md").lower())
-        reviewer = read(".yaaw-core/roles/reviewer.md").lower()
+        self.assertIn("traffic controller, not a super-agent", read(".yaaw-core/system/roles/orchestrator.md").lower())
+        self.assertIn("missing material decisions route back to planner", read(".yaaw-core/system/roles/implementer.md").lower())
+        reviewer = read(".yaaw-core/system/roles/reviewer.md").lower()
         self.assertIn("independent acceptance judgment", reviewer)
         self.assertIn("replan", reviewer)
 
