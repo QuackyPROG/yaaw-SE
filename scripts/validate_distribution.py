@@ -12,7 +12,7 @@ LEGACY_RE = re.compile(r"(?<!-)\.yaaw/")
 TEXT_SUFFIXES = {".md", ".json", ".py", ".ts", ".js", ".mjs", ".yml", ".yaml"}
 
 PACKAGE_DIRS = {
-    "core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates"
+    "core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates", "tools"
 }
 
 
@@ -72,6 +72,11 @@ def main() -> int:
     for forbidden in ("project", "runtime", "install"):
         if (CORE / forbidden).exists():
             errors.append(f"source .yaaw-core/{forbidden}/ must not contain repository-owned consumer state")
+
+    if (CORE / "system").exists():
+        errors.append("source contains legacy/parallel .yaaw-core/system framework root")
+    if not (CORE / "tools" / "repository-identity.mjs").is_file():
+        errors.append("canonical repository identity utility is not package-owned under .yaaw-core/tools")
 
     # Public skills remain thin adapters into canonical core.
     skills = load(CORE / "registries" / "skills.json")

@@ -29,6 +29,10 @@ class DistributionContractsTest(unittest.TestCase):
                 if path.is_file() and path.suffix.lower() in {".md", ".json", ".ts"}:
                     self.assertIsNone(legacy.search(path.read_text(errors="ignore")), str(path))
 
+    def test_canonical_framework_layout_has_tools_and_no_system_root(self):
+        self.assertTrue((CORE / "tools" / "repository-identity.mjs").is_file())
+        self.assertFalse((CORE / "system").exists())
+
     def test_provider_adapter_directories_are_generated_surfaces(self):
         for name in (".agents", ".claude", ".gemini", ".cline"):
             self.assertFalse((ROOT / name).exists(), name)

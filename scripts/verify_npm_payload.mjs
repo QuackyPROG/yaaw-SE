@@ -41,7 +41,9 @@ for (const rel of [
   "yaaw-core/registries/role-io.json",
   "yaaw-core/registries/artifacts.json",
   "yaaw-core/schemas/engineering-research.schema.json",
-  "yaaw-core/schemas/intent.schema.json"
+  "yaaw-core/schemas/intent.schema.json",
+  "yaaw-core/schemas/repository-identity.schema.json",
+  "yaaw-core/tools/repository-identity.mjs"
 ]) {
   if (!rels.includes(rel)) errors.push(`missing runtime hardening payload: ${rel}`);
 }
