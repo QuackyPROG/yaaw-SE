@@ -26,7 +26,7 @@ A consumer workspace has exactly one YAAW root: `.yaaw-core/`.
 
 ### Ownership
 
-- `.yaaw-core/system/` is **PACKAGE_MANAGED** and contains `core/`, `roles/`, `workflows/`, `expertise/`, `rules/`, `registries/`, `schemas/`, and `templates/`.
+- `.yaaw-core/system/` is **PACKAGE_MANAGED** and contains `core/`, `roles/`, `workflows/`, `expertise/`, `rules/`, `registries/`, `schemas/`, `templates/`, and `tools/`.
 - `.yaaw-core/project/` is **PROJECT_DURABLE**. Normal install/update/repair/reconfiguration/uninstall must never overwrite or delete accepted project artifacts.
 - `.yaaw-core/runtime/` is **RUNTIME_REPLACEABLE** coordination state.
 - `.yaaw-core/install/` is **INSTALLER_MANAGED** metadata and never semantic project truth.
@@ -62,6 +62,10 @@ commit manifest last
 ```
 
 If an operation or verification fails, the transaction restores pre-existing bytes and removes newly created package files.
+
+Quick Update, Modify, and Repair invalidate only replaceable `.yaaw-core/runtime/observed-state.json`, `handoff.json`, and `intent.json` after a package-basis change. Durable project memory is not invalidated.
+
+For tainted managed framework files, `--conflict-policy backup-replace` copies the modified bytes under `.yaaw-core/install/backups/<timestamp>/...` before restoring package-owned bytes.
 
 Shared structured configuration such as `.codex/config.toml` is not whole-file-owned. Manifest v2 tracks `managedConfigKeys` using semantic scalar-value hashes. An inherited setting is omitted and unowned; an already-compatible user-owned value remains user-owned; YAAW-namespaced role entries are owned only when YAAW creates or explicitly replaces them. Uninstall removes only keys whose ownership/hash is still proven.
 
@@ -109,6 +113,10 @@ The npm CLI owns installation, package updates, adapters, managed-file hashes, s
 The YAAW Orchestrator owns project lifecycle reconstruction, routing, recovery, ticket selection, review routing, and semantic continuation.
 
 Neither may take over the other's authority.
+
+Semantic roles may inspect package health but may never mutate `.yaaw-core/system/**` to unblock themselves. Orchestrator checks framework integrity before reconciliation and again before dispatch. A non-`HEALTHY` package basis is an execution stop, not a ticket transition.
+
+Framework drift and repository drift are different: repository drift may invalidate acceptance and route to Reviewer; framework drift invalidates the execution engine and requires installer repair.
 
 ## Runtime repository boundary
 
