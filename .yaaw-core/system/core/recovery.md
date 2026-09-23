@@ -1,6 +1,9 @@
 # Recovery policy
 
-Recovery compares claimed state with observed reality and returns to the last trustworthy boundary. Resolve the workspace root first and use only root-anchored, workspace-scoped repository evidence from `.yaaw-core/system/core/execution-context.md`.
+Recovery compares claimed state with observed reality and returns to the last trustworthy boundary.
+
+## Framework precondition
+Framework integrity is checked before project recovery. If `.yaaw-core/system/core/framework-integrity.md` is not `HEALTHY`, stop with `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, or `FRAMEWORK_CONTRACT_INCONSISTENCY` as appropriate. Do not repair project lifecycle state while the governing package is untrusted, and never edit package-managed framework files as a recovery action. Resolve the workspace root first and use only root-anchored, workspace-scoped repository evidence from `.yaaw-core/system/core/execution-context.md`.
 
 ## Evidence authority
 - Product intent: current accepted `product.md` revision.
@@ -13,7 +16,9 @@ Recovery compares claimed state with observed reality and returns to the last tr
 - Never reimplement solely because state is stale.
 - `IN_PROGRESS` + implementation + required verification evidence + no review -> reconcile to `REVIEW_REQUIRED`.
 - `READY` + implementation already present -> inspect/recover rather than duplicate the change.
-- `PASS` + missing/stale review, source revision mismatch, or repository identity mismatch -> invalidate current PASS and route to review/replan as appropriate.
+- `PASS` + source/contract revision mismatch -> reconcile to `REPLAN_REQUIRED`.
+- `PASS` + source-current missing/stale/unreproducible review or verification basis -> reconcile to `REVIEW_REQUIRED`.
+- Repository identity mismatch alone invalidates acceptance proof, not planning meaning. Never route a source-current PASS to Planner solely because repository identity changed.
 - A stale `.yaaw-core/runtime/handoff.json` is discarded, not executed.
 - If repository identity is required but status is not `READY`, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE` or `BLOCKED` with exact missing proof.
 - If a dispatched worker ends unexpectedly, returns no response, loses its context, or its response is lost, treat that as an ordinary context interruption: inspect durable artifacts/repository/evidence and route from reality.
