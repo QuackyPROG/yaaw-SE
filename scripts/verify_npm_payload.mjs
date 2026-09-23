@@ -36,12 +36,14 @@ for (const rel of rels) {
 for (const rel of [
   "yaaw-core/system/core/execution-context.md",
   "yaaw-core/system/core/io-contract.md",
+  "yaaw-core/system/core/dispatch-execution.md",
   "yaaw-core/system/rules/research-admission.md",
   "yaaw-core/system/registries/execution-policy.json",
   "yaaw-core/system/registries/role-io.json",
   "yaaw-core/system/registries/artifacts.json",
   "yaaw-core/system/schemas/engineering-research.schema.json",
-  "yaaw-core/system/schemas/intent.schema.json"
+  "yaaw-core/system/schemas/intent.schema.json",
+  "integrations/codex/yaaw-runtime.md"
 ]) {
   if (!rels.includes(rel)) errors.push(`missing runtime hardening payload: ${rel}`);
 }

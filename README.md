@@ -24,7 +24,7 @@ Choose the AI coding tools you want to use, finish the installer, then open your
 yaaw-orchestrator
 ```
 
-The Orchestrator inspects the project, determines what is missing or ready, and routes the next valid workflow.
+The Orchestrator inspects the project, determines what is missing or ready, and routes the next valid workflow. Under Codex, orchestrated PRD/Planner/Implementer/Reviewer work runs in fresh authority-worker contexts when the host supports it; durable artifacts remain the source of truth.
 
 You can start with only an idea, an existing codebase, a partially planned feature, or work already in progress.
 
@@ -117,4 +117,5 @@ npx yaaw-se@latest install
 
 - [Distribution and update behavior](docs/distribution.md)
 - [Coding-tool integrations](docs/integrations.md)
+- [Codex isolated-worker runtime](docs/codex-runtime.md)
 - [Report a bug or request a feature](https://github.com/QuackyPROG/yaaw-SE/issues)
