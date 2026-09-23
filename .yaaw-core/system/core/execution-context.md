@@ -8,6 +8,16 @@ The **workspace root** is the consumer directory that owns the active YAAW insta
 
 The process current working directory is never authoritative. `.yaaw-core/project/` is the **project memory root**, not the workspace root.
 
+## Framework integrity
+
+After resolving the workspace and before semantic project recovery, run:
+
+```text
+node .yaaw-core/system/tools/framework-integrity.mjs --workspace <WORKSPACE_ROOT>
+```
+
+Only `HEALTHY` permits semantic routing. Package drift, missing framework files, local framework overrides, or an invalid manifest produce a typed framework stop and invalidate executable handoffs. Orchestrator reports the condition; it never repairs package-managed files itself.
+
 ## Repository capability
 Repository capability is observed independently from workflow semantics:
 
