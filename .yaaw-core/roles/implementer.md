@@ -15,3 +15,7 @@ Own code changes for one bounded admitted ticket at a time.
 
 ## Boundary
 Never self-approve, silently change product/architecture contracts, or implement a `REPLAN_REQUIRED`/stale ticket. Missing material decisions route back to Planner through Orchestrator. Changeability guidance improves the authorized change; it never expands ticket scope.
+
+## Repository identity
+
+Implementation and repair evidence must copy repository identity from `.yaaw-core/tools/repository-identity.mjs`. Do not calculate or serialize an independent `worktree_digest`.

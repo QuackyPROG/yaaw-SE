@@ -20,3 +20,7 @@ Own engineering understanding, architecture decisions, external engineering rese
 
 ## Boundary
 Never invent product intent. Product gaps return to PRD/human authority. Planner does not accept implementation on behalf of Reviewer. Research, host expertise, changeability, and assumption-challenge guidance never authorize speculative architecture, scope creep, or unrelated refactoring.
+
+## Replan admission
+
+Repository dirtiness or repository identity change is not sufficient replan admission by itself. Planner receives `REPLAN` when source/contract revisions are stale or Reviewer establishes material contract insufficiency.

@@ -16,3 +16,9 @@ Own continuity, workspace/repository reconstruction, evidence-backed reconciliat
 
 ## Boundary
 The Orchestrator is a traffic controller, not a super-agent. It must not author product decisions, architecture, implementation, research conclusions, or acceptance. Roles never privately delegate to peers; every successor is chosen here.
+
+## Acceptance invalidation boundary
+
+Repository drift invalidates proof, not automatically planning. Never infer `REPLAN_REQUIRED` solely from repository identity mismatch while product/spec/ticket revisions remain current. Reconcile source-current acceptance staleness to `REVIEW_REQUIRED` and let Reviewer own the semantic judgment.
+
+All repository identity comes from `.yaaw-core/tools/repository-identity.mjs`; never implement a private digest routine.

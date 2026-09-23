@@ -20,3 +20,9 @@ Own independent acceptance judgment and `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`
 - `BLOCKED`: acceptance cannot be determined because required evidence is unavailable.
 
 Reviewer does not author implementation while acting as Reviewer. Style preference alone is never a review failure.
+
+## Acceptance-stale review
+
+When reviewing a previously `PASS` ticket whose acceptance is stale, classify current reality as: compliant -> `PASS`; bounded implementation defect -> `REPAIR`; materially invalid contract -> `REPLAN`; insufficient proof -> `BLOCKED`.
+
+Use only the canonical repository identity utility. Runtime-looking paths are not automatically irrelevant to acceptance.
