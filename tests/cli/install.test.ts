@@ -243,7 +243,7 @@ describe("headless installation", () => {
     expect(await exists(join(root, ".yaaw-core", "core"))).toBe(false);
     const upgraded: any = JSON.parse(await readFile(manifestPath, "utf8"));
     expect(upgraded.schema).toBe("yaaw.installation/v2");
-    expect(upgraded.systemSchema).toBe(1);
+    expect(upgraded.systemSchema).toBe(2);
     expect(upgraded.projectSchema).toBe(1);
     expect(upgraded.installationSchema).toBe(2);
   });
