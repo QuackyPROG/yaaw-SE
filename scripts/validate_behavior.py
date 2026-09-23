@@ -45,6 +45,18 @@ def main() -> int:
             f"routing precedence drifted: expected={expected_precedence!r} actual={actual_precedence!r}"
         )
 
+    contract_causes = {"PRODUCT_SOURCE_STALE","ENGINEERING_SOURCE_STALE","SPEC_SOURCE_STALE","TICKET_SOURCE_STALE","CONTRACT_INVALIDATED"}
+    acceptance_causes = {"REVIEW_MISSING","REVIEW_REPOSITORY_STALE","VERIFICATION_MISSING","VERIFICATION_REPOSITORY_STALE","LEGACY_IDENTITY_UNVERIFIABLE"}
+    routes = policy.get("invalidation_routes", {})
+    if set(routes) != contract_causes | acceptance_causes:
+        errors.append("invalidation routing cause vocabulary drifted")
+    for cause in contract_causes:
+        if routes.get(cause) != {"state": "REPLAN_REQUIRED", "workflow": "planning.replan"}:
+            errors.append(f"{cause} must route to planning.replan")
+    for cause in acceptance_causes:
+        if routes.get(cause) != {"state": "REVIEW_REQUIRED", "workflow": "review.review-ticket"}:
+            errors.append(f"{cause} must route to review.review-ticket")
+
     policy_workflows = {
         policy.get("product_unready_workflow"),
         policy.get("planning_unready_workflow"),
@@ -80,6 +92,22 @@ def main() -> int:
         workflow = transition.get("workflow")
         if workflow not in workflows:
             errors.append(f"transition {pair} references unregistered workflow {workflow}")
+        if transition.get("state_writer") != "orchestrator":
+            errors.append(f"transition {pair} must use orchestrator as physical state writer")
+
+    for pair in {("PASS", "REVIEW_REQUIRED"), ("PASS", "REPLAN_REQUIRED")}:
+        if pair not in legal_pairs:
+            errors.append(f"missing required PASS recovery transition {pair}")
+
+    for transition in transitions.get("legal", []):
+        if transition.get("from") != "PASS" or not transition.get("causes"):
+            continue
+        for cause in transition["causes"]:
+            route = routes.get(cause)
+            if not route:
+                errors.append(f"PASS recovery cause {cause} has no routing policy entry")
+            elif route.get("state") != transition.get("to"):
+                errors.append(f"PASS recovery cause {cause} routes to {route.get('state')} but transition requires {transition.get('to')}")
 
     forbidden_pairs = {
         (entry.get("from"), entry.get("to"))
