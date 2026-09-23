@@ -11,7 +11,7 @@ CORE_ROOT = ROOT / ".yaaw-core"
 SYSTEM = CORE_ROOT / "system"
 LEGACY_RE = re.compile(r"(?<!-)\.yaaw/")
 TEXT_SUFFIXES = {".md", ".json", ".py", ".ts", ".js", ".mjs", ".yml", ".yaml"}
-PACKAGE_DIRS = {"core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates"}
+PACKAGE_DIRS = {"core", "roles", "workflows", "expertise", "rules", "registries", "schemas", "templates", "tools"}
 
 
 def load(path: Path):
@@ -126,6 +126,15 @@ def main() -> int:
     artifact_model = (SYSTEM / "core" / "artifact-model.md").read_text(encoding="utf-8")
     if ".yaaw-core/project" not in artifact_model or ".yaaw-core/system" not in artifact_model:
         errors.append("artifact model does not separate system and durable project ownership")
+    if not (SYSTEM / "core" / "framework-integrity.md").is_file():
+        errors.append("framework immutability contract is missing from package-managed system")
+    if not (SYSTEM / "tools" / "framework-integrity.mjs").is_file():
+        errors.append("framework integrity verifier is missing from package-managed system")
+    else:
+        framework_text = (SYSTEM / "core" / "framework-integrity.md").read_text(encoding="utf-8").lower()
+        for marker in ("only installer authority may replace package-managed files", "backup-and-replace", "must never intentionally create, edit, delete, rename, or weaken"):
+            if marker not in framework_text:
+                errors.append(f"framework integrity contract missing distribution boundary marker: {marker}")
 
     if errors:
         print("YAAW distribution validation failed:")
