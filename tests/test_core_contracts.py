@@ -174,5 +174,42 @@ class CoreContractsTest(unittest.TestCase):
         self.assertIn("UNVERSIONED", execution)
 
 
+    def test_framework_integrity_is_fail_closed_and_read_only(self):
+        contract = (CORE / "core/framework-integrity.md").read_text()
+        tool = (CORE / "tools/framework-integrity.mjs").read_text()
+        self.assertIn("FRAMEWORK_INTEGRITY_VIOLATION", contract)
+        self.assertIn("backup-replace", contract)
+        self.assertIn('status !== "HEALTHY"', tool)
+        for mutator in ("writeFile(", "rename(", "unlink(", "rm("):
+            self.assertNotIn(mutator, tool)
+
+    def test_reviewer_reads_state_but_only_writes_review(self):
+        reviewer = self.role_io["roles"]["reviewer"]
+        self.assertIn("state", reviewer["reads"])
+        self.assertEqual(set(reviewer["writes"]), {"review"})
+        self.assertIn("state", reviewer["forbidden_writes"])
+        review_ticket = (CORE / "workflows/review/review-ticket.md").read_text()
+        self.assertIn(".yaaw-core/project/state.json", review_ticket)
+        self.assertIn("frontmatter", review_ticket.lower())
+
+    def test_orchestrator_is_only_physical_state_writer(self):
+        orchestrator = self.role_io["roles"]["orchestrator"]
+        self.assertEqual(set(orchestrator["writes"]), {"state", "observed_state", "handoff", "intent"})
+        self.assertIn("installation_manifest", orchestrator["reads"])
+        transitions = json.loads((CORE / "registries/transitions.json").read_text())
+        self.assertTrue(transitions["legal"])
+        self.assertTrue(all(row.get("state_writer") == "orchestrator" for row in transitions["legal"]))
+        record = (CORE / "workflows/review/record-review.md").read_text()
+        self.assertIn("Reviewer writes only", record)
+        self.assertIn("Orchestrator re-inspects", record)
+
+    def test_semantic_roles_cannot_write_installation_manifest(self):
+        for role, contract in self.role_io["roles"].items():
+            self.assertIn("installation_manifest", contract["forbidden_writes"], role)
+
+    def test_observed_state_records_framework_integrity(self):
+        schema = json.loads((CORE / "schemas/observed-state.schema.json").read_text())
+        required = set(schema["properties"]["framework"]["required"])
+        self.assertTrue({"integrity_status", "modified", "missing", "local_overrides", "legacy_paths", "repair_required"}.issubset(required))
 if __name__ == "__main__":
     unittest.main()
