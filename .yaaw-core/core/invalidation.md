@@ -31,3 +31,7 @@ Contract causes: `PRODUCT_SOURCE_STALE`, `ENGINEERING_SOURCE_STALE`, `SPEC_SOURC
 Acceptance causes: `REVIEW_MISSING`, `REVIEW_REPOSITORY_STALE`, `VERIFICATION_MISSING`, `VERIFICATION_REPOSITORY_STALE`, `LEGACY_IDENTITY_UNVERIFIABLE`.
 
 Every invalidation records a stable cause plus human-readable evidence. Runtime-looking paths are not automatically acceptance-irrelevant.
+
+## Framework integrity is not acceptance invalidation
+
+Package-managed framework drift is neither contract invalidation nor acceptance invalidation. It means the execution engine is not trusted. Stop orchestration with the typed framework failure and use installer repair. Do not route framework drift to Planner or Reviewer and do not change ticket lifecycle state to encode it.

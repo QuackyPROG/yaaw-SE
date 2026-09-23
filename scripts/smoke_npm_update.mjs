@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -74,6 +74,15 @@ try {
     await writeFile(path, bytes);
   }
 
+  const lifecyclePath = join(project, ".yaaw-core", "core", "lifecycle.md");
+  const canonicalLifecycle = await readFile(lifecyclePath, "utf8");
+  const taintedLifecycle = canonicalLifecycle + "\nincident framework self-edit\n";
+  await writeFile(lifecyclePath, taintedLifecycle);
+  const runtimeRoot = join(project, ".yaaw-core", "runtime");
+  for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+    await writeFile(join(runtimeRoot, name), JSON.stringify({ stale: name }) + "\n");
+  }
+
   const pkg = JSON.parse(originalPackage);
   pkg.version = "0.1.1";
   await writeFile(packagePath, JSON.stringify(pkg, null, 2) + "\n");
@@ -84,12 +93,31 @@ try {
   const v011 = packCurrent();
   tarballs.push(v011);
 
-  execTarball(v011, ["install", "--directory", project, "--action", "quick-update", "--yes"]);
+  execTarball(v011, ["install", "--directory", project, "--action", "repair", "--conflict-policy", "backup-replace", "--yes"]);
 
   for (const [rel, expected] of Object.entries(durableFiles)) {
     const actual = await readFile(join(project, ".yaaw-core", "project", rel), "utf8");
     if (actual !== expected) throw new Error(`Durable artifact changed during tarball update: ${rel}`);
   }
+
+  const repairedLifecycle = await readFile(lifecyclePath, "utf8");
+  if (repairedLifecycle !== canonicalLifecycle) {
+    throw new Error("Tainted package-managed lifecycle file was not restored by backup-replace repair");
+  }
+  for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+    if (existsSync(join(runtimeRoot, name))) throw new Error(`Runtime cache survived package repair: ${name}`);
+  }
+  const backupRoot = join(project, ".yaaw-core", "install", "backups");
+  const stamps = await readdir(backupRoot);
+  let taintedBackupFound = false;
+  for (const stamp of stamps) {
+    const candidate = join(backupRoot, stamp, ".yaaw-core", "core", "lifecycle.md");
+    if (existsSync(candidate)) {
+      const bytes = await readFile(candidate, "utf8");
+      if (bytes === taintedLifecycle) taintedBackupFound = true;
+    }
+  }
+  if (!taintedBackupFound) throw new Error("backup-replace did not preserve the tainted framework bytes");
 
   const installedCore = await readFile(join(project, ".yaaw-core", "core", "artifact-model.md"), "utf8");
   if (!installedCore.includes("synthetic-package-update-0.1.1")) {
@@ -101,7 +129,7 @@ try {
   const doctor = JSON.parse(execTarball(v011, ["doctor", "--directory", project, "--json"], true));
   if (!doctor.healthy) throw new Error(`Doctor failed after tarball update: ${JSON.stringify(doctor)}`);
 
-  console.log("✓ tarball update 0.1.0 -> 0.1.1 preserved all durable-state sentinels");
+  console.log("✓ tarball update/repair 0.1.0 -> 0.1.1 restored tainted framework, backed it up, invalidated runtime, and preserved durable state");
 } finally {
   await writeFile(packagePath, originalPackage);
   await writeFile(coreSourcePath, originalCore);

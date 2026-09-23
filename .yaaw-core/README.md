@@ -41,8 +41,12 @@ Read these contracts together:
 Any workflow context may disappear after durable output without destroying project understanding.
 
 ## Runtime hardening
+- `core/framework-integrity.md` + `tools/framework-integrity.mjs` make package health a fail-closed prerequisite. Consumer roles report framework defects; they never rewrite package contracts to unblock themselves.
 - `core/execution-context.md` resolves the consumer workspace root and requires root-anchored Git.
 - `registries/execution-policy.json` classifies every workflow as `NONE`, `INSPECT`, or `IDENTITY` for repository requirements.
 - `core/context-loading.md` requires metadata-first progressive workflow loading.
 - `core/io-contract.md` + `registries/role-io.json` keep peer roles from privately delegating or searching for alternate YAAW artifact locations.
 - Planner owns admitted primary-source research through `project/research/RSH-*.md`; `rules/research-admission.md` prevents host skill availability from choosing architecture.
+
+## State and review ownership
+`.yaaw-core/project/state.json` is the lifecycle ledger. Reviewer reads it but writes only immutable review rounds; Orchestrator applies the exact lifecycle target authorized by that durable review result. Ticket frontmatter status is not the current lifecycle authority.

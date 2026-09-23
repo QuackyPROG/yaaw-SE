@@ -16,91 +16,106 @@
       "from": "DRAFT",
       "to": "READY",
       "owner": "planner",
-      "workflow": "planning.create-tickets"
+      "workflow": "planning.create-tickets",
+      "state_writer": "orchestrator"
     },
     {
       "from": "DRAFT",
       "to": "CANCELLED",
       "owner": "planner",
-      "workflow": "planning.replan"
+      "workflow": "planning.replan",
+      "state_writer": "orchestrator"
     },
     {
       "from": "READY",
       "to": "IN_PROGRESS",
       "owner": "implementer",
-      "workflow": "implementation.implement-ticket"
+      "workflow": "implementation.implement-ticket",
+      "state_writer": "orchestrator"
     },
     {
       "from": "READY",
       "to": "REPLAN_REQUIRED",
       "owner": "planner",
-      "workflow": "planning.replan"
+      "workflow": "planning.replan",
+      "state_writer": "orchestrator"
     },
     {
       "from": "IN_PROGRESS",
       "to": "REVIEW_REQUIRED",
       "owner": "implementer",
-      "workflow": "implementation.verify-ticket"
+      "workflow": "implementation.verify-ticket",
+      "state_writer": "orchestrator"
     },
     {
       "from": "IN_PROGRESS",
       "to": "REPLAN_REQUIRED",
       "owner": "planner",
-      "workflow": "planning.replan"
+      "workflow": "planning.replan",
+      "state_writer": "orchestrator"
     },
     {
       "from": "IN_PROGRESS",
       "to": "BLOCKED",
       "owner": "implementer",
-      "workflow": "implementation.implement-ticket"
+      "workflow": "implementation.implement-ticket",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REVIEW_REQUIRED",
       "to": "PASS",
       "owner": "reviewer",
-      "workflow": "review.record-review"
+      "workflow": "review.record-review",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REVIEW_REQUIRED",
       "to": "REPAIR_REQUIRED",
       "owner": "reviewer",
-      "workflow": "review.record-review"
+      "workflow": "review.record-review",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REVIEW_REQUIRED",
       "to": "REPLAN_REQUIRED",
       "owner": "reviewer",
-      "workflow": "review.record-review"
+      "workflow": "review.record-review",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REVIEW_REQUIRED",
       "to": "BLOCKED",
       "owner": "reviewer",
-      "workflow": "review.record-review"
+      "workflow": "review.record-review",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REPAIR_REQUIRED",
       "to": "REVIEW_REQUIRED",
       "owner": "implementer",
-      "workflow": "implementation.repair-ticket"
+      "workflow": "implementation.repair-ticket",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REPAIR_REQUIRED",
       "to": "REPLAN_REQUIRED",
       "owner": "planner",
-      "workflow": "planning.replan"
+      "workflow": "planning.replan",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REPLAN_REQUIRED",
       "to": "DRAFT",
       "owner": "planner",
-      "workflow": "planning.replan"
+      "workflow": "planning.replan",
+      "state_writer": "orchestrator"
     },
     {
       "from": "REPLAN_REQUIRED",
       "to": "READY",
       "owner": "planner",
-      "workflow": "planning.replan"
+      "workflow": "planning.replan",
+      "state_writer": "orchestrator"
     },
     {
       "from": "PASS",
@@ -113,7 +128,8 @@
         "VERIFICATION_MISSING",
         "VERIFICATION_REPOSITORY_STALE",
         "LEGACY_IDENTITY_UNVERIFIABLE"
-      ]
+      ],
+      "state_writer": "orchestrator"
     },
     {
       "from": "PASS",
@@ -126,13 +142,15 @@
         "SPEC_SOURCE_STALE",
         "TICKET_SOURCE_STALE",
         "CONTRACT_INVALIDATED"
-      ]
+      ],
+      "state_writer": "orchestrator"
     },
     {
       "from": "PASS",
       "to": "CANCELLED",
       "owner": "planner",
-      "workflow": "planning.replan"
+      "workflow": "planning.replan",
+      "state_writer": "orchestrator"
     }
   ],
   "blocked_exit_targets": [

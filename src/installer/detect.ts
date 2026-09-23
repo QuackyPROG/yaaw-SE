@@ -28,6 +28,7 @@ export async function detectExistingInstallation(projectRoot: string): Promise<E
 
   for (const rel of [
     ".yaaw-core/core",
+    ".yaaw-core/system",
     ".yaaw-core/project",
     ".agents/skills",
     ".claude/skills",

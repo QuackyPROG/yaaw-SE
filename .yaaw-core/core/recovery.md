@@ -2,6 +2,9 @@
 
 Recovery compares claimed state with observed reality and returns to the last trustworthy boundary.
 
+## Framework precondition
+Framework integrity is checked before project recovery. If `core/framework-integrity.md` is not `HEALTHY`, stop with `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, or `FRAMEWORK_CONTRACT_INCONSISTENCY` as appropriate. Do not repair project lifecycle state while the governing package is untrusted, and never edit package-managed framework files as a recovery action.
+
 ## Evidence authority
 - Product intent: current accepted product revision.
 - Engineering meaning: current engineering decisions, spec revision, and ticket revision.

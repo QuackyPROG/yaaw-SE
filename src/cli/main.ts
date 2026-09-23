@@ -21,7 +21,8 @@ program.command("install")
   .option("--dry-run", "plan and validate without writing")
   .option("--list-tools", "list supported tool IDs")
   .option("--list-skills", "list public YAAW skills")
-  .option("--force-managed", "replace locally modified managed files/sections; never affects project memory")
+  .option("--force-managed", "legacy shorthand for --conflict-policy replace; never affects project memory")
+  .option("--conflict-policy <policy>", "fail|keep|replace|backup-replace for modified package-managed files")
   .option("--json", "emit JSON")
   .action(async options => {
     await runInstall(options);
@@ -37,7 +38,8 @@ program.command("doctor")
   .description("Run read-only installation diagnostics.")
   .option("--directory <path>", "target project directory")
   .option("--repair", "repair installation infrastructure using the current manifest")
-  .option("--force-managed", "replace locally modified managed files during repair")
+  .option("--force-managed", "legacy shorthand for --conflict-policy replace")
+  .option("--conflict-policy <policy>", "fail|keep|replace|backup-replace for modified package-managed files")
   .option("--json", "emit JSON")
   .action(runDoctor);
 

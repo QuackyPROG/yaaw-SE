@@ -21,6 +21,7 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Workflow routing is progressive: do not preload sibling/downstream workflow bodies, templates, or expertise before exactly one route is selected.
 - External/vendor research and host skills require the durable admission basis in `.yaaw-core/rules/research-admission.md`.
 - Orchestrator owns routing/reconciliation, never product/architecture/implementation/acceptance semantics.
+- Consumer semantic roles must never modify package-managed YAAW framework files to unblock themselves. `.yaaw-core/core/framework-integrity.md` is a fail-closed runtime boundary; only installer repair/update may replace package-managed framework content.
 - Implementer never self-approves. Acceptance requires independent review tied to repository/source identity.
 - Conversation must never be the only location of an accepted decision.
 - State transitions follow `core/transitions.md`; upstream changes follow `core/invalidation.md`.
@@ -32,6 +33,8 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Every filesystem mutation is represented in an install plan and boundary-checked before execution.
 - `.yaaw-core/project/` is project-owned data and must never be blanket-deleted or overwritten during update, repair, reconfiguration, or ordinary uninstall.
 - Package-owned files and managed instruction sections are hash-tracked.
+- Update/repair invalidates replaceable runtime handoffs/observations so no dispatch survives a framework basis change.
+- `--conflict-policy backup-replace` is the preferred recovery policy for tainted managed framework files because it preserves the incident bytes before restoring the package version.
 - Verification happens before the installation manifest is committed.
 - The installer owns distribution mechanics only; it must never make semantic project-lifecycle decisions.
 - `package-lock.json` is committed release metadata; keep it synchronized with `package.json` and use `npm ci` in validation.

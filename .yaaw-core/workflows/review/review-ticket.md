@@ -4,7 +4,11 @@
 Independently determine whether current implementation satisfies the current ticket contract.
 
 ## Preconditions
-Ticket is `REVIEW_REQUIRED`; source revisions and evidence are current enough to review.
+`.yaaw-core/project/state.json` is admitted read-only context. Its `tickets[TASK-NNN]` lifecycle value is authoritative for workflow admission and is `REVIEW_REQUIRED`, unless Orchestrator explicitly admitted a source-current stale-`PASS` acceptance revalidation.
+
+Ticket frontmatter `status` is artifact metadata/admission history and may still say `READY` or another earlier value after later lifecycle transitions. It does not override the reconciled state ledger. Source revisions and evidence must still be current enough to review.
+
+If state and stronger source/repository/evidence reality materially conflict, return `BLOCKED` with the exact conflict for Orchestrator reconciliation. Do not edit state.
 
 ## Procedure
 1. Use a fresh review context when practical.

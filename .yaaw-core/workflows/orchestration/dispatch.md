@@ -7,16 +7,21 @@ Execute exactly one already-selected canonical workflow. This file is not the or
 `.yaaw-core/runtime/handoff.json` created by `orchestration.determine-next-action`.
 
 ## Procedure
-1. Validate handoff schema, workflow registry entry, execution policy, role I/O, source artifact revisions, transition-sequence basis, and repository basis.
-2. Enforce repository requirement: `NONE` needs no Git prerequisite; `INSPECT` may proceed with a represented `UNVERSIONED` workspace; `IDENTITY` requires repository status `READY`.
-3. If any basis is stale or unsatisfied, discard the handoff and return a typed stale/prerequisite result to `orchestration.route`; do not execute it.
-4. Only now load the target role contract, selected workflow contract, exact handoff reads, selected expertise, and minimal relevant repository context.
-5. Execute the target workflow once.
-6. Require its expected durable output/state/evidence or an explicit typed stop/prerequisite result.
-7. Mark/remove the consumed runtime handoff and return control to `orchestration.route`.
+1. Re-run the framework integrity gate and require `HEALTHY`; compare its manifest basis with the handoff framework basis. If package integrity changed, discard the handoff and return the typed framework stop before loading target semantics.
+2. Validate handoff schema, workflow registry entry, execution policy, role I/O, source artifact revisions, transition-sequence basis, and repository basis.
+3. Enforce repository requirement: `NONE` needs no Git prerequisite; `INSPECT` may proceed with a represented `UNVERSIONED` workspace; `IDENTITY` requires repository status `READY`.
+4. If any basis is stale or unsatisfied, discard the handoff and return a typed stale/prerequisite result to `orchestration.route`; do not execute it.
+5. Only now load the target role contract, selected workflow contract, exact handoff reads, selected expertise, and minimal relevant repository context.
+6. Execute the target workflow once.
+7. Require its expected durable output/state/evidence or an explicit typed stop/prerequisite result.
+8. Mark/remove the consumed runtime handoff and return control to `orchestration.route`.
 
 Never recursively dispatch `orchestration.dispatch` as its own target. A target role never dispatches a peer.
 
 ## Identity freshness
 
 Before dispatching an `IDENTITY` workflow, compare the handoff framework basis and canonical repository identity with a fresh observation. If either changed, discard the handoff and inspect again.
+
+## Package boundary
+
+Dispatch must reject any handoff whose writes include installer-managed artifacts or package-managed framework files. A target role cannot use an admitted application-file write to modify `.yaaw-core/**`; YAAW package paths are outside semantic application scope.

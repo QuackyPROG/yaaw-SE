@@ -25,6 +25,7 @@ export type InstallOperation =
   | { type: "write-project-file-if-missing"; path: string; content: Buffer | string }
   | { type: "update-managed-section"; path: string; sectionId: string; content: string; owner: string }
   | { type: "remove-managed-file"; path: string; owner: string }
+  | { type: "remove-runtime-file"; path: string; owner: string }
   | { type: "remove-managed-section"; path: string; sectionId: string; owner: string }
   | { type: "remove-empty-dir"; path: string; owner: string }
   | { type: "preserve"; path: string; reason: string };

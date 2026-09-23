@@ -10,7 +10,7 @@ npx yaaw-se install
 
 A consumer workspace has exactly one YAAW root: `.yaaw-core/`. The workspace root is the directory containing that installation; `.yaaw-core/project/` is project memory and is not called the workspace root.
 
-- `.yaaw-core/core|roles|workflows|expertise|rules|registries|schemas|templates` are **PACKAGE_MANAGED**.
+- `.yaaw-core/core|roles|workflows|expertise|rules|registries|schemas|templates|tools` are **PACKAGE_MANAGED**.
 - `.yaaw-core/project/` is **PROJECT_DURABLE**. Package install/update/repair must never overwrite existing semantic project artifacts.
 - `.yaaw-core/runtime/` is **RUNTIME_REPLACEABLE** coordination state.
 - `.yaaw-core/install/` is **INSTALLER_MANAGED** metadata and never semantic project truth.
@@ -29,11 +29,19 @@ The YAAW Orchestrator owns project lifecycle reconstruction, routing, recovery, 
 
 Neither may take over the other's authority.
 
+Runtime semantic roles may inspect package health but may not mutate package-managed framework content. Orchestrator runs the installed read-only framework-integrity verifier before project reconciliation/dispatch. A non-`HEALTHY` result is an execution stop, not a ticket transition.
+
+Framework drift and repository drift are different trust failures: repository drift may invalidate acceptance and route to Reviewer; framework drift invalidates the execution engine and requires installer repair.
+
 ## Update invariant
 
 `.yaaw-core/project/` is project data. Update, repair, reconfiguration, and uninstall code must never blanket-delete `.yaaw-core/`.
 
 Package updates operate only on enumerated managed files/directories. The manifest is committed last.
+
+For a tainted managed installation, `--conflict-policy backup-replace` first stores modified managed bytes beneath `.yaaw-core/install/backups/<timestamp>/`, then restores package files transactionally. Update/modify/repair invalidate replaceable runtime coordination caches after the package basis changes. Durable `.yaaw-core/project/**` artifacts are preserved.
+
+Manifest-owned legacy `.yaaw-core/system/**` package files can be migrated by normal update/repair ownership logic. Modified legacy managed files require an explicit conflict policy such as `backup-replace`. Unmanaged/ownership-ambiguous legacy framework content fails closed instead of being deleted.
 
 ## Root instruction files
 

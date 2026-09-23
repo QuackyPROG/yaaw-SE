@@ -349,6 +349,70 @@ def main() -> int:
     require_phrases(CORE / "core/execution-context.md", ["git -C <WORKSPACE_ROOT>", "UNVERSIONED", "IDENTITY"], errors)
     require_phrases(CORE / "rules/research-admission.md", ["Availability of a Codex/host skill is not an admission basis", "primary sources", "RSH-NNN"], errors)
 
+    # Framework immutability and cross-contract authority guards.
+    framework_contract = CORE / "core/framework-integrity.md"
+    framework_tool = CORE / "tools/framework-integrity.mjs"
+    if not framework_contract.is_file():
+        errors.append("missing core/framework-integrity.md")
+    if not framework_tool.is_file():
+        errors.append("missing tools/framework-integrity.mjs")
+    else:
+        tool_text = framework_tool.read_text(encoding="utf-8")
+        for forbidden_mutator in ("writeFile(", "rename(", "unlink(", "rm("):
+            if forbidden_mutator in tool_text:
+                errors.append(f"framework integrity utility must remain read-only: contains {forbidden_mutator}")
+
+    reviewer_io = io_roles.get("reviewer", {})
+    if "state" not in reviewer_io.get("reads", []):
+        errors.append("reviewer must read canonical state for lifecycle admission")
+    if set(reviewer_io.get("writes", [])) != {"review"}:
+        errors.append(f"reviewer writes must remain immutable review only: {reviewer_io.get('writes')}")
+    orchestrator_io = io_roles.get("orchestrator", {})
+    if set(orchestrator_io.get("writes", [])) != {"state", "observed_state", "handoff", "intent"}:
+        errors.append(f"orchestrator write authority drifted: {orchestrator_io.get('writes')}")
+    if "installation_manifest" not in orchestrator_io.get("reads", []):
+        errors.append("orchestrator must be able to inspect installation manifest basis")
+    for role, contract in io_roles.items():
+        if "installation_manifest" not in contract.get("forbidden_writes", []):
+            errors.append(f"{role}: installer-managed manifest must be a forbidden semantic write")
+
+    review_ticket = (CORE / "workflows/review/review-ticket.md").read_text(encoding="utf-8")
+    for marker in (".yaaw-core/project/state.json", "frontmatter", "does not override the reconciled state ledger"):
+        if marker.lower() not in review_ticket.lower():
+            errors.append(f"review-ticket missing lifecycle authority marker: {marker}")
+    record_review = (CORE / "workflows/review/record-review.md").read_text(encoding="utf-8")
+    for marker in ("Reviewer writes only", "does not edit `.yaaw-core/project/state.json`", "Orchestrator re-inspects"):
+        if marker.lower() not in record_review.lower():
+            errors.append(f"record-review missing state-writer separation marker: {marker}")
+
+    transition_registry = load_json(CORE / "registries/transitions.json")
+    legal_transitions = transition_registry.get("legal", [])
+    for row in legal_transitions:
+        if row.get("state_writer") != "orchestrator":
+            errors.append(f"transition {row.get('from')}->{row.get('to')} must declare orchestrator state_writer")
+    routing_policy = load_json(CORE / "registries/routing-policy.json")
+    invalidation_routes = routing_policy.get("invalidation_routes", {})
+    for row in legal_transitions:
+        if row.get("from") != "PASS" or not row.get("causes"):
+            continue
+        for cause in row["causes"]:
+            route = invalidation_routes.get(cause)
+            if not route:
+                errors.append(f"PASS recovery cause {cause} has no routing-policy entry")
+            elif route.get("state") != row.get("to"):
+                errors.append(f"PASS recovery cause {cause} routes to {route.get('state')} but transition requires {row.get('to')}")
+
+    observed_schema = schemas.get("observed-state.schema.json", {})
+    framework_schema = observed_schema.get("properties", {}).get("framework", {})
+    framework_required = set(framework_schema.get("required", []))
+    for field in {"integrity_status", "modified", "missing", "local_overrides", "legacy_paths", "repair_required"}:
+        if field not in framework_required:
+            errors.append(f"observed-state framework must require {field}")
+
+    orchestrator_text = (CORE / "roles/orchestrator.md").read_text(encoding="utf-8")
+    for marker in ("framework integrity", "never creates, edits, deletes, or weakens package-managed framework"):
+        if marker.lower() not in orchestrator_text.lower():
+            errors.append(f"orchestrator missing framework boundary marker: {marker}")
     if errors:
         print("YAAW core validation failed:")
         for error in errors:

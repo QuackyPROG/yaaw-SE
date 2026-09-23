@@ -30,9 +30,14 @@ Roles never spawn or command peer roles. **Roles report reality; Orchestrator de
 ## Typed results
 Common results include `SUCCESS`, `READY`, `HUMAN_INPUT_REQUIRED`, `PRECONDITION_UNSATISFIED`, `REVIEW_REQUIRED`, `REPLAN_REQUIRED`, `BLOCKED`, `PASS`, `REPAIR`, `REPLAN`, and `COMPLETE`.
 
+Framework-level stop results are `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, and `FRAMEWORK_CONTRACT_INCONSISTENCY`. They are installation/runtime trust failures, not ticket lifecycle states, and must not be represented by fabricating a ticket transition.
+
 `PRECONDITION_UNSATISFIED` includes a reason such as `NO_PRODUCT`, `PLANNING_UNREADY`, `SPEC_MISSING`, `NO_READY_TICKET`, `STALE_SOURCE`, or `REPOSITORY_IDENTITY_UNAVAILABLE`.
 
 A missing ticket never authorizes Implementer to create one. Implementer returns `PRECONDITION_UNSATISFIED:NO_READY_TICKET`; Orchestrator routes Planner.
+
+## Framework write invariant
+No semantic-role handoff may admit package-managed framework paths as writes. If a role discovers a contradiction in `.yaaw-core/core/**`, `roles/**`, `workflows/**`, `registries/**`, `schemas/**`, `templates/**`, `rules/**`, `expertise/**`, or `tools/**`, it returns a typed framework failure to Orchestrator. Installer repair is the only supported package mutation path.
 
 ## Authority invariant
 Filesystem access never grants semantic authority. A role may detect an invalid upstream contract but returns control to its owner instead of rewriting it.
