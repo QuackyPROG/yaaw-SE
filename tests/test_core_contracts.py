@@ -211,5 +211,8 @@ class CoreContractsTest(unittest.TestCase):
         schema = json.loads((CORE / "schemas/observed-state.schema.json").read_text())
         required = set(schema["properties"]["framework"]["required"])
         self.assertTrue({"integrity_status", "modified", "missing", "local_overrides", "legacy_paths", "repair_required"}.issubset(required))
+        handoff = json.loads((CORE / "schemas/handoff.schema.json").read_text())
+        self.assertIn("integrity_status", handoff["properties"]["framework"]["required"])
+        self.assertEqual(handoff["properties"]["framework"]["properties"]["integrity_status"]["const"], "HEALTHY")
 if __name__ == "__main__":
     unittest.main()
