@@ -31,6 +31,7 @@ export interface InstallCommandOptions {
   listTools?: boolean;
   listSkills?: boolean;
   forceManaged?: boolean;
+  conflictPolicy?: ConflictPolicy;
   codexRuntime?: string;
   codexRootModel?: string;
   codexRootReasoning?: string;
@@ -146,6 +147,10 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   if (options.action && !allowedActions.has(options.action)) {
     throw new Error(`Unknown install action: ${options.action}`);
   }
+  const allowedConflictPolicies = new Set<ConflictPolicy>(["fail","keep","replace","backup-replace"]);
+  if (options.conflictPolicy && !allowedConflictPolicies.has(options.conflictPolicy)) {
+    throw new Error(`Unknown conflict policy: ${options.conflictPolicy}`);
+  }
 
   let action: InstallAction;
   if (options.action) action = options.action;
@@ -162,7 +167,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   }
 
   if (action === "uninstall") {
-    let conflictPolicy: ConflictPolicy = options.forceManaged ? "replace" : "fail";
+    let conflictPolicy: ConflictPolicy = options.conflictPolicy ?? (options.forceManaged ? "replace" : "fail");
     const makeUninstallContext = async (): Promise<InstallContext> => ({
       packageVersion: await packageVersion(), payloadRoot, requestedDirectory: requested, projectRoot,
       mode: interactive ? "interactive" : "headless", selectedIntegrations: [], selectedSkills: [],
@@ -175,7 +180,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     try {
       uninstallBuilt = await buildInstallPlan(ctx, existing.manifest);
     } catch (error) {
-      if (!(error instanceof ManagedConflictError) || !interactive) throw error;
+      if (!(error instanceof ManagedConflictError) || !interactive || options.conflictPolicy) throw error;
       conflictPolicy = await chooseConflictPolicy(error.conflicts);
       if (conflictPolicy === "fail") throw error;
       ctx = await makeUninstallContext();
@@ -220,7 +225,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     );
   }
 
-  let conflictPolicy: ConflictPolicy = options.forceManaged ? "replace" : "fail";
+  let conflictPolicy: ConflictPolicy = options.conflictPolicy ?? (options.forceManaged ? "replace" : "fail");
   const makeContext = (): InstallContext => ({
     packageVersion: "", payloadRoot, requestedDirectory: requested, projectRoot,
     mode: interactive ? "interactive" : "headless", selectedIntegrations: tools, selectedSkills: skills,
@@ -238,7 +243,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   try {
     built = await buildInstallPlan(ctx, existing.manifest);
   } catch (error) {
-    if (!(error instanceof ManagedConflictError) || !interactive) throw error;
+    if (!(error instanceof ManagedConflictError) || !interactive || options.conflictPolicy) throw error;
     conflictPolicy = await chooseConflictPolicy(error.conflicts);
     if (conflictPolicy === "fail") throw error;
     ctx = makeContext();
