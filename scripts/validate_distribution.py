@@ -126,8 +126,9 @@ def main() -> int:
     if ".yaaw-core/project" not in (CORE / "core" / "artifact-model.md").read_text(encoding="utf-8"):
         errors.append("artifact model does not identify durable project root")
     framework_text = (CORE / "core" / "framework-integrity.md").read_text(encoding="utf-8")
-    if "Installer repair is the only supported package mutation path" not in framework_text:
-        errors.append("framework integrity contract must reserve package mutation for installer repair")
+    for marker in ("only installer authority may replace package-managed files", "backup-and-replace", "must never intentionally create, edit, delete, rename, or weaken package-managed framework content"):
+        if marker.lower() not in framework_text.lower():
+            errors.append(f"framework integrity contract missing distribution boundary marker: {marker}")
 
     if errors:
         print("YAAW distribution validation failed:")
