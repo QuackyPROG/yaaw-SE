@@ -44,10 +44,13 @@ async function capture(path: string, backups: Map<string, Backup>) {
   backups.set(path, { existed: true, bytes: await readFile(path) });
 }
 
-async function operationBytes(op: InstallOperation): Promise<Buffer | string | null> {
-  if (op.type === "write-managed-file" || op.type === "write-project-file-if-missing") return op.content;
-  if (op.type === "copy-managed-file") return readFile(op.source);
-  return null;
+async function sameFileContent(path: string, expected: Buffer | string): Promise<boolean> {
+  if (!(await exists(path))) return false;
+  const info = await lstat(path);
+  if (!info.isFile()) return false;
+  const current = await readFile(path);
+  const desired = Buffer.isBuffer(expected) ? expected : Buffer.from(expected);
+  return current.equals(desired);
 }
 
 export async function preflightPlan(plan: InstallPlan): Promise<void> {
@@ -106,10 +109,14 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
           await mutateFile(op.path, async () => atomicWrite(op.path, op.content));
         }
       } else if (op.type === "write-managed-file") {
-        await mutateFile(op.path, async () => atomicWrite(op.path, op.content));
+        if (!(await sameFileContent(op.path, op.content))) {
+          await mutateFile(op.path, async () => atomicWrite(op.path, op.content));
+        }
       } else if (op.type === "copy-managed-file") {
         const bytes = await readFile(op.source);
-        await mutateFile(op.path, async () => atomicWrite(op.path, bytes));
+        if (!(await sameFileContent(op.path, bytes))) {
+          await mutateFile(op.path, async () => atomicWrite(op.path, bytes));
+        }
       } else if (op.type === "update-managed-section") {
         const original = (await exists(op.path)) ? await readFile(op.path, "utf8") : "";
         const updated = renderManagedSection(original, op.sectionId, op.content);
@@ -148,7 +155,9 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
     if (options.beforeManifest) await options.beforeManifest();
 
     if (options.manifestPath && options.manifestContent !== undefined) {
-      await mutateFile(options.manifestPath, async () => atomicWrite(options.manifestPath!, options.manifestContent!));
+      if (!(await sameFileContent(options.manifestPath, options.manifestContent))) {
+        await mutateFile(options.manifestPath, async () => atomicWrite(options.manifestPath!, options.manifestContent!));
+      }
     }
     return changed;
   } catch (error) {

@@ -46,6 +46,31 @@ describe("transaction rollback", () => {
     await expect(readFile(path, "utf8")).rejects.toThrow();
   });
 
+  it("skips unchanged managed bytes and reports only real file changes", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-noop-"));
+    const unchanged = join(root, "unchanged.txt");
+    const updated = join(root, "updated.txt");
+    await writeFile(unchanged, "same\n");
+    await writeFile(updated, "old\n");
+
+    const plan: InstallPlan = {
+      action: "quick-update",
+      projectRoot: root,
+      selectedIntegrations: [],
+      selectedSkills: [],
+      warnings: [],
+      operations: [
+        { type: "write-managed-file", path: unchanged, content: "same\n", owner: "test" },
+        { type: "write-managed-file", path: updated, content: "new\n", owner: "test" }
+      ]
+    };
+
+    const changed = await executePlan(plan);
+    expect(changed).toEqual(["updated.txt"]);
+    expect(await readFile(unchanged, "utf8")).toBe("same\n");
+    expect(await readFile(updated, "utf8")).toBe("new\n");
+  });
+
   it("hard-blocks installer-managed mutation of durable project memory", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-durable-guard-"));
     const product = join(root, ".yaaw-core", "project", "product.md");

@@ -81,7 +81,7 @@ export function formatPlan(plan: InstallPlan): string {
     `Skills exposed: ${plan.selectedSkills.length}`,
     "",
     "Planned file impact:",
-    `  Managed files to refresh: ${managedWrites.size}`,
+    `  Managed files to reconcile: ${managedWrites.size}`,
     `  Project files created only if missing: ${projectCreates.size}`,
     `  Managed file sections to update: ${sectionUpdates.length}`,
     `  Managed files/sections to remove: ${removals.size}`,

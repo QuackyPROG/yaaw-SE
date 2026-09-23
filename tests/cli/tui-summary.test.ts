@@ -44,7 +44,7 @@ describe("installer user-facing summaries", () => {
 
     const output = formatPlan(plan);
     expect(output).toContain("Action: Quick update");
-    expect(output).toContain("Managed files to refresh: 2");
+    expect(output).toContain("Managed files to reconcile: 2");
     expect(output).toContain("Project files created only if missing: 1");
     expect(output).toContain("Managed file sections to update: 1");
     expect(output).toContain("YAAW engine (.yaaw-core/system): 1 file");
