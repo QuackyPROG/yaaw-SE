@@ -13,8 +13,15 @@ Accepted artifacts are historical records, not eternally valid truth. When an up
 ## Engineering decision change
 Apply the same propagation from affected `ENG-*` decisions -> specs -> tickets -> reviews.
 
-## Repository drift
-A review becomes stale when the reviewed repository identity no longer matches the relevant implementation state. Route to review if the contract remains valid; route to replan when drift invalidates the contract.
+## Acceptance invalidation
+If product/engineering/spec/ticket meaning remains current but review or verification proof is missing, repository-stale, or cannot be reproduced, preserve historical reviews and reconcile current acceptance to `REVIEW_REQUIRED`.
+
+Repository identity mismatch alone does not establish `REPLAN_REQUIRED`. Reviewer may return `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`.
+
+Stable acceptance causes: `REVIEW_MISSING`, `REVIEW_REPOSITORY_STALE`, `VERIFICATION_MISSING`, `VERIFICATION_REPOSITORY_STALE`, `LEGACY_IDENTITY_UNVERIFIABLE`.
+
+## Framework integrity is not project invalidation
+Package-managed framework drift is neither contract invalidation nor acceptance invalidation. It means the execution engine is untrusted. Stop orchestration with the typed framework failure and use installer repair. Do not route framework drift to Planner or Reviewer and do not change ticket lifecycle state to encode it.
 
 ## No silent cascade
 Every invalidated artifact records why it became stale and which upstream revision/decision caused it. Never delete prior decisions/specs/reviews merely to make current state look clean.
