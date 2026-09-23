@@ -30,7 +30,7 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
     issues.push("legacy .yaaw root exists; automatic merge is intentionally unsupported");
   }
 
-  for (const legacy of ["core","roles","workflows","expertise","rules","registries","schemas","templates"]) {
+  for (const legacy of ["core","roles","workflows","expertise","rules","registries","schemas","templates","tools"]) {
     if (await exists(join(projectRoot, ".yaaw-core", legacy))) issues.push(`legacy flat package directory remains: .yaaw-core/${legacy}`);
   }
 
