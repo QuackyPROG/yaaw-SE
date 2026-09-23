@@ -10,7 +10,7 @@ No semantic workflow may independently calculate `worktree_digest`. All reposito
 node .yaaw-core/tools/repository-identity.mjs --workspace <WORKSPACE_ROOT>
 ```
 
-The tool emits machine-readable JSON on stdout, diagnostics on stderr, and exits non-zero when exact identity cannot be produced. The algorithm identifier is `yaaw-worktree-v1`. The implementation in `.yaaw-core/tools/repository-identity.mjs` is the only implementation of that algorithm.
+The tool emits machine-readable JSON on stdout, diagnostics on stderr, and exits non-zero when exact identity cannot be produced. The algorithm identifier is `yaaw-worktree-v1`. The implementation in `.yaaw-core/tools/repository-identity.mjs` is the only implementation of that algorithm. Roles and workflows **must not reimplement** it.
 
 ## Canonical digest inputs
 

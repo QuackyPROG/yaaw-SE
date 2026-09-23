@@ -1,6 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "yaaw.evidence",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "ticket",
+    "ticket_revision",
+    "spec_revision",
+    "kind",
+    "repository",
+    "workflow",
+    "commands",
+    "checks"
+  ],
   "oneOf": [
     {
       "$ref": "evidence-v1.schema.json"
