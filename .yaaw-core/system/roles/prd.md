@@ -17,3 +17,6 @@ Own product goals, users, behaviors, constraints, scope, non-goals, and human-ap
 
 ## Boundary
 Never silently convert a technical preference into product intent or repair downstream engineering artifacts yourself. Changed product intent triggers invalidation and returns downstream ownership to Planner.
+
+## Framework boundary
+Package-managed `.yaaw-core/system/**` is never a writable semantic-work surface. If a framework contract is missing, contradictory, or blocks valid work, do not edit YAAW to unblock yourself. Return `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, or `FRAMEWORK_CONTRACT_INCONSISTENCY` to Orchestrator with the exact evidence.
