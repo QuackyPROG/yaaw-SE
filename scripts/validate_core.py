@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core" / "system"
-NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")\nPRIMARY_README_SKILLS = {"yaaw-orchestrator", "yaaw-prd", "yaaw-planner", "yaaw-implement", "yaaw-review"}
 
 
 def load_json(path: Path):
@@ -331,9 +331,12 @@ def main() -> int:
     if (ROOT / ".agents").exists() or (ROOT / "agents").exists():
         errors.append("named agent layer must not exist")
     public_readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    for skill_id in skills:
-        if f"@{skill_id}" not in public_readme:
-            errors.append(f"README missing public skill @{skill_id}")
+    missing_primary = PRIMARY_README_SKILLS - set(skills)
+    if missing_primary:
+        errors.append(f"primary README skills missing from registry: {sorted(missing_primary)}")
+    for skill_id in PRIMARY_README_SKILLS:
+        if skill_id not in public_readme:
+            errors.append(f"README missing primary skill {skill_id}")
     if not (CORE / "core/invalidation.md").is_file() or not (CORE / "rules/repository-identity.md").is_file():
         errors.append("missing invalidation or repository-identity contract")
     for rel in ("core/execution-context.md", "core/io-contract.md", "rules/research-admission.md"):
