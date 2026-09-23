@@ -16,3 +16,7 @@ Persist immutable acceptance history and update current ticket state legally.
 6. Write state-transition provenance.
 
 A prior PASS remains historical but becomes stale when repository/source revisions invalidate its basis.
+
+## Review identity
+
+New review rounds use `yaaw.review/v2` and bind the canonical `yaaw-worktree-v1` repository identity. Never rewrite old `yaaw.review/v1` rounds.

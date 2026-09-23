@@ -16,3 +16,7 @@ Repository evidence, product revision, review finding, or invalidation has made 
 
 ## Output
 Current engineering contract plus updated downstream admission state.
+
+## Admission guard
+
+Repository identity change alone is not sufficient reason to replan. Require stale source/contract revisions or Reviewer `REPLAN` evidence.

@@ -25,3 +25,7 @@ After each selected workflow persists durable output, return to routing before l
 
 ## Execution
 Resolve and execute selected workflow IDs through `registries/workflows.json`; do not merely report which one would run.
+
+## Invalidation boundary
+
+Do not absorb acceptance-stale `PASS` recovery into planning. Acceptance-stale plus source-current routes to Reviewer; planning owns contract change only.

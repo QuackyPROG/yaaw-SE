@@ -18,3 +18,7 @@ Ticket is `REVIEW_REQUIRED`; source revisions and evidence are current enough to
 
 ## Output
 Exactly one result: `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`. Style preference alone cannot produce a failing result.
+
+## Acceptance revalidation
+
+Previously `PASS` but acceptance-stale tickets are valid review inputs. Compare current source revisions, canonical repository identity, and required verification. Reviewer may return `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`. Changeability rules remain mandatory.

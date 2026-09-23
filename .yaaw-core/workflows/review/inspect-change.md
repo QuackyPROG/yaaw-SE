@@ -15,3 +15,7 @@ Current ticket/spec/product/engineering revisions, repository status `READY` plu
 
 ## Output
 Review inspection tied to exact repository and contract identity.
+
+## Repository basis
+
+Obtain repository identity from `.yaaw-core/tools/repository-identity.mjs`. Do not whitelist `.codex`, `.agents`, provider directories, or runtime-looking files merely by path ownership; repository-wide checks may consume them.
