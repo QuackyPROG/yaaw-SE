@@ -46,6 +46,7 @@ A consuming project has exactly one canonical YAAW root:
 ├── registries/
 ├── schemas/
 ├── templates/
+├── tools/           package-managed integrity/repository utilities
 ├── project/         durable project-owned YAAW memory
 │   ├── product.md
 │   ├── engineering.md
@@ -111,7 +112,13 @@ npx yaaw-se install --action modify --tools codex,gemini-cli --skills core --yes
 npx yaaw-se doctor --repair
 ```
 
-Managed files are hashed. Local modifications block headless replacement unless `--force-managed` is explicit. That flag applies only to installer-managed files/sections and never authorizes overwriting `.yaaw-core/project`.
+Managed files are hashed. Normal headless updates fail closed when package-managed files were modified locally. `--force-managed` remains a legacy shorthand for replacement, but incident recovery should prefer:
+
+```bash
+npx yaaw-se install --action repair --conflict-policy backup-replace --yes
+```
+
+`backup-replace` copies modified package-managed bytes under `.yaaw-core/install/backups/<timestamp>/...` before restoring the package version. Update/modify/repair also invalidate replaceable `.yaaw-core/runtime/` handoff/observation/intent caches. None of these options authorize overwriting `.yaaw-core/project/**`.
 
 Safe uninstall removes package-managed framework files and adapters but preserves durable `.yaaw-core/project` data.
 
@@ -122,7 +129,9 @@ npx yaaw-se status
 npx yaaw-se doctor
 ```
 
-`status` reports installation health and managed-file drift. `doctor` performs read-only checks for manifest integrity, path ownership, missing/modified managed files, and the one-root path registry.
+`status` reports installation health, managed-file drift, and a dedicated framework-integrity status. `doctor` performs read-only checks for manifest integrity, package framework drift/local overrides, legacy parallel `.yaaw-core/system` layout, path ownership, missing/modified managed files, and the one-root path registry.
+
+During consumer execution, package-managed framework files are immutable. Orchestrator checks framework integrity before semantic reconciliation or dispatch. If framework bytes/layout are untrusted it stops and requests installer repair; it never edits YAAW's governing contracts to unblock itself.
 
 ## Architecture
 
