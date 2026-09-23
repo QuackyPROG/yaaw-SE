@@ -39,6 +39,7 @@ def main()->int:
         if pair in legal: errors.append(f"duplicate legal transition {pair}")
         legal.add(pair)
         if t.get("workflow") not in workflows: errors.append(f"transition {pair} references unregistered workflow {t.get('workflow')}")
+        if t.get("state_writer") != "orchestrator": errors.append(f"transition {pair} must use orchestrator as physical state writer")
     for pair in {("PASS","REVIEW_REQUIRED"),("PASS","REPLAN_REQUIRED")}:
         if pair not in legal: errors.append(f"missing required invalidation transition {pair}")
     forbidden={(x.get("from"),x.get("to")) for x in transitions.get("forbidden",[])}
