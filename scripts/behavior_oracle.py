@@ -31,19 +31,40 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
         source_current = ticket.get("source_current", True)
         implementation = ticket.get("implementation_present", False)
         verification = ticket.get("verification_present", False)
-        fresh_review = ticket.get("fresh_review", False)
+        legacy_fresh_review = ticket.get("fresh_review")
+        review_present = ticket.get("review_present", bool(legacy_fresh_review))
+        review_source_current = ticket.get("review_source_current", source_current)
+        review_repository_current = ticket.get("review_repository_current", bool(legacy_fresh_review))
+        verification_repository_current = ticket.get("verification_repository_current", verification)
+        identity_verifiable = ticket.get("identity_verifiable", True)
 
-        if state == "PASS" and (not source_current or not fresh_review):
-            ticket["state"] = "REPLAN_REQUIRED"
-            changes.append({
-                "ticket": ticket_id,
-                "from": "PASS",
-                "to": "REPLAN_REQUIRED",
-                "reason": "accepted source or review identity is stale",
-            })
-            continue
+        if state == "PASS":
+            if not source_current or not review_source_current:
+                ticket["state"] = "REPLAN_REQUIRED"
+                changes.append({"ticket": ticket_id, "from": "PASS", "to": "REPLAN_REQUIRED", "reason": "TICKET_SOURCE_STALE"})
+                continue
+            if not review_present:
+                ticket["state"] = "REVIEW_REQUIRED"
+                changes.append({"ticket": ticket_id, "from": "PASS", "to": "REVIEW_REQUIRED", "reason": "REVIEW_MISSING"})
+                continue
+            if not identity_verifiable:
+                ticket["state"] = "REVIEW_REQUIRED"
+                changes.append({"ticket": ticket_id, "from": "PASS", "to": "REVIEW_REQUIRED", "reason": "LEGACY_IDENTITY_UNVERIFIABLE"})
+                continue
+            if not review_repository_current:
+                ticket["state"] = "REVIEW_REQUIRED"
+                changes.append({"ticket": ticket_id, "from": "PASS", "to": "REVIEW_REQUIRED", "reason": "REVIEW_REPOSITORY_STALE"})
+                continue
+            if not verification:
+                ticket["state"] = "REVIEW_REQUIRED"
+                changes.append({"ticket": ticket_id, "from": "PASS", "to": "REVIEW_REQUIRED", "reason": "VERIFICATION_MISSING"})
+                continue
+            if not verification_repository_current:
+                ticket["state"] = "REVIEW_REQUIRED"
+                changes.append({"ticket": ticket_id, "from": "PASS", "to": "REVIEW_REQUIRED", "reason": "VERIFICATION_REPOSITORY_STALE"})
+                continue
 
-        if state == "IN_PROGRESS" and implementation and verification and not fresh_review:
+        if state == "IN_PROGRESS" and implementation and verification and not review_repository_current:
             ticket["state"] = "REVIEW_REQUIRED"
             changes.append({
                 "ticket": ticket_id,
@@ -169,7 +190,17 @@ def _determine_next_unchecked(observed: dict[str, Any], policy: dict[str, Any]) 
 
 
 def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
-    """Route, then enforce the selected workflow repository requirement."""
+    """Fail closed on framework integrity, then route and enforce repository requirements."""
+    framework_status = observed.get("framework_status", "HEALTHY")
+    if framework_status != "HEALTHY":
+        if framework_status == "CONTRACT_INCONSISTENT":
+            reason = "FRAMEWORK_CONTRACT_INCONSISTENCY"
+        elif framework_status in {"UNKNOWN", "MANIFEST_INVALID"}:
+            reason = "FRAMEWORK_INTEGRITY_UNKNOWN"
+        else:
+            reason = "FRAMEWORK_INTEGRITY_VIOLATION"
+        return {"workflow": None, "terminal": "BLOCKED", "reason": reason, "reconciliations": []}
+
     result = _determine_next_unchecked(observed, policy)
     workflow = result.get("workflow")
     if workflow:
