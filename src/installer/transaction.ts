@@ -63,6 +63,7 @@ export async function preflightPlan(plan: InstallPlan): Promise<void> {
     "update-managed-config-keys",
     "remove-managed-config-keys",
     "remove-managed-file",
+    "remove-runtime-file",
     "remove-managed-section",
     "remove-empty-dir"
   ]);
@@ -150,7 +151,7 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
             else await atomicWrite(op.path, updated);
           });
         }
-      } else if (op.type === "remove-managed-file") {
+      } else if (op.type === "remove-managed-file" || op.type === "remove-runtime-file") {
         if (await exists(op.path)) {
           await mutateFile(op.path, async () => unlink(op.path));
         }
