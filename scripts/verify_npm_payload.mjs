@@ -61,7 +61,9 @@ for (const [skillId, entry] of Object.entries(skills)) {
   if (!workflows[entry.workflow_id]) errors.push(`${skillId}: unresolved workflow ${entry.workflow_id}`);
 }
 for (const [id, entry] of Object.entries(workflows)) {
-  const rel = String(entry.workflow).replace(/^\\.yaaw-core\\/system\\//, "");
+  const prefix = ".yaaw-core/system/";
+  const workflowPath = String(entry.workflow);
+  const rel = workflowPath.startsWith(prefix) ? workflowPath.slice(prefix.length) : workflowPath;
   try { await stat(join(payload, "yaaw-core", "system", rel)); } catch { errors.push(`${id}: missing workflow ${entry.workflow}`); }
 }
 
