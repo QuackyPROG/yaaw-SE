@@ -203,7 +203,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   } as any);
   spinner?.stop("Changes applied and verified");
   if (options.json) console.log(JSON.stringify({ok:true,projectRoot,version,tools,skills,changed},null,2));
-  else if (interactive) showSuccess(projectRoot, tools);
-  else console.log(`YAAW-SE ${version} installed in ${projectRoot}.`);
+  else if (interactive) showSuccess({ projectRoot, selected: tools, version, action, changed });
+  else console.log(formatSuccess({ projectRoot, selected: tools, version, action, changed }));
   return { ok:true, projectRoot, version, tools, skills, changed };
 }
