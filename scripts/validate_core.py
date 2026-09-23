@@ -8,7 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core" / "system"
-NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")\nPRIMARY_README_SKILLS = {"yaaw-orchestrator", "yaaw-prd", "yaaw-planner", "yaaw-implement", "yaaw-review"}
+NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+PRIMARY_README_SKILLS = {"yaaw-orchestrator", "yaaw-prd", "yaaw-planner", "yaaw-implement", "yaaw-review"}
 
 
 def load_json(path: Path):
