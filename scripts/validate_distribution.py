@@ -103,9 +103,20 @@ def main() -> int:
         if len(text.splitlines()) > 30:
             errors.append(f"{name}: bootstrap template is too large")
 
-    for rel in (".agents", ".claude", ".gemini", ".cline"):
+    for rel in (".agents", ".codex", ".claude", ".gemini", ".cline"):
         if (ROOT / rel).exists():
             errors.append(f"provider adapter tree must be generated, not authored in source: {rel}")
+
+    codex_runtime = ROOT / "installer" / "templates" / "codex" / "yaaw-runtime.md"
+    if not codex_runtime.is_file():
+        errors.append("missing Codex runtime adapter template")
+    else:
+        runtime_text = codex_runtime.read_text(encoding="utf-8")
+        for required in ("yaaw_prd", "yaaw_planner", "yaaw_implementer", "yaaw_reviewer", "BLOCKED:HOST_ISOLATION_UNAVAILABLE", "orchestration.inspect-state"):
+            if required not in runtime_text:
+                errors.append(f"Codex runtime adapter missing contract token: {required}")
+        if "yaaw_orchestrator" in runtime_text and "Never spawn" not in runtime_text:
+            errors.append("Codex runtime adapter appears to define an Orchestrator child")
 
     installer_sources = "\n".join(p.read_text(encoding="utf-8") for p in (ROOT / "src" / "installer").rglob("*.ts"))
     if 'rm(".yaaw-core"' in installer_sources or "rm('.yaaw-core'" in installer_sources:

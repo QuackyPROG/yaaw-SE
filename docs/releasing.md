@@ -30,7 +30,7 @@ Every successful push to `main` runs the complete validation workflow:
 Only after every required job succeeds does GitHub publish a unique prerelease derived from the package version and workflow run identity:
 
 ```text
-0.1.0-dev.<run-id>.<run-attempt>
+0.2.0-dev.<run-id>.<run-attempt>
 ```
 
 The prerelease is published under the npm dist-tag:
@@ -51,10 +51,10 @@ A failed CI run never publishes.
 
 Stable npm releases are published from `main` after the full validation matrix succeeds.
 
-To publish new stable bytes, bump the version in both `package.json` and `package-lock.json`, commit that change to `main`, and push. For example, changing the package version from `0.1.0` to `0.1.1` causes a successful `main` run to publish:
+To publish new stable bytes, bump the version in both `package.json` and `package-lock.json`, commit that change to `main`, and push. For example, changing the package version from `0.1.x` to `0.2.0` causes a successful `main` run to publish:
 
 ```text
-yaaw-se@0.1.1
+yaaw-se@0.2.0
 dist-tag: latest
 ```
 
@@ -93,7 +93,7 @@ node scripts/smoke_npm_tarball.mjs
 node scripts/smoke_npm_update.mjs
 ```
 
-The first command exercises the exact packed artifact across Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, and durable-state sentinels.
+The first command exercises the exact packed artifact across Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, durable-state sentinels, and the Codex `.codex` runtime/role surface.
 
 The second builds a synthetic update tarball and verifies that package-managed core changes while product, engineering, state, spec, ticket, review, evidence, and project-rule durable artifacts survive byte-for-byte.
 

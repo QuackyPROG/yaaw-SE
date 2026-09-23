@@ -26,3 +26,14 @@ Changing or removing one provider must not modify another provider's surface or 
 ## Runtime parity
 
 All provider adapters point to the same `.yaaw-core/system/core/execution-context.md` and `.yaaw-core/system/core/context-loading.md` contracts. No provider may substitute ambient CWD, preload a different workflow graph, or treat an installed host skill as semantic authority. Provider-specific expertise remains advisory and is admitted only by the canonical research rule.
+
+
+## Codex adapter v2
+
+Codex is the first provider with a host-specific runtime layer in addition to thin skills/bootstrap. The canonical YAAW router still selects the role/workflow; the Codex adapter only decides how to execute that already-selected handoff.
+
+A Codex consumer gets `.codex/yaaw-runtime.md`, four runtime-only authority-role config files, and YAAW-owned role declarations in the project's shared `.codex/config.toml`. The root Codex session remains Orchestrator, so no Orchestrator child role is generated.
+
+The Codex adapter supports `auto`, `isolated-required`, and `inline` modes. `auto` prefers a named worker, falls back to a generic isolated worker, then to inline execution. Named-role availability is a runtime capability and is not inferred merely from installed config files.
+
+Codex project configuration is managed at semantic-key granularity. Existing unrelated model settings, MCP servers, profiles, hooks, comments, custom agents, and formatting remain user-owned. See [Codex runtime](codex-runtime.md).

@@ -31,7 +31,7 @@ A consumer workspace has exactly one YAAW root: `.yaaw-core/`.
 - `.yaaw-core/runtime/` is **RUNTIME_REPLACEABLE** coordination state.
 - `.yaaw-core/install/` is **INSTALLER_MANAGED** metadata and never semantic project truth.
 
-Provider folders are adapters only. They may contain thin `SKILL.md` wrappers and small host bootstrap instructions, never a second copy of YAAW workflow semantics.
+Provider folders are adapters only. They may contain thin `SKILL.md` wrappers and small host bootstrap instructions, never a second copy of YAAW workflow semantics. Codex additionally uses project-local `.codex/` runtime configuration, but that surface contains execution mechanics/model settings only; canonical semantics remain under `.yaaw-core/system/`.
 
 ## Security boundary
 
@@ -63,6 +63,8 @@ commit manifest last
 
 If an operation or verification fails, the transaction restores pre-existing bytes and removes newly created package files.
 
+Shared structured configuration such as `.codex/config.toml` is not whole-file-owned. Manifest v2 tracks `managedConfigKeys` using semantic scalar-value hashes. An inherited setting is omitted and unowned; an already-compatible user-owned value remains user-owned; YAAW-namespaced role entries are owned only when YAAW creates or explicitly replaces them. Uninstall removes only keys whose ownership/hash is still proven.
+
 The updater never performs `rm -rf .yaaw-core`. Old package-owned files are removed only when the prior manifest proves installer ownership.
 
 ## Version domains
@@ -89,7 +91,8 @@ The installer accepts `yaaw.installation/v1` manifests from the initial flat pac
 2. preserves `.yaaw-core/project/`;
 3. removes old flat package-owned directories only when their v1 manifest hashes prove ownership;
 4. updates provider adapters;
-5. emits `yaaw.installation/v2`.
+5. upgrades a legacy Codex adapter to v2 using `auto` runtime with all Codex overrides inherited;
+6. emits `yaaw.installation/v2`.
 
 No separate `.yaaw/` project root is introduced.
 

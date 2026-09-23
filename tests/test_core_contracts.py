@@ -89,6 +89,25 @@ class CoreContractsTest(unittest.TestCase):
         self.assertFalse((ROOT / ".agents").exists())
         self.assertFalse((ROOT / "agents").exists())
 
+    def test_canonical_core_is_provider_neutral(self):
+        forbidden = (".codex/agents/", "spawn_agent(", 'agent_type="yaaw_', "agents.yaaw_")
+        for path in CORE.rglob("*"):
+            if not path.is_file() or path.suffix not in {".md", ".json"}:
+                continue
+            text = path.read_text(encoding="utf-8")
+            for token in forbidden:
+                self.assertNotIn(token, text, f"{path.relative_to(ROOT)} leaked provider runtime token {token!r}")
+
+    def test_dispatch_execution_policy_separates_root_and_workers(self):
+        for workflow_id, policy in self.execution["workflows"].items():
+            if workflow_id.startswith("orchestration."):
+                self.assertEqual(policy["execution_context"], "ROOT_ONLY", workflow_id)
+            else:
+                self.assertEqual(policy["execution_context"], "ISOLATED_PREFERRED", workflow_id)
+        dispatch = (CORE / "core/dispatch-execution.md").read_text(encoding="utf-8")
+        self.assertIn("worker message is an execution signal, not project truth", dispatch)
+        self.assertIn("must never become the Reviewer execution context", dispatch)
+
     def test_authority_contract_keeps_orchestrator_non_semantic(self):
         text = (CORE / "roles/orchestrator.md").read_text().lower()
         self.assertIn("must not author product decisions", text)
