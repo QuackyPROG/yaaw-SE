@@ -37,6 +37,8 @@ for (const rel of [
   "yaaw-core/system/core/execution-context.md",
   "yaaw-core/system/core/io-contract.md",
   "yaaw-core/system/core/dispatch-execution.md",
+  "yaaw-core/system/core/framework-integrity.md",
+  "yaaw-core/system/tools/framework-integrity.mjs",
   "yaaw-core/system/rules/research-admission.md",
   "yaaw-core/system/registries/execution-policy.json",
   "yaaw-core/system/registries/role-io.json",
