@@ -18,3 +18,7 @@ Resolved workspace root, `.yaaw-core/project/state.json`, product/engineering/re
 
 ## Output
 Observed-state snapshot only; no semantic or ticket-state mutation.
+
+## Canonical identity
+
+If repository inspection is permitted, invoke `.yaaw-core/tools/repository-identity.mjs` and preserve its output as the repository observation. Classify source/contract currency separately from acceptance currency.

@@ -14,3 +14,7 @@ Current observed-state snapshot, state claims, artifact revisions, repository/ev
 
 ## Output
 Reconciled state or `BLOCKED` when the last trustworthy boundary cannot be proven.
+
+## Cause-aware PASS reconciliation
+
+For `PASS`: source revision mismatch -> `REPLAN_REQUIRED`. Otherwise missing/stale/unverifiable review or verification -> `REVIEW_REQUIRED`. Repository identity mismatch alone is acceptance invalidation, never automatic replan.

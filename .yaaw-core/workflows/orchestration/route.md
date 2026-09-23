@@ -21,3 +21,7 @@ If the same repository capability/identity, state, handoff, and expected output 
 
 ## Stop conditions
 Human product/engineering answer required; evidence/permission unavailable; target workflow requires repository `IDENTITY` but status is not `READY`; host requires approval for consequential action; or accepted scope is terminal `COMPLETE`.
+
+## Cause routing
+
+Route stable invalidation cause IDs through `registries/routing-policy.json`. Do not infer a semantic replan from free-form repository-drift prose.

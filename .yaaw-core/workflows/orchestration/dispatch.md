@@ -16,3 +16,7 @@ Execute exactly one already-selected canonical workflow. This file is not the or
 7. Mark/remove the consumed runtime handoff and return control to `orchestration.route`.
 
 Never recursively dispatch `orchestration.dispatch` as its own target. A target role never dispatches a peer.
+
+## Identity freshness
+
+Before dispatching an `IDENTITY` workflow, compare the handoff framework basis and canonical repository identity with a fresh observation. If either changed, discard the handoff and inspect again.

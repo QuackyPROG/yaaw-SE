@@ -17,3 +17,7 @@ Current observed-state snapshot, reconciled state, `core/routing.md`, workflow/e
 
 ## Boundary
 Do not perform target role semantic work here.
+
+## Invalidation routing
+
+Use `registries/routing-policy.json` `invalidation_routes`. Contract-stale causes select `planning.replan`; acceptance-stale causes select `review.review-ticket`.
