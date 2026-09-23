@@ -47,7 +47,31 @@ class BehavioralConformanceTest(unittest.TestCase):
         result = determine_next(case["observed"], self.policy)
         self.assertEqual(result["workflow"], "planning.replan")
         self.assertEqual(result["reconciliations"][0]["from"], "PASS")
+        self.assertEqual(result["reconciliations"][0]["reason"], "TICKET_SOURCE_STALE")
 
+    def test_source_current_acceptance_staleness_returns_to_review(self):
+        for case_id, reason in [
+            ("V-pass-repository-drift-source-current", "REVIEW_REPOSITORY_STALE"),
+            ("W-pass-review-missing-source-current", "REVIEW_MISSING"),
+            ("Y-pass-legacy-identity-unverifiable", "LEGACY_IDENTITY_UNVERIFIABLE"),
+        ]:
+            case = next(case for case in self.fixtures if case["id"] == case_id)
+            result = determine_next(case["observed"], self.policy)
+            self.assertEqual(result["workflow"], "review.review-ticket")
+            self.assertEqual(result["reconciliations"][0]["to"], "REVIEW_REQUIRED")
+            self.assertEqual(result["reconciliations"][0]["reason"], reason)
+
+    def test_framework_integrity_blocks_before_semantic_routing(self):
+        modified = next(case for case in self.fixtures if case["id"] == "AA-framework-modified-stops-routing")
+        result = determine_next(modified["observed"], self.policy)
+        self.assertIsNone(result["workflow"])
+        self.assertEqual(result["terminal"], "BLOCKED")
+        self.assertEqual(result["reason"], "FRAMEWORK_INTEGRITY_VIOLATION")
+        self.assertEqual(result["reconciliations"], [])
+
+        inconsistent = next(case for case in self.fixtures if case["id"] == "AB-framework-contract-inconsistency-stops-routing")
+        result = determine_next(inconsistent["observed"], self.policy)
+        self.assertEqual(result["reason"], "FRAMEWORK_CONTRACT_INCONSISTENCY")
 
     def test_unversioned_product_and_planning_are_allowed_but_identity_work_blocks(self):
         for case_id, workflow, terminal in [
