@@ -107,6 +107,16 @@ npx yaaw-se doctor
 
 Run the installer again to update, change integrations, repair, or safely uninstall YAAW-SE.
 
+Package-managed `.yaaw-core/system/**` is immutable during normal YAAW execution. If Orchestrator detects framework drift, it stops before routing semantic work instead of editing its own governing contracts.
+
+For an installation whose managed framework files were modified, use backup-and-replace repair:
+
+```bash
+npx yaaw-se install --action repair --conflict-policy backup-replace --yes
+```
+
+Modified package bytes are preserved under `.yaaw-core/install/backups/<timestamp>/...` before the package version is restored. Durable `.yaaw-core/project/**` remains untouched, while replaceable runtime handoff/observation/intent caches are regenerated after the framework basis changes.
+
 To explicitly use the latest published version:
 
 ```bash
