@@ -2,9 +2,7 @@ name: Validate YAAW Core and Distribution
 
 on:
   push:
-    branches: [main, yaaw-SEv2]
-    tags:
-      - 'v*'
+    branches: [main]
   pull_request:
     paths:
       - '.yaaw-core/**'
@@ -102,7 +100,7 @@ jobs:
   publish-next:
     name: Publish npm prerelease (next)
     needs: [validate, node-floor, platform-smoke]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/yaaw-SEv2'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -121,7 +119,7 @@ jobs:
         id: freshness
         shell: bash
         run: |
-          CURRENT_HEAD="$(git ls-remote origin refs/heads/yaaw-SEv2 | awk '{print $1}')"
+          CURRENT_HEAD="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
           if [ "${CURRENT_HEAD}" = "${GITHUB_SHA}" ]; then
             echo "publish=true" >> "${GITHUB_OUTPUT}"
           else
@@ -147,7 +145,7 @@ jobs:
   publish-release:
     name: Publish npm stable release (latest)
     needs: [validate, node-floor, platform-smoke]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -159,20 +157,23 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify tag matches package version
+      - name: Confirm commit is current main head
+        id: freshness
         shell: bash
         run: |
-          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          if [ "${TAG_VERSION}" != "${PACKAGE_VERSION}" ]; then
-            echo "Tag v${TAG_VERSION} does not match package.json version ${PACKAGE_VERSION}." >&2
-            exit 1
+          CURRENT_HEAD="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          if [ "${CURRENT_HEAD}" = "${GITHUB_SHA}" ]; then
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            echo "Skipping stale commit ${GITHUB_SHA}; current main head is ${CURRENT_HEAD}."
           fi
 
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 
       - name: Publish stable release
+        if: steps.freshness.outputs.publish == 'true'
         shell: bash
         run: |
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"

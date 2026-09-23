@@ -16,7 +16,7 @@ Never commit the token to the repository.
 
 ## Continuous prerelease publishing
 
-Every successful push to `yaaw-SEv2` runs the complete validation workflow:
+Every successful push to `main` runs the complete validation workflow:
 
 - semantic-core validation
 - Python tests
@@ -49,24 +49,16 @@ A failed CI run never publishes.
 
 ## Stable releases
 
-Stable npm releases are driven by Git tags matching `v*`.
+Stable npm releases are published from `main` after the full validation matrix succeeds.
 
-The tag must exactly match the version in `package.json`. For example:
-
-```bash
-# package.json version: 0.1.0
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-The tag starts the same full validation matrix. If all required jobs succeed, GitHub publishes:
+To publish new stable bytes, bump the version in both `package.json` and `package-lock.json`, commit that change to `main`, and push. For example, changing the package version from `0.1.0` to `0.1.1` causes a successful `main` run to publish:
 
 ```text
-yaaw-se@0.1.0
+yaaw-se@0.1.1
 dist-tag: latest
 ```
 
-If that exact npm version already exists, the workflow does not try to overwrite the immutable package version; it ensures the `latest` dist-tag points to that version.
+npm package versions are immutable. If the version already exists, the workflow does not overwrite it; it only ensures `latest` points to that already-published version. Therefore, any `main` change that must reach normal `npx yaaw-se install` users needs a package-version bump.
 
 Normal users can then run:
 
@@ -109,7 +101,7 @@ The second builds a synthetic update tarball and verifies that package-managed c
 
 npm package versions are immutable. Do not reuse a stable version for different stable source states.
 
-Before tagging a new stable release, update both `package.json` and `package-lock.json` to the intended version and commit them. Release verification uses `npm ci`, so lock drift fails rather than being silently resolved.
+Before publishing a new stable release from `main`, update both `package.json` and `package-lock.json` to the intended version and commit them. Release verification uses `npm ci`, so lock drift fails rather than being silently resolved.
 
 ## After the first package exists
 
