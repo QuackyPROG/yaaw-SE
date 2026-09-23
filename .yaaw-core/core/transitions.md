@@ -2,6 +2,8 @@
 
 Only transitions represented by the machine registry are legal.
 
+In the machine registry, `owner` is the semantic decision authority and `state_writer` is the role permitted to persist the resulting lifecycle mutation. All project-state ledger writes are performed by Orchestrator after validating the durable basis. This does not transfer product, planning, implementation, or acceptance authority to Orchestrator.
+
 ## Ticket transitions
 | From | To | Owner/workflow | Required basis |
 |---|---|---|---|
