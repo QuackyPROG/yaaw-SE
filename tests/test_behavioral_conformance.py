@@ -49,5 +49,14 @@ class BehavioralConformanceTest(unittest.TestCase):
             self.assertEqual(result["workflow"],workflow)
             self.assertEqual(result["terminal"],terminal)
 
+    def test_framework_integrity_blocks_before_semantic_routing(self):
+        modified=determine_next(self.case("AA-framework-modified-stops-routing")["observed"],self.policy)
+        self.assertIsNone(modified["workflow"])
+        self.assertEqual(modified["terminal"],"BLOCKED")
+        self.assertEqual(modified["reason"],"FRAMEWORK_INTEGRITY_VIOLATION")
+        inconsistent=determine_next(self.case("AB-framework-contract-inconsistency-stops-routing")["observed"],self.policy)
+        self.assertEqual(inconsistent["reason"],"FRAMEWORK_CONTRACT_INCONSISTENCY")
+        self.assertEqual(inconsistent["reconciliations"],[])
+
 if __name__=="__main__":
     unittest.main()
