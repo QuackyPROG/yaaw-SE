@@ -22,6 +22,7 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Workflow routing is progressive: do not preload sibling/downstream workflow bodies, templates, or expertise before exactly one route is selected.
 - External/vendor research and host skills require the durable admission basis in `.yaaw-core/system/rules/research-admission.md`.
 - Orchestrator owns routing/reconciliation, never product/architecture/implementation/acceptance semantics.
+- Consumer semantic roles must never modify package-managed `.yaaw-core/system/**` to unblock themselves. `.yaaw-core/system/core/framework-integrity.md` is fail-closed; only installer update/repair may replace framework content.
 - Implementer never self-approves. Acceptance requires independent review tied to repository/source identity.
 - Conversation must never be the only location of an accepted decision.
 - State transitions follow `.yaaw-core/system/core/transitions.md`; upstream changes follow `.yaaw-core/system/core/invalidation.md`.
@@ -34,6 +35,8 @@ Explicit user instructions take precedence over YAAW skill guidance unless a hig
 - Installer-managed operations are hard-blocked from writing/removing anything under `.yaaw-core/project/`; only project initialization-if-missing or explicit declared project-schema migrations may touch durable state.
 - Never blanket-delete or replace `.yaaw-core/`. Package refresh is scoped to `.yaaw-core/system/` and enumerated provider adapter files.
 - Package-owned files and managed instruction sections are hash-tracked.
+- Update/modify/repair invalidates replaceable runtime coordination caches so no dispatch survives a framework-basis change.
+- `--conflict-policy backup-replace` is the preferred incident-recovery policy because it preserves modified managed bytes before restoring the package version.
 - Existing `yaaw.installation/v1` manifests are accepted for upgrade; current installs emit `yaaw.installation/v2`.
 - System, installation, project, and provider-adapter versions are tracked independently. Unsupported downgrades are blocked.
 - Skipped-version project migrations must compose through the registered migration chain and execute as transaction-planned operations.
