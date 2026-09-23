@@ -66,8 +66,9 @@ async function inspect(workspace) {
     };
   }
 
+  const supportedManifest = manifest?.schema === "yaaw.installation/v1" || manifest?.schema === "yaaw.installation/v2";
   if (
-    manifest?.schema !== "yaaw.installation/v1" ||
+    !supportedManifest ||
     manifest?.project?.root !== "." ||
     !manifest?.managedFiles ||
     typeof manifest.managedFiles !== "object"
@@ -118,6 +119,9 @@ async function inspect(workspace) {
     schema: "yaaw.framework-integrity/v1",
     status,
     package_version: manifest.yaawVersion ?? null,
+    system_schema: manifest.systemSchema ?? 1,
+    installation_schema: manifest.installationSchema ?? 1,
+    project_schema: manifest.projectSchema ?? manifest.projectStateSchema ?? 1,
     manifest_digest: `sha256:${digest(manifestBytes)}`,
     modified,
     missing,
