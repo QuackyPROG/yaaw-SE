@@ -51,11 +51,17 @@ await mkdir(project);
 const tarballs = [];
 
 try {
-  run(["run", "build"]);
-  const v010 = packCurrent();
-  tarballs.push(v010);
+  const pkg = JSON.parse(originalPackage);
+  const currentVersion = pkg.version;
+  const oldVersion = `${currentVersion}-update-smoke.0`;
 
-  execTarball(v010, ["install", "--directory", project, "--tools", "codex", "--skills", "core", "--yes"]);
+  pkg.version = oldVersion;
+  await writeFile(packagePath, JSON.stringify(pkg, null, 2) + "\n");
+  run(["run", "build"]);
+  const oldTarball = packCurrent();
+  tarballs.push(oldTarball);
+
+  execTarball(oldTarball, ["install", "--directory", project, "--tools", "codex", "--skills", "core", "--yes"]);
 
   const durableFiles = {
     "product.md": "product sentinel\n",
@@ -74,17 +80,15 @@ try {
     await writeFile(path, bytes);
   }
 
-  const pkg = JSON.parse(originalPackage);
-  pkg.version = "0.1.1";
-  await writeFile(packagePath, JSON.stringify(pkg, null, 2) + "\n");
-  const marker = "\n<!-- synthetic-package-update-0.1.1 -->\n";
+  await writeFile(packagePath, originalPackage);
+  const marker = `\n<!-- synthetic-package-update-${currentVersion} -->\n`;
   await writeFile(coreSourcePath, originalCore + marker);
 
   run(["run", "build"]);
-  const v011 = packCurrent();
-  tarballs.push(v011);
+  const currentTarball = packCurrent();
+  tarballs.push(currentTarball);
 
-  execTarball(v011, ["install", "--directory", project, "--action", "quick-update", "--yes"]);
+  execTarball(currentTarball, ["install", "--directory", project, "--action", "quick-update", "--yes"]);
 
   for (const [rel, expected] of Object.entries(durableFiles)) {
     const actual = await readFile(join(project, ".yaaw-core", "project", rel), "utf8");
@@ -92,16 +96,18 @@ try {
   }
 
   const installedCore = await readFile(join(project, ".yaaw-core", "system", "core", "artifact-model.md"), "utf8");
-  if (!installedCore.includes("synthetic-package-update-0.1.1")) {
-    throw new Error("Package-managed core did not update from the 0.1.1 tarball");
+  if (!installedCore.includes(`synthetic-package-update-${currentVersion}`)) {
+    throw new Error(`Package-managed core did not update from the ${currentVersion} tarball`);
   }
   const manifest = JSON.parse(await readFile(join(project, ".yaaw-core", "install", "manifest.json"), "utf8"));
-  if (manifest.yaawVersion !== "0.1.1") throw new Error(`Expected manifest 0.1.1, got ${manifest.yaawVersion}`);
+  if (manifest.yaawVersion !== currentVersion) {
+    throw new Error(`Expected manifest ${currentVersion}, got ${manifest.yaawVersion}`);
+  }
 
-  const doctor = JSON.parse(execTarball(v011, ["doctor", "--directory", project, "--json"], true));
+  const doctor = JSON.parse(execTarball(currentTarball, ["doctor", "--directory", project, "--json"], true));
   if (!doctor.healthy) throw new Error(`Doctor failed after tarball update: ${JSON.stringify(doctor)}`);
 
-  console.log("✓ tarball update 0.1.0 -> 0.1.1 preserved all durable-state sentinels");
+  console.log(`✓ tarball update ${oldVersion} -> ${currentVersion} preserved all durable-state sentinels`);
 } finally {
   await writeFile(packagePath, originalPackage);
   await writeFile(coreSourcePath, originalCore);
