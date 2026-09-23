@@ -22,7 +22,8 @@ export function emptyManifest(version: string, installedAt = new Date().toISOStr
     integrations: {},
     skills: [],
     managedFiles: {},
-    managedSections: {}
+    managedSections: {},
+    managedConfigKeys: {}
   };
 }
 
@@ -40,7 +41,10 @@ function normalizeManifest(value: any): InstallationManifest {
         throw new Error(`Invalid YAAW installation manifest field: ${field}`);
       }
     }
-    return value as InstallationManifest;
+    return {
+      ...value,
+      managedConfigKeys: value.managedConfigKeys ?? {}
+    } as InstallationManifest;
   }
 
   if (value.schema === "yaaw.installation/v1") {
@@ -56,7 +60,8 @@ function normalizeManifest(value: any): InstallationManifest {
       integrations: value.integrations,
       skills: value.skills,
       managedFiles: value.managedFiles,
-      managedSections: value.managedSections
+      managedSections: value.managedSections,
+      managedConfigKeys: {}
     };
   }
 

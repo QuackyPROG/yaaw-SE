@@ -10,6 +10,7 @@ export interface DetectionResult {
 export interface IntegrationContext {
   projectRoot: string;
   payloadRoot: string;
+  settings?: unknown;
 }
 
 export interface IntegrationVerification {
@@ -32,6 +33,9 @@ export interface IntegrationAdapter {
   bootstrapRelativePath: string;
   planBootstrap(ctx: IntegrationContext): Promise<InstallOperation[]>;
   planSkills(ctx: IntegrationContext, skills: CanonicalSkill[]): Promise<InstallOperation[]>;
+  planRuntime?(ctx: IntegrationContext): Promise<InstallOperation[]>;
   verify(ctx: IntegrationContext, selectedSkillIds: string[]): Promise<IntegrationVerification>;
+  verifyRuntime?(ctx: IntegrationContext): Promise<IntegrationVerification>;
+  describeRuntime?(settings: unknown): string[];
   invocationHint(skillName: string): string;
 }

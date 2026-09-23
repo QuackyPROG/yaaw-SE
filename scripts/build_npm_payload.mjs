@@ -16,6 +16,7 @@ for (const name of approved) {
 }
 await cp(join(root, "skills"), join(out, "skills"), { recursive: true });
 await cp(join(root, "installer", "templates", "bootstrap"), join(out, "bootstrap"), { recursive: true });
+await cp(join(root, "installer", "templates", "codex"), join(out, "integrations", "codex"), { recursive: true });
 
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -28,7 +29,7 @@ async function walk(dir) {
   return result;
 }
 
-const textExtensions = new Set([".md", ".json"]);
+const textExtensions = new Set([".md", ".json", ".toml"]);
 const copiedFiles = await walk(out);
 for (const file of copiedFiles) {
   const lower = file.toLowerCase();
