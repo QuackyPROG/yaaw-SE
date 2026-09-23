@@ -125,6 +125,7 @@ async function assertConsumerLayout(project, tools) {
   for (const id of tools) {
     const surface = providerSurfaces[id];
     expectedRoot.add(surface.providerRoot);
+    if (id === "codex") expectedRoot.add(".codex");
     const bootstrapTop = firstSegment(surface.bootstrap);
     if (bootstrapTop !== surface.providerRoot) expectedRoot.add(bootstrapTop);
   }
@@ -170,6 +171,24 @@ async function assertConsumerLayout(project, tools) {
       if (!manifestOwners.includes(`integration:${id}`)) {
         throw new Error(`${id}: manifest does not own the selected provider surface`);
       }
+      if (id === "codex") {
+        assertSameEntries(await entries(join(project, ".codex")), ["agents", "config.toml", "yaaw-runtime.md"], "codex runtime root");
+        assertSameEntries(await entries(join(project, ".codex", "agents")), [
+          "yaaw-implementer.toml",
+          "yaaw-planner.toml",
+          "yaaw-prd.toml",
+          "yaaw-reviewer.toml"
+        ], "codex role configs");
+        if (existsSync(join(project, ".codex", "agents", "yaaw-orchestrator.toml"))) {
+          throw new Error("Codex root Orchestrator must not have a child role config");
+        }
+        const runtime = await readFile(join(project, ".codex", "yaaw-runtime.md"), "utf8");
+        if (!runtime.includes("Configured YAAW runtime mode: **auto**")) throw new Error("Codex runtime adapter missing auto default");
+        const codexConfig = await readFile(join(project, ".codex", "config.toml"), "utf8");
+        for (const role of ["yaaw_prd","yaaw_planner","yaaw_implementer","yaaw_reviewer"]) {
+          if (!codexConfig.includes(`[agents.${role}]`)) throw new Error(`Codex config missing ${role}`);
+        }
+      }
     } else {
       if (existsSync(join(project, surface.providerRoot))) {
         throw new Error(`${id}: unselected provider directory leaked into install`);
@@ -179,6 +198,9 @@ async function assertConsumerLayout(project, tools) {
       }
       if (manifestOwners.includes(`integration:${id}`)) {
         throw new Error(`${id}: unselected provider leaked into manifest ownership`);
+      }
+      if (id === "codex" && existsSync(join(project, ".codex"))) {
+        throw new Error("codex: unselected .codex runtime leaked into install");
       }
     }
   }
@@ -236,6 +258,9 @@ async function smokeCase(name, tools, expectedPaths, { pathWithSpaces = false, u
 try {
   await smokeCase("codex", ["codex"], [
     ".agents/skills/yaaw-orchestrator/SKILL.md",
+    ".codex/config.toml",
+    ".codex/yaaw-runtime.md",
+    ".codex/agents/yaaw-planner.toml",
     "AGENTS.md"
   ], { pathWithSpaces: true });
 
