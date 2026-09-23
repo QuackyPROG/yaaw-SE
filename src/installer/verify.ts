@@ -14,6 +14,8 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
     ".yaaw-core/system/workflows",
     ".yaaw-core/system/registries",
     ".yaaw-core/system/templates",
+    ".yaaw-core/system/core/framework-integrity.md",
+    ".yaaw-core/system/tools/framework-integrity.mjs",
     ".yaaw-core/project/product.md",
     ".yaaw-core/project/engineering.md",
     ".yaaw-core/project/research",
