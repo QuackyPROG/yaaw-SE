@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.review/v2",
+  "type": "object",
+  "required": [
+    "schema",
+    "ticket",
+    "round",
+    "result",
+    "ticket_revision",
+    "spec_revision",
+    "repository",
+    "evidence"
+  ],
+  "properties": {
+    "schema": {
+      "const": "yaaw.review/v2"
+    },
+    "ticket": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]+$"
+    },
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "result": {
+      "enum": [
+        "PASS",
+        "REPAIR",
+        "REPLAN",
+        "BLOCKED"
+      ]
+    },
+    "ticket_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "spec_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "repository": {
+      "allOf": [
+        {
+          "$ref": "repository-identity.schema.json"
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "READY"
+            },
+            "algorithm": {
+              "const": "yaaw-worktree-v1"
+            },
+            "head_commit": {
+              "type": "string"
+            },
+            "dirty": {
+              "type": "boolean"
+            },
+            "worktree_digest": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.repository-identity/v2",
+  "type": "object",
+  "required": [
+    "schema",
+    "algorithm",
+    "status",
+    "workspace_scope",
+    "git_root_relation",
+    "head_commit",
+    "dirty",
+    "worktree_digest",
+    "components",
+    "changed_paths",
+    "error"
+  ],
+  "properties": {
+    "schema": {
+      "const": "yaaw.repository-identity/v2"
+    },
+    "algorithm": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "READY",
+        "UNVERSIONED",
+        "UNAVAILABLE",
+        "ROOT_MISMATCH",
+        "IDENTITY_FAILED"
+      ]
+    },
+    "workspace_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "git_root_relation": {
+      "enum": [
+        "same",
+        "ancestor",
+        "none",
+        "unknown"
+      ]
+    },
+    "head_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "dirty": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "worktree_digest": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "components": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "status_sha256",
+            "unstaged_diff_sha256",
+            "staged_diff_sha256",
+            "untracked_manifest_sha256"
+          ],
+          "properties": {
+            "status_sha256": {
+              "type": "string"
+            },
+            "unstaged_diff_sha256": {
+              "type": "string"
+            },
+            "staged_diff_sha256": {
+              "type": "string"
+            },
+            "untracked_manifest_sha256": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "changed_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "kind"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "tracked",
+              "untracked"
+            ]
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}
