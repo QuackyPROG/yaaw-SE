@@ -114,6 +114,21 @@ describe("headless installation", () => {
     await expect(runInstall({ directory: root, action: "repair", tools: "codex", yes: true })).rejects.toThrow(/Partial YAAW\/provider state|valid manifest/i);
   });
 
+  it("doctor rejects a parallel legacy .yaaw-core/system layout", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-system-layout-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+    await mkdir(join(root, ".yaaw-core", "system", "core"), { recursive: true });
+    await writeFile(join(root, ".yaaw-core", "system", "core", "legacy.md"), "legacy framework\n");
+
+    const report: any = await runDoctor({ directory: root, json: true });
+    const check = report.checks.find((entry: any) => entry.name === "framework-layout");
+    expect(report.healthy).toBe(false);
+    expect(check?.ok).toBe(false);
+    expect(check?.detail).toMatch(/canonical execution is ambiguous/i);
+
+    expect(await readFile(join(root, ".yaaw-core", "system", "core", "legacy.md"), "utf8")).toBe("legacy framework\n");
+  });
+
   it("blocks ambiguous legacy state instead of merging roots", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-legacy-"));
     await mkdir(join(root, ".yaaw"));

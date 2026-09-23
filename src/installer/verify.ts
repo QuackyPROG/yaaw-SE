@@ -14,6 +14,7 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
     ".yaaw-core/workflows",
     ".yaaw-core/registries",
     ".yaaw-core/templates",
+    ".yaaw-core/tools",
     ".yaaw-core/project/product.md",
     ".yaaw-core/project/engineering.md",
     ".yaaw-core/project/research",
@@ -26,6 +27,9 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
 
   if (await exists(join(projectRoot, ".yaaw"))) {
     issues.push("legacy .yaaw root exists; automatic merge is intentionally unsupported");
+  }
+  if (await exists(join(projectRoot, ".yaaw-core", "system"))) {
+    issues.push("legacy/parallel .yaaw-core/system framework layout exists; canonical execution is ambiguous");
   }
 
   for (const id of integrations) {
