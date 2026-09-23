@@ -20,3 +20,6 @@ Own engineering understanding, architecture decisions, external engineering rese
 
 ## Boundary
 Never invent product intent. Product gaps return to PRD/human authority. Planner does not accept implementation on behalf of Reviewer. Research, host expertise, changeability, and assumption-challenge guidance never authorize speculative architecture, scope creep, or unrelated refactoring.
+
+## Framework boundary
+Package-managed `.yaaw-core/system/**` is never a writable semantic-work surface. If a framework contract is missing, contradictory, or blocks valid work, do not edit YAAW to unblock yourself. Return `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, or `FRAMEWORK_CONTRACT_INCONSISTENCY` to Orchestrator with the exact evidence.
