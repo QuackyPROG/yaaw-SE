@@ -63,6 +63,7 @@ Any workflow context may disappear after durable output without destroying proje
 
 ## Runtime hardening
 
+- `.yaaw-core/system/core/framework-integrity.md` plus `.yaaw-core/system/tools/framework-integrity.mjs` make package health a fail-closed prerequisite. Consumer roles report framework defects; they never rewrite package contracts to unblock themselves.
 - `.yaaw-core/system/core/execution-context.md` resolves the consumer workspace root and requires root-anchored Git.
 - `.yaaw-core/system/registries/execution-policy.json` classifies every workflow as `NONE`, `INSPECT`, or `IDENTITY` for repository requirements.
 - `.yaaw-core/system/core/context-loading.md` requires metadata-first progressive workflow loading.
@@ -74,3 +75,9 @@ Any workflow context may disappear after durable output without destroying proje
 Current installers emit `yaaw.installation/v2` and accept the original v1 manifest for upgrade. The installer tracks YAAW/system/project/install/adapter versions independently, plans skipped-version project migrations through registered adjacent steps, blocks unsupported downgrades, verifies before manifest commit, and rolls back failed transactions.
 
 Installer-managed mutations beneath `.yaaw-core/project/` are rejected at preflight. Only initialization-if-missing and explicit registered project-schema migrations may transform durable project state.
+
+## State and review ownership
+
+`.yaaw-core/project/state.json` is the current lifecycle ledger for workflow admission. Ticket frontmatter status is historical/artifact metadata and does not override reconciled lifecycle state.
+
+Reviewer reads state but writes only immutable review rounds. Orchestrator validates the durable review result and applies exactly the corresponding state transition/provenance; it never substitutes its own acceptance judgment.
