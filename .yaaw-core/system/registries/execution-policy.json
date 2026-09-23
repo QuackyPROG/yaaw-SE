@@ -1,38 +1,169 @@
 {
   "schema": "yaaw.execution-policy/v1",
-  "defaults": {"context_mode": "progressive", "external_research": "forbidden"},
+  "defaults": {
+    "context_mode": "progressive",
+    "external_research": "forbidden"
+  },
   "workflows": {
-    "prd.route": {"repository_requirement": "NONE", "external_research": "forbidden"},
-    "prd.create": {"repository_requirement": "NONE", "external_research": "forbidden"},
-    "prd.question-round": {"repository_requirement": "NONE", "external_research": "forbidden"},
-    "prd.record-decisions": {"repository_requirement": "NONE", "external_research": "forbidden"},
-    "prd.revise": {"repository_requirement": "NONE", "external_research": "forbidden"},
-    "prd.refine": {"repository_requirement": "NONE", "external_research": "forbidden"},
-    "prd.readiness": {"repository_requirement": "NONE", "external_research": "forbidden"},
-    "planning.route": {"repository_requirement": "INSPECT", "external_research": "metadata-only"},
-    "planning.discover": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "planning.write-understanding": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "planning.decision-frontier": {"repository_requirement": "INSPECT", "external_research": "admission-only"},
-    "planning.research": {"repository_requirement": "INSPECT", "external_research": "candidate-scoped"},
-    "planning.question-round": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "planning.record-decisions": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "planning.readiness-review": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "planning.create-spec": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "planning.create-tickets": {"repository_requirement": "IDENTITY", "external_research": "forbidden"},
-    "planning.replan": {"repository_requirement": "INSPECT", "external_research": "admission-only"},
-    "implementation.select-ticket": {"repository_requirement": "IDENTITY", "external_research": "forbidden"},
-    "implementation.implement-ticket": {"repository_requirement": "IDENTITY", "external_research": "forbidden"},
-    "implementation.verify-ticket": {"repository_requirement": "IDENTITY", "external_research": "forbidden"},
-    "implementation.repair-ticket": {"repository_requirement": "IDENTITY", "external_research": "forbidden"},
-    "review.inspect-change": {"repository_requirement": "IDENTITY", "external_research": "restricted"},
-    "review.review-ticket": {"repository_requirement": "IDENTITY", "external_research": "restricted"},
-    "review.classify-findings": {"repository_requirement": "IDENTITY", "external_research": "forbidden"},
-    "review.record-review": {"repository_requirement": "IDENTITY", "external_research": "forbidden"},
-    "orchestration.route": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "orchestration.inspect-state": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "orchestration.reconcile-state": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "orchestration.determine-next-action": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "orchestration.dispatch": {"repository_requirement": "INSPECT", "external_research": "forbidden"},
-    "orchestration.recover-interruption": {"repository_requirement": "IDENTITY", "external_research": "forbidden"}
+    "prd.route": {
+      "repository_requirement": "NONE",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "prd.create": {
+      "repository_requirement": "NONE",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "prd.question-round": {
+      "repository_requirement": "NONE",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "prd.record-decisions": {
+      "repository_requirement": "NONE",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "prd.revise": {
+      "repository_requirement": "NONE",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "prd.refine": {
+      "repository_requirement": "NONE",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "prd.readiness": {
+      "repository_requirement": "NONE",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.route": {
+      "repository_requirement": "INSPECT",
+      "external_research": "metadata-only",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.discover": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.write-understanding": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.decision-frontier": {
+      "repository_requirement": "INSPECT",
+      "external_research": "admission-only",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.research": {
+      "repository_requirement": "INSPECT",
+      "external_research": "candidate-scoped",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.question-round": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.record-decisions": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.readiness-review": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.create-spec": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.create-tickets": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "planning.replan": {
+      "repository_requirement": "INSPECT",
+      "external_research": "admission-only",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "implementation.select-ticket": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "implementation.implement-ticket": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "implementation.verify-ticket": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "implementation.repair-ticket": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "review.inspect-change": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "restricted",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "review.review-ticket": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "restricted",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "review.classify-findings": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "review.record-review": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
+    },
+    "orchestration.route": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ROOT_ONLY"
+    },
+    "orchestration.inspect-state": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ROOT_ONLY"
+    },
+    "orchestration.reconcile-state": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ROOT_ONLY"
+    },
+    "orchestration.determine-next-action": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ROOT_ONLY"
+    },
+    "orchestration.dispatch": {
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ROOT_ONLY"
+    },
+    "orchestration.recover-interruption": {
+      "repository_requirement": "IDENTITY",
+      "external_research": "forbidden",
+      "execution_context": "ROOT_ONLY"
+    }
   }
 }

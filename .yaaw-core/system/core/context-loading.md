@@ -16,6 +16,17 @@ After exactly one workflow is selected:
 
 After durable output, return to routing before opening another workflow contract.
 
+## Fresh worker bootstrap
+When an Orchestrator dispatch runs in a fresh host worker, the worker should receive only enough parent context to locate and execute the handoff:
+- resolved workspace root;
+- target semantic role;
+- `.yaaw-core/runtime/handoff.json`;
+- instruction to load the canonical role contract and resolve the workflow through registries;
+- instruction to load only handoff-admitted artifacts/expertise/repository context;
+- instruction not to route another YAAW authority role.
+
+Do not copy the parent planning conversation, all project documents, all expertise, all workflows, review history, or a repository dump into a worker prompt. Those are either durable artifacts or discoverable only when admitted by the selected workflow.
+
 ## Normal semantic context
 ```text
 role contract

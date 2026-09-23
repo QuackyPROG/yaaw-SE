@@ -6,7 +6,7 @@ YAAW roles communicate through durable artifacts, exact Orchestrator handoffs, a
 - `.yaaw-core/system/registries/artifacts.json` defines canonical artifact classes, locations, durability, and semantic ownership.
 - `.yaaw-core/system/registries/role-io.json` defines each role's default read/write authority.
 - `.yaaw-core/system/registries/workflows.json` maps canonical workflow IDs to one role/workflow contract.
-- `.yaaw-core/system/registries/execution-policy.json` defines repository requirements and context/research admission for every workflow.
+- `.yaaw-core/system/registries/execution-policy.json` defines repository requirements, execution-context policy, and context/research admission for every workflow.
 - `.yaaw-core/runtime/handoff.json` resolves those contracts to one exact dispatch.
 - `.yaaw-core/runtime/intent.json` may preserve the public entrypoint's desired destination while prerequisites are resolved.
 
@@ -17,15 +17,20 @@ The role reads the handoff, then its role contract, resolves `handoff.workflow` 
 
 A role must not search the repository for alternate YAAW artifact locations when a canonical input is missing. Missing or stale canonical prerequisites produce a typed result to Orchestrator.
 
+Host execution transport is separate from semantic communication. A semantic role may run in another fresh host context, but authority still flows only through durable YAAW artifacts and typed results.
+
 ## Communication topology
 ```text
 PRD / Planner / Implementer / Reviewer
         ↓ durable output + typed result
      Orchestrator
+        ↓ inspect reality
         ↓ exactly one next dispatch
 ```
 
 Roles never spawn or command peer roles. **Roles report reality; Orchestrator decides routing.**
+
+A worker's textual success message is not semantic truth. Orchestrator verifies the expected artifact, revision, repository/evidence basis, and legal state transition after every dispatched execution.
 
 ## Typed results
 Common results include `SUCCESS`, `READY`, `HUMAN_INPUT_REQUIRED`, `PRECONDITION_UNSATISFIED`, `REVIEW_REQUIRED`, `REPLAN_REQUIRED`, `BLOCKED`, `PASS`, `REPAIR`, `REPLAN`, and `COMPLETE`.
