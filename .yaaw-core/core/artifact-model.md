@@ -4,7 +4,7 @@ Canonical consumer workspace root is the directory containing the active YAAW in
 
 Ownership is separated under one YAAW root:
 
-- `.yaaw-core/core/`, `roles/`, `workflows/`, `expertise/`, `rules/`, `registries/`, `schemas/`, and `templates/`: package-managed framework content.
+- `.yaaw-core/core/`, `roles/`, `workflows/`, `expertise/`, `rules/`, `registries/`, `schemas/`, `templates/`, and `tools/`: package-managed framework content.
 - `.yaaw-core/project/`: durable project-owned semantic memory.
 - `.yaaw-core/runtime/`: replaceable coordination state.
 - `.yaaw-core/install/`: installer metadata only.
@@ -34,3 +34,9 @@ Installer metadata:
 Markdown artifacts use YAML frontmatter for machine-readable identity/revision/status and a human-readable body for durable reasoning. Machine-readable ownership patterns live in `registries/artifacts.json`.
 
 Conversation is never an artifact of record. Package update logic must never treat `.yaaw-core/project/` as replaceable framework content.
+
+## Framework immutability
+
+Package-managed framework content is not a semantic output surface. Normal PRD, Planner, Implementer, Reviewer, and Orchestrator workflows must not modify it. The installation manifest and `core/framework-integrity.md` define the runtime trust boundary.
+
+If package-managed framework bytes or layout drift, semantic orchestration stops before project-state reconciliation. Installer repair may replace package content and runtime caches, but must preserve `.yaaw-core/project/**`.
