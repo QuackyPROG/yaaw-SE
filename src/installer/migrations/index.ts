@@ -14,7 +14,7 @@ export interface Migration {
   plan(ctx: MigrationContext): Promise<InstallOperation[]>;
 }
 
-export const CURRENT_SYSTEM_SCHEMA = 1;
+export const CURRENT_SYSTEM_SCHEMA = 2;
 export const CURRENT_INSTALLATION_SCHEMA = 2;
 export const CURRENT_PROJECT_SCHEMA = 1;
 
