@@ -23,7 +23,7 @@ Every successful push to `main` runs the complete validation workflow:
 - Node installer tests
 - package build and pack inspection
 - exact tarball smoke tests
-- tarball-to-tarball update smoke
+- tarball-to-tarball update + tainted-framework repair smoke
 - minimum supported Node 20.12 runtime smoke
 - macOS and Windows smoke tests
 
@@ -95,7 +95,7 @@ node scripts/smoke_npm_update.mjs
 
 The first command exercises the exact packed artifact across Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, durable-state sentinels, and the Codex `.codex` runtime/role surface.
 
-The second builds a synthetic update tarball and verifies that package-managed core changes while product, engineering, state, spec, ticket, review, evidence, and project-rule durable artifacts survive byte-for-byte.
+The second builds a synthetic update tarball, deliberately taints an installed package-managed framework file, then upgrades using `backup-replace`. It verifies that the tainted bytes are backed up, canonical package content is restored/updated, replaceable runtime caches are invalidated, the Codex runtime migration still succeeds, and product, engineering, state, spec, ticket, review, evidence, research, and project-rule durable artifacts survive byte-for-byte.
 
 ## Versioning rule
 
