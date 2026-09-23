@@ -2,28 +2,173 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "yaaw.observed-state/v2",
   "type": "object",
-  "required": ["schema", "repository", "transition_sequence", "claims", "artifacts", "inconsistencies", "candidate_actions"],
+  "required": [
+    "schema",
+    "framework",
+    "repository",
+    "transition_sequence",
+    "claims",
+    "artifacts",
+    "inconsistencies",
+    "candidate_actions"
+  ],
   "properties": {
-    "schema": {"const": "yaaw.observed-state/v2"},
+    "schema": {
+      "const": "yaaw.observed-state/v2"
+    },
     "repository": {
       "type": "object",
-      "required": ["status", "workspace_scope", "git_root_relation", "head_commit", "dirty", "worktree_digest", "error"],
+      "required": [
+        "status",
+        "workspace_scope",
+        "git_root_relation",
+        "head_commit",
+        "dirty",
+        "worktree_digest",
+        "error"
+      ],
       "properties": {
-        "status": {"enum": ["READY", "UNVERSIONED", "UNAVAILABLE", "ROOT_MISMATCH", "IDENTITY_FAILED"]},
-        "workspace_scope": {"type": "string", "minLength": 1},
-        "git_root_relation": {"enum": ["same", "ancestor", "none", "unknown"]},
-        "head_commit": {"type": ["string", "null"]},
-        "dirty": {"type": ["boolean", "null"]},
-        "worktree_digest": {"type": ["string", "null"]},
-        "error": {"type": ["string", "null"]}
+        "status": {
+          "enum": [
+            "READY",
+            "UNVERSIONED",
+            "UNAVAILABLE",
+            "ROOT_MISMATCH",
+            "IDENTITY_FAILED"
+          ]
+        },
+        "workspace_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "git_root_relation": {
+          "enum": [
+            "same",
+            "ancestor",
+            "none",
+            "unknown"
+          ]
+        },
+        "head_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dirty": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "worktree_digest": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "additionalProperties": false
     },
-    "transition_sequence": {"type": "integer", "minimum": 0},
-    "claims": {"type": "object"},
-    "artifacts": {"type": "object"},
-    "inconsistencies": {"type": "array", "items": {"type": "string"}},
-    "candidate_actions": {"type": "array", "items": {"type": "string"}}
+    "transition_sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "claims": {
+      "type": "object"
+    },
+    "artifacts": {
+      "type": "object"
+    },
+    "inconsistencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "candidate_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "framework": {
+      "type": "object",
+      "required": [
+        "yaaw_version",
+        "system_schema",
+        "installation_schema",
+        "project_schema",
+        "manifest_digest",
+        "integrity_status",
+        "modified",
+        "missing",
+        "local_overrides",
+        "repair_required"
+      ],
+      "properties": {
+        "yaaw_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "system_schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "installation_schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "project_schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "manifest_digest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "integrity_status": {
+          "type": "string",
+          "enum": [
+            "HEALTHY",
+            "MODIFIED",
+            "MISSING",
+            "LOCAL_OVERRIDE",
+            "MANIFEST_INVALID",
+            "UNKNOWN",
+            "CONTRACT_INCONSISTENT"
+          ]
+        },
+        "modified": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "local_overrides": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "repair_required": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }
