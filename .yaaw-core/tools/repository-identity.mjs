@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync, readlinkSync, realpathSync } from "node:fs";
-import { isAbsolute, relative, resolve } from "node:path";
+import { lstatSync, readFileSync, readlinkSync } from "node:fs";
+import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const ALGORITHM = "yaaw-worktree-v1";
@@ -42,17 +42,16 @@ for(let i=0;i<args.length;i+=1){
   else {process.stderr.write("usage: repository-identity.mjs [--workspace <path>]\n"); process.exit(2);}
 }
 const workspace=resolve(workspaceArg);
-let gitRoot;
-try { gitRoot=realpathSync(git(workspace,["rev-parse","--show-toplevel"]).toString("utf8").trim()); }
+let workspacePrefix;
+try {
+  const inside=git(workspace,["rev-parse","--is-inside-work-tree"]).toString("utf8").trim();
+  if(inside!=="true") throw new Error("workspace is not inside a Git work tree");
+  workspacePrefix=git(workspace,["rev-parse","--show-prefix"]).toString("utf8").trim().replaceAll("\\","/");
+}
 catch(error){ fail("UNVERSIONED",error instanceof Error?error.message:String(error)); }
 
-if(gitRoot){
+if(workspacePrefix !== undefined){
   try {
-    const workspaceReal=realpathSync(workspace);
-    const scope=relative(gitRoot,workspaceReal);
-    if(scope && (scope.startsWith("..")||isAbsolute(scope))) {
-      fail("ROOT_MISMATCH","resolved workspace is not inside the Git root");
-    } else {
       const head=git(workspace,["rev-parse","HEAD"]).toString("utf8").trim();
       const status=git(workspace,["status","--porcelain=v1","-z","--untracked-files=all","--","."]);
       const unstaged=git(workspace,["diff","--binary","--no-ext-diff","--no-textconv","HEAD","--","."]);
@@ -75,11 +74,10 @@ if(gitRoot){
       ].sort((a,b)=>a.path.localeCompare(b.path));
       process.stdout.write(JSON.stringify({
         schema:"yaaw.repository-identity/v2",algorithm:ALGORITHM,status:"READY",workspace_scope:".",
-        git_root_relation:scope?"ancestor":"same",head_commit:head,dirty:status.length>0,
+        git_root_relation:workspacePrefix?"ancestor":"same",head_commit:head,dirty:status.length>0,
         worktree_digest:"sha256:"+hash(Buffer.from(canonicalJson(payload),"utf8")),
         components,changed_paths,error:null
       })+"\n");
-    }
   } catch(error) {
     if(process.exitCode!==2) fail("IDENTITY_FAILED",error instanceof Error?error.message:String(error));
   }
