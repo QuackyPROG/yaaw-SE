@@ -103,6 +103,16 @@ def _determine_next_unchecked(observed: dict[str, Any], policy: dict[str, Any]) 
     return {"workflow":"orchestration.recover-interruption","terminal":None,"reconciliations":changes}
 
 def determine_next(observed: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+    framework_status = observed.get("framework_status", "HEALTHY")
+    if framework_status != "HEALTHY":
+        if framework_status == "CONTRACT_INCONSISTENT":
+            reason = "FRAMEWORK_CONTRACT_INCONSISTENCY"
+        elif framework_status in {"UNKNOWN", "MANIFEST_INVALID"}:
+            reason = "FRAMEWORK_INTEGRITY_UNKNOWN"
+        else:
+            reason = "FRAMEWORK_INTEGRITY_VIOLATION"
+        return {"workflow": None, "terminal": "BLOCKED", "reason": reason, "reconciliations": []}
+
     result = _determine_next_unchecked(observed, policy)
     workflow = result.get("workflow")
     if workflow:
