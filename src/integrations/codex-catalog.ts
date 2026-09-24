@@ -18,9 +18,18 @@ export interface CodexProfile {
   settings: CodexRuntimeSettings;
 }
 
-export const CODEX_CONFIGURATION_REVISION = 2;
+export const CODEX_CONFIGURATION_REVISION = 3;
+
+export const codexReasoningEfforts = ["low", "medium", "high", "xhigh", "max"] as const;
 
 export const codexConfigurationChanges: IntegrationConfigChange[] = [
+  {
+    revision: 3,
+    id: "codex-max-reasoning",
+    type: "model-support",
+    title: "Expanded GPT-6 reasoning effort support",
+    summary: "YAAW now exposes low, medium, high, xhigh, and max reasoning effort for GPT-6 Sol and GPT-6 Luna."
+  },
   {
     revision: 2,
     id: "codex-gpt6-support",
@@ -43,7 +52,7 @@ export const codexModels: CodexModelCapability[] = [
     label: "GPT-6 Sol",
     status: "recommended",
     introducedRevision: 2,
-    reasoningEfforts: ["low", "medium", "high", "xhigh"],
+    reasoningEfforts: [...codexReasoningEfforts],
     description: "Recommended for complex software engineering."
   },
   {
@@ -51,7 +60,7 @@ export const codexModels: CodexModelCapability[] = [
     label: "GPT-6 Luna",
     status: "supported",
     introducedRevision: 2,
-    reasoningEfforts: ["low", "medium", "high"],
+    reasoningEfforts: [...codexReasoningEfforts],
     description: "Faster/lower-cost option for bounded work."
   }
 ];
