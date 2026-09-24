@@ -98,12 +98,16 @@ That includes both the YAAW system and the durable project artifacts it creates.
 
 ## Manage an Installation
 
-Check an installation:
+Check an installation or configure a provider:
 
 ```bash
 npx yaaw-se status
 npx yaaw-se doctor
+npx yaaw-se config
+npx yaaw-se config codex
 ```
+
+When installed globally, both `yaaw` and the backward-compatible `yaaw-se` binary are available. Provider configuration is project-local. YAAW may learn about newer provider/model capabilities during a framework update, but it preserves the project's current model/runtime policy until you explicitly reconfigure it.
 
 Run the installer again to update, change integrations, repair, or safely uninstall YAAW-SE.
 

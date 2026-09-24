@@ -9,7 +9,7 @@ async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
 }
 
-describe("Codex runtime adapter v2", () => {
+describe("Codex runtime adapter v3", () => {
   it("installs the fresh isolated-worker surface with auto + inherit defaults", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-codex-v2-"));
     await runInstall({ directory: root, tools: "codex", skills: "core", yes: true });
@@ -29,9 +29,12 @@ describe("Codex runtime adapter v2", () => {
     expect(readTomlManagedValue(config, "model")).toBeUndefined();
 
     const manifest: any = JSON.parse(await readFile(join(root, ".yaaw-core/install/manifest.json"), "utf8"));
-    expect(manifest.integrations.codex.adapterVersion).toBe(2);
+    expect(manifest.integrations.codex.adapterVersion).toBe(3);
     expect(manifest.integrations.codex.runtime.mode).toBe("auto");
     expect(manifest.integrations.codex.runtime.orchestrator.model).toBeNull();
+    expect(manifest.integrations.codex.configuration.schema).toBe("yaaw.integration-config/v1");
+    expect(manifest.integrations.codex.configuration.appliedRevision).toBe(2);
+    expect(manifest.integrations.codex.configuration.notifiedRevision).toBe(2);
     expect(Object.keys(manifest.managedConfigKeys[".codex/config.toml"])).toHaveLength(8);
   });
 

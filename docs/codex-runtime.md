@@ -73,3 +73,31 @@ After YAAW changes project `.codex/config.toml`, start a new Codex session/task.
 ## Capability vs configuration
 
 Installed role files and config declarations show that the project is configured for YAAW workers. They do not prove the active Codex runtime exposes named-role spawning. Runtime behavior follows `.codex/yaaw-runtime.md` and its fallback ladder.
+
+
+## Recommended, inherit, custom, and inline profiles
+
+Interactive Codex configuration now starts with four progressively disclosed choices:
+
+- **Recommended**: apply the current YAAW role profile from the release-curated Codex catalog.
+- **Inherit Codex defaults**: keep model and reasoning selection outside YAAW.
+- **Custom**: choose execution mode, model strategy, role assignments, and optional advanced settings.
+- **Inline only**: do not spawn authority workers.
+
+Known models and allowed reasoning values are release-curated. The model picker always includes a custom-model escape hatch, so a project can use an enterprise/private model or a model released after its YAAW version.
+
+The selected profile is intent metadata; normalized runtime settings remain the execution truth.
+
+## Configuration revisions and updates
+
+Codex configuration revisions are separate from YAAW package versions and Codex adapter versions. Existing installations migrate to a conservative legacy revision without changing their stored runtime values.
+
+When a newer YAAW release contains a newer Codex configuration revision, Quick Update preserves the current settings and may show what is newly available. It never switches a project to a newer model or Recommended profile automatically.
+
+Review or change the project-local configuration with:
+
+```bash
+yaaw config codex
+```
+
+A config-only transaction updates `.codex/config.toml`, YAAW authority-worker TOMLs, and configuration metadata only. User-owned Codex settings, MCP servers, and non-YAAW agents remain protected by the existing managed-key ownership rules.

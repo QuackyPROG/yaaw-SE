@@ -35,8 +35,8 @@ vi.mock("@clack/prompts", () => ({
     if (config.message === "Which YAAW entrypoints should be exposed?") {
       return promptState.profile;
     }
-    if (config.message === "Configure Codex runtime for YAAW-SE?") {
-      return "minimal";
+    if (config.message === "How should YAAW configure Codex?") {
+      return "inherit";
     }
     throw new Error(`Unexpected select prompt: ${config.message}`);
   }),
@@ -139,7 +139,7 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
   expect(manifest.schema).toBe("yaaw.installation/v2");
   expect(manifest.systemSchema).toBe(2);
   expect(manifest.projectSchema).toBe(1);
-  expect(manifest.installationSchema).toBe(2);
+  expect(manifest.installationSchema).toBe(3);
   expect(Object.keys(manifest.integrations).sort()).toEqual([...selectedTools].sort());
   expect(manifest.skills.length).toBeGreaterThan(0);
 
@@ -243,7 +243,7 @@ describe("interactive TUI consumer journeys", () => {
         "Where should YAAW-SE be installed?",
         "Which AI coding tools should use YAAW-SE?",
         "Which YAAW entrypoints should be exposed?",
-        ...(tools.includes("codex") ? ["Configure Codex runtime for YAAW-SE?"] : []),
+        ...(tools.includes("codex") ? ["How should YAAW configure Codex?"] : []),
         "Continue?"
       ]);
 
