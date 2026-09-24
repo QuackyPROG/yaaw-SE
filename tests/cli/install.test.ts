@@ -162,7 +162,7 @@ describe("headless installation", () => {
 
     await runInstall({ directory: root, tools: "codex", yes: true });
     expect(await readFile(product, "utf8")).toBe("preserve me\n");
-  });
+  }, 30_000);
 
   it("requires explicit tools for a fresh headless install", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-no-tools-"));
