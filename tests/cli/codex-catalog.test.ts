@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CODEX_CONFIGURATION_REVISION, codexConfigurationChanges, codexModels, codexProfiles, recommendedCodexProfile } from "../../src/integrations/codex-catalog.js";
+import { CODEX_CONFIGURATION_REVISION, codexConfigurationChanges, codexModels, codexProfiles, codexReasoningEfforts, recommendedCodexProfile } from "../../src/integrations/codex-catalog.js";
 
 describe("Codex configuration catalog", () => {
   it("keeps catalog identities and revisions deterministic", () => {
@@ -16,9 +16,10 @@ describe("Codex configuration catalog", () => {
     expect(codexProfiles.some(candidate => candidate.id === "inherit")).toBe(true);
   });
 
-  it("declares reasoning capabilities for known models", () => {
+  it("declares the complete selectable reasoning tiers for known GPT-6 models", () => {
+    expect(codexReasoningEfforts).toEqual(["low", "medium", "high", "xhigh", "max"]);
     for (const model of codexModels) {
-      expect(model.reasoningEfforts.length).toBeGreaterThan(0);
+      expect(model.reasoningEfforts).toEqual([...codexReasoningEfforts]);
       expect(new Set(model.reasoningEfforts).size).toBe(model.reasoningEfforts.length);
     }
   });
