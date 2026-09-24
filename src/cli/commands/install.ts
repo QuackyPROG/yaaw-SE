@@ -228,21 +228,44 @@ export async function runInstall(options: InstallCommandOptions = {}) {
 
   const integrationSettings: Partial<Record<IntegrationId, unknown>> = {};
   const integrationProfiles: Partial<Record<IntegrationId, any>> = {};
-  if (tools.includes("codex")) {
-    const codexRecord = installedManifest?.integrations?.codex;
-    const selection = await resolveCodexRuntime(
-      options,
-      codexRecord?.configuration?.settings ?? codexRecord?.runtime,
-      codexRecord?.configuration?.profile,
-      interactive,
-      action
-    );
+  for (const integrationId of tools) {
+    const adapter = getIntegration(integrationId);
+    const capability = adapter.configuration;
+    if (!capability) continue;
+
+    const record = installedManifest?.integrations?.[integrationId];
+    let selection: ConfigurationSelection;
+    if (integrationId === "codex") {
+      selection = await resolveCodexRuntime(
+        options,
+        record?.configuration?.settings ?? record?.runtime,
+        record?.configuration?.profile,
+        interactive,
+        action
+      );
+    } else {
+      const currentSettings = capability.normalize(record?.configuration?.settings ?? capability.defaultSettings());
+      if (interactive && (action === "fresh" || action === "modify") && capability.configureInteractive) {
+        selection = await configureIntegration(integrationId, currentSettings, {
+          reason: action === "fresh" ? "fresh" : "modify",
+          availableRevision: capability.revision,
+          pendingChanges: capability.changes.filter(change => change.revision > (record?.configuration?.appliedRevision ?? 0)),
+          currentProfile: record?.configuration?.profile ?? null
+        });
+      } else {
+        selection = {
+          settings: currentSettings,
+          profile: record?.configuration?.profile ?? { id: "custom", revision: capability.revision }
+        };
+      }
+    }
+
     if (selection.cancelled) {
       if (interactive) p.outro("Installation cancelled.");
       return;
     }
-    integrationSettings.codex = selection.settings;
-    integrationProfiles.codex = selection.profile;
+    integrationSettings[integrationId] = selection.settings;
+    integrationProfiles[integrationId] = selection.profile;
   }
 
   const pendingConfigurationUpdates = action === "quick-update" && installedManifest ? detectConfigurationUpdates(installedManifest) : [];
