@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import { defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, type CodexModelSettings, type CodexRuntimeSettings } from "../integrations/codex-runtime.js";
-import { CODEX_CONFIGURATION_REVISION, codexModels, getCodexModel, recommendedCodexProfile } from "../integrations/codex-catalog.js";
+import { CODEX_CONFIGURATION_REVISION, codexModels, codexReasoningEfforts, getCodexModel, recommendedCodexProfile } from "../integrations/codex-catalog.js";
 import type { ConfigurationContext, ConfigurationSelection, IntegrationConfigurationProfile } from "../integrations/types.js";
 
 async function optionalText(message: string, current: string | null): Promise<string | null> {
@@ -13,12 +13,12 @@ async function optionalText(message: string, current: string | null): Promise<st
 async function reasoningPicker(label: string, model: string | null, current: string | null): Promise<string | null> {
   if (!model) return null;
   const known = getCodexModel(model);
-  const values = known?.reasoningEfforts ?? ["low", "medium", "high", "xhigh"];
+  const values = known?.reasoningEfforts ?? [...codexReasoningEfforts];
   const result = await p.select({
     message: `${label} reasoning effort`,
     initialValue: current ?? "inherit",
     options: [
-      ...values.map(value => ({ value, label: value === "xhigh" ? "Extra high" : value[0].toUpperCase() + value.slice(1) })),
+      ...values.map(value => ({ value, label: value === "xhigh" ? "Extra high" : value === "max" ? "Max" : value[0].toUpperCase() + value.slice(1) })),
       { value: "inherit", label: "Inherit" }
     ]
   });
