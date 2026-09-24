@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import { makeAdapter, pathExists } from "./helpers.js";
 import type { IntegrationAdapter, IntegrationContext, IntegrationVerification } from "./types.js";
 import type { InstallOperation, ManagedConfigEntry } from "../installer/types.js";
-import { normalizeCodexRuntimeSettings, type CodexModelSettings, type CodexRuntimeSettings } from "./codex-runtime.js";
+import { defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, parseCodexInstallConfig, type CodexModelSettings, type CodexRuntimeSettings } from "./codex-runtime.js";
+import { CODEX_CONFIGURATION_REVISION, codexConfigurationChanges } from "./codex-catalog.js";
 import { readTomlManagedValue, validateManagedToml } from "../installer/toml-managed.js";
 
 const baseAdapter = makeAdapter({
@@ -113,7 +114,33 @@ async function verifyRuntime(ctx: IntegrationContext): Promise<IntegrationVerifi
 
 export const codexAdapter: IntegrationAdapter = {
   ...baseAdapter,
-  adapterVersion: 2,
+  aliases: ["codex"],
+  adapterVersion: 3,
+  configuration: {
+    revision: CODEX_CONFIGURATION_REVISION,
+    changes: codexConfigurationChanges,
+    defaultSettings: defaultCodexRuntimeSettings,
+    normalize: normalizeCodexRuntimeSettings,
+    parseHeadless: parseCodexInstallConfig,
+    describe(settings) {
+      const runtime = normalizeCodexRuntimeSettings(settings);
+      return [
+        `Runtime: ${runtime.mode}`,
+        `Orchestrator: ${runtime.orchestrator.model ?? "inherit"} / ${runtime.orchestrator.reasoning ?? "inherit"}`,
+        `PRD: ${runtime.roles.prd.model ?? "inherit"} / ${runtime.roles.prd.reasoning ?? "inherit"}`,
+        `Planner: ${runtime.roles.planner.model ?? "inherit"} / ${runtime.roles.planner.reasoning ?? "inherit"}`,
+        `Implementer: ${runtime.roles.implementer.model ?? "inherit"} / ${runtime.roles.implementer.reasoning ?? "inherit"}`,
+        `Reviewer: ${runtime.roles.reviewer.model ?? "inherit"} / ${runtime.roles.reviewer.reasoning ?? "inherit"}`,
+        `Agent threads: ${runtime.maxConcurrentThreads ?? "inherit"}`
+      ];
+    },
+    async configureInteractive(current, context) {
+      const { configureCodex } = await import("../tui/configure-codex.js");
+      return configureCodex(current, context);
+    },
+    plan: planRuntime,
+    verify: verifyRuntime
+  },
   planRuntime,
   verifyRuntime,
   async verify(ctx, selectedSkillIds) {

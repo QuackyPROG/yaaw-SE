@@ -52,7 +52,7 @@ function normalizeManifest(value: any): InstallationManifest {
       schema: "yaaw.installation/v2",
       yaawVersion: String(value.yaawVersion),
       systemSchema: 1,
-      installationSchema: CURRENT_INSTALLATION_SCHEMA,
+      installationSchema: 2,
       projectSchema: Number(value.projectStateSchema ?? 1),
       installedAt: String(value.installedAt),
       updatedAt: String(value.updatedAt),

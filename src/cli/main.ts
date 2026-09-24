@@ -4,10 +4,11 @@ import { packageVersion } from "../installer/context.js";
 import { runInstall } from "./commands/install.js";
 import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
+import { runConfig } from "./commands/config.js";
 
 const program = new Command();
 program
-  .name("yaaw-se")
+  .name("yaaw")
   .description("Install and maintain project-local YAAW-SE workflows.")
   .version(await packageVersion());
 
@@ -33,6 +34,17 @@ program.command("install")
   .option("--json", "emit JSON")
   .action(async options => {
     await runInstall(options);
+  });
+
+program.command("config [integration]")
+  .description("Configure project-local YAAW provider integrations.")
+  .option("--directory <path>", "target project directory")
+  .option("--yes", "headless/noninteractive mode")
+  .option("--config <path>", "provider-specific headless configuration file")
+  .option("--conflict-policy <policy>", "fail|keep|replace|backup-replace for modified YAAW-managed configuration")
+  .option("--json", "emit JSON")
+  .action(async (integration, options) => {
+    await runConfig(integration, options);
   });
 
 program.command("status")

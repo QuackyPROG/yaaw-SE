@@ -46,9 +46,18 @@ export function formatPlan(plan: InstallPlan): string {
     lines.push("  Ensure durable project memory defaults exist");
   }
 
-  lines.push(
-    "  Preserve project memory and user-owned content"
-  );
+  for (const summary of plan.configurationSummaries ?? []) {
+    lines.push(`  Configure ${integrations[summary.integrationId].displayName} using ${summary.profile}`);
+  }
+
+  lines.push("  Preserve project memory and user-owned content");
+
+  if ((plan.configurationSummaries ?? []).length) {
+    lines.push("");
+    for (const summary of plan.configurationSummaries ?? []) {
+      lines.push(`${integrations[summary.integrationId].displayName}:`, ...summary.description.slice(0, 3).map(line => `  ${line}`));
+    }
+  }
 
   if (plan.warnings.length) {
     lines.push("", "Warnings:", ...plan.warnings.map(warning => `  ${warning}`));

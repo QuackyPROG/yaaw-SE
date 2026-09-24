@@ -1,6 +1,7 @@
 import { makeAdapter } from "./helpers.js";
 export const claudeCodeAdapter = makeAdapter({
   id: "claude-code",
+  aliases: ["claude"],
   displayName: "Claude Code",
   executable: "claude",
   detectionPaths: [".claude", "CLAUDE.md"],

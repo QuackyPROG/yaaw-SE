@@ -5,6 +5,8 @@ import { sha256Bytes } from "./hashing.js";
 import { extractManagedSection, managedSectionHash } from "./managed-sections.js";
 import { readTomlManagedValue, semanticConfigHash, validateManagedToml } from "./toml-managed.js";
 import { readManifest } from "./manifest.js";
+import { configurationStatus } from "./configuration.js";
+import { migrateInstallationManifest } from "./migrations/installation/index.js";
 
 async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
@@ -44,6 +46,7 @@ export async function inspectStatus(projectRoot: string) {
   if (!manifest) {
     return { installed: false, manifestValid: false, projectRoot, healthy: false, message: "No YAAW-SE installation manifest." };
   }
+  manifest = migrateInstallationManifest(manifest);
 
   const managedFiles = emptyCounts();
   const frameworkIntegrity = {
@@ -149,6 +152,7 @@ export async function inspectStatus(projectRoot: string) {
         ? "LOCAL_OVERRIDE"
         : "HEALTHY";
   frameworkIntegrity.repairRequired = frameworkIntegrity.status !== "HEALTHY";
+  const configuration = configurationStatus(manifest);
 
   return {
     installed: true,
@@ -165,6 +169,7 @@ export async function inspectStatus(projectRoot: string) {
     managedSections,
     managedConfigKeys,
     frameworkIntegrity,
+    configuration,
     healthy: issues.length === 0,
     issues
   };
@@ -199,6 +204,13 @@ export async function doctor(projectRoot: string) {
   });
   checks.push({ name: "project-memory", ok: status.projectMemory });
   checks.push({ name: "system-root", ok: await exists(join(projectRoot, ".yaaw-core", "system")) });
+  for (const [id, state] of Object.entries(status.configuration ?? {}) as [string, any][]) {
+    checks.push({
+      name: `configuration:${id}`,
+      ok: true,
+      detail: state.updateAvailable ? `configuration update available (applied r${state.appliedRevision}, available r${state.availableRevision})` : undefined
+    });
+  }
 
   const manifest = await readManifest(projectRoot);
   const durablePrefix = ".yaaw-core/project/";

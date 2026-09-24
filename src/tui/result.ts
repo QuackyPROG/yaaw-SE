@@ -93,12 +93,12 @@ export function formatSuccess(summary: SuccessSummary): string {
   ].join("\n");
 }
 
-export function showSuccess(summary: SuccessSummary) {
+export function showSuccess(summary: SuccessSummary, finish = true) {
   const title = summary.action === "fresh"
     ? "YAAW-SE installation complete"
     : summary.action === "quick-update"
       ? "YAAW-SE update complete"
       : "YAAW-SE changes complete";
   p.note(formatSuccess(summary), title);
-  p.outro("Verified and ready.");
+  if (finish) p.outro("Verified and ready.");
 }

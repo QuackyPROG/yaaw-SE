@@ -28,6 +28,7 @@ export async function detectSignals(projectRoot: string, executable: string | nu
 
 export function makeAdapter(config: {
   id: IntegrationId;
+  aliases?: string[];
   displayName: string;
   executable: string | null;
   detectionPaths: string[];
@@ -39,6 +40,7 @@ export function makeAdapter(config: {
 }): IntegrationAdapter {
   return {
     id: config.id,
+    aliases: config.aliases,
     displayName: config.displayName,
     maturity: "stable",
     adapterVersion: 1,

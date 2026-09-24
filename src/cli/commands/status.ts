@@ -12,6 +12,9 @@ export async function runStatus(options: {directory?:string;json?:boolean} = {})
     console.log(`Core: ${status.healthy ? "healthy" : "needs attention"}`);
     console.log(`Project memory: ${status.projectMemory ? "present" : "missing"}`);
     console.log(`Integrations: ${status.integrations.join(", ") || "none"}`);
+    for (const [id, state] of Object.entries(status.configuration ?? {}) as [string, any][]) {
+      console.log(`${id} configuration: applied r${state.appliedRevision}, available r${state.availableRevision}${state.updateAvailable ? " — update available" : ""}`);
+    }
     console.log(`Managed files: ${status.managedFiles.healthy} healthy, ${status.managedFiles.modified} modified, ${status.managedFiles.missing} missing, ${status.managedFiles.localOverrides} local overrides`);
     if (status.frameworkIntegrity) {
       console.log(`Framework integrity: ${status.frameworkIntegrity.status}`);

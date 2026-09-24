@@ -8,8 +8,8 @@ import { MANIFEST_RELATIVE_PATH, serializeManifest } from "../../installer/manif
 import { resolveProjectRoot } from "../../installer/boundary.js";
 import { executePlan, preflightPlan } from "../../installer/transaction.js";
 import { verifyInstalledState } from "../../installer/verify.js";
-import { integrationIds } from "../../integrations/registry.js";
-import type { IntegrationId } from "../../integrations/types.js";
+import { getIntegration, integrationIds } from "../../integrations/registry.js";
+import type { ConfigurationSelection, IntegrationId } from "../../integrations/types.js";
 import type { ConflictPolicy, InstallAction, InstallContext } from "../../installer/types.js";
 import semver from "semver";
 import { selectDirectory } from "../../tui/select-directory.js";
@@ -18,7 +18,11 @@ import { selectSkills } from "../../tui/select-skills.js";
 import { selectExistingAction } from "../../tui/existing-install.js";
 import { confirmPlan, formatPlan } from "../../tui/confirm-plan.js";
 import { formatSuccess, showSuccess } from "../../tui/result.js";
-import { configureCodexRuntime } from "../../tui/configure-codex.js";
+import { configureIntegration } from "../../tui/configure-integration.js";
+import { detectConfigurationUpdates } from "../../installer/configuration.js";
+import { migrateInstallationManifest } from "../../installer/migrations/installation/index.js";
+import { promptConfigurationUpdates, formatConfigurationUpdates } from "../../tui/configuration-updates.js";
+import { configureProjectIntegration } from "./config.js";
 import { defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, parseCodexInstallConfig, type CodexRuntimeSettings } from "../../integrations/codex-runtime.js";
 
 export interface InstallCommandOptions {
@@ -56,7 +60,7 @@ function inheritValue(value: string | undefined): string | null | undefined {
   return value === "inherit" ? null : value;
 }
 
-async function resolveCodexRuntime(options: InstallCommandOptions, existing: unknown, interactive: boolean, action: InstallAction): Promise<CodexRuntimeSettings> {
+async function resolveCodexRuntime(options: InstallCommandOptions, existing: unknown, currentProfile: any, interactive: boolean, action: InstallAction): Promise<ConfigurationSelection> {
   let settings = normalizeCodexRuntimeSettings(existing ?? defaultCodexRuntimeSettings());
 
   if (options.codexConfig) {
@@ -90,10 +94,16 @@ async function resolveCodexRuntime(options: InstallCommandOptions, existing: unk
     options.codexRootReasoning !== undefined || options.codexWorkerModel !== undefined ||
     options.codexWorkerReasoning !== undefined || options.codexMaxAgents !== undefined
   );
+  const capability = getIntegration("codex").configuration!;
   if (interactive && !explicit && (action === "fresh" || action === "modify")) {
-    settings = await configureCodexRuntime(settings);
+    return configureIntegration("codex", settings, {
+      reason: action === "fresh" ? "fresh" : "modify",
+      availableRevision: capability.revision,
+      pendingChanges: capability.changes.filter(change => change.revision > (currentProfile?.revision ?? 0)),
+      currentProfile: currentProfile ?? null
+    });
   }
-  return settings;
+  return { settings, profile: currentProfile ?? { id: explicit ? "custom" : "inherit", revision: capability.revision } };
 }
 
 async function legacyExists(root: string) {
@@ -138,6 +148,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     : (options.directory ?? process.cwd());
   const projectRoot = await resolveProjectRoot(requested);
   const existing = await detectExistingInstallation(projectRoot);
+  const installedManifest = existing.manifest ? migrateInstallationManifest(existing.manifest) : null;
 
   if (await legacyExists(projectRoot)) {
     throw new Error("Legacy .yaaw project state detected. Automatic migration is intentionally not performed; move/validate it before installing the one-root distribution.");
@@ -178,13 +189,13 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     let ctx = await makeUninstallContext();
     let uninstallBuilt;
     try {
-      uninstallBuilt = await buildInstallPlan(ctx, existing.manifest);
+      uninstallBuilt = await buildInstallPlan(ctx, installedManifest);
     } catch (error) {
       if (!(error instanceof ManagedConflictError) || !interactive || options.conflictPolicy) throw error;
       conflictPolicy = await chooseConflictPolicy(error.conflicts);
       if (conflictPolicy === "fail") throw error;
       ctx = await makeUninstallContext();
-      uninstallBuilt = await buildInstallPlan(ctx, existing.manifest);
+      uninstallBuilt = await buildInstallPlan(ctx, installedManifest);
     }
     const { plan } = uninstallBuilt;
     if (options.dryRun) {
@@ -199,11 +210,11 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   }
 
   let tools = parseTools(options.tools);
-  if (!tools.length && existing.manifest && ["quick-update","repair"].includes(action)) {
-    tools = Object.keys(existing.manifest.integrations) as IntegrationId[];
+  if (!tools.length && installedManifest && ["quick-update","repair"].includes(action)) {
+    tools = Object.keys(installedManifest!.integrations) as IntegrationId[];
   }
   if (interactive && (action === "fresh" || action === "modify")) {
-    tools = await selectTools(projectRoot, tools.length ? tools : (Object.keys(existing.manifest?.integrations ?? {}) as IntegrationId[]));
+    tools = await selectTools(projectRoot, tools.length ? tools : (Object.keys(installedManifest?.integrations ?? {}) as IntegrationId[]));
   }
   if (!tools.length) {
     throw new Error("Fresh/headless installation requires --tools; no provider is guessed.");
@@ -211,25 +222,38 @@ export async function runInstall(options: InstallCommandOptions = {}) {
 
   let skills: string[];
   if (options.skills) skills = await resolveSkillSelection(payloadRoot, options.skills);
-  else if (existing.manifest && ["quick-update","repair"].includes(action)) skills = existing.manifest.skills;
-  else if (interactive) skills = await selectSkills(payloadRoot, existing.manifest?.skills);
+  else if (installedManifest && ["quick-update","repair"].includes(action)) skills = existing.manifest.skills;
+  else if (interactive) skills = await selectSkills(payloadRoot, installedManifest?.skills);
   else skills = await resolveSkillSelection(payloadRoot, "standard");
 
   const integrationSettings: Partial<Record<IntegrationId, unknown>> = {};
+  const integrationProfiles: Partial<Record<IntegrationId, any>> = {};
   if (tools.includes("codex")) {
-    integrationSettings.codex = await resolveCodexRuntime(
+    const codexRecord = installedManifest?.integrations?.codex;
+    const selection = await resolveCodexRuntime(
       options,
-      existing.manifest?.integrations?.codex?.runtime,
+      codexRecord?.configuration?.settings ?? codexRecord?.runtime,
+      codexRecord?.configuration?.profile,
       interactive,
       action
     );
+    if (selection.cancelled) {
+      if (interactive) p.outro("Installation cancelled.");
+      return;
+    }
+    integrationSettings.codex = selection.settings;
+    integrationProfiles.codex = selection.profile;
   }
+
+  const pendingConfigurationUpdates = action === "quick-update" && installedManifest ? detectConfigurationUpdates(installedManifest) : [];
 
   let conflictPolicy: ConflictPolicy = options.conflictPolicy ?? (options.forceManaged ? "replace" : "fail");
   const makeContext = (): InstallContext => ({
     packageVersion: "", payloadRoot, requestedDirectory: requested, projectRoot,
     mode: interactive ? "interactive" : "headless", selectedIntegrations: tools, selectedSkills: skills,
     integrationSettings,
+    integrationProfiles,
+    acknowledgeConfigurationUpdates: interactive && action === "quick-update" ? pendingConfigurationUpdates.map(update => update.integrationId) : [],
     action, dryRun: Boolean(options.dryRun), forceManaged: Boolean(options.forceManaged), conflictPolicy
   });
   const version = await packageVersion();
@@ -241,14 +265,14 @@ export async function runInstall(options: InstallCommandOptions = {}) {
 
   let built;
   try {
-    built = await buildInstallPlan(ctx, existing.manifest);
+    built = await buildInstallPlan(ctx, installedManifest);
   } catch (error) {
     if (!(error instanceof ManagedConflictError) || !interactive || options.conflictPolicy) throw error;
     conflictPolicy = await chooseConflictPolicy(error.conflicts);
     if (conflictPolicy === "fail") throw error;
     ctx = makeContext();
     ctx.packageVersion = version;
-    built = await buildInstallPlan(ctx, existing.manifest);
+    built = await buildInstallPlan(ctx, installedManifest);
   }
 
   await preflightPlan(built.plan);
@@ -274,8 +298,24 @@ export async function runInstall(options: InstallCommandOptions = {}) {
     beforeManifest: async () => verifyInstalledState(projectRoot, tools, skills)
   } as any);
   spinner?.stop("Changes applied and verified");
-  if (options.json) console.log(JSON.stringify({ok:true,projectRoot,version,tools,skills,changed},null,2));
-  else if (interactive) showSuccess({ projectRoot, selected: tools, version, action, changed });
-  else console.log(formatSuccess({ projectRoot, selected: tools, version, action, changed }));
-  return { ok:true, projectRoot, version, tools, skills, changed };
+  const result = { ok:true, projectRoot, version, tools, skills, changed, configurationUpdates: pendingConfigurationUpdates };
+  if (options.json) console.log(JSON.stringify(result,null,2));
+  else if (interactive) {
+    showSuccess({ projectRoot, selected: tools, version, action, changed }, !(action === "quick-update" && pendingConfigurationUpdates.length));
+    if (action === "quick-update" && pendingConfigurationUpdates.length) {
+      const configureNow = await promptConfigurationUpdates(pendingConfigurationUpdates);
+      for (const integrationId of configureNow) {
+        try {
+          await configureProjectIntegration({ projectRoot, integrationId, reason: "update", interactive: true, conflictPolicy, showIntro: false });
+        } catch (error: any) {
+          p.note(`The framework update is complete, but configuration was not applied: ${error.message}`, `${getIntegration(integrationId).displayName} configuration`);
+        }
+      }
+      p.outro("Verified and ready.");
+    }
+  } else {
+    console.log(formatSuccess({ projectRoot, selected: tools, version, action, changed }));
+    if (pendingConfigurationUpdates.length) console.log("\n" + formatConfigurationUpdates(pendingConfigurationUpdates));
+  }
+  return result;
 }

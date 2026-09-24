@@ -1,6 +1,7 @@
 import { makeAdapter } from "./helpers.js";
 export const geminiCliAdapter = makeAdapter({
   id: "gemini-cli",
+  aliases: ["gemini"],
   displayName: "Gemini CLI",
   executable: "gemini",
   detectionPaths: [".gemini", "GEMINI.md"],

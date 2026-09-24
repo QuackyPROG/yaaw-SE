@@ -9,6 +9,7 @@ import type { InstallContext, InstallOperation, InstallPlan, InstallationManifes
 import { getIntegration } from "../integrations/registry.js";
 import { CURRENT_INSTALLATION_SCHEMA, CURRENT_PROJECT_SCHEMA, CURRENT_SYSTEM_SCHEMA, migrationPath } from "./migrations/index.js";
 import { projectMigrations } from "./migrations/project/index.js";
+import { migrateInstallationManifest } from "./migrations/installation/index.js";
 import type { CanonicalSkill, IntegrationId } from "../integrations/types.js";
 
 export class ManagedConflictError extends Error {
@@ -79,7 +80,7 @@ async function currentFileHash(path: string): Promise<string | null> {
   try { return sha256Bytes(await readFile(path)); } catch { return null; }
 }
 
-async function chooseManagedFile(params: {
+export async function chooseManagedFile(params: {
   ctx: InstallContext;
   previous: InstallationManifest | null;
   path: string;
@@ -119,7 +120,7 @@ async function chooseManagedFile(params: {
   records[pathRel] = { owner, sha256: expectedHash };
 }
 
-async function chooseManagedSection(params: {
+export async function chooseManagedSection(params: {
   ctx: InstallContext;
   previous: InstallationManifest | null;
   op: Extract<InstallOperation,{type:"update-managed-section"}>;
@@ -157,7 +158,7 @@ async function chooseManagedSection(params: {
 }
 
 
-async function chooseManagedConfigKeys(params: {
+export async function chooseManagedConfigKeys(params: {
   ctx: InstallContext;
   previous: InstallationManifest | null;
   op: Extract<InstallOperation,{type:"update-managed-config-keys"}>;
@@ -238,7 +239,7 @@ async function chooseManagedConfigKeys(params: {
   if (ownedEntries.length) operations.push({ ...op, entries: ownedEntries });
 }
 
-async function protectConfigRemoval(params: {
+export async function protectConfigRemoval(params: {
   ctx: InstallContext;
   pathRel: string;
   records: Record<string, ManagedConfigKeyRecord>;
@@ -345,6 +346,7 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
   const conflicts: string[] = [];
   const now = new Date().toISOString();
   const backupStamp = now.replace(/[:.]/g, "-");
+  previous = previous ? migrateInstallationManifest(previous) : null;
 
   if (ctx.action === "uninstall") {
     if (!previous) throw new Error("Cannot uninstall: no valid YAAW manifest");
@@ -424,6 +426,7 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
     }
   }
 
+  const configurationSummaries: NonNullable<InstallPlan["configurationSummaries"]> = [];
   const skillMap = new Map((await canonicalSkills(ctx.payloadRoot)).map(x=>[x.id,x]));
   const selectedCanonical = ctx.selectedSkills.map(id => {
     const skill = skillMap.get(id);
@@ -433,16 +436,42 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
 
   for (const integrationId of ctx.selectedIntegrations) {
     const adapter = getIntegration(integrationId);
-    const settings = ctx.integrationSettings?.[integrationId] ?? previous?.integrations?.[integrationId]?.runtime;
+    const previousRecord = previous?.integrations?.[integrationId];
+    const previousConfiguration = previousRecord?.configuration;
+    let settings = ctx.integrationSettings?.[integrationId] ?? previousConfiguration?.settings ?? previousRecord?.runtime;
+    if (adapter.configuration && settings === undefined) settings = adapter.configuration.defaultSettings();
     const ictx = { projectRoot: ctx.projectRoot, payloadRoot: ctx.payloadRoot, settings };
-    const runtimeOps = adapter.planRuntime ? await adapter.planRuntime(ictx) : [];
+    const runtimeOps = adapter.configuration ? await adapter.configuration.plan(ictx) : adapter.planRuntime ? await adapter.planRuntime(ictx) : [];
     const adapterOps = [...await adapter.planSkills(ictx, selectedCanonical), ...await adapter.planBootstrap(ictx), ...runtimeOps];
-    manifest.integrations[integrationId] = {
+
+    const installationRecord: InstallationManifest["integrations"][string] = {
       adapterVersion: adapter.adapterVersion,
       skillsRoot: rel(ctx.projectRoot, adapter.skillsRoot(ctx.projectRoot)),
-      bootstrap: adapter.bootstrapRelativePath,
-      ...(adapter.planRuntime ? { runtime: settings ?? null } : {})
+      bootstrap: adapter.bootstrapRelativePath
     };
+    if (adapter.configuration) {
+      const normalizedSettings = adapter.configuration.normalize(settings);
+      const preserveReviewedState = Boolean(previousConfiguration && ["quick-update", "repair"].includes(ctx.action));
+      const configuration = preserveReviewedState
+        ? structuredClone(previousConfiguration!)
+        : {
+            schema: "yaaw.integration-config/v1" as const,
+            appliedRevision: adapter.configuration.revision,
+            notifiedRevision: adapter.configuration.revision,
+            profile: ctx.integrationProfiles?.[integrationId] ?? previousConfiguration?.profile ?? { id: "custom", revision: adapter.configuration.revision },
+            settings: normalizedSettings
+          };
+      if (ctx.action === "quick-update" && ctx.acknowledgeConfigurationUpdates?.includes(integrationId)) configuration.notifiedRevision = adapter.configuration.revision;
+      configuration.settings = preserveReviewedState ? previousConfiguration!.settings : normalizedSettings;
+      installationRecord.configuration = configuration;
+      installationRecord.runtime = configuration.settings;
+      configurationSummaries.push({
+        integrationId,
+        profile: configuration.profile ? `${configuration.profile.id} r${configuration.profile.revision}` : "custom",
+        description: adapter.configuration.describe(configuration.settings)
+      });
+    } else if (adapter.planRuntime) installationRecord.runtime = settings ?? null;
+    manifest.integrations[integrationId] = installationRecord;
     for (const op of adapterOps) {
       if (op.type === "copy-managed-file") {
         desiredFilePaths.add(rel(ctx.projectRoot, op.path));
@@ -487,7 +516,8 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
       operations,
       selectedIntegrations: [...ctx.selectedIntegrations],
       selectedSkills: [...ctx.selectedSkills],
-      warnings
+      warnings,
+      configurationSummaries
     },
     manifest
   };

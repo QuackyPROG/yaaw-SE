@@ -1,9 +1,10 @@
 {
   "name": "yaaw-se",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Artifact-first autonomous software engineering workflow installer.",
   "type": "module",
   "bin": {
+    "yaaw": "./dist/cli/main.js",
     "yaaw-se": "./dist/cli/main.js"
   },
   "files": [
