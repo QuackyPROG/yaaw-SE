@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { runInstall } from "../../src/cli/commands/install.js";
 import { readTomlManagedValue } from "../../src/installer/toml-managed.js";
+import { CODEX_CONFIGURATION_REVISION } from "../../src/integrations/codex-catalog.js";
 
 async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
@@ -33,8 +34,8 @@ describe("Codex runtime adapter v3", () => {
     expect(manifest.integrations.codex.runtime.mode).toBe("auto");
     expect(manifest.integrations.codex.runtime.orchestrator.model).toBeNull();
     expect(manifest.integrations.codex.configuration.schema).toBe("yaaw.integration-config/v1");
-    expect(manifest.integrations.codex.configuration.appliedRevision).toBe(2);
-    expect(manifest.integrations.codex.configuration.notifiedRevision).toBe(2);
+    expect(manifest.integrations.codex.configuration.appliedRevision).toBe(CODEX_CONFIGURATION_REVISION);
+    expect(manifest.integrations.codex.configuration.notifiedRevision).toBe(CODEX_CONFIGURATION_REVISION);
     expect(Object.keys(manifest.managedConfigKeys[".codex/config.toml"])).toHaveLength(8);
   });
 
