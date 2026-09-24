@@ -223,6 +223,7 @@ describe("headless installation", () => {
     const legacyIntegrations = structuredClone(current.integrations);
     legacyIntegrations.codex.adapterVersion = 1;
     delete legacyIntegrations.codex.runtime;
+    delete legacyIntegrations.codex.configuration;
     const legacy: any = {
       ...current,
       integrations: legacyIntegrations,
@@ -245,7 +246,7 @@ describe("headless installation", () => {
     expect(upgraded.schema).toBe("yaaw.installation/v2");
     expect(upgraded.systemSchema).toBe(2);
     expect(upgraded.projectSchema).toBe(1);
-    expect(upgraded.installationSchema).toBe(2);
+    expect(upgraded.installationSchema).toBe(3);
   });
 
   it("blocks a package that cannot understand the installed project schema", async () => {

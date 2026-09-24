@@ -70,6 +70,7 @@ try {
   const legacyManifest = JSON.parse(await readFile(legacyManifestPath, "utf8"));
   legacyManifest.integrations.codex.adapterVersion = 1;
   delete legacyManifest.integrations.codex.runtime;
+  delete legacyManifest.integrations.codex.configuration;
   legacyManifest.managedFiles = Object.fromEntries(
     Object.entries(legacyManifest.managedFiles).filter(([rel]) => !rel.startsWith(".codex/"))
   );
@@ -141,8 +142,8 @@ try {
   if (manifest.yaawVersion !== currentVersion) {
     throw new Error(`Expected manifest ${currentVersion}, got ${manifest.yaawVersion}`);
   }
-  if (manifest.integrations?.codex?.adapterVersion !== 2) {
-    throw new Error(`Expected Codex adapter v2 after migration, got ${manifest.integrations?.codex?.adapterVersion}`);
+  if (manifest.integrations?.codex?.adapterVersion !== 3) {
+    throw new Error(`Expected Codex adapter v3 after migration, got ${manifest.integrations?.codex?.adapterVersion}`);
   }
   if (manifest.integrations?.codex?.runtime?.mode !== "auto") {
     throw new Error("Legacy Codex migration did not default to auto runtime");
@@ -156,7 +157,7 @@ try {
   const doctor = JSON.parse(execTarball(currentTarball, ["doctor", "--directory", project, "--json"], true));
   if (!doctor.healthy) throw new Error(`Doctor failed after tarball update: ${JSON.stringify(doctor)}`);
 
-  console.log(`✓ tarball repair ${oldVersion} -> ${currentVersion} restored tainted framework, migrated Codex v1 -> v2, invalidated runtime, and preserved durable state`);
+  console.log(`✓ tarball repair ${oldVersion} -> ${currentVersion} restored tainted framework, migrated Codex v1 -> v3, invalidated runtime, and preserved durable state`);
 } finally {
   await writeFile(packagePath, originalPackage);
   await writeFile(coreSourcePath, originalCore);

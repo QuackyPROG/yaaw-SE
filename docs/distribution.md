@@ -121,3 +121,12 @@ Framework drift and repository drift are different: repository drift may invalid
 ## Runtime repository boundary
 
 Provider process CWD is not authoritative. YAAW resolves the consumer workspace and scopes repository commands with `git -C <WORKSPACE_ROOT>`. In monorepos, identity/diffs are scoped to the YAAW workspace so unrelated siblings do not automatically invalidate review. Repository capability is separate from installer health.
+
+
+## Provider configuration revisions
+
+Provider configuration freshness is intentionally separate from package, adapter, installation, system, and project schema versions. A framework update may carry newer provider capability knowledge while preserving the project's chosen runtime/model settings.
+
+Interactive Quick Update records that a displayed capability notice has been seen only when the framework transaction succeeds. Headless updates report pending provider configuration updates without acknowledging them automatically.
+
+Configuration-only changes use `yaaw config [integration]` and do not refresh package-managed system files or unrelated integration surfaces.

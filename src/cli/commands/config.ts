@@ -6,6 +6,7 @@ import { resolveProjectRoot } from "../../installer/boundary.js";
 import { payloadRoot as getPayloadRoot } from "../../installer/context.js";
 import { MANIFEST_RELATIVE_PATH, serializeManifest } from "../../installer/manifest.js";
 import { buildConfigurationPlan, configurationStateFor } from "../../installer/configuration.js";
+import { ManagedConflictError } from "../../installer/plan.js";
 import { migrateInstallationManifest } from "../../installer/migrations/installation/index.js";
 import { executePlan, preflightPlan } from "../../installer/transaction.js";
 import { configurableIntegrations, getIntegration, resolveIntegrationId } from "../../integrations/registry.js";
@@ -57,8 +58,27 @@ export async function configureProjectIntegration(input: {
     profile = { id: "custom", revision: capability.revision };
   }
 
-  const conflictPolicy = input.conflictPolicy ?? "fail";
-  const built = await buildConfigurationPlan({ projectRoot: input.projectRoot, payloadRoot: getPayloadRoot(), integrationId: input.integrationId, settings, profile, conflictPolicy, manifest });
+  let conflictPolicy = input.conflictPolicy ?? "fail";
+  let built;
+  try {
+    built = await buildConfigurationPlan({ projectRoot: input.projectRoot, payloadRoot: getPayloadRoot(), integrationId: input.integrationId, settings, profile, conflictPolicy, manifest });
+  } catch (error) {
+    if (!(error instanceof ManagedConflictError) || !input.interactive || input.conflictPolicy) throw error;
+    p.note(error.conflicts.join("\n"), `Modified YAAW-managed ${adapter.displayName} configuration found`);
+    const selected = await p.select({
+      message: "How should this change be handled?",
+      initialValue: "keep",
+      options: [
+        { value: "keep", label: "Keep local value" },
+        { value: "replace", label: "Replace with selected YAAW configuration" },
+        { value: "backup-replace", label: "Backup local configuration and replace" },
+        { value: "fail", label: "Cancel" }
+      ]
+    });
+    if (p.isCancel(selected) || selected === "fail") return { cancelled: true };
+    conflictPolicy = selected as ConflictPolicy;
+    built = await buildConfigurationPlan({ projectRoot: input.projectRoot, payloadRoot: getPayloadRoot(), integrationId: input.integrationId, settings, profile, conflictPolicy, manifest });
+  }
   await preflightPlan(built.plan);
 
   if (input.interactive && !(await confirmConfiguration({ projectRoot: input.projectRoot, integrationId: input.integrationId, currentSettings, newSettings: settings, currentProfile, newProfile: profile }))) return { cancelled: true };
@@ -80,6 +100,10 @@ export async function configureProjectIntegration(input: {
 }
 
 export async function runConfig(integration: string | undefined, options: ConfigCommandOptions = {}) {
+  const allowedConflictPolicies = new Set<ConflictPolicy>(["fail", "keep", "replace", "backup-replace"]);
+  if (options.conflictPolicy && !allowedConflictPolicies.has(options.conflictPolicy)) {
+    throw new Error(`Unknown conflict policy: ${options.conflictPolicy}`);
+  }
   const interactive = !options.yes;
   const projectRoot = await resolveProjectRoot(options.directory ?? process.cwd());
   const existing = await detectExistingInstallation(projectRoot);
