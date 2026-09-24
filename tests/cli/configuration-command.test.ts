@@ -7,6 +7,7 @@ import { runConfig } from "../../src/cli/commands/config.js";
 import { runStatus } from "../../src/cli/commands/status.js";
 import { runDoctor } from "../../src/cli/commands/doctor.js";
 import { readTomlManagedValue } from "../../src/installer/toml-managed.js";
+import { CODEX_CONFIGURATION_REVISION } from "../../src/integrations/codex-catalog.js";
 
 describe("yaaw config", () => {
   it("changes only the selected integration configuration surface", async () => {
@@ -44,8 +45,8 @@ describe("yaaw config", () => {
     const projectConfig = await readFile(join(root, ".codex/config.toml"), "utf8");
     expect(readTomlManagedValue(projectConfig, "model")).toBe("gpt-6-sol");
     const manifest: any = JSON.parse(await readFile(join(root, ".yaaw-core/install/manifest.json"), "utf8"));
-    expect(manifest.integrations.codex.configuration.appliedRevision).toBe(2);
-    expect(manifest.integrations.codex.configuration.notifiedRevision).toBe(2);
+    expect(manifest.integrations.codex.configuration.appliedRevision).toBe(CODEX_CONFIGURATION_REVISION);
+    expect(manifest.integrations.codex.configuration.notifiedRevision).toBe(CODEX_CONFIGURATION_REVISION);
     expect(manifest.integrations.codex.configuration.profile.id).toBe("custom");
   });
 
