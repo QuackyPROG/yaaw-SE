@@ -244,6 +244,7 @@ function assignInheritedModels(settings: CodexRuntimeSettings) {
 
 async function configureCustom(settings: CodexRuntimeSettings): Promise<NavigationResult<CodexRuntimeSettings>> {
   let step: "mode" | "strategy" = "mode";
+  let strategyValue = "roles";
 
   while (true) {
     if (step === "mode") {
@@ -264,7 +265,7 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
 
     const strategy = await p.select({
       message: "How should models be assigned?",
-      initialValue: "roles",
+      initialValue: strategyValue,
       options: [
         { value: "recommended", label: "Recommended role profile", hint: "Use YAAW's recommended model/reasoning split" },
         { value: "shared", label: "One model for all workers", hint: "Choose a shared worker model" },
@@ -279,7 +280,9 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
       continue;
     }
 
-    strategyValue = String(strategy);\n\n    if (strategy === "recommended") {
+    strategyValue = String(strategy);
+
+    if (strategy === "recommended") {
       assignRecommendedModels(settings);
     } else if (strategy === "inherit") {
       assignInheritedModels(settings);
