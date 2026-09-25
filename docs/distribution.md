@@ -8,11 +8,17 @@ The supported distribution entrypoint is:
 npx yaaw-se install
 ```
 
-Users who explicitly want the newest published package can run:
+YAAW performs an application-level package freshness check before Commander dispatch. Stable builds check the npm `latest` dist-tag; prerelease builds check `next`. When a newer version is available, YAAW resolves the dist-tag once and hands the original argv to that exact immutable version.
+
+If npm is unavailable, times out, returns malformed version metadata, or cannot be launched, the gate fails open and the currently running package continues. The update gate writes nothing to command stdout, preserving machine-readable commands such as `status --json` and `doctor --json`.
+
+For deterministic exact-version, local-tarball, migration, regression, and CI workflows:
 
 ```bash
-npx yaaw-se@latest install
+YAAW_DISABLE_AUTO_UPDATE=1 npx yaaw-se@0.3.0 status
 ```
+
+The handoff child uses the internal `YAAW_UPDATE_HANDOFF` guard to prevent recursive update checks.
 
 A consumer workspace has exactly one YAAW root: `.yaaw-core/`.
 
@@ -40,6 +46,8 @@ The user-selected project path is a hard permanent-write boundary. Every mutatio
 A second hard boundary protects durable memory: installer-managed write/remove operations targeting `.yaaw-core/project/` are rejected during preflight even if a future planner bug creates such an operation. Only explicit project initialization-if-missing and registered project-schema migrations may create or transform durable state.
 
 ## Update model
+
+Executable/package freshness is separate from project mutation. A read-only command may run through a fresher CLI package without rewriting `.yaaw-core/system/`, provider configuration, the manifest, or durable project memory. Project mutation still occurs only through explicit installer/configuration operations.
 
 Quick Update reuses the installed provider/skill configuration and performs this sequence:
 

@@ -40,63 +40,136 @@ export async function configureProjectIntegration(input: {
   const state = configurationStateFor(manifest, input.integrationId);
   const pendingChanges = capability.changes.filter(change => change.revision > (record.configuration?.appliedRevision ?? 0));
 
-  let settings: unknown;
-  let profile: IntegrationConfigurationProfile | null;
-  if (input.interactive) {
-    if (input.showIntro !== false) p.intro(`YAAW-SE — ${adapter.displayName} configuration`);
-    if (state?.updateAvailable) {
-      p.note([`Project: ${input.projectRoot}`, `Current configuration revision: ${state.appliedRevision}`, `Latest supported revision: ${state.availableRevision}`, "", "New since your current configuration:", ...pendingChanges.map(change => `  ${change.title}`)].join("\n"), `${adapter.displayName} configuration`);
+  if (input.interactive && input.showIntro !== false) {
+    p.intro(`YAAW-SE — ${adapter.displayName} configuration`);
+  }
+  if (input.interactive && state?.updateAvailable) {
+    p.note([
+      `Project: ${input.projectRoot}`,
+      `Current configuration revision: ${state.appliedRevision}`,
+      `Latest supported revision: ${state.availableRevision}`,
+      "",
+      "New since your current configuration:",
+      ...pendingChanges.map(change => `  ${change.title}`)
+    ].join("\n"), `${adapter.displayName} configuration`);
+  }
+
+  let draftSettings: unknown = currentSettings;
+  let draftProfile: IntegrationConfigurationProfile | null = currentProfile;
+  let sessionConflictPolicy: ConflictPolicy = input.conflictPolicy ?? "fail";
+  let headlessLoaded = false;
+
+  while (true) {
+    if (input.interactive) {
+      const selection = await configureIntegration(input.integrationId, draftSettings, {
+        reason: input.reason,
+        availableRevision: capability.revision,
+        pendingChanges,
+        currentProfile: draftProfile
+      });
+      if (selection.cancelled) return { cancelled: true };
+      draftSettings = selection.settings;
+      draftProfile = selection.profile;
+    } else if (!headlessLoaded) {
+      if (!input.configPath) throw new Error("Headless configuration requires --config <path>.");
+      const parsed = JSON.parse(await readFile(resolve(input.configPath), "utf8"));
+      draftSettings = capability.parseHeadless ? capability.parseHeadless(parsed) : capability.normalize(parsed);
+      draftProfile = { id: "custom", revision: capability.revision };
+      headlessLoaded = true;
     }
-    const selection = await configureIntegration(input.integrationId, currentSettings, { reason: input.reason, availableRevision: capability.revision, pendingChanges, currentProfile });
-    if (selection.cancelled) return { cancelled: true };
-    settings = selection.settings;
-    profile = selection.profile;
-  } else {
-    if (!input.configPath) throw new Error("Headless configuration requires --config <path>.");
-    const parsed = JSON.parse(await readFile(resolve(input.configPath), "utf8"));
-    settings = capability.parseHeadless ? capability.parseHeadless(parsed) : capability.normalize(parsed);
-    profile = { id: "custom", revision: capability.revision };
-  }
 
-  let conflictPolicy = input.conflictPolicy ?? "fail";
-  let built;
-  try {
-    built = await buildConfigurationPlan({ projectRoot: input.projectRoot, payloadRoot: getPayloadRoot(), integrationId: input.integrationId, settings, profile, conflictPolicy, manifest });
-  } catch (error) {
-    if (!(error instanceof ManagedConflictError) || !input.interactive || input.conflictPolicy) throw error;
-    p.note(error.conflicts.join("\n"), `Modified YAAW-managed ${adapter.displayName} configuration found`);
-    const selected = await p.select({
-      message: "How should this change be handled?",
-      initialValue: "keep",
-      options: [
-        { value: "keep", label: "Keep local value" },
-        { value: "replace", label: "Replace with selected YAAW configuration" },
-        { value: "backup-replace", label: "Backup local configuration and replace" },
-        { value: "fail", label: "Cancel" }
-      ]
-    });
-    if (p.isCancel(selected) || selected === "fail") return { cancelled: true };
-    conflictPolicy = selected as ConflictPolicy;
-    built = await buildConfigurationPlan({ projectRoot: input.projectRoot, payloadRoot: getPayloadRoot(), integrationId: input.integrationId, settings, profile, conflictPolicy, manifest });
-  }
-  await preflightPlan(built.plan);
-
-  if (input.interactive && !(await confirmConfiguration({ projectRoot: input.projectRoot, integrationId: input.integrationId, currentSettings, newSettings: settings, currentProfile, newProfile: profile }))) return { cancelled: true };
-
-  const manifestPath = join(input.projectRoot, MANIFEST_RELATIVE_PATH);
-  const changed = await executePlan(built.plan, {
-    manifestPath,
-    manifestContent: serializeManifest(built.manifest),
-    beforeManifest: async () => {
-      const verification = await capability.verify?.({ projectRoot: input.projectRoot, payloadRoot: getPayloadRoot(), settings });
-      if (verification && !verification.healthy) throw new Error(`${adapter.displayName} configuration verification failed: ${verification.issues.join("; ")}`);
+    let conflictPolicy = input.conflictPolicy ?? sessionConflictPolicy;
+    let built;
+    try {
+      built = await buildConfigurationPlan({
+        projectRoot: input.projectRoot,
+        payloadRoot: getPayloadRoot(),
+        integrationId: input.integrationId,
+        settings: draftSettings,
+        profile: draftProfile,
+        conflictPolicy,
+        manifest
+      });
+    } catch (error) {
+      if (!(error instanceof ManagedConflictError) || !input.interactive || input.conflictPolicy) throw error;
+      p.note(error.conflicts.join("\n"), `Modified YAAW-managed ${adapter.displayName} configuration found`);
+      const selected = await p.select({
+        message: "How should this change be handled?",
+        initialValue: sessionConflictPolicy === "fail" ? "keep" : sessionConflictPolicy,
+        options: [
+          { value: "keep", label: "Keep local value" },
+          { value: "replace", label: "Replace with selected YAAW configuration" },
+          { value: "backup-replace", label: "Backup local configuration and replace" },
+          { value: "fail", label: "Cancel" }
+        ]
+      });
+      if (p.isCancel(selected) || selected === "fail") return { cancelled: true };
+      conflictPolicy = selected as ConflictPolicy;
+      sessionConflictPolicy = conflictPolicy;
+      built = await buildConfigurationPlan({
+        projectRoot: input.projectRoot,
+        payloadRoot: getPayloadRoot(),
+        integrationId: input.integrationId,
+        settings: draftSettings,
+        profile: draftProfile,
+        conflictPolicy,
+        manifest
+      });
     }
-  } as any);
 
-  if (input.interactive) {
-    p.note([`Project: ${input.projectRoot}`, `Profile: ${profile?.id ?? "custom"}`, `Configuration revision: ${capability.revision}`, "", "Preserved:", "  user-owned provider settings", "  unrelated integrations", "  durable project memory", ...(input.integrationId === "codex" ? ["", "Start a new Codex session/task for project settings to reload."] : [])].join("\n"), `${adapter.displayName} configuration updated`);
+    await preflightPlan(built.plan);
+
+    if (input.interactive) {
+      const confirmation = await confirmConfiguration({
+        projectRoot: input.projectRoot,
+        integrationId: input.integrationId,
+        currentSettings,
+        newSettings: draftSettings,
+        currentProfile,
+        newProfile: draftProfile
+      });
+      if (confirmation === "cancel") return { cancelled: true };
+      if (confirmation === "back") continue;
+    }
+
+    const manifestPath = join(input.projectRoot, MANIFEST_RELATIVE_PATH);
+    const changed = await executePlan(built.plan, {
+      manifestPath,
+      manifestContent: serializeManifest(built.manifest),
+      beforeManifest: async () => {
+        const verification = await capability.verify?.({
+          projectRoot: input.projectRoot,
+          payloadRoot: getPayloadRoot(),
+          settings: draftSettings
+        });
+        if (verification && !verification.healthy) {
+          throw new Error(`${adapter.displayName} configuration verification failed: ${verification.issues.join("; ")}`);
+        }
+      }
+    } as any);
+
+    if (input.interactive) {
+      p.note([
+        `Project: ${input.projectRoot}`,
+        `Profile: ${draftProfile?.id ?? "custom"}`,
+        `Configuration revision: ${capability.revision}`,
+        "",
+        "Preserved:",
+        "  user-owned provider settings",
+        "  unrelated integrations",
+        "  durable project memory",
+        ...(input.integrationId === "codex" ? ["", "Start a new Codex session/task for project settings to reload."] : [])
+      ].join("\n"), `${adapter.displayName} configuration updated`);
+    }
+
+    return {
+      ok: true,
+      integrationId: input.integrationId,
+      changed,
+      revision: capability.revision,
+      profile: draftProfile
+    };
   }
-  return { ok: true, integrationId: input.integrationId, changed, revision: capability.revision, profile };
 }
 
 export async function runConfig(integration: string | undefined, options: ConfigCommandOptions = {}) {
@@ -123,14 +196,27 @@ export async function runConfig(integration: string | undefined, options: Config
     else {
       if (!interactive) throw new Error("Headless yaaw config requires an integration argument.");
       p.intro("YAAW-SE — Project configuration");
-      const selected = await p.select({ message: "Which integration would you like to configure?", options: configurable.map(adapter => ({ value: adapter.id, label: adapter.displayName })) });
+      const selected = await p.select({
+        message: "Which integration would you like to configure?",
+        options: configurable.map(adapter => ({ value: adapter.id, label: adapter.displayName }))
+      });
       if (p.isCancel(selected)) return;
       integrationId = selected as IntegrationId;
     }
   }
 
-  if (!manifest.integrations[integrationId]) throw new Error(`${getIntegration(integrationId).displayName} is not installed in this project. Use yaaw install to modify integrations.`);
-  const result = await configureProjectIntegration({ projectRoot, integrationId, reason: "manual", interactive, configPath: options.config, conflictPolicy: options.conflictPolicy, showIntro: true });
+  if (!manifest.integrations[integrationId]) {
+    throw new Error(`${getIntegration(integrationId).displayName} is not installed in this project. Use yaaw install to modify integrations.`);
+  }
+  const result = await configureProjectIntegration({
+    projectRoot,
+    integrationId,
+    reason: "manual",
+    interactive,
+    configPath: options.config,
+    conflictPolicy: options.conflictPolicy,
+    showIntro: true
+  });
   if (options.json) console.log(JSON.stringify(result, null, 2));
   else if (interactive && result && !("cancelled" in result)) p.outro("Configuration updated and verified.");
   return result;

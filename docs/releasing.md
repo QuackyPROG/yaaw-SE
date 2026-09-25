@@ -51,19 +51,40 @@ A failed CI run never publishes.
 
 Stable npm releases are published from `main` after the full validation matrix succeeds.
 
-To publish new stable bytes, bump the version in both `package.json` and `package-lock.json`, commit that change to `main`, and push. For example, changing the package version from `0.1.x` to `0.2.0` causes a successful `main` run to publish:
+npm package versions are immutable, so the workflow now resolves a fresh immutable stable target automatically. The repository version represents the requested release line:
 
 ```text
-yaaw-se@0.2.0
-dist-tag: latest
+repoVersion > npmLatest
+    -> target = repoVersion
+
+repoVersion <= npmLatest
+    -> target = semver.inc(npmLatest, "patch")
 ```
 
-npm package versions are immutable. If the version already exists, the workflow does not overwrite it; it only ensures `latest` points to that already-published version. Therefore, any `main` change that must reach normal `npx yaaw-se install` users needs a package-version bump.
+Examples:
 
-Normal users can then run:
+```text
+repo 0.3.0 + latest 0.3.0 -> 0.3.1
+repo 0.3.0 + latest 0.3.4 -> 0.3.5
+repo 0.4.0 + latest 0.3.8 -> 0.4.0
+```
+
+The workflow sets the target version **before** building, packs one tarball, smoke-tests that exact tarball, then publishes those exact bytes to `latest`. The existing current-main SHA guard remains in place so an older CI run cannot publish after a newer main commit exists.
+
+The `next` channel follows the same prospective stable line, for example `0.3.5-dev.<run-id>.<attempt>` when `latest` is `0.3.4`.
+
+Normal stable users can run:
 
 ```bash
 npx yaaw-se install
+```
+
+The CLI itself checks `latest` before command dispatch and hands off to the exact newer stable version when reachable. Stable users are never silently moved to `next`. Registry failure is non-fatal.
+
+For deterministic CI, regression reproduction, migration tests, support work, and exact local tarballs, disable application-level updating:
+
+```bash
+YAAW_DISABLE_AUTO_UPDATE=1 npx yaaw-se@0.3.0 status
 ```
 
 ## Local verification before a stable tag
@@ -97,11 +118,13 @@ The first command exercises the exact packed artifact across Codex, Claude Code,
 
 The second builds a synthetic update tarball, deliberately taints an installed package-managed framework file, then upgrades using `backup-replace`. It verifies that the tainted bytes are backed up, canonical package content is restored/updated, replaceable runtime caches are invalidated, the Codex runtime migration still succeeds, and product, engineering, state, spec, ticket, review, evidence, research, and project-rule durable artifacts survive byte-for-byte.
 
+Both exact-package smoke scripts set `YAAW_DISABLE_AUTO_UPDATE=1` so the new startup gate cannot substitute registry bytes for the tarball under test. Release jobs can pass `YAAW_SMOKE_TARBALL` so the artifact that passes smoke testing is the same tarball published to npm.
+
 ## Versioning rule
 
 npm package versions are immutable. Do not reuse a stable version for different stable source states.
 
-Before publishing a new stable release from `main`, update both `package.json` and `package-lock.json` to the intended version and commit them. Release verification uses `npm ci`, so lock drift fails rather than being silently resolved.
+Routine `main` changes do not require a manual patch bump: CI increments from npm `latest`. To request a deliberate minor or major boundary, move the repository version ahead of npm `latest`; that repository version becomes the next stable target. Release-time `npm version --no-git-tag-version` updates the package metadata in the isolated CI workspace before payload construction.
 
 ## After the first package exists
 
