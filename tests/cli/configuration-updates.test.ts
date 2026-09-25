@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { emptyManifest } from "../../src/installer/manifest.js";
 import { configurationStateFor, detectConfigurationUpdates } from "../../src/installer/configuration.js";
+import { formatConfigurationUpdates } from "../../src/tui/configuration-updates.js";
 import { CODEX_CONFIGURATION_REVISION } from "../../src/integrations/codex-catalog.js";
 
 function manifest(applied: number, notified: number) {
@@ -31,6 +32,17 @@ describe("provider configuration update detection", () => {
     expect(updates).toHaveLength(1);
     expect(updates[0].integrationId).toBe("codex");
     expect(updates[0].availableRevision).toBe(CODEX_CONFIGURATION_REVISION);
+  });
+
+  it("makes preserved settings and fallback opt-in explicit in the Quick Update notice", () => {
+    const updates = detectConfigurationUpdates(manifest(3, 3));
+    const notice = formatConfigurationUpdates(updates);
+
+    expect(notice).toContain("Quick Update installed support for these capabilities without changing your existing provider setup.");
+    expect(notice).toContain("Your current configuration and selected profile were preserved.");
+    expect(notice).toContain("Astra fallback is available, but Quick Update did not enable it or replace your current Codex settings.");
+    expect(notice).toContain("choose Recommended, or choose Custom and configure Failure fallback");
+    expect(notice).toContain("yaaw config codex");
   });
 
   it("does not nag after notification while status still reports update available", () => {
