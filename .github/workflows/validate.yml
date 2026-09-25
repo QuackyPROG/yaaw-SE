@@ -12,6 +12,7 @@ on:
       - 'installer/**'
       - 'tests/**'
       - 'docs/**'
+      - '.github/workflows/**'
       - 'package.json'
       - 'package-lock.json'
       - 'tsconfig.json'
