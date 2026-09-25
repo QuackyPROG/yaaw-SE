@@ -8,6 +8,11 @@ The supported distribution entrypoint is:
 npx yaaw-se install
 ```
 
+YAAW checks package freshness before command dispatch. Stable package versions check npm `latest`; prerelease package versions check `next`. If a newer version is available, YAAW resolves the tag once and hands the original argv to that exact immutable version.
+
+Registry failure is non-fatal, and the freshness gate writes nothing to stdout so machine-readable output remains valid. Use `YAAW_DISABLE_AUTO_UPDATE=1` for deterministic exact-version and local-tarball workflows. Handoff children use `YAAW_UPDATE_HANDOFF` to prevent recursion.
+
+
 A consumer workspace has exactly one YAAW root: `.yaaw-core/`. The workspace root is the directory containing that installation; `.yaaw-core/project/` is project memory and is not called the workspace root.
 
 - `.yaaw-core/core|roles|workflows|expertise|rules|registries|schemas|templates|tools` are **PACKAGE_MANAGED**.
@@ -32,6 +37,10 @@ Neither may take over the other's authority.
 Runtime semantic roles may inspect package health but may not mutate package-managed framework content. Orchestrator runs the installed read-only framework-integrity verifier before project reconciliation/dispatch. A non-`HEALTHY` result is an execution stop, not a ticket transition.
 
 Framework drift and repository drift are different trust failures: repository drift may invalidate acceptance and route to Reviewer; framework drift invalidates the execution engine and requires installer repair.
+
+## Executable freshness vs project mutation
+
+Executable freshness is separate from project mutation. A fresher CLI may execute a command, but the startup gate does not rewrite `.yaaw-core/`, provider adapters, manifests, or durable project memory.
 
 ## Update invariant
 

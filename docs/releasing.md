@@ -49,29 +49,14 @@ A failed CI run never publishes.
 
 ## Stable releases
 
-Stable npm releases are driven by Git tags matching `v*`.
+The `yaaw-SEv2` branch publishes only the npm `next` channel. Stable `latest` releases are owned by `main`.
 
-The tag must exactly match the version in `package.json`. For example:
+Each successful current-v2 build resolves a unique prerelease from the prospective stable line, sets that version before building, smoke-tests the exact packed tarball, then publishes those exact bytes. Stable packages check `latest`; prerelease packages check `next`.
 
-```bash
-# package.json version: 0.1.0
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-The tag starts the same full validation matrix. If all required jobs succeed, GitHub publishes:
-
-```text
-yaaw-se@0.1.0
-dist-tag: latest
-```
-
-If that exact npm version already exists, the workflow does not try to overwrite the immutable package version; it ensures the `latest` dist-tag points to that version.
-
-Normal users can then run:
+For deterministic exact-version, local-tarball, migration, regression, and CI workflows:
 
 ```bash
-npx yaaw-se install
+YAAW_DISABLE_AUTO_UPDATE=1 npx yaaw-se@0.1.0 status
 ```
 
 ## Local verification before a stable tag
@@ -101,15 +86,13 @@ node scripts/smoke_npm_tarball.mjs
 node scripts/smoke_npm_update.mjs
 ```
 
-The first command exercises the exact packed artifact across Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, and durable-state sentinels.
+The first command exercises the exact packed artifact across Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, and durable-state sentinels. Exact-package smoke runs disable application-level auto-update; release CI passes the already-packed tarball so the artifact tested is the artifact published.
 
 The second builds a synthetic update tarball, deliberately taints an installed package-managed framework file, then upgrades using `backup-replace`. It verifies that the tainted bytes are backed up, canonical package core is restored/updated, replaceable runtime caches are invalidated, and product, engineering, state, spec, ticket, review, evidence, research, and project-rule durable artifacts survive byte-for-byte.
 
 ## Versioning rule
 
-npm package versions are immutable. Do not reuse a stable version for different stable source states.
-
-Before tagging a new stable release, update both `package.json` and `package-lock.json` to the intended version and commit them. Release verification uses `npm ci`, so lock drift fails rather than being silently resolved.
+npm package versions are immutable. The v2 CI resolver selects a fresh prerelease version from the prospective stable line; stable version ownership remains on `main`.
 
 ## After the first package exists
 

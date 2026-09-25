@@ -21,7 +21,7 @@ function run(args, options = {}) {
     cwd: options.cwd ?? root,
     encoding: "utf8",
     stdio: options.capture ? "pipe" : "inherit",
-    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" }
+    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0", YAAW_DISABLE_AUTO_UPDATE: "1" }
   });
   if (result.status !== 0) {
     const details = [result.stdout, result.stderr].filter(Boolean).join("\n");
@@ -31,12 +31,21 @@ function run(args, options = {}) {
   return result.stdout ?? "";
 }
 
-const packRaw = run(["pack", "--json", "--ignore-scripts"], { capture: true });
-const packInfo = JSON.parse(packRaw);
-if (!Array.isArray(packInfo) || !packInfo[0]?.filename) {
-  throw new Error(`Unexpected npm pack output: ${packRaw}`);
+const providedTarball = process.env.YAAW_SMOKE_TARBALL ? resolve(process.env.YAAW_SMOKE_TARBALL) : null;
+let ownsTarball = false;
+let tarball;
+if (providedTarball) {
+  if (!existsSync(providedTarball)) throw new Error(`Provided smoke tarball does not exist: ${providedTarball}`);
+  tarball = providedTarball;
+} else {
+  const packRaw = run(["pack", "--json", "--ignore-scripts"], { capture: true });
+  const packInfo = JSON.parse(packRaw);
+  if (!Array.isArray(packInfo) || !packInfo[0]?.filename) {
+    throw new Error(`Unexpected npm pack output: ${packRaw}`);
+  }
+  tarball = join(root, packInfo[0].filename);
+  ownsTarball = true;
 }
-const tarball = join(root, packInfo[0].filename);
 
 function execTarball(args, capture = false) {
   return run(["exec", "--yes", `--package=${tarball}`, "--", "yaaw-se", ...args], { capture });
@@ -261,5 +270,5 @@ try {
 
   console.log(`Exact tarball smoke passed: ${basename(tarball)}`);
 } finally {
-  await rm(tarball, { force: true });
+  if (ownsTarball) await rm(tarball, { force: true });
 }

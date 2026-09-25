@@ -22,7 +22,7 @@ function run(args, options = {}) {
     cwd: options.cwd ?? root,
     encoding: "utf8",
     stdio: options.capture ? "pipe" : "inherit",
-    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" }
+    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0", YAAW_DISABLE_AUTO_UPDATE: "1" }
   });
   if (result.status !== 0) {
     const details = [result.stdout, result.stderr].filter(Boolean).join("\n");
