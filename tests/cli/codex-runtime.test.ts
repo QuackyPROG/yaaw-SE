@@ -135,6 +135,48 @@ describe("Codex runtime adapter v4", () => {
     expect(readTomlManagedValue(projectConfig, "agents.yaaw_reviewer_fallback.config_file")).toBe("agents/yaaw-reviewer-fallback.toml");
   });
 
+  it("quick-update preserves an existing Codex setup when a newer configuration revision is only being announced", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-codex-preserve-config-update-"));
+    const configPath = join(root, "codex-install.json");
+    await writeFile(configPath, JSON.stringify({
+      schema: "yaaw.codex-install/v1",
+      mode: "auto",
+      orchestrator: { model: "gpt-6-luna", reasoning: "low" },
+      failureFallback: {
+        afterFailures: null,
+        implementer: { model: null, reasoning: null },
+        reviewer: { model: null, reasoning: null }
+      },
+      serviceTier: "flex"
+    }, null, 2));
+
+    await runInstall({ directory: root, tools: "codex", skills: "core", yes: true, codexConfig: configPath });
+
+    const manifestPath = join(root, ".yaaw-core/install/manifest.json");
+    const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    const preservedSettings = structuredClone(manifest.integrations.codex.configuration.settings);
+    manifest.integrations.codex.configuration.appliedRevision = CODEX_CONFIGURATION_REVISION - 1;
+    manifest.integrations.codex.configuration.notifiedRevision = CODEX_CONFIGURATION_REVISION - 1;
+    manifest.integrations.codex.configuration.profile = { id: "custom", revision: CODEX_CONFIGURATION_REVISION - 1 };
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+    await runInstall({ directory: root, action: "quick-update", yes: true });
+
+    const updated: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    expect(updated.integrations.codex.configuration.settings).toEqual(preservedSettings);
+    expect(updated.integrations.codex.configuration.profile).toEqual({ id: "custom", revision: CODEX_CONFIGURATION_REVISION - 1 });
+    expect(updated.integrations.codex.configuration.appliedRevision).toBe(CODEX_CONFIGURATION_REVISION - 1);
+    expect(updated.integrations.codex.configuration.notifiedRevision).toBe(CODEX_CONFIGURATION_REVISION - 1);
+    expect(updated.integrations.codex.configuration.settings.failureFallback.afterFailures).toBeNull();
+
+    const projectConfig = await readFile(join(root, ".codex/config.toml"), "utf8");
+    expect(readTomlManagedValue(projectConfig, "model")).toBe("gpt-6-luna");
+    expect(readTomlManagedValue(projectConfig, "model_reasoning_effort")).toBe("low");
+    expect(readTomlManagedValue(projectConfig, "service_tier")).toBe("flex");
+    expect(await exists(join(root, ".codex/agents/yaaw-implementer-fallback.toml"))).toBe(false);
+    expect(await exists(join(root, ".codex/agents/yaaw-reviewer-fallback.toml"))).toBe(false);
+  });
+
   it("inline mode disables spawned YAAW authority execution in the adapter", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-codex-inline-"));
     await runInstall({ directory: root, tools: "codex", yes: true, codexRuntime: "inline" });
