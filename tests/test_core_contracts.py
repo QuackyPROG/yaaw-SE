@@ -203,7 +203,7 @@ class CoreContractsTest(unittest.TestCase):
 
     def test_orchestrator_is_only_physical_state_writer(self):
         orchestrator = self.role_io["roles"]["orchestrator"]
-        self.assertEqual(set(orchestrator["writes"]), {"state", "observed_state", "handoff", "intent"})
+        self.assertEqual(set(orchestrator["writes"]), {"state", "observed_state", "handoff", "intent", "dispatch_failures"})
         self.assertIn("installation_manifest", orchestrator["reads"])
         transitions = json.loads((CORE / "registries/transitions.json").read_text())
         self.assertTrue(transitions["legal"])
