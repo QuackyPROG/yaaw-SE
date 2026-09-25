@@ -60,10 +60,11 @@ async function reasoningPicker(
 }
 
 async function modelPair(label: string, current: CodexModelSettings): Promise<NavigationResult<CodexModelSettings>> {
+  const draft = structuredClone(current);
   while (true) {
     const result = await p.select({
       message: `${label} model`,
-      initialValue: current.model ?? "inherit",
+      initialValue: draft.model ?? "inherit",
       options: [
         ...codexModels.map(model => ({ value: model.id, label: model.label, hint: model.description })),
         { value: "inherit", label: "Inherit", hint: "Use the parent/default Codex model" },
@@ -73,21 +74,21 @@ async function modelPair(label: string, current: CodexModelSettings): Promise<Na
     });
     if (p.isCancel(result) || result === "back") return navigationBack();
 
-    let model: string | null;
     if (result === "inherit") {
-      model = null;
+      draft.model = null;
     } else if (result === "custom") {
-      const custom = await textValue(`${label} custom model ID`, current.model);
+      const custom = await textValue(`${label} custom model ID`, draft.model);
       if (custom.kind !== "value") continue;
-      model = custom.value;
+      draft.model = custom.value;
     } else {
-      model = String(result);
+      draft.model = String(result);
     }
 
-    const reasoning = await reasoningPicker(label, model, current.reasoning);
+    const reasoning = await reasoningPicker(label, draft.model, draft.reasoning);
     if (reasoning.kind === "back") continue;
     if (reasoning.kind === "cancel") return navigationCancel();
-    return navigationValue({ model, reasoning: reasoning.value });
+    draft.reasoning = reasoning.value;
+    return navigationValue(draft);
   }
 }
 
@@ -278,7 +279,7 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
       continue;
     }
 
-    if (strategy === "recommended") {
+    strategyValue = String(strategy);\n\n    if (strategy === "recommended") {
       assignRecommendedModels(settings);
     } else if (strategy === "inherit") {
       assignInheritedModels(settings);
