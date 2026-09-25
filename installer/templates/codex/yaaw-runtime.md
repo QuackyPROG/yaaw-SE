@@ -17,31 +17,59 @@ When `orchestration.dispatch` selects a non-Orchestrator role, map it only after
 
 Codex role selection is an execution mechanism, never a second router.
 
+## Configured authority execution profiles
+
+{{AUTHORITY_EXECUTION_PROFILES}}
+
+These values are generated from the same normalized settings stored in the YAAW installation manifest. `HOST_INHERIT` is symbolic: do not guess a concrete model or reasoning value.
+
+## Execution-profile fidelity
+Changing the execution mechanism is allowed. Changing the configured effective authority profile without explicit user configuration is not.
+
+Before any non-inline authority dispatch:
+1. Resolve the required authority profile shown above for the selected primary or fallback authority.
+2. Prefer the exact named YAAW worker. Its managed agent file is the authoritative role-specific configuration layer.
+3. If named selection is unavailable before a child starts, compare the generic worker baseline with the required profile dimension by dimension.
+4. A mismatched model may be corrected only when the active spawn schema exposes an authoritative model override. A mismatched reasoning value may be corrected only when the active spawn schema exposes an authoritative reasoning/model_reasoning_effort override.
+5. Spawn generic only when every mismatched dimension is either already equivalent or can be explicitly corrected to the required value.
+6. If generic cannot preserve the profile, compare the inline/root baseline with the required profile and execute inline only when equivalent in `auto` mode.
+7. Unknown is not assumed equivalent. `HOST_INHERIT` equals another `HOST_INHERIT` only because both paths use the same unresolved inheritance chain.
+8. If the active mechanism cannot guarantee the profile, stop with `BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE`.
+
+Never prompt a generic worker to *claim* a model/reasoning identity. Worker self-report is not proof of the host execution profile.
+
 ## Capability escalation fallback
 
 {{FAILURE_FALLBACK_POLICY}}
 
-Failure accounting is read from `.yaaw-core/runtime/dispatch-failures.json` only after Orchestrator has re-inspected durable reality. Count only child execution failures with no durable progress on the unchanged handoff basis: worker failure, interruption, no response, or an unusable/illegal result. Do **not** count legal semantic results such as `REPAIR`, `REPLAN`, `BLOCKED`, or a real precondition result.
+Failure accounting is read from `.yaaw-core/runtime/dispatch-failures.json` only after Orchestrator has re-inspected durable reality. Count only child execution failures with no durable progress on the unchanged handoff basis: worker failure, interruption, no response, or an unusable/illegal result. Do **not** count legal semantic results such as `REPAIR`, `REPLAN`, `BLOCKED`, or a real precondition result. A pre-execution `HOST_EXECUTION_PROFILE_UNAVAILABLE` or `HOST_ISOLATION_UNAVAILABLE` stop means no authority worker ran, so it must not increment the failure ledger or trigger Astra escalation.
 
 When the threshold is reached for Implementer or Reviewer, prefer the role-specific fallback named worker on the next dispatch. It receives the exact same semantic role and handoff; only the host execution capability/model changes. Never reuse an Implementer context as Reviewer.
 
 ## Runtime modes
 
 ### auto
-1. Prefer a fresh named YAAW worker when the active spawn schema exposes named role / agent-type selection.
-2. If named selection is unavailable or is explicitly rejected **before a child starts**, spawn one fresh generic worker for the same handoff.
-3. If no isolated worker capability is available, execute the selected role/workflow inline.
-4. If a child was created and then failed/interrupted, do not blindly retry. Return to YAAW reality inspection first.
+1. Resolve the selected authority's required execution profile.
+2. Prefer its exact named YAAW worker.
+3. If named selection is unavailable before child creation, inspect the generic baseline.
+4. For each mismatch, use an explicit spawn override only when the active spawn schema exposes that exact control.
+5. Execute generic only when the resulting model and reasoning are both guaranteed equivalent to the required profile.
+6. If generic cannot preserve the profile, execute inline only when the current inline/root profile is equivalent.
+7. Otherwise return `BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE`.
+8. If a child was created and then failed/interrupted, do not try another mechanism blindly. Return to YAAW reality inspection first.
 
 ### isolated-required
-Use the named -> generic isolation ladder above. If no isolated worker can be created, return:
+Use the same named-then-generic fidelity checks, but never execute inline.
 
-`BLOCKED:HOST_ISOLATION_UNAVAILABLE`
-
-Do not fall back inline.
+- If the host exposes no isolated spawning mechanism at all, return `BLOCKED:HOST_ISOLATION_UNAVAILABLE`.
+- If isolation exists but the available isolated mechanism cannot guarantee the required model/reasoning profile, return `BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE`.
 
 ### inline
-Do not spawn YAAW authority workers. Execute the selected handoff in the current context using canonical YAAW role/workflow contracts.
+Do not spawn YAAW authority workers. Execute the selected handoff in the current/root context using canonical YAAW role/workflow contracts.
+
+Inline mode is an explicit user choice and therefore does **not** provide per-role model isolation. Choose `auto` or `isolated-required` when role-specific model/reasoning assignments must be enforced.
+
+The primary and Astra capability-fallback profiles use exactly the same fidelity rules. If fallback selects Astra/high, no generic or inline mechanism may silently substitute another profile.
 
 ## Fresh worker bootstrap
 Prefer no inherited parent conversation history. If the active host exposes a no-history control such as `fork_turns`, use its no-history value; if an older compatible host exposes a boolean fork-context control, disable inherited context.

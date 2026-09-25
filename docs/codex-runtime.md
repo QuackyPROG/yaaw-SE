@@ -4,9 +4,9 @@ YAAW-SE keeps the root Codex session as Orchestrator during autonomous operation
 
 ## Runtime modes
 
-- `auto` (default): named YAAW worker -> generic fresh worker -> inline fallback.
-- `isolated-required`: named -> generic worker, then `BLOCKED:HOST_ISOLATION_UNAVAILABLE` if isolation is unavailable.
-- `inline`: legacy same-context execution.
+- `auto` (default): exact named worker first; generic and then inline are permitted only when the configured effective authority profile is preserved.
+- `isolated-required`: exact named worker first, then only profile-equivalent/correctable generic isolation. No isolation returns `BLOCKED:HOST_ISOLATION_UNAVAILABLE`; isolation that cannot honor the profile returns `BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE`.
+- `inline`: deliberate same-context execution. Per-role model isolation is not provided in this mode.
 
 Direct public role invocation may still run in the current context. The isolation ladder applies to Orchestrator dispatch.
 
@@ -63,6 +63,33 @@ A failure counts only after reality inspection confirms that the child failed/in
 
 The counter is stored only in replaceable `.yaaw-core/runtime/dispatch-failures.json`. It resets when the role/workflow/work item/revisions/repository basis changes or durable progress is observed. If the Astra fallback also fails without progress on the unchanged basis, YAAW stops with `BLOCKED:AUTHORITY_EXECUTION_FAILED` rather than looping indefinitely.
 
+## Authority execution profile fidelity
+
+Codex adapter v5 makes model/reasoning fidelity a dispatch invariant. For each authority, YAAW resolves model and reasoning independently using:
+
+```text
+authority setting
+  ?? default worker setting
+  ?? orchestrator/root setting
+  ?? HOST_INHERIT
+```
+
+Implementer/Reviewer capability-fallback profiles use the same resolver with the fallback role setting as the authority-specific layer.
+
+The named YAAW worker remains preferred. If named selection is unavailable before a child starts, a generic worker is legal only when its baseline is already equivalent or the active spawn schema exposes authoritative overrides for every mismatched dimension. If generic cannot preserve the profile, `auto` may use inline only when the root profile is equivalent. Otherwise dispatch fails closed with `BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE`.
+
+`HOST_INHERIT` is symbolic. YAAW never guesses a concrete model from an inherited value. Two unresolved paths may be treated as equivalent only when they share the same inheritance chain.
+
+Changing the execution mechanism is allowed; silently changing the configured effective authority profile is not. Prompt text or worker self-report is never accepted as proof of the actual model/reasoning configuration.
+
+The generated `.codex/yaaw-runtime.md` includes the primary authority profiles, optional capability-fallback profiles, generic-worker baseline, and inline/root baseline. This is generated execution metadata from the same normalized settings stored in the installation manifest; it is not a second mutable configuration source.
+
+A pre-execution profile/isolation block means no authority child ran. It does not increment `.yaaw-core/runtime/dispatch-failures.json` and cannot by itself trigger Astra escalation.
+
+### Troubleshooting `BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE`
+
+This means YAAW knew the authority and configured execution profile, but the active Codex execution mechanism could not guarantee that profile. It does **not** mean the Reviewer, Implementer, ticket, or Astra execution failed. Remedies are to use a Codex runtime that supports the required named/override capability, change the project-local Codex configuration, or deliberately select inline mode if per-role isolation is not required.
+
 ## Configuration CLI
 
 Common headless flags:
@@ -80,7 +107,7 @@ Common headless flags:
 
 Full configuration files use schema `yaaw.codex-install/v1`. They must not contain credentials.
 
-Quick Update and Repair preserve existing manifest runtime settings. Existing pre-v2 Codex integrations migrate conservatively to `auto` with all model, sandbox, approval, web-search, and concurrency settings inherited.
+Quick Update and Repair preserve existing manifest runtime settings. Adapter v5 is a mechanics/fidelity update: `CODEX_CONFIGURATION_REVISION` remains 4, so updating the adapter does not reapply Recommended or force a configuration migration. Existing pre-v2 Codex integrations migrate conservatively to `auto` with all model, sandbox, approval, web-search, and concurrency settings inherited.
 
 ## Trust and session reload
 

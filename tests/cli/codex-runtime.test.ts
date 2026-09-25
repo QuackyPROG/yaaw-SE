@@ -10,7 +10,7 @@ async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
 }
 
-describe("Codex runtime adapter v4", () => {
+describe("Codex runtime adapter v5", () => {
   it("installs the fresh isolated-worker surface with auto + inherit defaults", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-codex-v2-"));
     await runInstall({ directory: root, tools: "codex", skills: "core", yes: true });
@@ -33,7 +33,7 @@ describe("Codex runtime adapter v4", () => {
     expect(await exists(join(root, ".codex/agents/yaaw-reviewer-fallback.toml"))).toBe(false);
 
     const manifest: any = JSON.parse(await readFile(join(root, ".yaaw-core/install/manifest.json"), "utf8"));
-    expect(manifest.integrations.codex.adapterVersion).toBe(4);
+    expect(manifest.integrations.codex.adapterVersion).toBe(5);
     expect(manifest.integrations.codex.runtime.mode).toBe("auto");
     expect(manifest.integrations.codex.runtime.orchestrator.model).toBeNull();
     expect(manifest.integrations.codex.configuration.schema).toBe("yaaw.integration-config/v1");

@@ -112,7 +112,7 @@ def main() -> int:
         errors.append("missing Codex runtime adapter template")
     else:
         runtime_text = codex_runtime.read_text(encoding="utf-8")
-        for required in ("yaaw_prd", "yaaw_planner", "yaaw_implementer", "yaaw_reviewer", "BLOCKED:HOST_ISOLATION_UNAVAILABLE", "orchestration.inspect-state"):
+        for required in ("yaaw_prd", "yaaw_planner", "yaaw_implementer", "yaaw_reviewer", "BLOCKED:HOST_ISOLATION_UNAVAILABLE", "BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE", "HOST_INHERIT", "orchestration.inspect-state"):
             if required not in runtime_text:
                 errors.append(f"Codex runtime adapter missing contract token: {required}")
         if "yaaw_orchestrator" in runtime_text and "Never spawn" not in runtime_text:

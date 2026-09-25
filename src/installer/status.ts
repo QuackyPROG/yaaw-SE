@@ -7,6 +7,7 @@ import { readTomlManagedValue, semanticConfigHash, validateManagedToml } from ".
 import { readManifest } from "./manifest.js";
 import { configurationStatus } from "./configuration.js";
 import { migrateInstallationManifest } from "./migrations/installation/index.js";
+import { codexResolvedSettingLabel, normalizeCodexRuntimeSettings, resolveCodexAuthorityProfile } from "../integrations/codex-runtime.js";
 
 async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
@@ -250,6 +251,21 @@ export async function doctor(projectRoot: string) {
     checks.push({ name: "codex-config-syntax", ok: configOk });
     checks.push({ name: "codex-runtime-adapter", ok: await exists(join(projectRoot, ".codex", "yaaw-runtime.md")) });
     const codexSettings: any = manifest.integrations.codex.configuration?.settings ?? manifest.integrations.codex.runtime ?? {};
+    let normalizedCodex: any = null;
+    try {
+      normalizedCodex = normalizeCodexRuntimeSettings(codexSettings);
+      const authorityProfiles = (["prd", "planner", "implementer", "reviewer"] as const).map(role => {
+        const profile = resolveCodexAuthorityProfile(normalizedCodex, role);
+        return `${role === "prd" ? "PRD" : role}: ${codexResolvedSettingLabel(profile.model)} / ${codexResolvedSettingLabel(profile.reasoning)}`;
+      });
+      checks.push({
+        name: "codex-authority-profiles",
+        ok: true,
+        detail: authorityProfiles.join("; ")
+      });
+    } catch (error: any) {
+      checks.push({ name: "codex-authority-profiles", ok: false, detail: `invalid saved Codex runtime settings: ${error.message}` });
+    }
     const fallbackEnabled = Number(codexSettings?.failureFallback?.afterFailures) > 0;
     const roleFiles = [
       "yaaw-prd.toml",
@@ -273,6 +289,48 @@ export async function doctor(projectRoot: string) {
       name: "codex-role-declarations",
       ok: configOk && declarations.every(([role,file]) => readTomlManagedValue(codexConfig, `agents.${role}.config_file`) === `agents/${file}`)
     });
+    if (normalizedCodex) {
+      const profileIssues: string[] = [];
+      const roleSpecs: [string, any][] = [
+        ["yaaw-prd.toml", normalizedCodex.roles.prd],
+        ["yaaw-planner.toml", normalizedCodex.roles.planner],
+        ["yaaw-implementer.toml", normalizedCodex.roles.implementer],
+        ["yaaw-reviewer.toml", normalizedCodex.roles.reviewer],
+        ...(fallbackEnabled ? [
+          ["yaaw-implementer-fallback.toml", normalizedCodex.failureFallback.implementer],
+          ["yaaw-reviewer-fallback.toml", normalizedCodex.failureFallback.reviewer]
+        ] as [string, any][] : [])
+      ];
+      for (const [file, expected] of roleSpecs) {
+        try {
+          const roleText = await readFile(join(projectRoot, ".codex", "agents", file), "utf8");
+          validateManagedToml(roleText);
+          const model = readTomlManagedValue(roleText, "model");
+          const reasoning = readTomlManagedValue(roleText, "model_reasoning_effort");
+          if (expected.model === null ? model !== undefined : model !== expected.model) profileIssues.push(`${file}: model`);
+          if (expected.reasoning === null ? reasoning !== undefined : reasoning !== expected.reasoning) profileIssues.push(`${file}: reasoning`);
+        } catch {
+          profileIssues.push(`${file}: unreadable`);
+        }
+      }
+      if (configOk) {
+        for (const [key, expected] of [
+          ["model", normalizedCodex.orchestrator.model],
+          ["model_reasoning_effort", normalizedCodex.orchestrator.reasoning],
+          ["agents.default_subagent_model", normalizedCodex.defaultWorker.model],
+          ["agents.default_subagent_reasoning_effort", normalizedCodex.defaultWorker.reasoning]
+        ] as [string, string | null][]) {
+          if (expected !== null && readTomlManagedValue(codexConfig, key) !== expected) profileIssues.push(`config:${key}`);
+        }
+      }
+      checks.push({
+        name: "codex-execution-profile-config",
+        ok: profileIssues.length === 0,
+        detail: profileIssues.length
+          ? `static profile drift: ${profileIssues.join(", ")}`
+          : "installed role/default/root mappings match saved YAAW settings; active spawn capability is checked at dispatch"
+      });
+    }
     const codexOwned = manifest.managedConfigKeys?.[".codex/config.toml"] ?? {};
     checks.push({
       name: "codex-managed-config-ownership",

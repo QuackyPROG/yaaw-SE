@@ -28,13 +28,15 @@ Changing or removing one provider must not modify another provider's surface or 
 All provider adapters point to the same `.yaaw-core/system/core/execution-context.md` and `.yaaw-core/system/core/context-loading.md` contracts. No provider may substitute ambient CWD, preload a different workflow graph, or treat an installed host skill as semantic authority. Provider-specific expertise remains advisory and is admitted only by the canonical research rule.
 
 
-## Codex adapter v4
+## Codex adapter v5
 
 Codex is the first provider with a host-specific runtime layer in addition to thin skills/bootstrap. The canonical YAAW router still selects the role/workflow; the Codex adapter only decides how to execute that already-selected handoff.
 
 A Codex consumer gets `.codex/yaaw-runtime.md`, four primary runtime-only authority-role config files, optional Implementer/Reviewer fallback role files when capability fallback is enabled, and YAAW-owned role declarations in the project's shared `.codex/config.toml`. The root Codex session remains Orchestrator, so no Orchestrator child role is generated.
 
-The Codex adapter supports `auto`, `isolated-required`, and `inline` modes, GPT-6 Astra model selection, bounded role-specific capability fallback, and explicit service-tier configuration. `auto` prefers a named worker, falls back to a generic isolated worker, then to inline execution. Named-role availability is a runtime capability and is not inferred merely from installed config files.
+The Codex adapter supports `auto`, `isolated-required`, and `inline` modes, GPT-6 Astra model selection, bounded role-specific capability fallback, and explicit service-tier configuration. Adapter v5 resolves an effective model/reasoning profile for each authority and fails closed rather than silently substituting a different profile. `auto` prefers the exact named worker, permits generic execution only when equivalent or authoritatively correctable, and permits inline fallback only when the root profile is equivalent. Named-role/override availability remains an active runtime capability and is not inferred merely from installed config files.
+
+Codex configuration revision remains 4 for adapter v5 because no new user-selectable setting is introduced; the change hardens how existing settings are honored. Quick Update therefore preserves the stored profile/settings instead of re-running setup.
 
 Codex project configuration is managed at semantic-key granularity. Existing unrelated model settings, MCP servers, profiles, hooks, comments, custom agents, and formatting remain user-owned. See [Codex runtime](codex-runtime.md).
 

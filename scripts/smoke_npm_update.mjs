@@ -142,8 +142,8 @@ try {
   if (manifest.yaawVersion !== currentVersion) {
     throw new Error(`Expected manifest ${currentVersion}, got ${manifest.yaawVersion}`);
   }
-  if (manifest.integrations?.codex?.adapterVersion !== 4) {
-    throw new Error(`Expected Codex adapter v4 after migration, got ${manifest.integrations?.codex?.adapterVersion}`);
+  if (manifest.integrations?.codex?.adapterVersion !== 5) {
+    throw new Error(`Expected Codex adapter v5 after migration, got ${manifest.integrations?.codex?.adapterVersion}`);
   }
   if (manifest.integrations?.codex?.runtime?.mode !== "auto") {
     throw new Error("Legacy Codex migration did not default to auto runtime");
@@ -157,7 +157,7 @@ try {
   const doctor = JSON.parse(execTarball(currentTarball, ["doctor", "--directory", project, "--json"], true));
   if (!doctor.healthy) throw new Error(`Doctor failed after tarball update: ${JSON.stringify(doctor)}`);
 
-  console.log(`✓ tarball repair ${oldVersion} -> ${currentVersion} restored tainted framework, migrated Codex v1 -> v4, invalidated runtime, and preserved durable state`);
+  console.log(`✓ tarball repair ${oldVersion} -> ${currentVersion} restored tainted framework, migrated Codex v1 -> v5, invalidated runtime, and preserved durable state`);
 } finally {
   await writeFile(packagePath, originalPackage);
   await writeFile(coreSourcePath, originalCore);

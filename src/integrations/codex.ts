@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { makeAdapter, pathExists } from "./helpers.js";
 import type { IntegrationAdapter, IntegrationContext, IntegrationVerification } from "./types.js";
 import type { InstallOperation, ManagedConfigEntry } from "../installer/types.js";
-import { defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, parseCodexInstallConfig, type CodexModelSettings, type CodexRuntimeSettings } from "./codex-runtime.js";
+import { codexResolvedSettingLabel, defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, parseCodexInstallConfig, resolveCodexAuthorityProfile, resolveCodexGenericProfile, resolveCodexInlineProfile, type CodexAuthorityRole, type CodexModelSettings, type CodexRuntimeSettings } from "./codex-runtime.js";
 import { CODEX_CONFIGURATION_REVISION, codexConfigurationChanges } from "./codex-catalog.js";
 import { readTomlManagedValue, validateManagedToml } from "../installer/toml-managed.js";
 
@@ -52,6 +52,65 @@ function allRoleDefinitions(settings: CodexRuntimeSettings) {
     : [...Object.values(roleDefinitions)];
 }
 
+function authorityLabel(role: CodexAuthorityRole): string {
+  return role === "prd" ? "PRD" : role[0].toUpperCase() + role.slice(1);
+}
+
+function profileLine(label: string, profile: { namedAgent?: string; model: { value: string | null }; reasoning: { value: string | null } }): string[] {
+  return [
+    label,
+    ...(profile.namedAgent ? ["  named worker: " + profile.namedAgent] : []),
+    "  model: " + codexResolvedSettingLabel(profile.model as any),
+    "  reasoning: " + codexResolvedSettingLabel(profile.reasoning as any)
+  ];
+}
+
+function configuredAuthorityProfileSection(settings: CodexRuntimeSettings): string {
+  const lines: string[] = ["Primary:"];
+  for (const role of Object.keys(roleDefinitions) as CodexAuthorityRole[]) {
+    lines.push(...profileLine(authorityLabel(role), resolveCodexAuthorityProfile(settings, role)));
+  }
+  if (fallbackEnabled(settings)) {
+    lines.push("", "Capability fallback:");
+    for (const role of ["implementer", "reviewer"] as const) {
+      lines.push(...profileLine(authorityLabel(role), resolveCodexAuthorityProfile(settings, role, "fallback")));
+    }
+  } else {
+    lines.push("", "Capability fallback: disabled");
+  }
+  lines.push("", ...profileLine("Generic worker baseline", resolveCodexGenericProfile(settings)));
+  lines.push("", ...profileLine("Inline/root baseline", resolveCodexInlineProfile(settings)));
+  return lines.join("\n");
+}
+
+async function verifyRoleConfigFile(
+  projectRoot: string,
+  file: string,
+  expected: CodexModelSettings,
+  label: string,
+  issues: string[]
+): Promise<void> {
+  const path = join(projectRoot, ".codex", "agents", file);
+  if (!(await pathExists(path))) {
+    issues.push("missing .codex/agents/" + file);
+    return;
+  }
+  try {
+    const text = await readFile(path, "utf8");
+    validateManagedToml(text);
+    const actualModel = readTomlManagedValue(text, "model");
+    const actualReasoning = readTomlManagedValue(text, "model_reasoning_effort");
+    if (expected.model === null ? actualModel !== undefined : actualModel !== expected.model) {
+      issues.push("mismatched Codex role model: " + label);
+    }
+    if (expected.reasoning === null ? actualReasoning !== undefined : actualReasoning !== expected.reasoning) {
+      issues.push("mismatched Codex role reasoning: " + label);
+    }
+  } catch (error: any) {
+    issues.push("invalid Codex role config " + label + ": " + error.message);
+  }
+}
+
 function configEntries(settings: CodexRuntimeSettings): ManagedConfigEntry[] {
   const entries: ManagedConfigEntry[] = [];
   for (const def of allRoleDefinitions(settings)) {
@@ -90,7 +149,8 @@ async function planRuntime(ctx: IntegrationContext): Promise<InstallOperation[]>
       path: join(ctx.projectRoot, ".codex", "yaaw-runtime.md"),
       content: runtimeTemplate
         .replaceAll("{{RUNTIME_MODE}}", settings.mode)
-        .replaceAll("{{FAILURE_FALLBACK_POLICY}}", fallbackPolicy),
+        .replaceAll("{{FAILURE_FALLBACK_POLICY}}", fallbackPolicy)
+        .replaceAll("{{AUTHORITY_EXECUTION_PROFILES}}", configuredAuthorityProfileSection(settings)),
       owner: "integration:codex"
     }
   ];
@@ -128,23 +188,54 @@ async function planRuntime(ctx: IntegrationContext): Promise<InstallOperation[]>
 async function verifyRuntime(ctx: IntegrationContext): Promise<IntegrationVerification> {
   const settings = normalizeCodexRuntimeSettings(ctx.settings);
   const issues: string[] = [];
+  const runtimePath = join(ctx.projectRoot, ".codex", "yaaw-runtime.md");
   const configPath = join(ctx.projectRoot, ".codex", "config.toml");
-  if (!(await pathExists(join(ctx.projectRoot, ".codex", "yaaw-runtime.md")))) issues.push("missing .codex/yaaw-runtime.md");
-  for (const def of allRoleDefinitions(settings)) {
-    if (!(await pathExists(join(ctx.projectRoot, ".codex", "agents", def.file)))) issues.push(`missing .codex/agents/${def.file}`);
+
+  if (!(await pathExists(runtimePath))) {
+    issues.push("missing .codex/yaaw-runtime.md");
+  } else {
+    try {
+      const runtimeText = await readFile(runtimePath, "utf8");
+      const expectedProfiles = configuredAuthorityProfileSection(settings);
+      if (!runtimeText.includes(expectedProfiles)) issues.push("mismatched Codex authority execution-profile metadata");
+    } catch (error: any) {
+      issues.push("invalid Codex runtime metadata: " + error.message);
+    }
   }
+
+  for (const [role, def] of Object.entries(roleDefinitions) as [CodexAuthorityRole, (typeof roleDefinitions)[CodexAuthorityRole]][]) {
+    await verifyRoleConfigFile(ctx.projectRoot, def.file, settings.roles[role], role, issues);
+  }
+  if (fallbackEnabled(settings)) {
+    for (const role of ["implementer", "reviewer"] as const) {
+      const def = fallbackRoleDefinitions[role];
+      await verifyRoleConfigFile(ctx.projectRoot, def.file, settings.failureFallback[role], role + " fallback", issues);
+    }
+  }
+
   if (!(await pathExists(configPath))) issues.push("missing .codex/config.toml");
   else {
     try {
       const text = await readFile(configPath, "utf8");
       validateManagedToml(text);
       for (const def of allRoleDefinitions(settings)) {
-        if (readTomlManagedValue(text, `agents.${def.agent}.config_file`) !== `agents/${def.file}`) {
-          issues.push(`missing/mismatched Codex role declaration: ${def.agent}`);
+        if (readTomlManagedValue(text, "agents." + def.agent + ".config_file") !== "agents/" + def.file) {
+          issues.push("missing/mismatched Codex role declaration: " + def.agent);
+        }
+      }
+      const expectedOwnedSettings: [string, string | null, string][] = [
+        ["model", settings.orchestrator.model, "orchestrator model"],
+        ["model_reasoning_effort", settings.orchestrator.reasoning, "orchestrator reasoning"],
+        ["agents.default_subagent_model", settings.defaultWorker.model, "default worker model"],
+        ["agents.default_subagent_reasoning_effort", settings.defaultWorker.reasoning, "default worker reasoning"]
+      ];
+      for (const [key, expected, label] of expectedOwnedSettings) {
+        if (expected !== null && readTomlManagedValue(text, key) !== expected) {
+          issues.push("missing/mismatched Codex " + label);
         }
       }
     } catch (error: any) {
-      issues.push(`invalid Codex config: ${error.message}`);
+      issues.push("invalid Codex config: " + error.message);
     }
   }
   return { healthy: issues.length === 0, issues };
@@ -153,7 +244,7 @@ async function verifyRuntime(ctx: IntegrationContext): Promise<IntegrationVerifi
 export const codexAdapter: IntegrationAdapter = {
   ...baseAdapter,
   aliases: ["codex"],
-  adapterVersion: 4,
+  adapterVersion: 5,
   configuration: {
     revision: CODEX_CONFIGURATION_REVISION,
     changes: codexConfigurationChanges,
@@ -191,13 +282,19 @@ export const codexAdapter: IntegrationAdapter = {
   },
   describeRuntime(settings) {
     const runtime = normalizeCodexRuntimeSettings(settings);
+    const authorityProfiles = (Object.keys(roleDefinitions) as CodexAuthorityRole[]).map(role => {
+      const profile = resolveCodexAuthorityProfile(runtime, role);
+      return "  " + authorityLabel(role) + ": " + codexResolvedSettingLabel(profile.model) + " / " + codexResolvedSettingLabel(profile.reasoning);
+    });
     return [
-      `mode: ${runtime.mode}`,
-      `orchestrator model: ${runtime.orchestrator.model ?? "inherit"}`,
-      `default worker model: ${runtime.defaultWorker.model ?? "inherit"}`,
-      `failure fallback: ${runtime.failureFallback.afterFailures === null ? "disabled" : `after ${runtime.failureFallback.afterFailures} -> Astra-capable named role fallback`}`,
-      `service tier: ${runtime.serviceTier ?? "inherit"}`,
-      `max concurrent threads: ${runtime.maxConcurrentThreads ?? "inherit"}`
+      "mode: " + runtime.mode,
+      "authority profiles:",
+      ...authorityProfiles,
+      "generic fallback baseline: " + codexResolvedSettingLabel(resolveCodexGenericProfile(runtime).model) + " / " + codexResolvedSettingLabel(resolveCodexGenericProfile(runtime).reasoning),
+      "inline/root baseline: " + codexResolvedSettingLabel(resolveCodexInlineProfile(runtime).model) + " / " + codexResolvedSettingLabel(resolveCodexInlineProfile(runtime).reasoning),
+      "failure fallback: " + (runtime.failureFallback.afterFailures === null ? "disabled" : "after " + runtime.failureFallback.afterFailures + " no-progress execution failures"),
+      "service tier: " + (runtime.serviceTier ?? "inherit"),
+      "max concurrent threads: " + (runtime.maxConcurrentThreads ?? "inherit")
     ];
   }
 };

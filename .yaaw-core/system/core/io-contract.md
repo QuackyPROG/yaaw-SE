@@ -37,6 +37,14 @@ Common results include `SUCCESS`, `READY`, `HUMAN_INPUT_REQUIRED`, `PRECONDITION
 
 Framework-level stop results are `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, and `FRAMEWORK_CONTRACT_INCONSISTENCY`. They are installation/runtime trust failures, not ticket lifecycle states, and must not be represented by fabricating a ticket transition.
 
+Host-execution stop results are `HOST_ISOLATION_UNAVAILABLE`, `HOST_EXECUTION_PROFILE_UNAVAILABLE`, and `AUTHORITY_EXECUTION_FAILED`. They describe execution transport/capability failures, not semantic workflow outcomes or ticket lifecycle states.
+
+- `HOST_ISOLATION_UNAVAILABLE`: strict isolation was required, but the host could not create an isolated worker.
+- `HOST_EXECUTION_PROFILE_UNAVAILABLE`: an execution mechanism existed, but the host could not guarantee the configured effective authority model/reasoning profile.
+- `AUTHORITY_EXECUTION_FAILED`: the correct authority execution actually started and failed under the bounded retry/fallback policy.
+
+A host isolation/profile stop raised before child creation is a pre-execution host failure and must not be counted as an authority execution failure.
+
 `PRECONDITION_UNSATISFIED` includes a reason such as `NO_PRODUCT`, `PLANNING_UNREADY`, `SPEC_MISSING`, `NO_READY_TICKET`, `STALE_SOURCE`, or `REPOSITORY_IDENTITY_UNAVAILABLE`.
 
 A missing ticket never authorizes Implementer to create one. Implementer returns `PRECONDITION_UNSATISFIED:NO_READY_TICKET`; Orchestrator routes Planner.

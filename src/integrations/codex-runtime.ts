@@ -152,3 +152,148 @@ export function parseCodexInstallConfig(value: any): CodexRuntimeSettings {
   inspect(value);
   return normalizeCodexRuntimeSettings(value);
 }
+
+export type CodexAuthorityRole = "prd" | "planner" | "implementer" | "reviewer";
+export type CodexAuthorityProfileVariant = "primary" | "fallback";
+export type CodexSettingSource = "authority" | "default-worker" | "orchestrator" | "host-inherit";
+
+export interface ResolvedCodexSetting {
+  value: string | null;
+  source: CodexSettingSource;
+}
+
+export interface CodexResolvedExecutionProfile {
+  model: ResolvedCodexSetting;
+  reasoning: ResolvedCodexSetting;
+}
+
+export interface CodexAuthorityExecutionProfile extends CodexResolvedExecutionProfile {
+  role: CodexAuthorityRole;
+  variant: CodexAuthorityProfileVariant;
+  namedAgent: string;
+}
+
+export interface CodexExecutionSettingComparison {
+  expected: ResolvedCodexSetting;
+  actual: ResolvedCodexSetting;
+  equivalent: boolean;
+  requiresExplicitOverride: boolean;
+  explicitOverrideValue: string | null;
+}
+
+export interface CodexExecutionProfileComparison {
+  equivalent: boolean;
+  model: CodexExecutionSettingComparison;
+  reasoning: CodexExecutionSettingComparison;
+}
+
+export interface CodexSpawnOverrideCapabilities {
+  model: boolean;
+  reasoning: boolean;
+}
+
+export const CODEX_HOST_INHERIT = "HOST_INHERIT";
+
+const primaryNamedAgents: Record<CodexAuthorityRole, string> = {
+  prd: "yaaw_prd",
+  planner: "yaaw_planner",
+  implementer: "yaaw_implementer",
+  reviewer: "yaaw_reviewer"
+};
+
+const fallbackNamedAgents: Partial<Record<CodexAuthorityRole, string>> = {
+  implementer: "yaaw_implementer_fallback",
+  reviewer: "yaaw_reviewer_fallback"
+};
+
+function resolveSetting(authority: string | null, defaultWorker: string | null, orchestrator: string | null): ResolvedCodexSetting {
+  if (authority !== null) return { value: authority, source: "authority" };
+  if (defaultWorker !== null) return { value: defaultWorker, source: "default-worker" };
+  if (orchestrator !== null) return { value: orchestrator, source: "orchestrator" };
+  return { value: null, source: "host-inherit" };
+}
+
+function resolveBaselineSetting(defaultWorker: string | null, orchestrator: string | null): ResolvedCodexSetting {
+  if (defaultWorker !== null) return { value: defaultWorker, source: "default-worker" };
+  if (orchestrator !== null) return { value: orchestrator, source: "orchestrator" };
+  return { value: null, source: "host-inherit" };
+}
+
+function resolveInlineSetting(orchestrator: string | null): ResolvedCodexSetting {
+  if (orchestrator !== null) return { value: orchestrator, source: "orchestrator" };
+  return { value: null, source: "host-inherit" };
+}
+
+export function resolveCodexAuthorityProfile(
+  settings: CodexRuntimeSettings,
+  role: CodexAuthorityRole,
+  variant: CodexAuthorityProfileVariant = "primary"
+): CodexAuthorityExecutionProfile {
+  let authority: CodexModelSettings;
+  let namedAgent: string;
+  if (variant === "fallback") {
+    if (role !== "implementer" && role !== "reviewer") {
+      throw new Error("Codex capability fallback exists only for Implementer and Reviewer");
+    }
+    authority = settings.failureFallback[role];
+    namedAgent = fallbackNamedAgents[role]!;
+  } else {
+    authority = settings.roles[role];
+    namedAgent = primaryNamedAgents[role];
+  }
+
+  return {
+    role,
+    variant,
+    namedAgent,
+    model: resolveSetting(authority.model, settings.defaultWorker.model, settings.orchestrator.model),
+    reasoning: resolveSetting(authority.reasoning, settings.defaultWorker.reasoning, settings.orchestrator.reasoning)
+  };
+}
+
+export function resolveCodexGenericProfile(settings: CodexRuntimeSettings): CodexResolvedExecutionProfile {
+  return {
+    model: resolveBaselineSetting(settings.defaultWorker.model, settings.orchestrator.model),
+    reasoning: resolveBaselineSetting(settings.defaultWorker.reasoning, settings.orchestrator.reasoning)
+  };
+}
+
+export function resolveCodexInlineProfile(settings: CodexRuntimeSettings): CodexResolvedExecutionProfile {
+  return {
+    model: resolveInlineSetting(settings.orchestrator.model),
+    reasoning: resolveInlineSetting(settings.orchestrator.reasoning)
+  };
+}
+
+function compareSetting(expected: ResolvedCodexSetting, actual: ResolvedCodexSetting): CodexExecutionSettingComparison {
+  const equivalent = expected.value === actual.value;
+  return {
+    expected,
+    actual,
+    equivalent,
+    requiresExplicitOverride: !equivalent,
+    explicitOverrideValue: equivalent ? null : expected.value
+  };
+}
+
+export function compareCodexExecutionProfiles(
+  expected: CodexResolvedExecutionProfile,
+  actual: CodexResolvedExecutionProfile
+): CodexExecutionProfileComparison {
+  const model = compareSetting(expected.model, actual.model);
+  const reasoning = compareSetting(expected.reasoning, actual.reasoning);
+  return { equivalent: model.equivalent && reasoning.equivalent, model, reasoning };
+}
+
+export function canPreserveCodexProfileWithOverrides(
+  comparison: CodexExecutionProfileComparison,
+  capabilities: CodexSpawnOverrideCapabilities
+): boolean {
+  const model = comparison.model.equivalent || (comparison.model.expected.value !== null && capabilities.model);
+  const reasoning = comparison.reasoning.equivalent || (comparison.reasoning.expected.value !== null && capabilities.reasoning);
+  return model && reasoning;
+}
+
+export function codexResolvedSettingLabel(setting: ResolvedCodexSetting): string {
+  return setting.value ?? CODEX_HOST_INHERIT;
+}
