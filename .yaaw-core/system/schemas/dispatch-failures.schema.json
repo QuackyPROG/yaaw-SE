@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.dispatch-failures/v1",
+  "type": "object",
+  "required": ["schema", "basis", "consecutive_failures", "fallback_attempted", "last_failure"],
+  "properties": {
+    "schema": {"const": "yaaw.dispatch-failures/v1"},
+    "basis": {
+      "type": "object",
+      "required": ["role", "workflow", "active_artifact", "revisions", "transition_sequence", "repository"],
+      "properties": {
+        "role": {"enum": ["implementer", "reviewer"]},
+        "workflow": {"type": "string", "minLength": 1},
+        "active_artifact": {"type": ["string", "null"]},
+        "revisions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "transition_sequence": {"type": "integer", "minimum": 0},
+        "repository": {
+          "type": "object",
+          "required": ["head_commit", "worktree_digest"],
+          "properties": {
+            "head_commit": {"type": ["string", "null"]},
+            "worktree_digest": {"type": ["string", "null"]}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "consecutive_failures": {"type": "integer", "minimum": 0},
+    "fallback_attempted": {"type": "boolean"},
+    "last_failure": {
+      "anyOf": [
+        {"type": "null"},
+        {"enum": ["worker_failed", "interrupted", "no_response", "invalid_result"]}
+      ]
+    }
+  },
+  "additionalProperties": false
+}

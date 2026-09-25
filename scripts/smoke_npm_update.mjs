@@ -99,7 +99,7 @@ try {
   const taintedLifecycle = canonicalLifecycle + "\nincident framework self-edit\n";
   await writeFile(lifecyclePath, taintedLifecycle);
   const runtimeRoot = join(project, ".yaaw-core", "runtime");
-  for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+  for (const name of ["observed-state.json", "handoff.json", "intent.json", "dispatch-failures.json"]) {
     await writeFile(join(runtimeRoot, name), JSON.stringify({ stale: name }) + "\n");
   }
 
@@ -122,7 +122,7 @@ try {
   if (repairedLifecycle !== canonicalLifecycle) {
     throw new Error("Tainted package-managed lifecycle file was not restored by backup-replace repair");
   }
-  for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+  for (const name of ["observed-state.json", "handoff.json", "intent.json", "dispatch-failures.json"]) {
     if (existsSync(join(runtimeRoot, name))) throw new Error(`Runtime cache survived package repair: ${name}`);
   }
   const backupRoot = join(project, ".yaaw-core", "install", "backups");

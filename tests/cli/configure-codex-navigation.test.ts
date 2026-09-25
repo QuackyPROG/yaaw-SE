@@ -29,9 +29,9 @@ import { configureCodex } from "../../src/tui/configure-codex.js";
 
 const context = {
   reason: "manual" as const,
-  availableRevision: 3,
+  availableRevision: 4,
   pendingChanges: [],
-  currentProfile: { id: "custom", revision: 3 }
+  currentProfile: { id: "custom", revision: 4 }
 };
 
 describe("Codex configuration navigation", () => {
@@ -94,6 +94,15 @@ describe("Codex configuration navigation", () => {
     expect(result.cancelled).not.toBe(true);
     expect(result.profile.id).toBe("custom");
     expect(result.settings.roles.planner).toEqual({ model: null, reasoning: "max" });
+  });
+
+  it("uses the recommended three-failure Astra rescue path without forcing Fast mode", async () => {
+    promptState.queue.push("recommended");
+    const result: any = await configureCodex(defaultCodexRuntimeSettings(), context);
+    expect(result.settings.failureFallback.afterFailures).toBe(3);
+    expect(result.settings.failureFallback.implementer.model).toBe("gpt-6-astra");
+    expect(result.settings.failureFallback.reviewer.model).toBe("gpt-6-astra");
+    expect(result.settings.serviceTier).toBeNull();
   });
 
   it("reopens a saved custom profile with Custom highlighted", async () => {

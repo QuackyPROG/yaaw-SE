@@ -14,8 +14,9 @@ Resolved workspace root, installation manifest/framework-integrity result, `.yaa
 5. When status is `READY`, compute workspace-scoped repository identity. If Git root is an ancestor, scope status/diff/untracked hashing to the workspace.
 6. Read machine-readable artifact metadata and active durable artifacts.
 7. Compare state claims with artifact/repository/review evidence without repairing yet.
-8. List inconsistencies, stale artifacts/handoffs, blockers, and candidate next states.
-9. Write replaceable `.yaaw-core/runtime/observed-state.json` conforming to observed-state v2.
+8. Reconcile the replaceable dispatch-failure ledger. For Implementer/Reviewer worker execution failures, compare the prior failure basis with the current role, workflow, active artifact, revisions, transition sequence, and repository basis. Increment only when the prior attempt made no durable progress and the basis is unchanged. Reset/remove the ledger after legal workflow completion, durable progress, a basis change, or when routing leaves that work item.
+9. List inconsistencies, stale artifacts/handoffs, blockers, and candidate next states.
+10. Write replaceable `.yaaw-core/runtime/observed-state.json` conforming to observed-state v2.
 
 ## Output
 Observed-state snapshot only; no semantic or ticket-state mutation.

@@ -18,11 +18,32 @@ export interface CodexProfile {
   settings: CodexRuntimeSettings;
 }
 
-export const CODEX_CONFIGURATION_REVISION = 3;
+export const CODEX_CONFIGURATION_REVISION = 4;
 
 export const codexReasoningEfforts = ["low", "medium", "high", "xhigh", "max"] as const;
 
 export const codexConfigurationChanges: IntegrationConfigChange[] = [
+  {
+    revision: 4,
+    id: "codex-gpt6-astra-support",
+    type: "model-support",
+    title: "GPT-6 Astra support",
+    summary: "YAAW now exposes GPT-6 Astra and its low through max reasoning efforts for Codex 0.153.0+."
+  },
+  {
+    revision: 4,
+    id: "codex-authority-failure-fallback",
+    type: "new-capability",
+    title: "Implementer and Reviewer Astra fallback",
+    summary: "Recommended Codex configuration escalates repeated no-progress Implementer/Reviewer execution failures to GPT-6 Astra after three primary attempts."
+  },
+  {
+    revision: 4,
+    id: "codex-service-tier-control",
+    type: "new-capability",
+    title: "Codex service tier control",
+    summary: "Custom configuration can inherit, force Standard, enable Fast, or select Flex service tier. Recommended does not force Fast mode."
+  },
   {
     revision: 3,
     id: "codex-max-reasoning",
@@ -48,12 +69,20 @@ export const codexConfigurationChanges: IntegrationConfigChange[] = [
 
 export const codexModels: CodexModelCapability[] = [
   {
+    id: "gpt-6-astra",
+    label: "GPT-6 Astra",
+    status: "recommended",
+    introducedRevision: 4,
+    reasoningEfforts: [...codexReasoningEfforts],
+    description: "Highest-capability model for difficult end-to-end coding and escalation; requires Codex 0.153.0+."
+  },
+  {
     id: "gpt-6-sol",
     label: "GPT-6 Sol",
-    status: "recommended",
+    status: "supported",
     introducedRevision: 2,
     reasoningEfforts: [...codexReasoningEfforts],
-    description: "Recommended for complex software engineering."
+    description: "Balanced default for complex software engineering."
   },
   {
     id: "gpt-6-luna",
@@ -75,6 +104,12 @@ const recommendedSettings: CodexRuntimeSettings = normalizeCodexRuntimeSettings(
     implementer: { model: "gpt-6-sol", reasoning: "medium" },
     reviewer: { model: "gpt-6-sol", reasoning: "high" }
   },
+  failureFallback: {
+    afterFailures: 3,
+    implementer: { model: "gpt-6-astra", reasoning: "high" },
+    reviewer: { model: "gpt-6-astra", reasoning: "high" }
+  },
+  serviceTier: null,
   maxConcurrentThreads: 4,
   sandboxMode: null,
   approvalPolicy: null,

@@ -13,8 +13,9 @@ Own continuity, workspace/repository reconstruction, evidence-backed reconciliat
 7. Determine exactly one next canonical workflow or terminal state.
 8. Populate a structured handoff from `role-io.json`, `execution-policy.json`, exact artifact references, and current repository basis.
 9. Dispatch exactly one canonical workflow using the host execution mechanism defined by `.yaaw-core/system/core/dispatch-execution.md`. Prefer a fresh isolated worker for non-Orchestrator semantic roles when available.
-10. After any worker completion, failure, interruption, or lost response, return to `orchestration.inspect-state` before selecting another semantic workflow.
-11. Repeat until a real stop condition.
+10. After any worker completion, failure, interruption, or lost response, return to `orchestration.inspect-state` before selecting another semantic workflow. For Implementer/Reviewer execution failures, update or reset the replaceable dispatch-failure ledger only after confirming durable progress and the current handoff basis.
+11. Apply any configured host capability fallback only through `orchestration.dispatch`; never change semantic role or bypass fresh-context review independence.
+12. Repeat until a real stop condition.
 
 ## Boundary
 The Orchestrator is a traffic controller, not a super-agent. Package integrity is an execution precondition, not something Orchestrator may repair by editing YAAW. The Orchestrator never creates, edits, deletes, or weakens package-managed `.yaaw-core/system/**` content in a consumer run. It must not author product decisions, architecture, implementation, research conclusions, or acceptance. Roles never privately delegate to peers; every successor is chosen here.

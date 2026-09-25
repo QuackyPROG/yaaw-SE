@@ -25,6 +25,8 @@ AGENTS.md
     yaaw-planner.toml
     yaaw-implementer.toml
     yaaw-reviewer.toml
+    yaaw-implementer-fallback.toml  # when failure fallback is enabled
+    yaaw-reviewer-fallback.toml     # when failure fallback is enabled
 .yaaw-core/
 ```
 
@@ -38,6 +40,8 @@ There is intentionally no `yaaw-orchestrator.toml`: the root session is Orchestr
 
 Role TOML files contain runtime/model configuration only. Workflow instructions are never duplicated into `.codex/`.
 
+Custom configuration also exposes Codex `service_tier`: inherit, Standard (`default`), Fast (`fast`), or Flex (`flex`). Recommended leaves the tier inherited and therefore **does not turn Fast mode on**. Fast is a latency/cost choice, not a quality escalation; Astra is the quality fallback.
+
 ## Fresh context and recovery
 
 Each Orchestrator dispatch is one fresh authority execution when isolation is available. Workers receive the workspace root and handoff path, then load only canonical admitted context. A worker does not route peer YAAW authority roles.
@@ -45,6 +49,19 @@ Each Orchestrator dispatch is one fresh authority execution when isolation is av
 After success, error, interruption, or lost response, Orchestrator re-inspects durable reality before choosing another workflow. Worker text is never accepted as project truth by itself.
 
 Reviewer never reuses the Implementer authority context for orchestrated acceptance.
+
+## Astra capability fallback
+
+YAAW supports `gpt-6-astra` as a Codex model. Astra requires Codex CLI 0.153.0 or newer.
+
+The Recommended profile keeps normal Orchestrator/worker execution on GPT-6 Sol, then enables a bounded escalation for the two roles where repeated execution failure is most expensive:
+
+- Implementer: after 3 consecutive no-progress **execution** failures on the same handoff basis, retry once with GPT-6 Astra / high reasoning.
+- Reviewer: after the same threshold, retry once with GPT-6 Astra / high reasoning.
+
+A failure counts only after reality inspection confirms that the child failed/interrupted/disappeared or returned an unusable result **and** made no durable progress. Legal semantic outcomes such as `REPAIR`, `REPLAN`, `BLOCKED`, or a real precondition result do not increment the counter.
+
+The counter is stored only in replaceable `.yaaw-core/runtime/dispatch-failures.json`. It resets when the role/workflow/work item/revisions/repository basis changes or durable progress is observed. If the Astra fallback also fails without progress on the unchanged basis, YAAW stops with `BLOCKED:AUTHORITY_EXECUTION_FAILED` rather than looping indefinitely.
 
 ## Configuration CLI
 
@@ -57,6 +74,7 @@ Common headless flags:
 --codex-worker-model <inherit|MODEL>
 --codex-worker-reasoning <inherit|VALUE>
 --codex-max-agents <inherit|NUMBER>
+--codex-service-tier <inherit|default|fast|flex>
 --codex-config <path>
 ```
 
@@ -84,7 +102,7 @@ Interactive Codex configuration now starts with four progressively disclosed cho
 - **Custom**: choose execution mode, model strategy, role assignments, and optional advanced settings.
 - **Inline only**: do not spawn authority workers.
 
-Known models and allowed reasoning values are release-curated. The model picker always includes a custom-model escape hatch, so a project can use an enterprise/private model or a model released after its YAAW version.
+Known models and allowed reasoning values are release-curated. GPT-6 Astra, Sol, and Luna expose low, medium, high, xhigh, and max in this catalog. The model picker always includes a custom-model escape hatch, so a project can use an enterprise/private model or a model released after its YAAW version.
 
 The selected profile is intent metadata; normalized runtime settings remain the execution truth.
 

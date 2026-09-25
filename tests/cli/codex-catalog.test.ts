@@ -13,10 +13,15 @@ describe("Codex configuration catalog", () => {
     expect(profile.revision).toBe(CODEX_CONFIGURATION_REVISION);
     expect(profile.settings.roles.planner.model).toBe("gpt-6-sol");
     expect(profile.settings.roles.planner.reasoning).toBe("high");
+    expect(profile.settings.failureFallback.afterFailures).toBe(3);
+    expect(profile.settings.failureFallback.implementer).toEqual({ model: "gpt-6-astra", reasoning: "high" });
+    expect(profile.settings.failureFallback.reviewer).toEqual({ model: "gpt-6-astra", reasoning: "high" });
+    expect(profile.settings.serviceTier).toBeNull();
     expect(codexProfiles.some(candidate => candidate.id === "inherit")).toBe(true);
   });
 
   it("declares the complete selectable reasoning tiers for known GPT-6 models", () => {
+    expect(codexModels.some(model => model.id === "gpt-6-astra")).toBe(true);
     expect(codexReasoningEfforts).toEqual(["low", "medium", "high", "xhigh", "max"]);
     for (const model of codexModels) {
       expect(model.reasoningEfforts).toEqual([...codexReasoningEfforts]);

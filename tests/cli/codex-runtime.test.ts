@@ -10,7 +10,7 @@ async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
 }
 
-describe("Codex runtime adapter v3", () => {
+describe("Codex runtime adapter v4", () => {
   it("installs the fresh isolated-worker surface with auto + inherit defaults", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-codex-v2-"));
     await runInstall({ directory: root, tools: "codex", skills: "core", yes: true });
@@ -28,9 +28,12 @@ describe("Codex runtime adapter v3", () => {
     const config = await readFile(join(root, ".codex/config.toml"), "utf8");
     expect(readTomlManagedValue(config, "agents.yaaw_planner.config_file")).toBe("agents/yaaw-planner.toml");
     expect(readTomlManagedValue(config, "model")).toBeUndefined();
+    expect(readTomlManagedValue(config, "service_tier")).toBeUndefined();
+    expect(await exists(join(root, ".codex/agents/yaaw-implementer-fallback.toml"))).toBe(false);
+    expect(await exists(join(root, ".codex/agents/yaaw-reviewer-fallback.toml"))).toBe(false);
 
     const manifest: any = JSON.parse(await readFile(join(root, ".yaaw-core/install/manifest.json"), "utf8"));
-    expect(manifest.integrations.codex.adapterVersion).toBe(3);
+    expect(manifest.integrations.codex.adapterVersion).toBe(4);
     expect(manifest.integrations.codex.runtime.mode).toBe("auto");
     expect(manifest.integrations.codex.runtime.orchestrator.model).toBeNull();
     expect(manifest.integrations.codex.configuration.schema).toBe("yaaw.integration-config/v1");
@@ -98,6 +101,38 @@ describe("Codex runtime adapter v3", () => {
     expect(await readFile(join(root, ".codex/agents/yaaw-reviewer.toml"), "utf8")).toContain('model = "review-model"');
     const projectConfig = await readFile(join(root, ".codex/config.toml"), "utf8");
     expect(readTomlManagedValue(projectConfig, "agents.max_concurrent_threads_per_session")).toBe(4);
+  });
+
+  it("installs bounded Astra fallback workers and optional Fast service tier when configured", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-codex-astra-fallback-"));
+    const configPath = join(root, "codex-install.json");
+    await writeFile(configPath, JSON.stringify({
+      schema: "yaaw.codex-install/v1",
+      mode: "auto",
+      failureFallback: {
+        afterFailures: 3,
+        implementer: { model: "gpt-6-astra", reasoning: "high" },
+        reviewer: { model: "gpt-6-astra", reasoning: "high" }
+      },
+      serviceTier: "fast"
+    }, null, 2));
+
+    await runInstall({ directory: root, tools: "codex", yes: true, codexConfig: configPath });
+
+    const runtime = await readFile(join(root, ".codex/yaaw-runtime.md"), "utf8");
+    expect(runtime).toContain("enabled after 3 consecutive no-progress execution failures");
+    expect(runtime).toContain("one attempt on an unchanged basis");
+
+    const implementerFallback = await readFile(join(root, ".codex/agents/yaaw-implementer-fallback.toml"), "utf8");
+    const reviewerFallback = await readFile(join(root, ".codex/agents/yaaw-reviewer-fallback.toml"), "utf8");
+    expect(implementerFallback).toContain('model = "gpt-6-astra"');
+    expect(implementerFallback).toContain('model_reasoning_effort = "high"');
+    expect(reviewerFallback).toContain('model = "gpt-6-astra"');
+
+    const projectConfig = await readFile(join(root, ".codex/config.toml"), "utf8");
+    expect(readTomlManagedValue(projectConfig, "service_tier")).toBe("fast");
+    expect(readTomlManagedValue(projectConfig, "agents.yaaw_implementer_fallback.config_file")).toBe("agents/yaaw-implementer-fallback.toml");
+    expect(readTomlManagedValue(projectConfig, "agents.yaaw_reviewer_fallback.config_file")).toBe("agents/yaaw-reviewer-fallback.toml");
   });
 
   it("inline mode disables spawned YAAW authority execution in the adapter", async () => {

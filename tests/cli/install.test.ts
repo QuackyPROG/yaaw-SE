@@ -106,7 +106,7 @@ describe("headless installation", () => {
     await writeFile(lifecycle, tainted);
 
     const runtime = join(root, ".yaaw-core", "runtime");
-    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+    for (const name of ["observed-state.json", "handoff.json", "intent.json", "dispatch-failures.json"]) {
       await writeFile(join(runtime, name), JSON.stringify({ stale: name }) + "\n");
     }
 
@@ -124,7 +124,7 @@ describe("headless installation", () => {
 
     expect(await readFile(lifecycle, "utf8")).toBe(canonical);
     expect(await readFile(product, "utf8")).toBe("durable repair sentinel\n");
-    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+    for (const name of ["observed-state.json", "handoff.json", "intent.json", "dispatch-failures.json"]) {
       expect(await exists(join(runtime, name))).toBe(false);
     }
 

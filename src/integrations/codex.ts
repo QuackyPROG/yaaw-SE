@@ -26,6 +26,11 @@ const roleDefinitions = {
   reviewer: { agent: "yaaw_reviewer", file: "yaaw-reviewer.toml", description: "YAAW Reviewer authority worker. Use only for a YAAW handoff whose role is reviewer." }
 } as const;
 
+const fallbackRoleDefinitions = {
+  implementer: { agent: "yaaw_implementer_fallback", file: "yaaw-implementer-fallback.toml", description: "YAAW Implementer capability fallback. Use only after the configured consecutive no-progress execution-failure threshold." },
+  reviewer: { agent: "yaaw_reviewer_fallback", file: "yaaw-reviewer-fallback.toml", description: "YAAW Reviewer capability fallback. Use only after the configured consecutive no-progress execution-failure threshold." }
+} as const;
+
 function roleConfig(settings: CodexModelSettings): string {
   const lines = [
     "# YAAW-SE Codex authority-worker runtime configuration.",
@@ -37,15 +42,26 @@ function roleConfig(settings: CodexModelSettings): string {
   return lines.join("\n") + "\n";
 }
 
+function fallbackEnabled(settings: CodexRuntimeSettings): boolean {
+  return settings.failureFallback.afterFailures !== null;
+}
+
+function allRoleDefinitions(settings: CodexRuntimeSettings) {
+  return fallbackEnabled(settings)
+    ? [...Object.values(roleDefinitions), ...Object.values(fallbackRoleDefinitions)]
+    : [...Object.values(roleDefinitions)];
+}
+
 function configEntries(settings: CodexRuntimeSettings): ManagedConfigEntry[] {
   const entries: ManagedConfigEntry[] = [];
-  for (const def of Object.values(roleDefinitions)) {
+  for (const def of allRoleDefinitions(settings)) {
     entries.push(
       { key: `agents.${def.agent}.description`, value: def.description },
       { key: `agents.${def.agent}.config_file`, value: `agents/${def.file}` }
     );
   }
   if (settings.orchestrator.model) entries.push({ key: "model", value: settings.orchestrator.model });
+  if (settings.serviceTier) entries.push({ key: "service_tier", value: settings.serviceTier });
   if (settings.orchestrator.reasoning) entries.push({ key: "model_reasoning_effort", value: settings.orchestrator.reasoning });
   if (settings.defaultWorker.model) entries.push({ key: "agents.default_subagent_model", value: settings.defaultWorker.model });
   if (settings.defaultWorker.reasoning) entries.push({ key: "agents.default_subagent_reasoning_effort", value: settings.defaultWorker.reasoning });
@@ -60,11 +76,21 @@ async function planRuntime(ctx: IntegrationContext): Promise<InstallOperation[]>
   const settings = normalizeCodexRuntimeSettings(ctx.settings);
   const source = join(ctx.payloadRoot, "integrations", "codex", "yaaw-runtime.md");
   const runtimeTemplate = await readFile(source, "utf8");
+  const fallbackPolicy = settings.failureFallback.afterFailures === null
+    ? "Authority capability fallback is **disabled** for this installation."
+    : [
+        `Authority capability fallback is **enabled after ${settings.failureFallback.afterFailures} consecutive no-progress execution failures** on the same handoff basis.`,
+        "- `implementer` fallback -> `yaaw_implementer_fallback`",
+        "- `reviewer` fallback -> `yaaw_reviewer_fallback`",
+        "The fallback gets one attempt on an unchanged basis; another no-progress execution failure blocks rather than looping indefinitely."
+      ].join("\n");
   const operations: InstallOperation[] = [
     {
       type: "write-managed-file",
       path: join(ctx.projectRoot, ".codex", "yaaw-runtime.md"),
-      content: runtimeTemplate.replaceAll("{{RUNTIME_MODE}}", settings.mode),
+      content: runtimeTemplate
+        .replaceAll("{{RUNTIME_MODE}}", settings.mode)
+        .replaceAll("{{FAILURE_FALLBACK_POLICY}}", fallbackPolicy),
       owner: "integration:codex"
     }
   ];
@@ -78,6 +104,17 @@ async function planRuntime(ctx: IntegrationContext): Promise<InstallOperation[]>
     });
   }
 
+  if (fallbackEnabled(settings)) {
+    for (const [role, def] of Object.entries(fallbackRoleDefinitions) as [keyof typeof fallbackRoleDefinitions, (typeof fallbackRoleDefinitions)[keyof typeof fallbackRoleDefinitions]][]) {
+      operations.push({
+        type: "write-managed-file",
+        path: join(ctx.projectRoot, ".codex", "agents", def.file),
+        content: roleConfig(settings.failureFallback[role]),
+        owner: "integration:codex"
+      });
+    }
+  }
+
   operations.push({
     type: "update-managed-config-keys",
     path: join(ctx.projectRoot, ".codex", "config.toml"),
@@ -89,10 +126,11 @@ async function planRuntime(ctx: IntegrationContext): Promise<InstallOperation[]>
 }
 
 async function verifyRuntime(ctx: IntegrationContext): Promise<IntegrationVerification> {
+  const settings = normalizeCodexRuntimeSettings(ctx.settings);
   const issues: string[] = [];
   const configPath = join(ctx.projectRoot, ".codex", "config.toml");
   if (!(await pathExists(join(ctx.projectRoot, ".codex", "yaaw-runtime.md")))) issues.push("missing .codex/yaaw-runtime.md");
-  for (const def of Object.values(roleDefinitions)) {
+  for (const def of allRoleDefinitions(settings)) {
     if (!(await pathExists(join(ctx.projectRoot, ".codex", "agents", def.file)))) issues.push(`missing .codex/agents/${def.file}`);
   }
   if (!(await pathExists(configPath))) issues.push("missing .codex/config.toml");
@@ -100,7 +138,7 @@ async function verifyRuntime(ctx: IntegrationContext): Promise<IntegrationVerifi
     try {
       const text = await readFile(configPath, "utf8");
       validateManagedToml(text);
-      for (const def of Object.values(roleDefinitions)) {
+      for (const def of allRoleDefinitions(settings)) {
         if (readTomlManagedValue(text, `agents.${def.agent}.config_file`) !== `agents/${def.file}`) {
           issues.push(`missing/mismatched Codex role declaration: ${def.agent}`);
         }
@@ -115,7 +153,7 @@ async function verifyRuntime(ctx: IntegrationContext): Promise<IntegrationVerifi
 export const codexAdapter: IntegrationAdapter = {
   ...baseAdapter,
   aliases: ["codex"],
-  adapterVersion: 3,
+  adapterVersion: 4,
   configuration: {
     revision: CODEX_CONFIGURATION_REVISION,
     changes: codexConfigurationChanges,
@@ -131,6 +169,9 @@ export const codexAdapter: IntegrationAdapter = {
         `Planner: ${runtime.roles.planner.model ?? "inherit"} / ${runtime.roles.planner.reasoning ?? "inherit"}`,
         `Implementer: ${runtime.roles.implementer.model ?? "inherit"} / ${runtime.roles.implementer.reasoning ?? "inherit"}`,
         `Reviewer: ${runtime.roles.reviewer.model ?? "inherit"} / ${runtime.roles.reviewer.reasoning ?? "inherit"}`,
+        `Implementer fallback: ${runtime.failureFallback.afterFailures === null ? "disabled" : `after ${runtime.failureFallback.afterFailures} -> ${runtime.failureFallback.implementer.model ?? "inherit"} / ${runtime.failureFallback.implementer.reasoning ?? "inherit"}`}`,
+        `Reviewer fallback: ${runtime.failureFallback.afterFailures === null ? "disabled" : `after ${runtime.failureFallback.afterFailures} -> ${runtime.failureFallback.reviewer.model ?? "inherit"} / ${runtime.failureFallback.reviewer.reasoning ?? "inherit"}`}`,
+        `Service tier: ${runtime.serviceTier ?? "inherit"}`,
         `Agent threads: ${runtime.maxConcurrentThreads ?? "inherit"}`
       ];
     },
@@ -154,6 +195,8 @@ export const codexAdapter: IntegrationAdapter = {
       `mode: ${runtime.mode}`,
       `orchestrator model: ${runtime.orchestrator.model ?? "inherit"}`,
       `default worker model: ${runtime.defaultWorker.model ?? "inherit"}`,
+      `failure fallback: ${runtime.failureFallback.afterFailures === null ? "disabled" : `after ${runtime.failureFallback.afterFailures} -> Astra-capable named role fallback`}`,
+      `service tier: ${runtime.serviceTier ?? "inherit"}`,
       `max concurrent threads: ${runtime.maxConcurrentThreads ?? "inherit"}`
     ];
   }
