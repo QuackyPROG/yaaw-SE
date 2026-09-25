@@ -279,7 +279,7 @@ def main() -> int:
         "engineering.md": {"schema", "revision", "status", "product_revision", "current_frontier", "readiness"},
         "spec.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id", "decision_ids"},
         "ticket.md": {"schema", "id", "revision", "spec", "spec_revision", "product_revision", "engineering_revision", "status", "dependencies", "decision_ids", "expertise"},
-        "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"},
+        "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "repository", "evidence"},
         "engineering-research.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id"},
     }
     for filename, required in template_meta.items():
@@ -342,6 +342,10 @@ def main() -> int:
             errors.append(f"README missing primary skill {skill_id}")
     if not (CORE / "core/invalidation.md").is_file() or not (CORE / "rules/repository-identity.md").is_file():
         errors.append("missing invalidation or repository-identity contract")
+    if not (CORE / "tools/repository-identity.mjs").is_file():
+        errors.append("missing canonical repository identity utility")
+    if not (CORE / "schemas/repository-identity.schema.json").is_file():
+        errors.append("missing shared repository identity schema")
     for rel in ("core/execution-context.md", "core/io-contract.md", "rules/research-admission.md"):
         if not (CORE / rel).is_file():
             errors.append(f"missing runtime hardening contract {rel}")

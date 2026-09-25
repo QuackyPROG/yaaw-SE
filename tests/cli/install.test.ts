@@ -189,6 +189,94 @@ describe("headless installation", () => {
     await expect(runInstall({ directory: root, action: "repair", tools: "codex", yes: true })).rejects.toThrow(/Partial YAAW\/provider state|valid manifest/i);
   });
 
+  it("quick-update migrates manifest-owned legacy system layout to canonical root", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-system-migrate-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+
+    const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
+    const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    const canonicalRel = ".yaaw-core/core/lifecycle.md";
+    const legacyRel = ".yaaw-core/system/core/lifecycle.md";
+    const canonicalPath = join(root, canonicalRel);
+    const lifecycle = await readFile(canonicalPath);
+
+    await mkdir(join(root, ".yaaw-core", "system", "core"), { recursive: true });
+    await writeFile(join(root, legacyRel), lifecycle);
+    await rm(canonicalPath);
+    manifest.managedFiles[legacyRel] = manifest.managedFiles[canonicalRel];
+    delete manifest.managedFiles[canonicalRel];
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    await writeFile(product, "migration sentinel\n");
+
+    await runInstall({ directory: root, action: "quick-update", yes: true });
+
+    expect(await exists(canonicalPath)).toBe(true);
+    expect(await exists(join(root, ".yaaw-core", "system"))).toBe(false);
+    expect(await readFile(product, "utf8")).toBe("migration sentinel\n");
+  });
+
+  it("backup-replace migrates a modified manifest-owned legacy system layout without losing project memory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-system-tainted-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+
+    const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
+    const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
+    const canonicalRel = ".yaaw-core/core/lifecycle.md";
+    const legacyRel = ".yaaw-core/system/core/lifecycle.md";
+    const canonicalPath = join(root, canonicalRel);
+    const original = await readFile(canonicalPath, "utf8");
+    const tainted = original + "\nlegacy incident self-edit\n";
+
+    await mkdir(join(root, ".yaaw-core", "system", "core"), { recursive: true });
+    await writeFile(join(root, legacyRel), tainted);
+    await rm(canonicalPath);
+    manifest.managedFiles[legacyRel] = manifest.managedFiles[canonicalRel];
+    delete manifest.managedFiles[canonicalRel];
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+    const product = join(root, ".yaaw-core", "project", "product.md");
+    await writeFile(product, "legacy migration durable sentinel\n");
+
+    await runInstall({
+      directory: root,
+      action: "repair",
+      yes: true,
+      conflictPolicy: "backup-replace"
+    });
+
+    expect(await readFile(canonicalPath, "utf8")).toBe(original);
+    expect(await exists(join(root, ".yaaw-core", "system"))).toBe(false);
+    expect(await readFile(product, "utf8")).toBe("legacy migration durable sentinel\n");
+
+    const stamps = await readdir(join(root, ".yaaw-core", "install", "backups"));
+    let found = false;
+    for (const stamp of stamps) {
+      const candidate = join(root, ".yaaw-core", "install", "backups", stamp, legacyRel);
+      if (await exists(candidate)) {
+        expect(await readFile(candidate, "utf8")).toBe(tainted);
+        found = true;
+      }
+    }
+    expect(found).toBe(true);
+  });
+
+  it("doctor rejects a parallel legacy .yaaw-core/system layout", async () => {
+    const root = await mkdtemp(join(tmpdir(), "yaaw-system-layout-"));
+    await runInstall({ directory: root, tools: "codex", yes: true });
+    await mkdir(join(root, ".yaaw-core", "system", "core"), { recursive: true });
+    await writeFile(join(root, ".yaaw-core", "system", "core", "legacy.md"), "legacy framework\n");
+
+    const report: any = await runDoctor({ directory: root, json: true });
+    const check = report.checks.find((entry: any) => entry.name === "framework-layout");
+    expect(report.healthy).toBe(false);
+    expect(check?.ok).toBe(false);
+    expect(check?.detail).toMatch(/canonical execution is ambiguous/i);
+
+    expect(await readFile(join(root, ".yaaw-core", "system", "core", "legacy.md"), "utf8")).toBe("legacy framework\n");
+  });
+
   it("blocks ambiguous legacy state instead of merging roots", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-legacy-"));
     await mkdir(join(root, ".yaaw"));

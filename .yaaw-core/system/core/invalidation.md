@@ -1,17 +1,10 @@
 # Invalidation propagation
 
-Accepted artifacts are historical records, not eternally valid truth. When an upstream basis changes, preserve history and invalidate downstream trust explicitly.
+Accepted artifacts are historical records, not eternally valid truth. Prior reviews remain immutable historical evidence; current authority may become `STALE` without rewriting history.
 
-## Product revision change
-1. Increment `product.md` revision and record the changed requirement.
-2. Identify `ENG-*` decisions whose product provenance depends on the changed requirement.
-3. Mark affected decisions superseded/invalidated in `engineering.md`; move planning readiness to unresolved.
-4. Mark dependent specs `STALE` rather than rewriting them in place.
-5. Move dependent tickets, including prior `PASS` tickets when behavior is affected, to `REPLAN_REQUIRED` using the transition contract.
-6. Prior reviews remain immutable historical evidence but no longer establish current acceptance.
+## Permanent rule
 
-## Engineering decision change
-Apply the same propagation from affected `ENG-*` decisions -> specs -> tickets -> reviews.
+**A stale contract and stale acceptance are not the same thing.**
 
 ## Acceptance invalidation
 If product/engineering/spec/ticket meaning remains current but review or verification proof is missing, repository-stale, or cannot be reproduced, preserve historical reviews and reconcile current acceptance to `REVIEW_REQUIRED`.
@@ -23,5 +16,29 @@ Stable acceptance causes: `REVIEW_MISSING`, `REVIEW_REPOSITORY_STALE`, `VERIFICA
 ## Framework integrity is not project invalidation
 Package-managed framework drift is neither contract invalidation nor acceptance invalidation. It means the execution engine is untrusted. Stop orchestration with the typed framework failure and use installer repair. Do not route framework drift to Planner or Reviewer and do not change ticket lifecycle state to encode it.
 
-## No silent cascade
-Every invalidated artifact records why it became stale and which upstream revision/decision caused it. Never delete prior decisions/specs/reviews merely to make current state look clean.
+Result: `PASS -> REPLAN_REQUIRED`.
+
+Next semantic owner: Planner.
+
+### Acceptance invalidation
+The source contract remains current, but review or verification proof is missing, repository-stale, or cannot be reproduced under the canonical identity algorithm.
+
+Result: `PASS -> REVIEW_REQUIRED`.
+
+Next semantic owner: Reviewer.
+
+Repository identity mismatch alone does not establish `REPLAN_REQUIRED`. The Orchestrator may mechanically invalidate trust, but it must not decide that current code satisfies the contract or that architecture is invalid.
+
+Reviewer may then return `PASS`, `REPAIR`, `REPLAN`, or `BLOCKED`.
+
+## Stable cause IDs
+
+Contract causes: `PRODUCT_SOURCE_STALE`, `ENGINEERING_SOURCE_STALE`, `SPEC_SOURCE_STALE`, `TICKET_SOURCE_STALE`, `CONTRACT_INVALIDATED`.
+
+Acceptance causes: `REVIEW_MISSING`, `REVIEW_REPOSITORY_STALE`, `VERIFICATION_MISSING`, `VERIFICATION_REPOSITORY_STALE`, `LEGACY_IDENTITY_UNVERIFIABLE`.
+
+Every invalidation records a stable cause plus human-readable evidence. Runtime-looking paths are not automatically acceptance-irrelevant.
+
+## Framework integrity is not acceptance invalidation
+
+Package-managed framework drift is neither contract invalidation nor acceptance invalidation. It means the execution engine is not trusted. Stop orchestration with the typed framework failure and use installer repair. Do not route framework drift to Planner or Reviewer and do not change ticket lifecycle state to encode it.

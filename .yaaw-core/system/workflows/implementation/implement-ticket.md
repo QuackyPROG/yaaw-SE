@@ -20,3 +20,7 @@ Repository status is `READY`. One ticket must be admitted as `READY`, dependenci
 
 ## Output
 Reviewable implementation plus evidence, or explicit replan/blocker state.
+
+## Evidence identity
+
+Use the canonical repository identity utility for implementation evidence. Do not implement a private worktree digest. Changeability requirements remain in force.

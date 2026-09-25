@@ -212,6 +212,17 @@ export async function doctor(projectRoot: string) {
     });
   }
 
+  const canonicalCore = await exists(join(projectRoot, ".yaaw-core", "core"));
+  const canonicalWorkflows = await exists(join(projectRoot, ".yaaw-core", "workflows"));
+  const legacySystem = await exists(join(projectRoot, ".yaaw-core", "system"));
+  checks.push({
+    name: "framework-layout",
+    ok: canonicalCore && canonicalWorkflows && !legacySystem,
+    detail: legacySystem
+      ? "legacy/parallel .yaaw-core/system framework layout exists; canonical execution is ambiguous"
+      : (!canonicalCore || !canonicalWorkflows ? "canonical .yaaw-core/core or .yaaw-core/workflows is missing" : undefined)
+  });
+
   const manifest = await readManifest(projectRoot);
   const durablePrefix = ".yaaw-core/project/";
   const badOwned = Object.keys(manifest!.managedFiles).filter(p=>p.startsWith(durablePrefix));

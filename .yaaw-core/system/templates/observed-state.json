@@ -13,13 +13,25 @@
     "repair_required": false
   },
   "repository": {
+    "schema": "yaaw.repository-identity/v2",
+    "algorithm": null,
     "status": "UNVERSIONED",
     "workspace_scope": ".",
     "git_root_relation": "none",
     "head_commit": null,
     "dirty": null,
     "worktree_digest": null,
-    "error": null
+    "components": null,
+    "changed_paths": [],
+    "error": "workspace is not versioned"
+  },
+  "acceptance": {
+    "active_ticket": null,
+    "source_current": null,
+    "review_present": null,
+    "review_repository_current": null,
+    "verification_repository_current": null,
+    "stale_reason": null
   },
   "transition_sequence": 0,
   "claims": {},

@@ -15,3 +15,7 @@ Active/recent artifact, state claims, runtime caches, repository identity/histor
 6. Return control to `orchestration.route` for normal next-action selection.
 
 Never repeat destructive work merely because a context ended.
+
+## Acceptance recovery
+
+A source-current stale `PASS` is recovered through `REVIEW_REQUIRED`. Do not dispatch Planner unless contract invalidation is independently proven.

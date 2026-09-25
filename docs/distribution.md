@@ -108,6 +108,10 @@ The installer accepts `yaaw.installation/v1` manifests from the initial flat pac
 
 No separate `.yaaw/` project root is introduced.
 
+For a tainted managed installation, `--conflict-policy backup-replace` first stores modified managed bytes beneath `.yaaw-core/install/backups/<timestamp>/`, then restores package files transactionally. Update/modify/repair invalidate replaceable runtime coordination caches after the package basis changes. Durable `.yaaw-core/project/**` artifacts are preserved.
+
+Manifest-owned legacy `.yaaw-core/system/**` package files can be migrated by normal update/repair ownership logic. Modified legacy managed files require an explicit conflict policy such as `backup-replace`. Unmanaged/ownership-ambiguous legacy framework content fails closed instead of being deleted.
+
 ## Root instruction files
 
 `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` use a managed section delimited by `<!-- yaaw-se:begin -->` and `<!-- yaaw-se:end -->`. Bytes outside the managed section are preserved as far as practical. Cline uses the fully namespaced `.cline/rules/yaaw-se.md`.

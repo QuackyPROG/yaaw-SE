@@ -67,11 +67,15 @@ class CoreContractsTest(unittest.TestCase):
         self.assertTrue({"reason", "evidence", "workflow", "observed_commit"}.issubset(set(transition["required"])))
 
     def test_review_and_evidence_bind_repository_identity(self):
-        review = json.loads((CORE / "schemas/review.schema.json").read_text())
-        self.assertTrue({"reviewed_head_commit", "reviewed_dirty", "reviewed_worktree_digest", "evidence"}.issubset(set(review["required"])))
-        evidence = json.loads((CORE / "schemas/evidence.schema.json").read_text())
-        self.assertIn("repository", evidence["required"])
-        self.assertEqual(set(review["properties"]["result"]["enum"]), {"PASS", "REPAIR", "REPLAN", "BLOCKED"})
+        repository = json.loads((CORE / "schemas/repository-identity.schema.json").read_text())
+        self.assertEqual(repository["$id"], "yaaw.repository-identity/v2")
+        review_v2 = json.loads((CORE / "schemas/review-v2.schema.json").read_text())
+        evidence_v2 = json.loads((CORE / "schemas/evidence-v2.schema.json").read_text())
+        self.assertIn("repository", review_v2["required"])
+        self.assertIn("repository", evidence_v2["required"])
+        self.assertEqual(set(review_v2["properties"]["result"]["enum"]), {"PASS", "REPAIR", "REPLAN", "BLOCKED"})
+        self.assertTrue((CORE / "schemas/review-v1.schema.json").is_file())
+        self.assertTrue((CORE / "schemas/evidence-v1.schema.json").is_file())
 
     def test_transition_contract_forbids_self_acceptance_shortcuts(self):
         text = (CORE / "core/transitions.md").read_text()
@@ -174,6 +178,12 @@ class CoreContractsTest(unittest.TestCase):
         self.assertNotIn("yaaw-research", self.skills)
         self.assertIn("research-admission", (CORE / "workflows/planning/decision-frontier.md").read_text())
         self.assertIn("Availability of a Codex/host skill is not an admission basis", (CORE / "rules/research-admission.md").read_text())
+
+    def test_repository_identity_is_single_canonical_utility(self):
+        self.assertTrue((CORE / "tools/repository-identity.mjs").is_file())
+        rule = (CORE / "rules/repository-identity.md").read_text()
+        self.assertIn("must not reimplement", rule.lower())
+        self.assertIn("yaaw-worktree-v1", rule)
 
     def test_context_loading_is_progressive_and_git_is_root_anchored(self):
         context = (CORE / "core/context-loading.md").read_text()

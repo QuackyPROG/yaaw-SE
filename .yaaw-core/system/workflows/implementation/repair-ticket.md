@@ -16,3 +16,7 @@ Ticket is `REPAIR_REQUIRED` and latest review result is `REPAIR` against the sam
 
 ## Output
 Repaired reviewable implementation or replan/blocker result.
+
+## Repair identity
+
+After bounded repair and verification, bind evidence to the canonical repository identity and return `REVIEW_REQUIRED`. Changeability requirements remain in force.

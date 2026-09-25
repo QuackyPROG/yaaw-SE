@@ -1,6 +1,6 @@
 # State transition contract
 
-State names are not enough; only the transitions below are legal unless an explicit recovery rule documents a narrower evidence-backed exception.
+Only transitions represented by the machine registry are legal.
 
 In the machine registry, `owner` is the semantic decision authority and `state_writer` is the role permitted to persist the resulting lifecycle mutation. Project-state ledger writes are performed by Orchestrator after validating the durable basis. This does not transfer product, planning, implementation, or acceptance authority to Orchestrator.
 
@@ -33,7 +33,4 @@ Repository identity mismatch alone does not establish `REPLAN_REQUIRED`.
 
 Forbidden examples: `DRAFT -> PASS`, `READY -> PASS`, `REPAIR_REQUIRED -> PASS`, or Implementer-authored `PASS`.
 
-## Project transitions
-Normal phase order is `product -> planning -> implementation -> complete`. `blocked` may be entered from any phase and exited only when its blocker is resolved. A new accepted product revision may move `complete` back to `product` or `planning`; historical completion evidence remains immutable.
-
-Every transition increments `transition_sequence` and writes `last_transition` in `.yaaw-core/project/state.json`.
+Every transition increments `transition_sequence` and records a stable cause plus evidence. Historical PASS reviews remain immutable even when their authority becomes stale.

@@ -1,12 +1,22 @@
 # Execution context
 
 ## Purpose
-Define the runtime boundary for every YAAW workflow so provider shell state, ambient working directory, and repository layout cannot silently change semantic behavior.
+Define one runtime boundary for every YAAW workflow so ambient shell state and provider layout cannot silently change semantics.
 
 ## Canonical workspace root
 The **workspace root** is the consumer directory that owns the active YAAW installation. Resolve it before repository or application inspection by walking from the provider's current location toward ancestors until `.yaaw-core/install/manifest.json` is found. During recovery of a damaged installation, `.yaaw-core/system/registries/paths.json` may be used as a fallback marker.
 
-The process current working directory is never authoritative. `.yaaw-core/project/` is the **project memory root**, not the workspace root.
+The process CWD is never authoritative. `.yaaw-core/project/` is project memory, not the workspace root.
+
+## Framework integrity
+
+After resolving the workspace and before semantic project recovery, run:
+
+```text
+node .yaaw-core/tools/framework-integrity.mjs --workspace <WORKSPACE_ROOT>
+```
+
+Only `HEALTHY` permits semantic routing. Package drift, missing framework files, local framework overrides, legacy parallel layout, or an invalid manifest produce a typed framework stop and invalidate executable handoffs. Orchestrator reports the condition; it never repairs package-managed files itself.
 
 ## Framework integrity
 
@@ -19,35 +29,31 @@ node .yaaw-core/system/tools/framework-integrity.mjs --workspace <WORKSPACE_ROOT
 Only `HEALTHY` permits semantic routing. Package drift, missing framework files, local framework overrides, or an invalid manifest produce a typed framework stop and invalidate executable handoffs. Orchestrator reports the condition; it never repairs package-managed files itself.
 
 ## Repository capability
-Repository capability is observed independently from workflow semantics:
-
-- `READY`: Git is available and the workspace is inside a repository; trustworthy identity can be computed.
-- `UNVERSIONED`: the workspace is valid but is not inside a Git repository.
-- `UNAVAILABLE`: Git cannot be executed or repository inspection is prohibited by the host.
-- `ROOT_MISMATCH`: repository ownership cannot be reconciled safely with the resolved workspace.
-- `IDENTITY_FAILED`: a repository exists but exact identity cannot be established.
-
-A raw Git failure is evidence to classify; it is never permission to continue as though repository identity succeeded.
+- `READY`: repository exists and exact identity is trustworthy.
+- `UNVERSIONED`: valid workspace, no Git repository.
+- `UNAVAILABLE`: Git or host permission unavailable.
+- `ROOT_MISMATCH`: repository/workspace ownership cannot be reconciled.
+- `IDENTITY_FAILED`: repository exists but exact identity failed.
 
 ## Root-anchored command rule
-Every YAAW Git command is explicitly scoped to the resolved workspace:
+Every Git command is explicitly scoped:
 
 ```text
 git -C <WORKSPACE_ROOT> ...
 ```
 
-Never rely on ambient CWD for `git status`, `git diff`, `git log`, `git rev-parse`, or verification commands.
+When Git top-level is an ancestor, inspection and identity remain workspace-scoped with `-- .`; unrelated sibling changes must not contaminate the active workspace identity.
 
-When the Git top-level is an ancestor of the workspace, repository inspection and worktree hashing are path-scoped to the workspace using the equivalent of `-- .` from `git -C <WORKSPACE_ROOT>`. Unrelated sibling work in a monorepo must not automatically contaminate the workspace identity.
+## Canonical identity execution
+For repository identity, every semantic workflow invokes:
+
+```text
+node .yaaw-core/tools/repository-identity.mjs --workspace <WORKSPACE_ROOT>
+```
+
+No role or workflow may independently compute or reserialize `worktree_digest`. Copy the returned repository identity into state, handoff, evidence, and review records.
 
 ## Workflow requirements
 The machine policy in `.yaaw-core/system/registries/execution-policy.json` assigns one repository requirement to every workflow:
 
-- `NONE`: repository capability is not a prerequisite.
-- `INSPECT`: inspect repository/workspace reality when available; `UNVERSIONED` is representable and does not by itself block the workflow.
-- `IDENTITY`: exact repository identity is mandatory; dispatch is blocked unless repository status is `READY`.
-
-PRD work normally uses `NONE`. Planning discovery uses `INSPECT`. Implementation, code review, and implementation recovery use `IDENTITY`.
-
-## Provider invariant
-Provider adapters may point to this contract but must not duplicate it. Codex, Claude Code, Gemini CLI, and Cline all execute against the same workspace-root and repository-capability semantics.
+Provider adapters point to this contract; Codex, Claude Code, Gemini CLI, and Cline do not fork repository semantics.
