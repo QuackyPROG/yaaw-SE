@@ -10,65 +10,83 @@ The repository must define this Actions secret:
 NPM_TOKEN
 ```
 
-Use an npm granular access token with package read/write publishing permission. For the initial package creation, the token may need access to all packages because `yaaw-se` does not exist yet. After the package exists, replace the bootstrap token with a token restricted to `yaaw-se` only.
+Use an npm granular access token with package read/write publishing permission. Never commit the token to the repository.
 
-Never commit the token to the repository.
+## Release policy
+
+npm versions are immutable, so every successful current-`main` publication must use a new version. The repository's `package.json` version is the requested release line, not a promise to overwrite that exact version.
+
+The stable resolver follows this rule:
+
+```text
+repository version > npm latest
+    -> publish repository version
+
+repository version <= npm latest
+    -> publish patch(npm latest)
+```
+
+Examples:
+
+```text
+repo 0.3.0 + latest 0.3.0 -> 0.3.1
+repo 0.3.0 + latest 0.3.4 -> 0.3.5
+repo 0.4.0 + latest 0.3.8 -> 0.4.0
+```
+
+This means normal bug fixes merged to `main` no longer require a manual patch bump just to make new bytes reachable through `latest`. Deliberate minor/major boundaries are still expressed by moving the repository version ahead.
 
 ## Continuous prerelease publishing
 
-Every successful push to `main` runs the complete validation workflow:
-
-- semantic-core validation
-- Python tests
-- Node installer tests
-- package build and pack inspection
-- exact tarball smoke tests
-- tarball-to-tarball update + tainted-framework repair smoke
-- minimum supported Node 20.12 runtime smoke
-- macOS and Windows smoke tests
-
-Only after every required job succeeds does GitHub publish a unique prerelease derived from the package version and workflow run identity:
+After the full validation matrix succeeds, the current `main` head publishes `next` from the same prospective stable release line:
 
 ```text
-0.2.0-dev.<run-id>.<run-attempt>
+latest 0.3.4
+next   0.3.5-dev.<run-id>.<run-attempt>
 ```
 
-The prerelease is published under the npm dist-tag:
-
-```text
-next
-```
-
-Development users can therefore run:
+Development users can run:
 
 ```bash
 npx yaaw-se@next install
 ```
 
-A failed CI run never publishes.
+Stable users are never silently moved to `next`.
 
-## Stable releases
+## Stable publishing sequence
 
-Stable npm releases are published from `main` after the full validation matrix succeeds.
-
-To publish new stable bytes, bump the version in both `package.json` and `package-lock.json`, commit that change to `main`, and push. For example, changing the package version from `0.1.x` to `0.2.0` causes a successful `main` run to publish:
+The release job keeps the existing current-main freshness guard, then performs:
 
 ```text
-yaaw-se@0.2.0
-dist-tag: latest
+validated source
+  -> resolve next immutable stable version
+  -> npm version <target> --no-git-tag-version
+  -> build payload with that exact version
+  -> verify package/payload version alignment
+  -> pack tarball
+  -> smoke that exact tarball
+  -> npm publish that exact tarball --tag latest
 ```
 
-npm package versions are immutable. If the version already exists, the workflow does not overwrite it; it only ensures `latest` points to that already-published version. Therefore, any `main` change that must reach normal `npx yaaw-se install` users needs a package-version bump.
+Publishing the same tarball that passed smoke testing closes the tested-artifact/published-artifact gap.
 
-Normal users can then run:
+Normal users can run:
 
 ```bash
 npx yaaw-se install
 ```
 
-## Local verification before a stable tag
+The CLI also performs an application-level freshness check before Commander dispatch. When the registry is reachable and a newer stable version exists, a stable invocation hands the original argv to that exact immutable release. Registry failure is non-fatal and the current package continues to run.
 
-Before creating a stable release tag, verify locally:
+For deterministic CI, migration, support, or exact-tarball testing:
+
+```bash
+YAAW_DISABLE_AUTO_UPDATE=1 npx yaaw-se@0.3.0 status
+```
+
+## Local verification
+
+Before merging a release-affecting change:
 
 ```bash
 git status
@@ -82,34 +100,12 @@ npm ci
 npm test
 npm run build
 npm pack --dry-run
-```
-
-Inspect the pack list. It should contain `package.json`, `README.md`, `dist/cli/**`, and `dist/payload/**`, and must not contain tests, git metadata, repository-development `AGENTS.md`, project memory, environment files, or private keys.
-
-The repository also includes:
-
-```bash
 node scripts/smoke_npm_tarball.mjs
 node scripts/smoke_npm_update.mjs
 ```
 
-The first command exercises the exact packed artifact across Codex, Claude Code, Gemini CLI, Cline, all four together, paths with spaces/Unicode, quick-update idempotence, status/doctor, durable-state sentinels, and the Codex `.codex` runtime/role surface.
+Exact-package smoke processes disable the application-level updater so they continue testing the intended local bytes.
 
-The second builds a synthetic update tarball, deliberately taints an installed package-managed framework file, then upgrades using `backup-replace`. It verifies that the tainted bytes are backed up, canonical package content is restored/updated, replaceable runtime caches are invalidated, the Codex runtime migration still succeeds, and product, engineering, state, spec, ticket, review, evidence, research, and project-rule durable artifacts survive byte-for-byte.
+## Token hardening
 
-## Versioning rule
-
-npm package versions are immutable. Do not reuse a stable version for different stable source states.
-
-Before publishing a new stable release from `main`, update both `package.json` and `package-lock.json` to the intended version and commit them. Release verification uses `npm ci`, so lock drift fails rather than being silently resolved.
-
-## After the first package exists
-
-Once `yaaw-se` has been created on npm:
-
-1. revoke the broad bootstrap granular token;
-2. create a new granular token restricted to the `yaaw-se` package;
-3. keep package read/write publishing permission;
-4. replace the GitHub `NPM_TOKEN` repository secret with the restricted token.
-
-Longer term, npm Trusted Publishing/OIDC can replace the token entirely.
+Once `yaaw-se` exists on npm, prefer a granular token restricted to that package. Longer term, npm Trusted Publishing/OIDC can replace the token entirely.

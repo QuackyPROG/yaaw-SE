@@ -127,18 +127,32 @@ jobs:
             echo "Skipping stale commit ${GITHUB_SHA}; current branch head is ${CURRENT_HEAD}."
           fi
 
-      - name: Create unique prerelease version
+      - name: Resolve immutable prerelease version
         if: steps.freshness.outputs.publish == 'true'
+        id: version
         shell: bash
         run: |
-          BASE_VERSION="$(node -p "require('./package.json').version")"
-          PUBLISH_VERSION="${BASE_VERSION}-dev.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
-          npm version "${PUBLISH_VERSION}" --no-git-tag-version
-          echo "Publishing yaaw-se@${PUBLISH_VERSION} to dist-tag next"
+          REPO_VERSION="$(node -p "require('./package.json').version")"
+          LATEST_JSON="$(npm view yaaw-se@latest version --json 2>/dev/null || true)"
+          TARGET_VERSION="$(node scripts/resolve_release_version.mjs next "${REPO_VERSION}" "${LATEST_JSON}" "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}")"
+          npm version "${TARGET_VERSION}" --no-git-tag-version
+          echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "Publishing yaaw-se@${TARGET_VERSION} to dist-tag next"
 
-      - name: Publish to npm next
+      - name: Build, smoke, and pack prerelease
         if: steps.freshness.outputs.publish == 'true'
-        run: npm publish --tag next --access public
+        id: pack
+        shell: bash
+        run: |
+          npm run build
+          PACK_JSON="$(npm pack --json --ignore-scripts)"
+          TARBALL="$(node -e 'const p=JSON.parse(process.argv[1]); process.stdout.write(p[0].filename)' "${PACK_JSON}")"
+          YAAW_SMOKE_TARBALL="${PWD}/${TARBALL}" node scripts/smoke_npm_tarball.mjs
+          echo "tarball=${TARBALL}" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish tested tarball to npm next
+        if: steps.freshness.outputs.publish == 'true'
+        run: npm publish "${{ steps.pack.outputs.tarball }}" --tag next --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -172,16 +186,31 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 
-      - name: Publish stable release
+      - name: Resolve immutable stable version
         if: steps.freshness.outputs.publish == 'true'
+        id: version
         shell: bash
         run: |
-          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
-          if npm view "yaaw-se@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
-            echo "yaaw-se@${PACKAGE_VERSION} already exists; ensuring latest points to it."
-            npm dist-tag add "yaaw-se@${PACKAGE_VERSION}" latest
-          else
-            npm publish --tag latest --access public
-          fi
+          REPO_VERSION="$(node -p "require('./package.json').version")"
+          LATEST_JSON="$(npm view yaaw-se@latest version --json 2>/dev/null || true)"
+          TARGET_VERSION="$(node scripts/resolve_release_version.mjs stable "${REPO_VERSION}" "${LATEST_JSON}")"
+          npm version "${TARGET_VERSION}" --no-git-tag-version
+          echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "Stable target: yaaw-se@${TARGET_VERSION}"
+
+      - name: Build, smoke, and pack stable release
+        if: steps.freshness.outputs.publish == 'true'
+        id: pack
+        shell: bash
+        run: |
+          npm run build
+          PACK_JSON="$(npm pack --json --ignore-scripts)"
+          TARBALL="$(node -e 'const p=JSON.parse(process.argv[1]); process.stdout.write(p[0].filename)' "${PACK_JSON}")"
+          YAAW_SMOKE_TARBALL="${PWD}/${TARBALL}" node scripts/smoke_npm_tarball.mjs
+          echo "tarball=${TARBALL}" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish tested tarball to npm latest
+        if: steps.freshness.outputs.publish == 'true'
+        run: npm publish "${{ steps.pack.outputs.tarball }}" --tag latest --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
