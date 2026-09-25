@@ -26,6 +26,7 @@ Replaceable runtime artifacts:
 - `.yaaw-core/runtime/observed-state.json`: observed orchestration snapshot including repository capability.
 - `.yaaw-core/runtime/handoff.json`: exact dispatch contract.
 - `.yaaw-core/runtime/intent.json`: optional desired-outcome cache used while prerequisites are resolved.
+- `.yaaw-core/runtime/dispatch-failures.json`: replaceable per-handoff execution-failure ledger used only for bounded host capability escalation.
 
 Installer metadata:
 

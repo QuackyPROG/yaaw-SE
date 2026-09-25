@@ -42,6 +42,7 @@ export interface InstallCommandOptions {
   codexWorkerModel?: string;
   codexWorkerReasoning?: string;
   codexMaxAgents?: string;
+  codexServiceTier?: string;
   codexConfig?: string;
   json?: boolean;
 }
@@ -87,12 +88,14 @@ async function resolveCodexRuntime(options: InstallCommandOptions, existing: unk
     };
   }
   if (options.codexMaxAgents !== undefined) overlay.maxConcurrentThreads = options.codexMaxAgents === "inherit" ? null : options.codexMaxAgents;
+  if (options.codexServiceTier !== undefined) overlay.serviceTier = options.codexServiceTier === "inherit" ? null : options.codexServiceTier;
   settings = normalizeCodexRuntimeSettings(overlay, settings);
 
   const explicit = Boolean(
     options.codexConfig || options.codexRuntime !== undefined || options.codexRootModel !== undefined ||
     options.codexRootReasoning !== undefined || options.codexWorkerModel !== undefined ||
-    options.codexWorkerReasoning !== undefined || options.codexMaxAgents !== undefined
+    options.codexWorkerReasoning !== undefined || options.codexMaxAgents !== undefined ||
+    options.codexServiceTier !== undefined
   );
   const capability = getIntegration("codex").configuration!;
   if (interactive && !explicit && (action === "fresh" || action === "modify")) {

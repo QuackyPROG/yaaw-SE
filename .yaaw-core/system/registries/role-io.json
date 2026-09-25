@@ -20,7 +20,8 @@
         "observed_state",
         "handoff",
         "state",
-        "installation_manifest"
+        "installation_manifest",
+        "dispatch_failures"
       ]
     },
     "planner": {
@@ -48,7 +49,8 @@
         "observed_state",
         "handoff",
         "state",
-        "installation_manifest"
+        "installation_manifest",
+        "dispatch_failures"
       ]
     },
     "implementer": {
@@ -79,7 +81,8 @@
         "observed_state",
         "handoff",
         "state",
-        "installation_manifest"
+        "installation_manifest",
+        "dispatch_failures"
       ]
     },
     "reviewer": {
@@ -111,7 +114,8 @@
         "observed_state",
         "handoff",
         "state",
-        "installation_manifest"
+        "installation_manifest",
+        "dispatch_failures"
       ]
     },
     "orchestrator": {
@@ -129,13 +133,15 @@
         "observed_state",
         "handoff",
         "intent",
-        "installation_manifest"
+        "installation_manifest",
+        "dispatch_failures"
       ],
       "writes": [
         "state",
         "observed_state",
         "handoff",
-        "intent"
+        "intent",
+        "dispatch_failures"
       ],
       "forbidden_writes": [
         "product",

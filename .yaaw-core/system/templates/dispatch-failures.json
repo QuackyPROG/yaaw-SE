@@ -1,0 +1,17 @@
+{
+  "schema": "yaaw.dispatch-failures/v1",
+  "basis": {
+    "role": "implementer",
+    "workflow": "implementation.implement-ticket",
+    "active_artifact": null,
+    "revisions": {},
+    "transition_sequence": 0,
+    "repository": {
+      "head_commit": null,
+      "worktree_digest": null
+    }
+  },
+  "consecutive_failures": 0,
+  "fallback_attempted": false,
+  "last_failure": null
+}

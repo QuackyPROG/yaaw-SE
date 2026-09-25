@@ -17,6 +17,14 @@ When `orchestration.dispatch` selects a non-Orchestrator role, map it only after
 
 Codex role selection is an execution mechanism, never a second router.
 
+## Capability escalation fallback
+
+{{FAILURE_FALLBACK_POLICY}}
+
+Failure accounting is read from `.yaaw-core/runtime/dispatch-failures.json` only after Orchestrator has re-inspected durable reality. Count only child execution failures with no durable progress on the unchanged handoff basis: worker failure, interruption, no response, or an unusable/illegal result. Do **not** count legal semantic results such as `REPAIR`, `REPLAN`, `BLOCKED`, or a real precondition result.
+
+When the threshold is reached for Implementer or Reviewer, prefer the role-specific fallback named worker on the next dispatch. It receives the exact same semantic role and handoff; only the host execution capability/model changes. Never reuse an Implementer context as Reviewer.
+
 ## Runtime modes
 
 ### auto

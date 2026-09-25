@@ -71,7 +71,7 @@ commit manifest last
 
 If an operation or verification fails, the transaction restores pre-existing bytes and removes newly created package files.
 
-Quick Update, Modify, and Repair invalidate only replaceable `.yaaw-core/runtime/observed-state.json`, `handoff.json`, and `intent.json` after a package-basis change. Durable project memory is not invalidated.
+Quick Update, Modify, and Repair invalidate only replaceable `.yaaw-core/runtime/observed-state.json`, `handoff.json`, `intent.json`, and `dispatch-failures.json` after a package-basis change. Durable project memory is not invalidated.
 
 For tainted managed framework files, `--conflict-policy backup-replace` copies the modified bytes under `.yaaw-core/install/backups/<timestamp>/...` before restoring package-owned bytes.
 

@@ -15,6 +15,13 @@ function pairSummary(pair: CodexModelSettings): string {
   return `${pair.model ?? "Inherit"} / ${displayReasoning(pair.reasoning)}`;
 }
 
+function serviceTierSummary(value: CodexRuntimeSettings["serviceTier"]): string {
+  if (!value) return "Inherit (Fast not forced)";
+  if (value === "default") return "Standard";
+  if (value === "fast") return "Fast";
+  return "Flex";
+}
+
 function profile(id: string): IntegrationConfigurationProfile {
   return { id, revision: CODEX_CONFIGURATION_REVISION };
 }
@@ -99,9 +106,12 @@ function recommendedNote(settings: CodexRuntimeSettings) {
     `Planner         ${pairSummary(settings.roles.planner)}`,
     `Implementer     ${pairSummary(settings.roles.implementer)}`,
     `Reviewer        ${pairSummary(settings.roles.reviewer)}`,
-    `Fallback        ${pairSummary(settings.defaultWorker)}`,
+    `Default worker  ${pairSummary(settings.defaultWorker)}`,
+    `Impl fallback   ${settings.failureFallback.afterFailures === null ? "Disabled" : `after ${settings.failureFallback.afterFailures} -> ${pairSummary(settings.failureFallback.implementer)}`}`,
+    `Review fallback ${settings.failureFallback.afterFailures === null ? "Disabled" : `after ${settings.failureFallback.afterFailures} -> ${pairSummary(settings.failureFallback.reviewer)}`}`,
     "",
     `Runtime         ${settings.mode}`,
+    `Service tier    ${serviceTierSummary(settings.serviceTier)}`,
     `Agent threads   ${settings.maxConcurrentThreads ?? "Inherit"}`
   ].join("\n"), "Recommended Codex profile");
 }
@@ -115,6 +125,7 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
         { value: "sandbox", label: `Sandbox mode               ${settings.sandboxMode ?? "Inherit"}` },
         { value: "approval", label: `Approval policy            ${settings.approvalPolicy ?? "Inherit"}` },
         { value: "web", label: `Web search                 ${settings.webSearch ?? "Inherit"}` },
+        { value: "tier", label: `Service tier              ${serviceTierSummary(settings.serviceTier)}` },
         { value: "back", label: "← Back" }
       ]
     });
@@ -153,6 +164,23 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
       continue;
     }
 
+    if (choice === "tier") {
+      const result = await p.select({
+        message: "Codex service tier",
+        initialValue: settings.serviceTier ?? "inherit",
+        options: [
+          { value: "inherit", label: "Inherit", hint: "Do not force Fast mode; use the surrounding Codex/project setting" },
+          { value: "default", label: "Standard", hint: "Explicitly disable Fast/Flex for YAAW turns" },
+          { value: "fast", label: "Fast", hint: "Lower latency with higher usage/cost where supported" },
+          { value: "flex", label: "Flex", hint: "Lower-cost, higher-latency processing where supported" },
+          { value: "back", label: "← Back" }
+        ]
+      });
+      if (p.isCancel(result) || result === "back") continue;
+      settings.serviceTier = result === "inherit" ? null : result as CodexRuntimeSettings["serviceTier"];
+      continue;
+    }
+
     if (choice === "web") {
       const result = await p.select({
         message: "Web search",
@@ -172,6 +200,48 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
   }
 }
 
+async function editFailureFallback(settings: CodexRuntimeSettings): Promise<void> {
+  while (true) {
+    const threshold = settings.failureFallback.afterFailures;
+    const choice = await p.select({
+      message: "Implementer / Reviewer failure fallback",
+      options: [
+        { value: "threshold", label: `Escalate after            ${threshold === null ? "Disabled" : `${threshold} no-progress failures`}` },
+        { value: "implementer", label: `Implementer fallback      ${pairSummary(settings.failureFallback.implementer)}` },
+        { value: "reviewer", label: `Reviewer fallback         ${pairSummary(settings.failureFallback.reviewer)}` },
+        { value: "back", label: "← Back" }
+      ]
+    });
+    if (p.isCancel(choice) || choice === "back") return;
+
+    if (choice === "threshold") {
+      const result = await p.text({
+        message: "Fallback threshold (blank = disabled)",
+        placeholder: threshold === null ? "3" : String(threshold),
+        defaultValue: threshold === null ? "" : String(threshold)
+      });
+      if (p.isCancel(result)) continue;
+      const raw = String(result).trim();
+      if (!raw) {
+        settings.failureFallback.afterFailures = null;
+        continue;
+      }
+      const value = Number(raw);
+      if (!Number.isInteger(value) || value < 1) {
+        p.note("Enter a positive integer, or leave blank to disable fallback.", "Invalid fallback threshold");
+        continue;
+      }
+      settings.failureFallback.afterFailures = value;
+      continue;
+    }
+
+    const role = choice as "implementer" | "reviewer";
+    const label = role === "implementer" ? "Implementer fallback" : "Reviewer fallback";
+    const edited = await modelPair(label, settings.failureFallback[role]);
+    if (edited.kind === "value") settings.failureFallback[role] = edited.value;
+  }
+}
+
 async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationResult<CodexRuntimeSettings>> {
   while (true) {
     const choice = await p.select({
@@ -183,6 +253,7 @@ async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationRe
         { value: "planner", label: `Planner               ${pairSummary(settings.roles.planner)}` },
         { value: "implementer", label: `Implementer           ${pairSummary(settings.roles.implementer)}` },
         { value: "reviewer", label: `Reviewer              ${pairSummary(settings.roles.reviewer)}` },
+        { value: "fallback", label: `Failure fallback      ${settings.failureFallback.afterFailures === null ? "Disabled" : `after ${settings.failureFallback.afterFailures} -> Astra/role config`}` },
         { value: "advanced", label: "Advanced settings" },
         { value: "review", label: "Review changes" },
         { value: "back", label: "← Back" },
@@ -195,6 +266,10 @@ async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationRe
     if (choice === "review") return navigationValue(normalizeCodexRuntimeSettings(settings));
     if (choice === "advanced") {
       await editAdvanced(settings);
+      continue;
+    }
+    if (choice === "fallback") {
+      await editFailureFallback(settings);
       continue;
     }
 
@@ -229,6 +304,8 @@ function assignRecommendedModels(settings: CodexRuntimeSettings) {
   settings.orchestrator = structuredClone(recommended.orchestrator);
   settings.defaultWorker = structuredClone(recommended.defaultWorker);
   settings.roles = structuredClone(recommended.roles);
+  settings.failureFallback = structuredClone(recommended.failureFallback);
+  settings.serviceTier = recommended.serviceTier;
 }
 
 function assignInheritedModels(settings: CodexRuntimeSettings) {
@@ -240,6 +317,12 @@ function assignInheritedModels(settings: CodexRuntimeSettings) {
     implementer: inheritPair(),
     reviewer: inheritPair()
   };
+  settings.failureFallback = {
+    afterFailures: null,
+    implementer: inheritPair(),
+    reviewer: inheritPair()
+  };
+  settings.serviceTier = null;
 }
 
 async function configureCustom(settings: CodexRuntimeSettings): Promise<NavigationResult<CodexRuntimeSettings>> {

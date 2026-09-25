@@ -40,6 +40,7 @@ program.command("install")
   .option("--codex-worker-model <model>", "inherit or default subagent model ID")
   .option("--codex-worker-reasoning <effort>", "inherit or default subagent reasoning effort")
   .option("--codex-max-agents <count>", "inherit or positive concurrent thread count")
+  .option("--codex-service-tier <tier>", "inherit|default|fast|flex")
   .option("--codex-config <path>", "yaaw.codex-install/v1 JSON configuration")
   .option("--json", "emit JSON")
   .action(async options => {

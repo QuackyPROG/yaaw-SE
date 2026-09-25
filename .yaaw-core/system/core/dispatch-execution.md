@@ -33,5 +33,17 @@ An orchestrated Implementer execution context must never become the Reviewer exe
 ## Failure and retry invariant
 If a worker started and later failed or disappeared, do not blindly start the same authority worker again. Inspect durable reality first because the worker may already have mutated the repository or written evidence.
 
+## Capability fallback invariant
+For Implementer and Reviewer only, a host adapter may declare a bounded capability fallback after repeated **execution** failures. This is not a semantic reroute.
+
+The Orchestrator owns `.yaaw-core/runtime/dispatch-failures.json` and updates it only after re-entering reality inspection. A failure counts only when:
+- a child started and failed, was interrupted, returned no response, or returned an unusable/illegal result;
+- post-failure inspection shows no durable progress attributable to that attempt; and
+- role, workflow, active artifact, source revisions, transition sequence, and repository basis are unchanged.
+
+Legal workflow results such as `REPAIR`, `REPLAN`, `BLOCKED`, or a real precondition result do not count as execution failures. Any durable progress or basis change resets the counter.
+
+When a configured threshold is reached, the next attempt may use the host's stronger fallback execution profile while preserving the exact role and handoff. The fallback receives one attempt on an unchanged basis. If that attempt also fails with no progress, stop with `BLOCKED:AUTHORITY_EXECUTION_FAILED` rather than entering an unbounded retry loop.
+
 ## Provider boundary
 This contract is provider-neutral. Names of host tools, agent types, provider directories, model identifiers, and provider-specific spawning schemas belong only to integration adapters.

@@ -238,13 +238,25 @@ export async function doctor(projectRoot: string) {
     } catch {}
     checks.push({ name: "codex-config-syntax", ok: configOk });
     checks.push({ name: "codex-runtime-adapter", ok: await exists(join(projectRoot, ".codex", "yaaw-runtime.md")) });
-    const roleFiles = ["yaaw-prd.toml","yaaw-planner.toml","yaaw-implementer.toml","yaaw-reviewer.toml"];
+    const codexSettings: any = manifest.integrations.codex.configuration?.settings ?? manifest.integrations.codex.runtime ?? {};
+    const fallbackEnabled = Number(codexSettings?.failureFallback?.afterFailures) > 0;
+    const roleFiles = [
+      "yaaw-prd.toml",
+      "yaaw-planner.toml",
+      "yaaw-implementer.toml",
+      "yaaw-reviewer.toml",
+      ...(fallbackEnabled ? ["yaaw-implementer-fallback.toml", "yaaw-reviewer-fallback.toml"] : [])
+    ];
     checks.push({ name: "codex-role-files", ok: (await Promise.all(roleFiles.map(name => exists(join(projectRoot, ".codex", "agents", name))))).every(Boolean) });
     const declarations = [
       ["yaaw_prd","yaaw-prd.toml"],
       ["yaaw_planner","yaaw-planner.toml"],
       ["yaaw_implementer","yaaw-implementer.toml"],
-      ["yaaw_reviewer","yaaw-reviewer.toml"]
+      ["yaaw_reviewer","yaaw-reviewer.toml"],
+      ...(fallbackEnabled ? [
+        ["yaaw_implementer_fallback","yaaw-implementer-fallback.toml"],
+        ["yaaw_reviewer_fallback","yaaw-reviewer-fallback.toml"]
+      ] : [])
     ];
     checks.push({
       name: "codex-role-declarations",

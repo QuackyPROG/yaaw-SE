@@ -6,7 +6,7 @@ import { CODEX_CONFIGURATION_REVISION } from "../../src/integrations/codex-catal
 function manifest(applied: number, notified: number) {
   const value = emptyManifest("0.3.0");
   value.integrations.codex = {
-    adapterVersion: 3,
+    adapterVersion: 4,
     skillsRoot: ".agents/skills",
     bootstrap: "AGENTS.md",
     runtime: {},

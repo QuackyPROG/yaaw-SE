@@ -269,7 +269,7 @@ def main() -> int:
         errors.append(f"review outcomes drifted: {sorted(outcomes)}")
     if "evidence.schema.json" not in schemas or "observed-state.schema.json" not in schemas:
         errors.append("missing evidence or observed-state schema")
-    for required_schema in ("engineering-research.schema.json", "intent.schema.json", "handoff.schema.json"):
+    for required_schema in ("engineering-research.schema.json", "intent.schema.json", "handoff.schema.json", "dispatch-failures.schema.json"):
         if required_schema not in schemas:
             errors.append(f"missing {required_schema}")
 
@@ -299,7 +299,7 @@ def main() -> int:
     require_headings(CORE / "templates/review.md", ["Result rationale", "Reviewed state", "Findings", "Verification", "Evidence", "Next action"], errors)
     require_headings(CORE / "templates/engineering-research.md", ["Question", "Why this matters", "Admission basis", "Source ledger", "Planning implications", "Resolution"], errors)
 
-    for json_template in ["project-state.json", "evidence.json", "handoff.json", "observed-state.json", "intent.json"]:
+    for json_template in ["project-state.json", "evidence.json", "handoff.json", "observed-state.json", "intent.json", "dispatch-failures.json"]:
         try:
             load_json(CORE / "templates" / json_template)
         except Exception as exc:  # noqa: BLE001
@@ -369,7 +369,7 @@ def main() -> int:
     if set(reviewer_io.get("writes", [])) != {"review"}:
         errors.append(f"reviewer writes must remain immutable review only: {reviewer_io.get('writes')}")
     orchestrator_io = io_roles.get("orchestrator", {})
-    if set(orchestrator_io.get("writes", [])) != {"state", "observed_state", "handoff", "intent"}:
+    if set(orchestrator_io.get("writes", [])) != {"state", "observed_state", "handoff", "intent", "dispatch_failures"}:
         errors.append(f"orchestrator write authority drifted: {orchestrator_io.get('writes')}")
     if "installation_manifest" not in orchestrator_io.get("reads", []):
         errors.append("orchestrator must inspect installation manifest basis")

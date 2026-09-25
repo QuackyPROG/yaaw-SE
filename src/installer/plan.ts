@@ -405,7 +405,7 @@ export async function buildInstallPlan(ctx: InstallContext, previous: Installati
   operations.push(...await planProjectInitialization(ctx.payloadRoot, ctx.projectRoot));
 
   if (["quick-update", "modify", "repair"].includes(ctx.action)) {
-    for (const name of ["observed-state.json", "handoff.json", "intent.json"]) {
+    for (const name of ["observed-state.json", "handoff.json", "intent.json", "dispatch-failures.json"]) {
       operations.push({
         type: "remove-runtime-file",
         path: join(ctx.projectRoot, ".yaaw-core", "runtime", name),

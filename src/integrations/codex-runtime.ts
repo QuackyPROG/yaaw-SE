@@ -1,10 +1,17 @@
 export type CodexRuntimeMode = "auto" | "isolated-required" | "inline";
 export type CodexWebSearchMode = "disabled" | "cached" | "indexed" | "live";
+export type CodexServiceTier = "default" | "fast" | "flex";
 export type CodexRuntimeScalar = string | number | boolean;
 
 export interface CodexModelSettings {
   model: string | null;
   reasoning: string | null;
+}
+
+export interface CodexFailureFallbackSettings {
+  afterFailures: number | null;
+  implementer: CodexModelSettings;
+  reviewer: CodexModelSettings;
 }
 
 export interface CodexRuntimeSettings {
@@ -17,6 +24,8 @@ export interface CodexRuntimeSettings {
     implementer: CodexModelSettings;
     reviewer: CodexModelSettings;
   };
+  failureFallback: CodexFailureFallbackSettings;
+  serviceTier: CodexServiceTier | null;
   maxConcurrentThreads: number | null;
   sandboxMode: string | null;
   approvalPolicy: string | null;
@@ -36,6 +45,12 @@ export function defaultCodexRuntimeSettings(): CodexRuntimeSettings {
       implementer: inheritedModel(),
       reviewer: inheritedModel()
     },
+    failureFallback: {
+      afterFailures: null,
+      implementer: inheritedModel(),
+      reviewer: inheritedModel()
+    },
+    serviceTier: null,
     maxConcurrentThreads: null,
     sandboxMode: null,
     approvalPolicy: null,
@@ -55,6 +70,32 @@ function modelSettings(value: any, fallback: CodexModelSettings, label: string):
     model: source.model === undefined ? fallback.model : nullableString(source.model, `${label} model`),
     reasoning: source.reasoning === undefined ? fallback.reasoning : nullableString(source.reasoning, `${label} reasoning`)
   };
+}
+
+function failureFallbackSettings(value: any, fallback: CodexFailureFallbackSettings): CodexFailureFallbackSettings {
+  const source = value ?? {};
+  const raw = source.afterFailures === undefined ? fallback.afterFailures : source.afterFailures;
+  const afterFailures = raw === undefined || raw === null || raw === "inherit" || raw === "off" || raw === "disabled"
+    ? null
+    : Number(raw);
+  if (afterFailures !== null && (!Number.isInteger(afterFailures) || afterFailures < 1)) {
+    throw new Error("Codex failure fallback threshold must be a positive integer or disabled");
+  }
+  return {
+    afterFailures,
+    implementer: modelSettings(source.implementer, fallback.implementer, "Implementer fallback"),
+    reviewer: modelSettings(source.reviewer, fallback.reviewer, "Reviewer fallback")
+  };
+}
+
+function serviceTierValue(value: unknown, fallback: CodexServiceTier | null): CodexServiceTier | null {
+  const raw = value === undefined ? fallback : value;
+  if (raw === undefined || raw === null || raw === "inherit" || raw === "auto") return null;
+  if (raw === "priority") return "fast";
+  if (!["default", "fast", "flex"].includes(String(raw))) {
+    throw new Error(`Invalid Codex service tier: ${String(raw)}`);
+  }
+  return raw as CodexServiceTier;
 }
 
 export function normalizeCodexRuntimeSettings(value: any, fallback = defaultCodexRuntimeSettings()): CodexRuntimeSettings {
@@ -86,6 +127,8 @@ export function normalizeCodexRuntimeSettings(value: any, fallback = defaultCode
       implementer: modelSettings(source.roles?.implementer, fallback.roles.implementer, "Implementer"),
       reviewer: modelSettings(source.roles?.reviewer, fallback.roles.reviewer, "Reviewer")
     },
+    failureFallback: failureFallbackSettings(source.failureFallback, fallback.failureFallback),
+    serviceTier: serviceTierValue(source.serviceTier, fallback.serviceTier),
     maxConcurrentThreads,
     sandboxMode: source.sandboxMode === undefined ? fallback.sandboxMode : nullableString(source.sandboxMode, "sandbox mode"),
     approvalPolicy: source.approvalPolicy === undefined ? fallback.approvalPolicy : nullableString(source.approvalPolicy, "approval policy"),

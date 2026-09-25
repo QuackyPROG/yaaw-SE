@@ -1,18 +1,99 @@
 {
   "schema": "yaaw.artifacts/v1",
-  "product": {"path": ".yaaw-core/project/product.md", "durability": "PROJECT_DURABLE", "owner": "prd", "mutable": true},
-  "engineering": {"path": ".yaaw-core/project/engineering.md", "durability": "PROJECT_DURABLE", "owner": "planner", "mutable": true},
-  "engineering_research": {"path_pattern": ".yaaw-core/project/research/RSH-*.md", "durability": "PROJECT_DURABLE", "owner": "planner", "mutable": true},
-  "spec": {"path_pattern": ".yaaw-core/project/specs/SPEC-*.md", "durability": "PROJECT_DURABLE", "owner": "planner", "mutable": true},
-  "ticket": {"path_pattern": ".yaaw-core/project/tickets/TASK-*.md", "durability": "PROJECT_DURABLE", "owner": "planner", "mutable": true},
-  "review": {"path_pattern": ".yaaw-core/project/reviews/TASK-*-R*.md", "durability": "PROJECT_DURABLE", "owner": "reviewer", "mutable": false},
-  "evidence": {"path_pattern": ".yaaw-core/project/evidence/*.json", "durability": "PROJECT_DURABLE", "owner": "implementer", "mutable": false},
-  "project_rule": {"path_pattern": ".yaaw-core/project/rules/*.md", "durability": "PROJECT_DURABLE", "owner": "planner", "mutable": true},
-  "state": {"path": ".yaaw-core/project/state.json", "durability": "PROJECT_DURABLE", "owner": "orchestrator", "mutable": true},
-  "observed_state": {"path": ".yaaw-core/runtime/observed-state.json", "durability": "RUNTIME_REPLACEABLE", "owner": "orchestrator", "mutable": true},
-  "handoff": {"path": ".yaaw-core/runtime/handoff.json", "durability": "RUNTIME_REPLACEABLE", "owner": "orchestrator", "mutable": true},
-  "intent": {"path": ".yaaw-core/runtime/intent.json", "durability": "RUNTIME_REPLACEABLE", "owner": "orchestrator", "mutable": true},
-  "installation_manifest": {"path": ".yaaw-core/install/manifest.json", "durability": "INSTALLER_MANAGED", "owner": "installer", "mutable": true},
-  "repository": {"virtual": true, "durability": "OBSERVED", "owner": "none", "mutable": false},
-  "application_files": {"virtual": true, "durability": "APPLICATION", "owner": "implementer", "mutable": true}
+  "product": {
+    "path": ".yaaw-core/project/product.md",
+    "durability": "PROJECT_DURABLE",
+    "owner": "prd",
+    "mutable": true
+  },
+  "engineering": {
+    "path": ".yaaw-core/project/engineering.md",
+    "durability": "PROJECT_DURABLE",
+    "owner": "planner",
+    "mutable": true
+  },
+  "engineering_research": {
+    "path_pattern": ".yaaw-core/project/research/RSH-*.md",
+    "durability": "PROJECT_DURABLE",
+    "owner": "planner",
+    "mutable": true
+  },
+  "spec": {
+    "path_pattern": ".yaaw-core/project/specs/SPEC-*.md",
+    "durability": "PROJECT_DURABLE",
+    "owner": "planner",
+    "mutable": true
+  },
+  "ticket": {
+    "path_pattern": ".yaaw-core/project/tickets/TASK-*.md",
+    "durability": "PROJECT_DURABLE",
+    "owner": "planner",
+    "mutable": true
+  },
+  "review": {
+    "path_pattern": ".yaaw-core/project/reviews/TASK-*-R*.md",
+    "durability": "PROJECT_DURABLE",
+    "owner": "reviewer",
+    "mutable": false
+  },
+  "evidence": {
+    "path_pattern": ".yaaw-core/project/evidence/*.json",
+    "durability": "PROJECT_DURABLE",
+    "owner": "implementer",
+    "mutable": false
+  },
+  "project_rule": {
+    "path_pattern": ".yaaw-core/project/rules/*.md",
+    "durability": "PROJECT_DURABLE",
+    "owner": "planner",
+    "mutable": true
+  },
+  "state": {
+    "path": ".yaaw-core/project/state.json",
+    "durability": "PROJECT_DURABLE",
+    "owner": "orchestrator",
+    "mutable": true
+  },
+  "observed_state": {
+    "path": ".yaaw-core/runtime/observed-state.json",
+    "durability": "RUNTIME_REPLACEABLE",
+    "owner": "orchestrator",
+    "mutable": true
+  },
+  "handoff": {
+    "path": ".yaaw-core/runtime/handoff.json",
+    "durability": "RUNTIME_REPLACEABLE",
+    "owner": "orchestrator",
+    "mutable": true
+  },
+  "intent": {
+    "path": ".yaaw-core/runtime/intent.json",
+    "durability": "RUNTIME_REPLACEABLE",
+    "owner": "orchestrator",
+    "mutable": true
+  },
+  "installation_manifest": {
+    "path": ".yaaw-core/install/manifest.json",
+    "durability": "INSTALLER_MANAGED",
+    "owner": "installer",
+    "mutable": true
+  },
+  "repository": {
+    "virtual": true,
+    "durability": "OBSERVED",
+    "owner": "none",
+    "mutable": false
+  },
+  "application_files": {
+    "virtual": true,
+    "durability": "APPLICATION",
+    "owner": "implementer",
+    "mutable": true
+  },
+  "dispatch_failures": {
+    "path": ".yaaw-core/runtime/dispatch-failures.json",
+    "durability": "RUNTIME_REPLACEABLE",
+    "owner": "orchestrator",
+    "mutable": true
+  }
 }

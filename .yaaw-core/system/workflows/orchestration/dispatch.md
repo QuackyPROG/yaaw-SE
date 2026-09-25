@@ -15,11 +15,12 @@ Execute exactly one already-selected canonical workflow. This file is not the or
 6. If the target is an Orchestrator workflow or policy is `ROOT_ONLY`, execute in the current root context.
 7. Otherwise request the active host adapter's isolated-worker mechanism. When isolation is available, execute this one handoff in a fresh worker with minimal bootstrap context and without relying on inherited parent conversation.
 8. If isolation is unavailable or a named worker cannot be selected before child creation, follow the configured host fallback policy. If a child was already created and then failed, do **not** blindly retry; return to reality inspection first.
-9. The executing context loads only the target role contract, selected workflow contract, exact handoff reads, selected expertise, and minimal relevant repository context.
-10. Execute the target workflow once. A worker may not route or spawn another YAAW authority role.
-11. Require the expected durable output/state/evidence or an explicit legal typed stop/prerequisite result.
-12. Treat any child response only as an execution signal; do not accept it as project truth without re-inspection.
-13. Mark/remove the consumed runtime handoff and return control to `orchestration.route`.
+9. For Implementer or Reviewer, consult `.yaaw-core/runtime/dispatch-failures.json` after inspection. If the unchanged handoff basis has reached the host-configured execution-failure threshold, request the host capability-fallback worker/profile for this attempt. The semantic role/workflow and handoff remain unchanged. If the fallback itself already failed with no progress on this basis, return `BLOCKED:AUTHORITY_EXECUTION_FAILED`.
+10. The executing context loads only the target role contract, selected workflow contract, exact handoff reads, selected expertise, and minimal relevant repository context.
+11. Execute the target workflow once. A worker may not route or spawn another YAAW authority role.
+12. Require the expected durable output/state/evidence or an explicit legal typed stop/prerequisite result.
+13. Treat any child response only as an execution signal; do not accept it as project truth without re-inspection.
+14. Mark/remove the consumed runtime handoff and return control to `orchestration.route`.
 
 Never recursively dispatch `orchestration.dispatch` as its own target. A target role never dispatches a peer.
 
