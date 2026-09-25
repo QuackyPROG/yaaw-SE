@@ -2,11 +2,29 @@ import * as p from "@clack/prompts";
 import type { ConfigurationUpdate } from "../installer/types.js";
 import type { IntegrationId } from "../integrations/types.js";
 
+const CODEX_FAILURE_FALLBACK_CHANGE = "codex-authority-failure-fallback";
+
+function preservationNotice(update: ConfigurationUpdate): string[] {
+  const lines = [
+    "  Quick Update installed support for these capabilities without changing your existing provider setup.",
+    "  Your current configuration and selected profile were preserved."
+  ];
+
+  if (update.integrationId === "codex" && update.changes.some(change => change.id === CODEX_FAILURE_FALLBACK_CHANGE)) {
+    lines.push(
+      "  Astra fallback is available, but Quick Update did not enable it or replace your current Codex settings.",
+      "  To enable it: run `yaaw config codex` and choose Recommended, or choose Custom and configure Failure fallback."
+    );
+  }
+
+  return lines;
+}
+
 export function formatConfigurationUpdates(updates: ConfigurationUpdate[]): string {
   return updates.flatMap(update => [
     update.displayName,
     ...update.changes.map(change => `  ${change.title}: ${change.summary}`),
-    "  Current configuration was preserved.",
+    ...preservationNotice(update),
     `  Review: ${update.command}`,
     ""
   ]).join("\n").trim();
