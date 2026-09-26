@@ -1,0 +1,17 @@
+{
+  "schema": "yaaw.reconciliation-policy/v1",
+  "priority": [
+    {"id": "PROJECT_STATE_SCHEMA_MIGRATION_REQUIRED", "priority": 1},
+    {"id": "PRODUCT_LEDGER_SYNC", "priority": 2},
+    {"id": "PLANNING_LEDGER_SYNC", "priority": 3},
+    {"id": "ACTIVE_SPEC_UNADOPTED", "priority": 4},
+    {"id": "TICKET_UNREGISTERED", "priority": 5},
+    {"id": "CONTRACT_SOURCE_STALE", "priority": 6},
+    {"id": "IMPLEMENTATION_STARTED", "priority": 7},
+    {"id": "IMPLEMENTATION_VERIFIED", "priority": 8},
+    {"id": "REVIEW_RESULT_UNAPPLIED", "priority": 9},
+    {"id": "ACCEPTANCE_STALE", "priority": 10},
+    {"id": "PROJECT_COMPLETION_SYNC", "priority": 11}
+  ],
+  "one_reconciliation_per_cycle": true
+}
