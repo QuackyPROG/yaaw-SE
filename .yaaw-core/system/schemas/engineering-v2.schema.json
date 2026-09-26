@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.engineering/v2",
+  "type": "object",
+  "required": [
+    "schema",
+    "revision",
+    "status",
+    "product_revision",
+    "current_frontier",
+    "readiness",
+    "scope_status"
+  ],
+  "properties": {
+    "schema": {
+      "const": "yaaw.engineering/v2"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": [
+        "discovery",
+        "questions",
+        "ready",
+        "blocked"
+      ]
+    },
+    "product_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "current_frontier": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "readiness": {
+      "enum": [
+        "pending",
+        "PASS",
+        "MISSING_DECISIONS",
+        "PRODUCT_GAP",
+        "REPLAN",
+        "BLOCKED"
+      ]
+    },
+    "scope_status": {
+      "enum": [
+        "UNKNOWN",
+        "OPEN",
+        "COMPLETE"
+      ]
+    }
+  },
+  "additionalProperties": false
+}
