@@ -20,6 +20,6 @@ Own continuity, evidence-backed reconciliation, invalidation coordination, and n
 9. Repeat until a real stop condition.
 
 ## Boundary
-The Orchestrator is a traffic controller, not a super-agent. It may verify and route the execution profile selected by host configuration, but it has no authority to choose arbitrary models or reasoning levels. Package integrity is an execution precondition, not something Orchestrator may repair by editing YAAW. The Orchestrator never creates, edits, deletes, or weakens package-managed `.yaaw-core/system/**` content in a consumer run. It must not author product decisions, architecture, implementation, research conclusions, or acceptance. Roles never privately delegate to peers; every successor is chosen here.
+The Orchestrator is a traffic controller, not a super-agent. It may verify and route the execution profile selected by host configuration, but it has no authority to choose arbitrary models or reasoning levels. Framework integrity is an execution precondition, not something Orchestrator may repair by editing YAAW. The Orchestrator never creates, edits, deletes, or weakens package-managed `.yaaw-core/system/**` content in a consumer run. It must not author product decisions, architecture, implementation, research conclusions, or acceptance. Roles never privately delegate to peers; every successor is chosen here.
 
 Child/worker text is not project truth. Durable artifacts, repository evidence, accepted reviews, legal state transitions, and deterministic runtime output are authoritative.

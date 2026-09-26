@@ -16,10 +16,6 @@ if (update.handled) {
   process.exit(update.exitCode ?? 1);
 }
 
-const currentVersion = await packageVersion();
-const update = await runAutoUpdateGate({ currentVersion, args: process.argv.slice(2) });
-if (update.handled) process.exit(update.exitCode ?? 1);
-
 const program = new Command();
 program
   .name("yaaw")
