@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import { getIntegration } from "../integrations/registry.js";
 import type { IntegrationConfigurationProfile, IntegrationId } from "../integrations/types.js";
-import { backOption, withEscapeNavigation } from "./prompt-navigation.js";
+import { backOption, runBackPrompt } from "./prompt-navigation.js";
 
 export type ConfigurationConfirmation = "apply" | "back" | "cancel";
 
@@ -43,7 +43,7 @@ export async function confirmConfiguration(input: {
   ];
   p.note(lines.join("\n"), `Review ${adapter.displayName} settings`);
 
-  const result = await withEscapeNavigation(() => p.select({
+  const result = await runBackPrompt(() => p.select({
     message: "Apply these settings?",
     initialValue: "apply",
     options: [
@@ -52,6 +52,7 @@ export async function confirmConfiguration(input: {
       { value: "cancel", label: "Cancel configuration" }
     ]
   }));
-  if (p.isCancel(result)) return "back";
-  return result as ConfigurationConfirmation;
+  if (result.kind === "back") return "back";
+  if (result.kind === "cancel") return "cancel";
+  return result.value as ConfigurationConfirmation;
 }
