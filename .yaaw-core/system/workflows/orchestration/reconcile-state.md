@@ -1,22 +1,19 @@
 # Reconcile state
 
 ## Purpose
-Repair only evidence-backed state inconsistencies before routing semantic work.
+Apply exactly one highest-priority evidence-backed state adoption or legal lifecycle transition.
 
 ## Inputs
-Current observed-state snapshot, state claims, artifact revisions, repository/evidence/review identity.
+Current observed-state snapshot and its `reconciliation` object from the production orchestration engine.
 
 ## Procedure
-- apply `core/recovery.md`, `core/transitions.md`, and `core/invalidation.md`;
-- examples: `IN_PROGRESS` + implementation + passing verification + no review -> `REVIEW_REQUIRED`; stale `PASS` -> `REPLAN_REQUIRED` or `REVIEW_REQUIRED` according to cause; `READY` + implementation already present -> recover/inspect rather than duplicate;
-- never change product/architecture meaning during reconciliation;
-- every repaired state records transition reason/evidence and increments transition sequence.
+1. Require framework integrity `HEALTHY`.
+2. Run `node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT> --reconcile-one`.
+3. Apply only the one reconciliation returned by the engine; do not batch multiple discovered facts.
+4. Increment `transition_sequence` exactly once and persist provenance.
+5. Return immediately to `orchestration.route` so reality is observed again.
+
+Examples include ledger sync, accepted-spec adoption, ticket registration, implementation-start adoption, PASS-verification adoption, review-result adoption, acceptance invalidation, and project completion sync.
 
 ## Output
-Reconciled state or `BLOCKED` when the last trustworthy boundary cannot be proven.
-
-## Framework boundary
-
-Reconciliation is forbidden when the observed framework integrity status is not `HEALTHY`. Return the typed framework stop without changing ticket/project lifecycle state. A contradiction among canonical framework contracts is `FRAMEWORK_CONTRACT_INCONSISTENCY`; do not resolve it by editing the governing files.
-
-Reviewer-owned acceptance results are applied to `state.json` by Orchestrator only after the immutable review artifact is fresh and valid. Orchestrator records exactly the target implied by the review result and never invents an acceptance result.
+One reconciled mutation or a typed blocker. No semantic product/engineering/implementation/acceptance judgment is invented here.

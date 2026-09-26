@@ -1,28 +1,21 @@
 # Lifecycle contract
 
-YAAW advances only through evidence-backed workflow boundaries.
+YAAW advances only through durable facts adopted by Orchestrator.
 
 ```text
 product missing/unready -> PRD
 product ready, planning unresolved -> Planner
-planning ready, spec missing -> create spec
-spec accepted, tickets missing -> create tickets
-READY -> Implementer
-IN_PROGRESS -> recovery/continue
-REVIEW_REQUIRED -> Reviewer
-REPAIR_REQUIRED -> Implementer repair -> REVIEW_REQUIRED
-REPLAN_REQUIRED -> Planner
-PASS -> next admitted work
-all accepted scope current -> COMPLETE
+planning ready, spec missing -> create/adopt spec
+spec accepted, tickets missing -> create/register tickets
+READY -> implementation_start fact -> IN_PROGRESS
+IN_PROGRESS -> PASS verification fact -> REVIEW_REQUIRED
+REVIEW_REQUIRED -> immutable Reviewer result -> PASS | REPAIR_REQUIRED | REPLAN_REQUIRED | BLOCKED
+REPAIR_REQUIRED -> fresh PASS verification -> REVIEW_REQUIRED
+PASS + scope_status OPEN/UNKNOWN -> Planner
+all current tickets PASS/CANCELLED + scope_status COMPLETE -> COMPLETE
 ```
 
-## Accepted-but-stale
-A historical `PASS` whose source contract is still current but whose acceptance proof is stale becomes `REVIEW_REQUIRED`, not `REPLAN_REQUIRED`.
-
-## PASS meaning
-`PASS` means the currently observed repository/worktree state satisfies the current accepted ticket contract according to an independent Reviewer.
-
-It does not inherently mean committed, pushed, merged, or deployed. When accepted state is dirty, reporting must distinguish acceptance from persistence and disclose that the review basis is the current worktree.
+One reconciliation is applied per observation cycle; recovery never jumps directly from `READY` to `REVIEW_REQUIRED`.
 
 ## Fresh-context invariant
-Every workflow must be resumable from durable artifacts and repository evidence without previous chat history.
+Conversation may disappear at any point. Durable artifacts and repository evidence must still identify the correct next boundary.

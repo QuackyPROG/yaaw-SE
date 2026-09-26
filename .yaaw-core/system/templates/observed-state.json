@@ -1,10 +1,10 @@
 {
-  "schema": "yaaw.observed-state/v2",
+  "schema": "yaaw.observed-state/v3",
   "framework": {
     "yaaw_version": "VERSION",
-    "system_schema": 2,
-    "installation_schema": 1,
-    "project_schema": 1,
+    "system_schema": 3,
+    "installation_schema": 3,
+    "project_schema": 2,
     "manifest_digest": "sha256:MANIFEST",
     "integrity_status": "HEALTHY",
     "modified": [],
@@ -25,17 +25,10 @@
     "changed_paths": [],
     "error": "workspace is not versioned"
   },
-  "acceptance": {
-    "active_ticket": null,
-    "source_current": null,
-    "review_present": null,
-    "review_repository_current": null,
-    "verification_repository_current": null,
-    "stale_reason": null
-  },
   "transition_sequence": 0,
   "claims": {},
   "artifacts": {},
   "inconsistencies": [],
-  "candidate_actions": []
+  "candidate_actions": [],
+  "reconciliation": null
 }

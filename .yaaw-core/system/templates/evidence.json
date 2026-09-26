@@ -1,10 +1,11 @@
 {
-  "schema": "yaaw.evidence/v2",
+  "schema": "yaaw.evidence/v3",
   "id": "EVIDENCE-TASK-000-V1",
   "ticket": "TASK-000",
   "ticket_revision": 1,
   "spec_revision": 1,
   "kind": "implementation_verification",
+  "result": "PASS",
   "repository": {
     "schema": "yaaw.repository-identity/v2",
     "algorithm": "yaaw-worktree-v2",

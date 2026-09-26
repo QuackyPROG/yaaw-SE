@@ -1,14 +1,110 @@
 {
-  "yaaw-orchestrator": {"role": "orchestrator", "workflow_id": "orchestration.route", "description": "Continue or recover a YAAW project by reconstructing reality and dispatching the next safe workflow."},
-  "yaaw-prd": {"role": "prd", "workflow_id": "prd.route", "description": "Create or continue YAAW product definition, challenge material product assumptions, and route clarification or revision work."},
-  "yaaw-revise-prd": {"role": "prd", "workflow_id": "prd.revise", "description": "Change accepted YAAW product intent and invalidate downstream engineering contracts whose basis became stale."},
-  "yaaw-refine-prd": {"role": "prd", "workflow_id": "prd.refine", "description": "Improve clarity and completeness of a YAAW product artifact without changing accepted product meaning."},
-  "yaaw-planner": {"role": "planner", "workflow_id": "planning.route", "description": "Continue repository-backed YAAW engineering planning, challenge material technical assumptions, and advance decisions, readiness, specifications, or tickets."},
-  "yaaw-planning-review": {"role": "planner", "workflow_id": "planning.readiness-review", "description": "Freshly assess whether the current YAAW engineering frontier is ready for implementation without material invention."},
-  "yaaw-create-spec": {"role": "planner", "workflow_id": "planning.create-spec", "description": "Create the next YAAW specification from an engineering frontier whose readiness is currently PASS."},
-  "yaaw-create-ticket": {"role": "planner", "workflow_id": "planning.create-tickets", "description": "Create bounded YAAW implementation ticket contracts from the current accepted specification."},
-  "yaaw-create-tickets": {"role": "planner", "workflow_id": "planning.create-tickets", "description": "Create dependency-aware bounded YAAW implementation tickets from the current accepted specification."},
-  "yaaw-implement": {"role": "implementer", "workflow_id": "implementation.implement-ticket", "description": "Implement one admitted READY YAAW ticket and produce repository-identity-bound verification evidence."},
-  "yaaw-repair": {"role": "implementer", "workflow_id": "implementation.repair-ticket", "description": "Repair a YAAW ticket in REPAIR_REQUIRED state while preserving its accepted product and engineering contract."},
-  "yaaw-review": {"role": "reviewer", "workflow_id": "review.review-ticket", "description": "Independently review actual YAAW implementation and classify PASS, REPAIR, REPLAN, or BLOCKED against current evidence."}
+  "yaaw-orchestrator": {
+    "role": "orchestrator",
+    "workflow_id": "orchestration.route",
+    "destination_role": "orchestrator",
+    "requested_workflow": "orchestration.route",
+    "desired_outcome": "CONTINUE",
+    "completion_kind": "CONTINUE_UNTIL_STOP",
+    "description": "Continue or recover a YAAW project by reconstructing reality and dispatching the next safe workflow."
+  },
+  "yaaw-prd": {
+    "role": "prd",
+    "workflow_id": "prd.route",
+    "destination_role": "prd",
+    "requested_workflow": "prd.route",
+    "desired_outcome": "CONTINUE_PRODUCT",
+    "completion_kind": "PRODUCT_READY",
+    "description": "Create or continue YAAW product definition, challenge material product assumptions, and route clarification or revision work."
+  },
+  "yaaw-revise-prd": {
+    "role": "prd",
+    "workflow_id": "prd.revise",
+    "destination_role": "prd",
+    "requested_workflow": "prd.revise",
+    "desired_outcome": "REVISE_PRODUCT",
+    "completion_kind": "PRODUCT_REVISION_ADVANCED",
+    "description": "Change accepted YAAW product intent and invalidate downstream engineering contracts whose basis became stale."
+  },
+  "yaaw-refine-prd": {
+    "role": "prd",
+    "workflow_id": "prd.refine",
+    "destination_role": "prd",
+    "requested_workflow": "prd.refine",
+    "desired_outcome": "REFINE_PRODUCT",
+    "completion_kind": "PRODUCT_REFINED",
+    "description": "Improve clarity and completeness of a YAAW product artifact without changing accepted product meaning."
+  },
+  "yaaw-planner": {
+    "role": "planner",
+    "workflow_id": "planning.route",
+    "destination_role": "planner",
+    "requested_workflow": "planning.route",
+    "desired_outcome": "CONTINUE_PLANNING",
+    "completion_kind": "PLANNING_READY",
+    "description": "Continue repository-backed YAAW engineering planning, challenge material technical assumptions, and advance decisions, readiness, specifications, or tickets."
+  },
+  "yaaw-planning-review": {
+    "role": "planner",
+    "workflow_id": "planning.readiness-review",
+    "destination_role": "planner",
+    "requested_workflow": "planning.readiness-review",
+    "desired_outcome": "PLANNING_REVIEW",
+    "completion_kind": "PLANNING_READINESS_DECIDED",
+    "description": "Freshly assess whether the current YAAW engineering frontier is ready for implementation without material invention."
+  },
+  "yaaw-create-spec": {
+    "role": "planner",
+    "workflow_id": "planning.create-spec",
+    "destination_role": "planner",
+    "requested_workflow": "planning.create-spec",
+    "desired_outcome": "CREATE_SPEC",
+    "completion_kind": "CURRENT_SPEC_ACCEPTED",
+    "description": "Create the next YAAW specification from an engineering frontier whose readiness is currently PASS."
+  },
+  "yaaw-create-ticket": {
+    "role": "planner",
+    "workflow_id": "planning.create-tickets",
+    "destination_role": "planner",
+    "requested_workflow": "planning.create-tickets",
+    "desired_outcome": "CREATE_TICKETS",
+    "completion_kind": "CURRENT_TICKETS_REGISTERED",
+    "description": "Create bounded YAAW implementation ticket contracts from the current accepted specification."
+  },
+  "yaaw-create-tickets": {
+    "role": "planner",
+    "workflow_id": "planning.create-tickets",
+    "destination_role": "planner",
+    "requested_workflow": "planning.create-tickets",
+    "desired_outcome": "CREATE_TICKETS",
+    "completion_kind": "CURRENT_TICKETS_REGISTERED",
+    "description": "Create dependency-aware bounded YAAW implementation tickets from the current accepted specification."
+  },
+  "yaaw-implement": {
+    "role": "implementer",
+    "workflow_id": "implementation.implement-ticket",
+    "destination_role": "implementer",
+    "requested_workflow": "implementation.implement-ticket",
+    "desired_outcome": "IMPLEMENT",
+    "completion_kind": "TICKET_REVIEW_REQUIRED",
+    "description": "Implement one admitted READY YAAW ticket and produce repository-identity-bound verification evidence."
+  },
+  "yaaw-repair": {
+    "role": "implementer",
+    "workflow_id": "implementation.repair-ticket",
+    "destination_role": "implementer",
+    "requested_workflow": "implementation.repair-ticket",
+    "desired_outcome": "REPAIR",
+    "completion_kind": "TICKET_REVIEW_REQUIRED",
+    "description": "Repair a YAAW ticket in REPAIR_REQUIRED state while preserving its accepted product and engineering contract."
+  },
+  "yaaw-review": {
+    "role": "reviewer",
+    "workflow_id": "review.review-ticket",
+    "destination_role": "reviewer",
+    "requested_workflow": "review.review-ticket",
+    "desired_outcome": "REVIEW",
+    "completion_kind": "TICKET_REVIEW_APPLIED",
+    "description": "Independently review actual YAAW implementation and classify PASS, REPAIR, REPLAN, or BLOCKED against current evidence."
+  }
 }

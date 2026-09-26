@@ -35,6 +35,7 @@ export async function planProjectInitialization(payloadRoot: string, projectRoot
   state.planning.status = "discovery";
   state.planning.revision = 1;
   state.planning.current_frontier = "FRONTIER-001";
+  state.planning.scope_status = "UNKNOWN";
   state.last_workflow = null;
   operations.push({
     type: "write-project-file-if-missing",

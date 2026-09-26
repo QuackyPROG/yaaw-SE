@@ -29,6 +29,7 @@ export type InstallOperation =
   | { type: "write-managed-file"; path: string; content: Buffer | string; owner: string }
   | { type: "copy-managed-file"; source: string; path: string; owner: string }
   | { type: "write-project-file-if-missing"; path: string; content: Buffer | string }
+  | { type: "migrate-project-file"; path: string; content: Buffer | string; migration: string }
   | { type: "update-managed-section"; path: string; sectionId: string; content: string; owner: string }
   | { type: "update-managed-config-keys"; path: string; format: "toml"; entries: ManagedConfigEntry[]; owner: string }
   | { type: "remove-managed-config-keys"; path: string; format: "toml"; keys: string[]; owner: string }

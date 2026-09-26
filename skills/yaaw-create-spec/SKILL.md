@@ -2,9 +2,13 @@
 name: yaaw-create-spec
 description: Create the next YAAW specification from an engineering frontier whose readiness is currently PASS.
 ---
-# YAAW Create Spec
+# yaaw-create-spec
 ROLE: `planner`
 WORKFLOW: `planning.create-spec`
+INTENT: `CREATE_SPEC`
 
 ## Execute
-Load `.yaaw-core/system/roles/planner.md`, resolve `planning.create-spec` through `.yaaw-core/system/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/system/`; this skill is only an entrypoint.
+Resolve the YAAW workspace root, then invoke:
+`node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-create-spec`
+
+Follow `orchestration.route` until `CURRENT_SPEC_ACCEPTED` is satisfied or a human-input, BLOCKED, or framework stop occurs. Do not execute planner semantics directly from this wrapper; every semantic execution requires the exact runtime handoff.

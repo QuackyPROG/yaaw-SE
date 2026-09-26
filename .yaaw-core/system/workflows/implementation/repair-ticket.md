@@ -4,19 +4,14 @@
 Correct implementation defects while keeping the accepted ticket/spec contract unchanged.
 
 ## Preconditions
-Ticket is `REPAIR_REQUIRED` and latest review result is `REPAIR` against the same current contract revisions.
+Reconciled state is `REPAIR_REQUIRED` and the latest review result is `REPAIR` against the current contract.
 
 ## Procedure
-1. Load the same ticket contract, `.yaaw-core/system/rules/changeability.md`, latest review findings, and relevant code/evidence.
-2. Repair only what is needed to satisfy the unchanged plan and the concrete review findings; do not broaden scope into adjacent cleanup.
-3. Apply the relevant changeability principles when they are part of the defect or needed for a safe repair.
-4. If repair requires product/architecture contract changes, transition to `REPLAN_REQUIRED` and stop.
-5. Rerun relevant verification, including any previously failed changeability check, and append a new evidence record.
-6. Transition `REPAIR_REQUIRED -> REVIEW_REQUIRED` with provenance.
+1. Load state, the unchanged ticket contract, latest review findings, prior evidence, and relevant code.
+2. Repair only the bounded findings; do not broaden scope.
+3. If repair requires product/architecture contract changes, return `REPLAN_REQUIRED`.
+4. Rerun `implementation.verify-ticket` and write a new v3 verification record distinct from evidence referenced by the REPAIR review.
+5. Never edit state. Orchestrator moves `REPAIR_REQUIRED -> REVIEW_REQUIRED` only after fresh PASS verification.
 
 ## Output
-Repaired reviewable implementation or replan/blocker result.
-
-## Repair identity
-
-After bounded repair and verification, bind evidence to the canonical repository identity and return `REVIEW_REQUIRED`. Changeability requirements remain in force.
+Repaired reviewable implementation with fresh verification evidence, or a typed replan/blocker result.

@@ -4,18 +4,15 @@
 Resume safely after context/session failure without duplicating already-completed work.
 
 ## Inputs
-Active/recent artifact, state claims, runtime caches, repository identity/history/diff, verification/review evidence.
+Reconciled state, durable artifacts, implementation-start/verification evidence, reviews, and repository identity.
 
 ## Procedure
-1. Discard stale runtime handoffs/snapshots.
-2. Identify the last trustworthy completed boundary.
-3. If implementation exists, prefer verification/review over reimplementation when evidence supports it.
-4. Reconcile only via legal transitions with provenance.
-5. If the boundary cannot be proven, return `BLOCKED` with exact missing evidence.
-6. Return control to `orchestration.route` for normal next-action selection.
+1. Discard stale runtime caches/handoffs.
+2. Identify the last trustworthy durable boundary.
+3. For `IN_PROGRESS`: current PASS verification is reconciled to review; valid start evidence without PASS verification routes to `implementation.verify-ticket`; missing start evidence requires explicit recovery/blocking proof.
+4. Never rerun full implementation merely because a worker response disappeared.
+5. A source-current review artifact is adopted before another Reviewer dispatch.
+6. Use only legal transitions with provenance; if the boundary cannot be proven, return `BLOCKED`.
 
-Never repeat destructive work merely because a context ended.
-
-## Acceptance recovery
-
-A source-current stale `PASS` is recovered through `REVIEW_REQUIRED`. Do not dispatch Planner unless contract invalidation is independently proven.
+## Output
+A safe next boundary or exact blocker, then control returns to `orchestration.route`.

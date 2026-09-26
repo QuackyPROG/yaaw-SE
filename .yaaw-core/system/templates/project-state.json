@@ -1,8 +1,8 @@
 {
-  "schema": "yaaw.project-state/v1",
+  "schema": "yaaw.project-state/v2",
   "phase": "product",
   "product": {"artifact": ".yaaw-core/project/product.md", "status": "missing", "revision": 0},
-  "planning": {"artifact": ".yaaw-core/project/engineering.md", "status": "missing", "revision": 0, "current_frontier": null, "readiness": "pending", "active_spec": null},
+  "planning": {"artifact": ".yaaw-core/project/engineering.md", "status": "missing", "revision": 0, "current_frontier": null, "readiness": "pending", "active_spec": null, "scope_status": "UNKNOWN"},
   "active_ticket": null,
   "tickets": {},
   "transition_sequence": 0,

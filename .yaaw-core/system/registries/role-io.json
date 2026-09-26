@@ -2,158 +2,29 @@
   "schema": "yaaw.role-io/v1",
   "roles": {
     "prd": {
-      "reads": [
-        "product",
-        "state"
-      ],
-      "writes": [
-        "product"
-      ],
-      "forbidden_writes": [
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "application_files",
-        "evidence",
-        "review",
-        "observed_state",
-        "handoff",
-        "state",
-        "installation_manifest",
-        "dispatch_failures"
-      ]
+      "reads": ["product","state"],
+      "writes": ["product"],
+      "forbidden_writes": ["engineering","engineering_research","spec","ticket","application_files","evidence","review","observed_state","handoff","state","installation_manifest","dispatch_failures"]
     },
     "planner": {
-      "reads": [
-        "product",
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "project_rule",
-        "repository"
-      ],
-      "writes": [
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "project_rule"
-      ],
-      "forbidden_writes": [
-        "product",
-        "application_files",
-        "evidence",
-        "review",
-        "observed_state",
-        "handoff",
-        "state",
-        "installation_manifest",
-        "dispatch_failures"
-      ]
+      "reads": ["product","engineering","engineering_research","spec","ticket","project_rule","repository","state"],
+      "writes": ["engineering","engineering_research","spec","ticket","project_rule"],
+      "forbidden_writes": ["product","application_files","evidence","review","observed_state","handoff","state","installation_manifest","dispatch_failures"]
     },
     "implementer": {
-      "reads": [
-        "product",
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "project_rule",
-        "repository",
-        "evidence",
-        "review",
-        "application_files"
-      ],
-      "writes": [
-        "application_files",
-        "evidence"
-      ],
-      "forbidden_writes": [
-        "product",
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "project_rule",
-        "review",
-        "observed_state",
-        "handoff",
-        "state",
-        "installation_manifest",
-        "dispatch_failures"
-      ]
+      "reads": ["product","engineering","engineering_research","spec","ticket","project_rule","repository","evidence","review","application_files","state"],
+      "writes": ["application_files","evidence"],
+      "forbidden_writes": ["product","engineering","engineering_research","spec","ticket","project_rule","review","observed_state","handoff","state","installation_manifest","dispatch_failures"]
     },
     "reviewer": {
-      "reads": [
-        "product",
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "project_rule",
-        "repository",
-        "evidence",
-        "review",
-        "application_files",
-        "state"
-      ],
-      "writes": [
-        "review"
-      ],
-      "forbidden_writes": [
-        "product",
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "project_rule",
-        "application_files",
-        "evidence",
-        "observed_state",
-        "handoff",
-        "state",
-        "installation_manifest",
-        "dispatch_failures"
-      ]
+      "reads": ["product","engineering","engineering_research","spec","ticket","project_rule","repository","evidence","review","application_files","state"],
+      "writes": ["review"],
+      "forbidden_writes": ["product","engineering","engineering_research","spec","ticket","project_rule","application_files","evidence","observed_state","handoff","state","installation_manifest","dispatch_failures"]
     },
     "orchestrator": {
-      "reads": [
-        "product",
-        "engineering",
-        "engineering_research",
-        "spec",
-        "ticket",
-        "project_rule",
-        "repository",
-        "evidence",
-        "review",
-        "state",
-        "observed_state",
-        "handoff",
-        "intent",
-        "installation_manifest",
-        "dispatch_failures"
-      ],
-      "writes": [
-        "state",
-        "observed_state",
-        "handoff",
-        "intent",
-        "dispatch_failures"
-      ],
-      "forbidden_writes": [
-        "product",
-        "engineering",
-        "engineering_research",
-        "spec",
-        "project_rule",
-        "application_files",
-        "evidence",
-        "review",
-        "installation_manifest"
-      ]
+      "reads": ["product","engineering","engineering_research","spec","ticket","project_rule","repository","evidence","review","state","observed_state","handoff","intent","installation_manifest","dispatch_failures"],
+      "writes": ["state","observed_state","handoff","intent","dispatch_failures"],
+      "forbidden_writes": ["product","engineering","engineering_research","spec","project_rule","application_files","evidence","review","installation_manifest"]
     }
   }
 }

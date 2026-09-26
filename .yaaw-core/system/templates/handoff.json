@@ -1,10 +1,10 @@
 {
-  "schema": "yaaw.handoff/v2",
+  "schema": "yaaw.handoff/v3",
   "framework": {
     "yaaw_version": "VERSION",
-    "system_schema": 2,
-    "installation_schema": 1,
-    "project_schema": 1,
+    "system_schema": 3,
+    "installation_schema": 3,
+    "project_schema": 2,
     "manifest_digest": "sha256:MANIFEST",
     "integrity_status": "HEALTHY"
   },
@@ -19,8 +19,8 @@
   "revisions": {"product": 1, "engineering": 1, "spec": 1, "ticket": 1},
   "expertise": [],
   "host_expertise": [],
-  "expected_output": "implementation_evidence",
-  "result_vocabulary": ["SUCCESS", "REVIEW_REQUIRED", "REPLAN_REQUIRED", "PRECONDITION_UNSATISFIED", "BLOCKED"],
+  "expected_output": "implementation evidence",
+  "result_vocabulary": ["VERIFICATION_PASS","VERIFICATION_FAIL","REPLAN_REQUIRED","BLOCKED"],
   "repository_requirement": "IDENTITY",
   "repository": {
     "schema": "yaaw.repository-identity/v2",
@@ -35,6 +35,5 @@
     "changed_paths": [],
     "error": null
   },
-  "transition_sequence": 0,
-  "cause": null
+  "transition_sequence": 0
 }

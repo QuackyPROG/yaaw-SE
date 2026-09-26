@@ -5,6 +5,7 @@ const specId=v=>String(v??"").match(/SPEC-[0-9]+/)?.[0]??null;
 const legal=(t,a,b)=>(t?.legal??[]).some(x=>x.from===a&&x.to===b);
 const currentRepo=(r,repo)=>Boolean(r?.value?.repository?.worktree_digest&&repo?.status==="READY"&&r.value.repository.worktree_digest===repo.worktree_digest);
 const latest=(rows,pred)=>(rows??[]).filter(pred).sort((a,b)=>String(a.path).localeCompare(String(b.path))).at(-1)??null;
+const evidenceRefs=r=>new Set((r?.value?.evidence??[]).map(String));
 
 export function ticketSourceStatus(ticket,state,activeSpec){
   if(!ticket||!activeSpec)return "SPEC_SOURCE_STALE";
@@ -27,9 +28,9 @@ function start(rows,id,tr,sr){const x=ev(rows,id,tr,sr,"implementation_start");r
 function verify(rows,id,tr,sr){return ev(rows,id,tr,sr,"implementation_verification");}
 function review(rows,id,tr,sr){return (rows??[]).filter(x=>x?.value?.ticket===id&&num(x.value.ticket_revision,tr)&&num(x.value.spec_revision,sr)).sort((a,b)=>Number(a.value.round)-Number(b.value.round)).at(-1)??null;}
 function transition(id,subject,from,to,reason,evidence=[]){return{id,kind:"STATE",subject,from,to,reason,workflow:"orchestration.reconcile-state",evidence};}
-function currentTicketIds(state,a){const s=activeSpec(state,a);return s?Object.keys(state?.tickets??{}).filter(id=>ticketSourceStatus(a?.tickets?.[id]?.meta,state,s)==="CURRENT"):[];}
+function currentTicketIds(state,a){const s=activeSpec(state,a);return s?Object.keys(state?.tickets??{}).filter(id=>ticketSourceStatus(a?.tickets?.[id]?.meta,state,s)==="CURRENT").sort():[];}
 
-export function selectReconciliation({state,artifacts:a,evidence=[],reviews=[],repository,transitions,reconciliationPolicy}){
+export function selectReconciliation({state,artifacts:a,evidence=[],reviews=[],repository,transitions,reconciliationPolicy,routingPolicy}){
   const order=["PROJECT_STATE_SCHEMA_MIGRATION_REQUIRED","PRODUCT_LEDGER_SYNC","PLANNING_LEDGER_SYNC","ACTIVE_SPEC_UNADOPTED","TICKET_UNREGISTERED","CONTRACT_SOURCE_STALE","IMPLEMENTATION_STARTED","IMPLEMENTATION_VERIFIED","REVIEW_RESULT_UNAPPLIED","ACCEPTANCE_STALE","PROJECT_COMPLETION_SYNC"];
   const declared=(reconciliationPolicy?.priority??[]).map(x=>typeof x==="string"?x:x.id);
   if(declared.length&&JSON.stringify(declared)!==JSON.stringify(order))return{id:"RECONCILIATION_POLICY_DRIFT",kind:"BLOCKED",reason:"reconciliation priority differs from engine contract"};
@@ -68,26 +69,59 @@ export function selectReconciliation({state,artifacts:a,evidence=[],reviews=[],r
       const st=state.tickets[id];if(!EXECUTABLE.has(st))continue;
       const cause=ticketSourceStatus(a?.tickets?.[id]?.meta,state,s);
       if(cause!=="CURRENT"){
-        if(!legal(transitions,st,"REPLAN_REQUIRED"))return{id:"ILLEGAL_INVALIDATION_TRANSITION",kind:"BLOCKED",reason:st+" cannot transition to REPLAN_REQUIRED"};
-        return transition("CONTRACT_SOURCE_STALE",id,st,"REPLAN_REQUIRED",cause,[a?.tickets?.[id]?.path,s.path].filter(Boolean));
+        const target=routingPolicy?.invalidation_routes?.[cause]?.state;
+        if(target!=="REPLAN_REQUIRED"||!legal(transitions,st,target))return{id:"ILLEGAL_INVALIDATION_TRANSITION",kind:"BLOCKED",reason:st+" cannot transition for "+cause};
+        return transition("CONTRACT_SOURCE_STALE",id,st,target,cause,[a?.tickets?.[id]?.path,s.path].filter(Boolean));
       }
     }
     for(const id of Object.keys(state.tickets??{}).sort()){
       const st=state.tickets[id],m=a?.tickets?.[id]?.meta;if(!m)continue;
       const tr=Number(m.revision),sr=Number(s.revision);
-      if(st==="READY"){const x=start(evidence,id,tr,sr);if(x)return transition("IMPLEMENTATION_STARTED",id,"READY","IN_PROGRESS","IMPLEMENTATION_STARTED",[x.path]);}
-      if(st==="IN_PROGRESS"){const x=verify(evidence,id,tr,sr);if(x?.value?.schema==="yaaw.evidence/v3"&&x.value.result==="PASS"&&currentRepo(x,repository))return transition("IMPLEMENTATION_VERIFIED",id,"IN_PROGRESS","REVIEW_REQUIRED","IMPLEMENTATION_VERIFIED",[x.path]);}
-      if(st==="REVIEW_REQUIRED"){const x=review(reviews,id,tr,sr),to={PASS:"PASS",REPAIR:"REPAIR_REQUIRED",REPLAN:"REPLAN_REQUIRED",BLOCKED:"BLOCKED"}[x?.value?.result];if(x&&to&&currentRepo(x,repository)&&legal(transitions,"REVIEW_REQUIRED",to))return transition("REVIEW_RESULT_UNAPPLIED",id,"REVIEW_REQUIRED",to,"REVIEW_"+x.value.result,[x.path,...(x.value.evidence??[])]);}
+      if(st==="READY"){
+        const x=start(evidence,id,tr,sr);
+        if(x)return transition("IMPLEMENTATION_STARTED",id,"READY","IN_PROGRESS","IMPLEMENTATION_STARTED",[x.path]);
+      }
+      if(st==="IN_PROGRESS"){
+        const x=verify(evidence,id,tr,sr);
+        if(x?.value?.schema==="yaaw.evidence/v3"&&x.value.result==="PASS"&&currentRepo(x,repository))
+          return transition("IMPLEMENTATION_VERIFIED",id,"IN_PROGRESS","REVIEW_REQUIRED","IMPLEMENTATION_VERIFIED",[x.path]);
+      }
+      if(st==="REPAIR_REQUIRED"){
+        const v=verify(evidence,id,tr,sr),r=review(reviews,id,tr,sr),used=evidenceRefs(r);
+        if(v?.value?.schema==="yaaw.evidence/v3"&&v.value.result==="PASS"&&currentRepo(v,repository)&&!used.has(String(v.value.id)))
+          return transition("IMPLEMENTATION_VERIFIED",id,"REPAIR_REQUIRED","REVIEW_REQUIRED","REPAIR_VERIFIED",[v.path,r?.path].filter(Boolean));
+      }
+      if(st==="REVIEW_REQUIRED"){
+        const v=verify(evidence,id,tr,sr),r=review(reviews,id,tr,sr),to={PASS:"PASS",REPAIR:"REPAIR_REQUIRED",REPLAN:"REPLAN_REQUIRED",BLOCKED:"BLOCKED"}[r?.value?.result];
+        if(r&&to&&currentRepo(r,repository)){
+          if(!v||v.value?.schema!=="yaaw.evidence/v3"||v.value.result!=="PASS"||!currentRepo(v,repository))
+            return{id:"REVIEW_EVIDENCE_INVALID",kind:"BLOCKED",reason:"current review lacks current PASS verification"};
+          if(!evidenceRefs(r).has(String(v.value.id)))
+            return{id:"REVIEW_EVIDENCE_INVALID",kind:"BLOCKED",reason:"current review does not reference current PASS verification"};
+          if(!legal(transitions,"REVIEW_REQUIRED",to))
+            return{id:"ILLEGAL_REVIEW_TRANSITION",kind:"BLOCKED",reason:"review result is not a legal lifecycle transition"};
+          return transition("REVIEW_RESULT_UNAPPLIED",id,"REVIEW_REQUIRED",to,"REVIEW_"+r.value.result,[r.path,v.path]);
+        }
+      }
       if(st==="PASS"){
         const v=verify(evidence,id,tr,sr),r=review(reviews,id,tr,sr);let reason=null;
-        if(!r)reason="REVIEW_MISSING";else if(!r.value?.repository?.worktree_digest)reason="LEGACY_IDENTITY_UNVERIFIABLE";else if(!currentRepo(r,repository))reason="REVIEW_REPOSITORY_STALE";else if(!v||v.value?.schema!=="yaaw.evidence/v3"||v.value.result!=="PASS")reason="VERIFICATION_MISSING";else if(!currentRepo(v,repository))reason="VERIFICATION_REPOSITORY_STALE";
-        if(reason&&legal(transitions,"PASS","REVIEW_REQUIRED"))return transition("ACCEPTANCE_STALE",id,"PASS","REVIEW_REQUIRED",reason,[r?.path,v?.path].filter(Boolean));
+        if(!r)reason="REVIEW_MISSING";
+        else if(!r.value?.repository?.worktree_digest)reason="LEGACY_IDENTITY_UNVERIFIABLE";
+        else if(!currentRepo(r,repository))reason="REVIEW_REPOSITORY_STALE";
+        else if(!v||v.value?.schema!=="yaaw.evidence/v3"||v.value.result!=="PASS")reason="VERIFICATION_MISSING";
+        else if(!currentRepo(v,repository))reason="VERIFICATION_REPOSITORY_STALE";
+        else if(!evidenceRefs(r).has(String(v.value.id)))reason="VERIFICATION_MISSING";
+        if(reason){
+          const target=routingPolicy?.invalidation_routes?.[reason]?.state;
+          if(target!=="REVIEW_REQUIRED"||!legal(transitions,"PASS",target))return{id:"ILLEGAL_ACCEPTANCE_INVALIDATION",kind:"BLOCKED",reason};
+          return transition("ACCEPTANCE_STALE",id,"PASS",target,reason,[r?.path,v?.path].filter(Boolean));
+        }
       }
     }
   }
-  const vals=Object.values(state.tickets??{});
-  if(vals.length&&vals.every(x=>x==="PASS"||x==="CANCELLED")&&state.planning.scope_status==="COMPLETE"&&state.phase!=="complete")
-    return{id:"PROJECT_COMPLETION_SYNC",kind:"STATE",subject:"project",from:state.phase,to:"complete",reason:"all admitted tickets terminal and scope COMPLETE",workflow:"orchestration.reconcile-state",evidence:[]};
+  const ids=currentTicketIds(state,a),vals=ids.map(id=>state.tickets[id]);
+  if(ids.length&&vals.every(x=>x==="PASS"||x==="CANCELLED")&&state.planning.scope_status==="COMPLETE"&&state.phase!=="complete")
+    return{id:"PROJECT_COMPLETION_SYNC",kind:"STATE",subject:"project",from:state.phase,to:"complete",reason:"all current admitted tickets terminal and scope COMPLETE",workflow:"orchestration.reconcile-state",evidence:ids};
   return null;
 }
 function deps(id,a,state){return (a?.tickets?.[id]?.meta?.dependencies??[]).every(d=>state.tickets?.[d]==="PASS");}
@@ -106,10 +140,11 @@ function baseRoute(state,a,evidence,p){
   return{kind:"ROOT_ACTION",workflow:"orchestration.recover-interruption",reason:"NO_SAFE_SEMANTIC_ROUTE"};
 }
 function legalNow(w,state,a){
-  const s=activeSpec(state,a),t=state?.tickets??{};
-  if(["prd.route","prd.revise","prd.refine"].includes(w))return true;
-  if(["planning.route","planning.readiness-review"].includes(w))return normalizeStatus(state?.product?.status)==="ready";
-  if(w==="planning.create-spec")return normalizeStatus(state.product.status)==="ready"&&normalizeStatus(state.planning.status)==="ready"&&state.planning.readiness==="PASS"&&!s;
+  const s=activeSpec(state,a),t=state?.tickets??{},productReady=normalizeStatus(state?.product?.status)==="ready";
+  if(w==="prd.route")return true;
+  if(["prd.revise","prd.refine"].includes(w))return Boolean(a?.product?.meta);
+  if(["planning.route","planning.readiness-review"].includes(w))return productReady;
+  if(w==="planning.create-spec")return productReady&&normalizeStatus(state.planning.status)==="ready"&&state.planning.readiness==="PASS"&&!s;
   if(w==="planning.create-tickets")return Boolean(s)&&currentTicketIds(state,a).length===0;
   if(w==="implementation.implement-ticket")return Object.values(t).includes("READY");
   if(w==="implementation.repair-ticket")return Object.values(t).includes("REPAIR_REQUIRED");
@@ -117,12 +152,14 @@ function legalNow(w,state,a){
   return false;
 }
 export function intentComplete(i,state,a){
-  if(!i)return false;const target=String(i.target_artifact??"").match(/TASK-[0-9]+/)?.[0]??null,o=i.desired_outcome;
+  if(!i)return false;const target=String(i.target_artifact??"").match(/TASK-[0-9]+/)?.[0]??null,o=i.desired_outcome,advanced=Number(state?.last_transition?.sequence??0)>Number(i.created_from_transition_sequence??0);
   if(o==="CREATE_SPEC")return currentAcceptedSpecs(state,a).length===1;
   if(o==="CREATE_TICKETS")return currentTicketIds(state,a).length>0;
-  if(o==="IMPLEMENT"||o==="REPAIR")return target?state.tickets?.[target]==="REVIEW_REQUIRED":Number(state?.last_transition?.sequence??0)>Number(i.created_from_transition_sequence??0)&&state.last_transition?.to==="REVIEW_REQUIRED";
-  if(o==="REVIEW")return target?Boolean(state.tickets?.[target]&&state.tickets[target]!=="REVIEW_REQUIRED"):Number(state?.last_transition?.sequence??0)>Number(i.created_from_transition_sequence??0)&&state.last_transition?.workflow==="review.record-review";
+  if(o==="IMPLEMENT"||o==="REPAIR")return target?state.tickets?.[target]==="REVIEW_REQUIRED":advanced&&state.last_transition?.to==="REVIEW_REQUIRED";
+  if(o==="REVIEW")return target?Boolean(state.tickets?.[target]&&state.tickets[target]!=="REVIEW_REQUIRED"):advanced&&state.last_transition?.workflow==="review.record-review";
   if(o==="CONTINUE_PRODUCT")return normalizeStatus(state.product?.status)==="ready";
+  if(o==="REVISE_PRODUCT"||o==="REFINE_PRODUCT")return advanced&&state.last_transition?.subject==="product";
+  if(o==="CONTINUE_PLANNING")return normalizeStatus(state.planning?.status)==="ready"&&state.planning?.readiness==="PASS";
   if(o==="PLANNING_REVIEW")return ["PASS","MISSING_DECISIONS","PRODUCT_GAP","REPLAN","BLOCKED"].includes(state.planning?.readiness);
   return false;
 }

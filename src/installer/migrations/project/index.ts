@@ -1,4 +1,4 @@
 import type { Migration } from "../index.js";
+import { migrateProjectV1ToV2 } from "./v1-to-v2.js";
 
-// v0.1 starts at project-state schema 1. Add explicit migrations here before changing that schema.
-export const projectMigrations: Migration[] = [];
+export const projectMigrations: Migration[] = [migrateProjectV1ToV2];

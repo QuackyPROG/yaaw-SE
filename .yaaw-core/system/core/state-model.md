@@ -1,34 +1,14 @@
 # State model
 
-Canonical machine-readable project state is `.yaaw-core/project/state.json` using `yaaw.project-state/v1`.
+Canonical project state is `.yaaw-core/project/state.json` using `yaaw.project-state/v2`.
 
-State is a routing cache and claim ledger. It is never trusted blindly over stronger domain evidence.
-
-## Lifecycle authority
-For routing and workflow preconditions, `.yaaw-core/project/state.json` `tickets[TASK-NNN]` is the current lifecycle ledger. Ticket frontmatter `status` is artifact metadata/admission history and may retain an earlier value after later lifecycle transitions; it does not override the reconciled state ledger.
-
-Roles whose workflow depends on lifecycle status must receive `state` in their read set. Orchestrator reconciles the ledger against stronger artifact, review, evidence, and repository reality before dispatch.
+State is a routing/adoption ledger, not semantic authority. Ticket frontmatter is admission/history metadata and never overrides the reconciled ticket lifecycle value in state.
 
 ## State writer
-Orchestrator is the physical writer of `state.json`. A transition's role owner remains the semantic decision authority. Reviewer decides `PASS`/`REPAIR`/`REPLAN`/`BLOCKED` in an immutable review; Orchestrator validates that durable result and records exactly the corresponding lifecycle transition and provenance. Orchestrator may not substitute its own acceptance judgment.
+Orchestrator is the only physical writer of `state.json`. Semantic roles create durable facts: Planner creates engineering/spec/ticket facts, Implementer creates start/verification evidence, Reviewer creates immutable review results. Orchestrator validates and adopts those facts through legal transitions.
 
-## Ticket states
-`DRAFT`, `READY`, `IN_PROGRESS`, `REVIEW_REQUIRED`, `REPAIR_REQUIRED`, `REPLAN_REQUIRED`, `BLOCKED`, `PASS`, `CANCELLED`.
+## Planning completion
+`planning.scope_status` mirrors Planner-owned `engineering.md`: `UNKNOWN`, `OPEN`, or `COMPLETE`. Orchestrator never infers COMPLETE from absence of runnable tickets.
 
-## Project phases
-`product`, `planning`, `implementation`, `complete`, `blocked`.
-
-## Required provenance
-Every mutation increments `transition_sequence` and writes `last_transition` with:
-- subject (`project` or `TASK-NNN`);
-- from/to state;
-- canonical workflow ID;
-- reason;
-- evidence references;
-- observed repository commit when available.
-
-`BLOCKED` state records a blocker summary and exact missing evidence/decision.
-
-`.yaaw-core/runtime/observed-state.json` and `.yaaw-core/runtime/handoff.json` are replaceable caches used to survive interruption inside orchestration. Their bases must be revalidated before use.
-
-Legal transitions are defined in `core/transitions.md`.
+## Provenance
+Every adopted mutation increments `transition_sequence` and records subject, from/to, workflow, reason, evidence, and observed commit.

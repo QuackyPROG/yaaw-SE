@@ -2,9 +2,13 @@
 name: yaaw-revise-prd
 description: Change accepted YAAW product intent and invalidate downstream engineering contracts whose basis became stale.
 ---
-# YAAW Revise PRD
+# yaaw-revise-prd
 ROLE: `prd`
 WORKFLOW: `prd.revise`
+INTENT: `REVISE_PRODUCT`
 
 ## Execute
-Load `.yaaw-core/system/roles/prd.md`, resolve `prd.revise` through `.yaaw-core/system/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/system/`; this skill is only an entrypoint.
+Resolve the YAAW workspace root, then invoke:
+`node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-revise-prd`
+
+Follow `orchestration.route` until `PRODUCT_REVISION_ADVANCED` is satisfied or a human-input, BLOCKED, or framework stop occurs. Do not execute prd semantics directly from this wrapper; every semantic execution requires the exact runtime handoff.

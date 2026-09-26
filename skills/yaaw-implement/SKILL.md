@@ -2,9 +2,13 @@
 name: yaaw-implement
 description: Implement one admitted READY YAAW ticket and produce repository-identity-bound verification evidence.
 ---
-# YAAW Implement
+# yaaw-implement
 ROLE: `implementer`
 WORKFLOW: `implementation.implement-ticket`
+INTENT: `IMPLEMENT`
 
 ## Execute
-Load `.yaaw-core/system/roles/implementer.md`, resolve `implementation.implement-ticket` through `.yaaw-core/system/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/system/`; this skill is only an entrypoint.
+Resolve the YAAW workspace root, then invoke:
+`node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-implement`
+
+Follow `orchestration.route` until `TICKET_REVIEW_REQUIRED` is satisfied or a human-input, BLOCKED, or framework stop occurs. Do not execute implementer semantics directly from this wrapper; every semantic execution requires the exact runtime handoff.

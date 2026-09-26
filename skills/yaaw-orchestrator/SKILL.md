@@ -2,9 +2,13 @@
 name: yaaw-orchestrator
 description: Continue or recover a YAAW project by reconstructing reality and dispatching the next safe workflow.
 ---
-# YAAW Orchestrator
+# yaaw-orchestrator
 ROLE: `orchestrator`
 WORKFLOW: `orchestration.route`
+INTENT: `CONTINUE`
 
 ## Execute
-Load `.yaaw-core/system/roles/orchestrator.md`, resolve `orchestration.route` through `.yaaw-core/system/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/system/`; this skill is only an entrypoint.
+Resolve the YAAW workspace root, then invoke:
+`node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-orchestrator`
+
+Follow `orchestration.route` until `CONTINUE_UNTIL_STOP` is satisfied or a human-input, BLOCKED, or framework stop occurs. Do not execute orchestrator semantics directly from this wrapper; every semantic execution requires the exact runtime handoff.

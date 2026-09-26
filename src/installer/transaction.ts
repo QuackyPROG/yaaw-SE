@@ -112,6 +112,10 @@ export async function executePlan(plan: InstallPlan, options: ExecuteOptions = {
         if (!(await exists(op.path))) {
           await mutateFile(op.path, async () => atomicWrite(op.path, op.content));
         }
+      } else if (op.type === "migrate-project-file") {
+        if (!(await sameFileContent(op.path, op.content))) {
+          await mutateFile(op.path, async () => atomicWrite(op.path, op.content));
+        }
       } else if (op.type === "write-managed-file") {
         if (!(await sameFileContent(op.path, op.content))) {
           await mutateFile(op.path, async () => atomicWrite(op.path, op.content));

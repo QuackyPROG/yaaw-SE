@@ -4,17 +4,16 @@
 Produce reproducible implementation evidence without self-accepting the ticket.
 
 ## Inputs
-Ticket requirements/tests, changed surface, project tooling/rules, current repository identity.
+Exact handoff, reconciled state, ticket requirements/tests, changed surface, project rules/tooling, and current repository identity.
 
 ## Procedure
-1. Run every test/check required by the ticket.
-2. Add targeted regression checks justified by the changed surface.
-3. For each materially relevant changeability principle from `.yaaw-core/system/rules/changeability.md`, verify the concrete property rather than a style preference. Examples include boundary mapping behavior, invalid-state rejection, decision logic independent of side effects, stable error identity, and focused-diff inspection.
-4. Record commands, exit/result, relevant checks (including relevant changeability checks), ticket/spec revisions, and exact repository identity in `.yaaw-core/project/evidence/EVIDENCE-TASK-NNN-VK.json` using the evidence schema.
-5. Preserve failed evidence; do not rewrite it as success.
+1. Run every ticket-required test/check and justified targeted regressions.
+2. Verify materially relevant changeability properties as concrete behavior.
+3. After verification commands finish, capture the canonical repository identity.
+4. Write a new immutable `.yaaw-core/project/evidence/EVIDENCE-TASK-NNN-VK.json` using `yaaw.evidence/v3`.
+5. Set `kind: implementation_verification` and exactly one result: `PASS`, `FAIL`, or `BLOCKED`.
+6. Preserve failed records; fixes produce a later evidence record.
+7. If verification proves implementation materially incomplete, return `IMPLEMENTATION_INCOMPLETE` to Orchestrator rather than silently reimplementing in this verification workflow.
 
 ## Output
-Evidence record(s). Verification never transitions a ticket to PASS; only Reviewer can accept.
-
-## Verification identity
-After verification commands finish, invoke `.yaaw-core/system/tools/repository-identity.mjs` and record that exact output in `yaaw.evidence/v2`. Do not reserialize it through a second digest implementation. Replaceable `.yaaw-core/runtime/**` coordination files are excluded by canonical `yaaw-worktree-v2`; all semantic/project/application changes remain in the basis. Changeability requirements remain in force.
+One explicit verification result. Only a current PASS record can authorize review admission; evidence-file existence alone never does.

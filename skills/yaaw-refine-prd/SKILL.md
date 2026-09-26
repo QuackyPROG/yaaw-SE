@@ -2,9 +2,13 @@
 name: yaaw-refine-prd
 description: Improve clarity and completeness of a YAAW product artifact without changing accepted product meaning.
 ---
-# YAAW Refine PRD
+# yaaw-refine-prd
 ROLE: `prd`
 WORKFLOW: `prd.refine`
+INTENT: `REFINE_PRODUCT`
 
 ## Execute
-Load `.yaaw-core/system/roles/prd.md`, resolve `prd.refine` through `.yaaw-core/system/registries/workflows.json`, then execute that canonical workflow. Keep semantic behavior in `.yaaw-core/system/`; this skill is only an entrypoint.
+Resolve the YAAW workspace root, then invoke:
+`node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-refine-prd`
+
+Follow `orchestration.route` until `PRODUCT_REFINED` is satisfied or a human-input, BLOCKED, or framework stop occurs. Do not execute prd semantics directly from this wrapper; every semantic execution requires the exact runtime handoff.
