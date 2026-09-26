@@ -12,7 +12,8 @@ node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_RO
 ```
 
 3. Consume `.yaaw-core/runtime/observed-state.json` and the typed `INSPECTED`/framework-stop result.
-4. Do not independently invoke Git, calculate `worktree_digest`, discover artifact locations, or serialize a second observation.
+4. The runtime compares current product/engineering/spec/ticket revisions and, for accepted work, current review/verification presence and repository identity so stale acceptance becomes a reconciliation input rather than a direct terminal route.
+5. Do not independently invoke Git, calculate `worktree_digest`, discover artifact locations, or serialize a second observation.
 
 ## Output
 Observed-state snapshot only; no semantic/ticket-state mutation and no executable handoff construction in `--inspect-only` mode.

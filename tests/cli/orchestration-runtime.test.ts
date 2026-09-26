@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -146,6 +146,81 @@ afterEach(async () => {
 });
 
 describe("deterministic orchestration runtime", () => {
+  it("routes stale PASS acceptance through reconciliation instead of completion", async () => {
+    const root = await fixture();
+    const prepared = run(root);
+    const currentDigest = prepared.handoff.repository.worktree_digest;
+
+    const statePath = join(root, ".yaaw-core/project/state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.phase = "complete";
+    state.active_ticket = null;
+    state.tickets["TASK-001"] = "PASS";
+    state.transition_sequence = 2;
+    state.last_workflow = "review.record-review";
+    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
+
+    await writeFile(join(root, ".yaaw-core/project/evidence/EVIDENCE-TASK-001-V1.json"), JSON.stringify({
+      schema: "yaaw.evidence/v2",
+      id: "EVIDENCE-TASK-001-V1",
+      ticket: "TASK-001",
+      ticket_revision: 1,
+      spec_revision: 1,
+      kind: "implementation_verification",
+      repository: {
+        schema: "yaaw.repository-identity/v2",
+        algorithm: "yaaw-worktree-v2",
+        status: "READY",
+        workspace_scope: ".",
+        git_root_relation: "same",
+        head_commit: prepared.handoff.repository.head_commit,
+        dirty: false,
+        worktree_digest: "sha256:stale",
+        components: {
+          status_sha256: "x",
+          unstaged_diff_sha256: "x",
+          staged_diff_sha256: "x",
+          untracked_manifest_sha256: "x"
+        },
+        changed_paths: [],
+        error: null
+      },
+      workflow: "implementation.verify-ticket",
+      commands: [],
+      checks: []
+    }, null, 2) + "\n");
+
+    await writeFile(join(root, ".yaaw-core/project/reviews/TASK-001-R1.md"), `---
+schema: yaaw.review/v2
+ticket: TASK-001
+round: 1
+result: PASS
+ticket_revision: 1
+spec_revision: 1
+repository:
+  schema: yaaw.repository-identity/v2
+  algorithm: yaaw-worktree-v2
+  status: READY
+  workspace_scope: .
+  git_root_relation: same
+  head_commit: ${prepared.handoff.repository.head_commit}
+  dirty: false
+  worktree_digest: sha256:stale
+  components: {}
+  changed_paths: []
+  error: null
+evidence: ["EVIDENCE-TASK-001-V1"]
+---
+# Review
+`);
+
+    const reconciled = run(root);
+    expect(currentDigest).toMatch(/^sha256:/);
+    expect(reconciled.status).toBe("RECONCILE_REQUIRED");
+    expect(reconciled.observed.inconsistencies).toContain("REVIEW_REPOSITORY_STALE:TASK-001");
+    expect(reconciled.observed.inconsistencies).toContain("VERIFICATION_REPOSITORY_STALE:TASK-001");
+  });
+
   it("prepares one route/handoff and validates that exact basis before dispatch", async () => {
     const root = await fixture();
     const prepared = run(root);

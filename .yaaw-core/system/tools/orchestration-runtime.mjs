@@ -79,6 +79,52 @@ async function files(dir, pattern) {
   }
 }
 
+async function reviewRecord(path) {
+  try {
+    const text = await readFile(path, "utf8");
+    const lines = text.split(/\r?\n/);
+    if (lines[0]?.trim() !== "---") return null;
+    const closing = lines.slice(1).findIndex(line => line.trim() === "---");
+    if (closing < 0) return null;
+    const data = { repository: {} };
+    let repository = false;
+    for (const line of lines.slice(1, closing + 1)) {
+      if (/^repository:\s*$/.test(line)) {
+        repository = true;
+        continue;
+      }
+      const nested = line.match(/^\s{2}([A-Za-z0-9_]+):\s*(.*)$/);
+      if (repository && nested) {
+        data.repository[nested[1]] = parseScalar(nested[2]);
+        continue;
+      }
+      if (!/^\S/.test(line)) continue;
+      repository = false;
+      const top = line.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+      if (top) data[top[1]] = parseScalar(top[2]);
+    }
+    if (!data.repository.worktree_digest && data.reviewed_worktree_digest) {
+      data.repository.worktree_digest = data.reviewed_worktree_digest;
+      data.repository.head_commit = data.reviewed_head_commit ?? null;
+      data.repository.dirty = data.reviewed_dirty ?? null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+async function evidenceRecords(paths) {
+  const records = [];
+  for (const path of paths) {
+    try {
+      const value = await readJson(path);
+      records.push({ path, value });
+    } catch {}
+  }
+  return records;
+}
+
 function runJsonTool(path, toolArgs) {
   const result = spawnSync(process.execPath, [path, ...toolArgs], {
     cwd: workspace,
@@ -222,8 +268,90 @@ function artifactSummary(artifacts) {
     engineering: artifacts.engineering.meta ? { path: rel(artifacts.engineering.path), metadata: artifacts.engineering.meta } : null,
     active_spec: artifacts.activeSpec ? { path: rel(artifacts.activeSpec.path), metadata: artifacts.activeSpec.meta } : null,
     specs: Object.fromEntries(Object.entries(artifacts.specs).map(([id, value]) => [id, { path: rel(value.path), metadata: value.meta }])),
-    tickets: Object.fromEntries(Object.entries(artifacts.tickets).map(([id, value]) => [id, { path: rel(value.path), metadata: value.meta }]))
+    tickets: Object.fromEntries(Object.entries(artifacts.tickets).map(([id, value]) => [id, { path: rel(value.path), metadata: value.meta }])),
+    reviews: artifacts.reviews.map(rel),
+    evidence: artifacts.evidence.map(rel)
   };
+}
+
+function ticketSourceCurrent(state, artifacts, ticketId) {
+  const ticket = artifacts.tickets[ticketId]?.meta;
+  const spec = artifacts.activeSpec?.meta;
+  if (!ticket || !spec) return false;
+  return Number(ticket.product_revision) === Number(state.product?.revision)
+    && Number(ticket.engineering_revision) === Number(state.planning?.revision)
+    && Number(ticket.spec_revision) === Number(spec.revision)
+    && String(ticket.spec ?? "") === String(artifacts.activeSpecId ?? "");
+}
+
+function currentEvidenceFor(records, state, artifacts, ticketId) {
+  const ticketRevision = Number(artifacts.tickets[ticketId]?.meta?.revision);
+  const specRevision = Number(artifacts.activeSpec?.meta?.revision);
+  return records.filter(({ value }) =>
+    value?.ticket === ticketId
+    && value?.kind === "implementation_verification"
+    && Number(value?.ticket_revision) === ticketRevision
+    && Number(value?.spec_revision) === specRevision
+  );
+}
+
+async function acceptanceInconsistencies(state, artifacts, repository) {
+  const issues = [];
+  const evidence = await evidenceRecords(artifacts.evidence);
+  for (const ticketId of Object.keys(state?.tickets ?? {}).sort()) {
+    const lifecycle = state.tickets[ticketId];
+    if (!["PASS", "IN_PROGRESS", "READY"].includes(lifecycle)) continue;
+    const currentEvidence = currentEvidenceFor(evidence, state, artifacts, ticketId);
+    const currentVerification = repository.status === "READY"
+      ? currentEvidence.filter(({ value }) => value?.repository?.worktree_digest === repository.worktree_digest)
+      : currentEvidence;
+
+    if (lifecycle === "IN_PROGRESS" && currentVerification.length) {
+      issues.push(`IMPLEMENTATION_VERIFIED_NOT_REVIEWED:${ticketId}`);
+      continue;
+    }
+    if (lifecycle === "READY" && currentVerification.length) {
+      issues.push(`IMPLEMENTATION_ALREADY_PRESENT:${ticketId}`);
+      continue;
+    }
+    if (lifecycle !== "PASS") continue;
+
+    if (!ticketSourceCurrent(state, artifacts, ticketId)) {
+      issues.push(`TICKET_SOURCE_STALE:${ticketId}`);
+      continue;
+    }
+
+    const reviewPath = artifacts.reviews
+      .filter(path => basename(path).startsWith(ticketId + "-R"))
+      .sort((a, b) => {
+        const ar = Number(basename(a).match(/-R([0-9]+)/)?.[1] ?? 0);
+        const br = Number(basename(b).match(/-R([0-9]+)/)?.[1] ?? 0);
+        return br - ar;
+      })[0];
+    if (!reviewPath) {
+      issues.push(`REVIEW_MISSING:${ticketId}`);
+    } else {
+      const review = await reviewRecord(reviewPath);
+      const ticketRevision = Number(artifacts.tickets[ticketId]?.meta?.revision);
+      const specRevision = Number(artifacts.activeSpec?.meta?.revision);
+      if (!review || review.ticket !== ticketId || review.result !== "PASS"
+          || Number(review.ticket_revision) !== ticketRevision
+          || Number(review.spec_revision) !== specRevision) {
+        issues.push(`REVIEW_MISSING:${ticketId}`);
+      } else if (!review.repository?.worktree_digest) {
+        issues.push(`LEGACY_IDENTITY_UNVERIFIABLE:${ticketId}`);
+      } else if (repository.status === "READY" && review.repository.worktree_digest !== repository.worktree_digest) {
+        issues.push(`REVIEW_REPOSITORY_STALE:${ticketId}`);
+      }
+    }
+
+    if (!currentEvidence.length) {
+      issues.push(`VERIFICATION_MISSING:${ticketId}`);
+    } else if (repository.status === "READY" && !currentVerification.length) {
+      issues.push(`VERIFICATION_REPOSITORY_STALE:${ticketId}`);
+    }
+  }
+  return unique(issues);
 }
 
 function metadataInconsistencies(state, artifacts) {
@@ -447,6 +575,7 @@ async function main() {
   const state = await readJsonOrNull(join(projectRoot, "state.json"));
   const artifacts = await inspectArtifacts(state);
   const inconsistencies = metadataInconsistencies(state, artifacts);
+  inconsistencies.push(...await acceptanceInconsistencies(state, artifacts, repository));
   if (contracts.errors.length) inconsistencies.unshift(...contracts.errors.map(error => `FRAMEWORK_CONTRACT_INCONSISTENCY:${error}`));
 
   const observed = {
