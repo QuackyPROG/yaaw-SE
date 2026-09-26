@@ -49,14 +49,14 @@ describe("Codex configuration navigation", () => {
     promptState.aliases.clear();
   });
 
-  it("treats ESC at Planner reasoning as Back to Planner model", async () => {
+  it("returns from Planner reasoning to Planner model", async () => {
     promptState.queue.push(
       "custom",
       "auto",
       "roles",
       "planner",
       "gpt-6-sol",
-      promptState.cancel,
+      "back",
       "back",
       "cancel"
     );
@@ -69,13 +69,13 @@ describe("Codex configuration navigation", () => {
     expect(promptState.messages[reasoningIndex + 1]).toBe("Planner: model");
   });
 
-  it("treats ESC at Planner model as Back to the role hub", async () => {
+  it("returns from Planner model to the role hub", async () => {
     promptState.queue.push(
       "custom",
       "auto",
       "roles",
       "planner",
-      promptState.cancel,
+      "back",
       "cancel"
     );
 
@@ -93,7 +93,7 @@ describe("Codex configuration navigation", () => {
       "auto",
       "roles",
       "planner",
-      promptState.cancel,
+      "back",
       "cancel"
     );
 
@@ -103,6 +103,19 @@ describe("Codex configuration navigation", () => {
       label: "← Back",
       hint: "Esc"
     });
+  });
+
+  it("keeps Ctrl+C as configuration cancel", async () => {
+    promptState.queue.push(
+      "custom",
+      "auto",
+      "roles",
+      "planner",
+      promptState.cancel
+    );
+
+    const result = await configureCodex(defaultCodexRuntimeSettings(), context);
+    expect(result.cancelled).toBe(true);
   });
 
   it("allows inherited model with explicit reasoning", async () => {
