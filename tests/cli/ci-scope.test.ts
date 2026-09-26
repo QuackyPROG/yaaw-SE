@@ -23,6 +23,22 @@ describe("CI change scope", () => {
     expect(scope.full).toBe(false);
   });
 
+  it("keeps frontmatter/runtime parser changes in the focused orchestration suite", () => {
+    const scope = classifyChangedFiles([
+      ".yaaw-core/system/tools/frontmatter.mjs",
+      "scripts/validate_schemas.mjs",
+      "skills/yaaw-orchestrator/SKILL.md",
+      "tests/cli/orchestration-frontmatter.test.ts"
+    ]);
+    expect(scope.orchestration).toBe(true);
+    expect(scope.core).toBe(false);
+    expect(scope.distribution).toBe(false);
+    expect(scope.node_floor).toBe(false);
+    expect(scope.platform).toBe(false);
+    expect(scope.release).toBe(true);
+    expect(scope.full).toBe(false);
+  });
+
   it("selects distribution and compatibility checks for packaged CLI changes", () => {
     const scope = classifyChangedFiles(["src/cli/main.ts"]);
     expect(scope.distribution).toBe(true);

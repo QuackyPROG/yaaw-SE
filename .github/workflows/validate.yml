@@ -75,8 +75,9 @@ jobs:
       - name: Test orchestration recovery and lifecycle
         if: needs.changes.outputs.orchestration == 'true' && needs.changes.outputs.full != 'true'
         run: |
-          npx vitest run tests/cli/orchestration-engine.test.ts tests/cli/orchestration-runtime.test.ts
+          npx vitest run tests/cli/orchestration-frontmatter.test.ts tests/cli/orchestration-engine.test.ts tests/cli/orchestration-runtime.test.ts
           node scripts/run_lifecycle_cases.mjs
+          npm run validate:schemas
 
       - name: Validate broad core changes
         if: needs.changes.outputs.core == 'true' && needs.changes.outputs.full != 'true'
@@ -193,7 +194,7 @@ jobs:
           TARGET_VERSION="$(node scripts/resolve_release_version.mjs next "${REPO_VERSION}" "${LATEST_JSON}" "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}")"
           npm version "${TARGET_VERSION}" --no-git-tag-version
           echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "Publishing yaaw-se$@{TARGET_VERSION} to dist-tag next"
+          echo "Publishing yaaw-se@${TARGET_VERSION} to dist-tag next"
       - name: Build and pack prerelease
         if: steps.freshness.outputs.publish == 'true'
         id: pack
@@ -213,15 +214,15 @@ jobs:
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
-          for attempt in {1..36}; do
-            PUBLISHED="$(npm view "yaaw-se$@{TARGET}" version 2>/dev/null || true)"
+          for attempt in {1..18}; do
+            PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@next version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
-              echo "Verified npm next -> yaaw-se$@{TARGET}"
+              echo "Verified npm next -> yaaw-se@${TARGET}"
               exit 0
             fi
             echo "Waiting for npm next propagation (${attempt}/36)"
-            sleep 10
+            sleep 5
           done
           exit 1
 
@@ -268,7 +269,7 @@ jobs:
           TARGET_VERSION="$(node scripts/resolve_release_version.mjs stable "${REPO_VERSION}" "${LATEST_JSON}")"
           npm version "${TARGET_VERSION}" --no-git-tag-version
           echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "Stable target: yaaw-se$@{TARGET_VERSION}"
+          echo "Stable target: yaaw-se@${TARGET_VERSION}"
       - name: Build and pack stable release
         if: steps.freshness.outputs.publish == 'true'
         id: pack
@@ -288,14 +289,14 @@ jobs:
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
-          for attempt in {1..36}; do
-            PUBLISHED="$(npm view "yaaw-se$@{TARGET}" version 2>/dev/null || true)"
+          for attempt in {1..18}; do
+            PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@latest version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
-              echo "Verified npm latest -> yaaw-se$@{TARGET}"
+              echo "Verified npm latest -> yaaw-se@${TARGET}"
               exit 0
             fi
             echo "Waiting for npm latest propagation (${attempt}/36)"
-            sleep 10
+            sleep 5
           done
           exit 1

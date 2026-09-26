@@ -8,12 +8,15 @@ const docsOnlyPath = path => path === "README.md" || path === "AGENTS.md" || pat
 const ciPath = path => path === ".github/workflows/validate.yml" || path === "scripts/ci_scope.mjs" || path === "tests/cli/ci-scope.test.ts";
 const orchestrationPath = path =>
   /^\.yaaw-core\/system\/tools\/orchestration-(engine|runtime)\.mjs$/.test(path) ||
+  path === ".yaaw-core/system/tools/frontmatter.mjs" ||
   path === ".yaaw-core/system/core/recovery.md" ||
   path === ".yaaw-core/system/roles/orchestrator.md" ||
   /^\.yaaw-core\/system\/workflows\/(orchestration|implementation)\//.test(path) ||
   /^\.yaaw-core\/system\/registries\/(routing-policy|reconciliation-policy|handoff-policy|transitions|execution-policy|role-io|workflows)\.json$/.test(path) ||
   /^tests\/cli\/orchestration-.*\.test\.ts$/.test(path) ||
-  path === "scripts/run_lifecycle_cases.mjs";
+  path === "scripts/run_lifecycle_cases.mjs" ||
+  path === "scripts/validate_schemas.mjs" ||
+  path === "skills/yaaw-orchestrator/SKILL.md";
 const corePath = path =>
   /^\.yaaw-core\//.test(path) ||
   /^skills\//.test(path) ||

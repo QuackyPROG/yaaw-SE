@@ -2,6 +2,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseFrontmatter } from "../.yaaw-core/system/tools/frontmatter.mjs";
 
 const HERE=dirname(fileURLToPath(import.meta.url));
 const ROOT=resolve(HERE,"..");
@@ -30,13 +31,7 @@ export function validateValue(value,schema,schemas,path="$"){
   const checkLocal=(v,s,p,out)=>{const before=errors.length;check(v,s,p);out.push(...errors.splice(before));};
   check(value,schema,path);return errors;
 }
-function scalar(v){v=v.trim();if(v==="")return {};if(v==="null")return null;if(v==="true")return true;if(v==="false")return false;if(/^-?\d+$/.test(v))return Number(v);if(v.startsWith("[")||v.startsWith("{"))return JSON.parse(v);return v.replace(/^["']|["']$/g,"");}
-export function parseFrontmatter(text){
-  const lines=text.split(/\r?\n/);if(lines[0]?.trim()!=="---")throw new Error("missing opening frontmatter");const end=lines.slice(1).findIndex(x=>x.trim()==="---")+1;if(end<=0)throw new Error("missing closing frontmatter");
-  const out={};let parent=null;
-  for(const raw of lines.slice(1,end)){if(!raw.trim()||raw.trimStart().startsWith("#"))continue;const nested=raw.match(/^\s{2}([^:]+):\s*(.*)$/);if(nested&&parent){out[parent][nested[1].trim()]=scalar(nested[2]);continue}const m=raw.match(/^([^:]+):\s*(.*)$/);if(!m)continue;parent=null;const key=m[1].trim(),val=m[2];if(val.trim()===""){out[key]={};parent=key}else out[key]=scalar(val)}
-  return out;
-}
+export { parseFrontmatter };
 export async function loadSchemas(){const out={};for(const name of await readdir(SCHEMA_DIR))if(name.endsWith(".json"))out[name]=JSON.parse(await readFile(join(SCHEMA_DIR,name),"utf8"));return out}
 export async function validateRepositoryTemplates(){
   const schemas=await loadSchemas(),templates=join(ROOT,".yaaw-core","system","templates"),pairs=[

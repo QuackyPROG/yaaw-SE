@@ -178,7 +178,8 @@ ticket_revision: 1
 spec_revision: 1
 repository:
   worktree_digest: ${repository.worktree_digest}
-evidence: ${JSON.stringify(evidence)}
+evidence:
+${evidence.map(id => `  - ${id}`).join("\n")}
 ---
 # TASK-001 review
 `);
@@ -254,6 +255,54 @@ Changed semantic product text.
     expect(next.workflow).toBe("implementation.verify-ticket");
     const state = JSON.parse(await readFile(join(root, ".yaaw-core/project/state.json"), "utf8"));
     expect(state.tickets["TASK-001"]).toBe("IN_PROGRESS");
+  });
+
+  it("adopts a real block-list review without a framework stop", async () => {
+    const root = await fixture();
+    const prepared = run(root);
+    const statePath = join(root, ".yaaw-core/project/state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.tickets["TASK-001"] = "REVIEW_REQUIRED";
+    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
+    await writeVerification(root, prepared.handoff.repository, "PASS");
+    await writeReview(root, prepared.handoff.repository, ["EVIDENCE-TASK-001-V1"]);
+
+    const next = run(root);
+    expect(next.status).toBe("RECONCILE_REQUIRED");
+    expect(next.reconciliation.id).toBe("REVIEW_RESULT_UNAPPLIED");
+    expect(next.reconciliation.to).toBe("PASS");
+  });
+
+  it("honors block-list ticket dependencies instead of crashing on .every", async () => {
+    const root = await fixture();
+    const statePath = join(root, ".yaaw-core/project/state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.tickets["TASK-001"] = "PASS";
+    state.tickets["TASK-002"] = "READY";
+    state.active_ticket = "TASK-002";
+    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
+    await writeFile(join(root, ".yaaw-core/project/tickets/TASK-002.md"), `---
+schema: yaaw.ticket/v1
+id: TASK-002
+revision: 1
+spec: SPEC-001
+spec_revision: 1
+product_revision: 1
+engineering_revision: 1
+status: READY
+dependencies:
+  - TASK-001
+decision_ids:
+  - ENG-001
+expertise: []
+---
+# TASK-002
+`);
+
+    const next = run(root);
+    expect(next.status).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("implementation.implement-ticket");
+    expect(next.handoff.active_artifact).toBe(".yaaw-core/project/tickets/TASK-002.md");
   });
 
   it("creates recovery handoffs for stale review evidence instead of BLOCKED", async () => {
