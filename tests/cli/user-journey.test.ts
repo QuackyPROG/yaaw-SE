@@ -9,11 +9,18 @@ const promptState = vi.hoisted(() => ({
   tools: [] as string[],
   profile: "standard",
   messages: [] as string[],
-  toolOptions: [] as string[]
+  toolOptions: [] as string[],
+  aliases: new Map<string, any>()
 }));
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
+  settings: { aliases: promptState.aliases },
+  updateSettings: vi.fn((updates: any) => {
+    for (const [key, value] of Object.entries(updates.aliases ?? {})) {
+      if (!promptState.aliases.has(key)) promptState.aliases.set(key, value);
+    }
+  }),
   outro: vi.fn(),
   note: vi.fn(),
   spinner: vi.fn(() => ({ start: vi.fn(), stop: vi.fn() })),
@@ -35,7 +42,7 @@ vi.mock("@clack/prompts", () => ({
     if (config.message === "Which YAAW entrypoints should be exposed?") {
       return promptState.profile;
     }
-    if (config.message === "How should YAAW configure Codex?") {
+    if (config.message === "Choose a Codex setup") {
       return "inherit";
     }
     throw new Error(`Unexpected select prompt: ${config.message}`);
@@ -222,6 +229,7 @@ describe("interactive TUI consumer journeys", () => {
     promptState.profile = "standard";
     promptState.messages = [];
     promptState.toolOptions = [];
+    promptState.aliases.clear();
   });
 
   it("keeps the provider journey matrix synchronized with the integration registry", () => {
@@ -243,7 +251,7 @@ describe("interactive TUI consumer journeys", () => {
         "Where should YAAW-SE be installed?",
         "Which AI coding tools should use YAAW-SE?",
         "Which YAAW entrypoints should be exposed?",
-        ...(tools.includes("codex") ? ["How should YAAW configure Codex?"] : []),
+        ...(tools.includes("codex") ? ["Choose a Codex setup"] : []),
         "Continue?"
       ]);
 
