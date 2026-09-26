@@ -43,7 +43,7 @@ Host-execution stop results are `HOST_ISOLATION_UNAVAILABLE`, `HOST_EXECUTION_PR
 - `HOST_EXECUTION_PROFILE_UNAVAILABLE`: an execution mechanism existed, but the host could not guarantee the configured effective authority model/reasoning profile.
 - `AUTHORITY_EXECUTION_FAILED`: the correct authority execution actually started and failed under the bounded retry/fallback policy.
 
-A host isolation/profile stop raised before child creation is a pre-execution host failure and must not be counted as an authority execution failure.
+A host isolation/profile stop raised before child creation is a pre-execution host failure: no authority worker ran, so it must not be counted as an authority execution failure.
 
 `PRECONDITION_UNSATISFIED` includes a reason such as `NO_PRODUCT`, `PLANNING_UNREADY`, `SPEC_MISSING`, `NO_READY_TICKET`, `STALE_SOURCE`, or `REPOSITORY_IDENTITY_UNAVAILABLE`.
 

@@ -19,7 +19,8 @@ class BehavioralConformanceTest(unittest.TestCase):
         self.assertEqual(run_fixture_cases(FIXTURES),[])
     def test_fixture_suite_covers_required_lifecycle_cases(self):
         covered={c["id"].split("-",1)[0] for c in self.fixtures}
-        required = set("ABCDEFGHIJKLMNOPQRSTUVWY") | {"AA", "AB"}\n        self.assertTrue(required.issubset(covered))
+        required = set("ABCDEFGHIJKLMNOPQRSTUVWY") | {"AA", "AB"}
+        self.assertTrue(required.issubset(covered))
     def test_every_nonterminal_expected_workflow_is_registered(self):
         workflows=json.loads((CORE/"registries/workflows.json").read_text())
         for case in self.fixtures:
