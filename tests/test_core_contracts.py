@@ -61,7 +61,7 @@ class CoreContractsTest(unittest.TestCase):
         self.assertEqual(order, sorted(order))
 
     def test_state_schema_can_represent_transition_provenance(self):
-        state = json.loads((CORE / "schemas/project-state.schema.json").read_text())
+        state = json.loads((CORE / "schemas/project-state-v2.schema.json").read_text())
         required = set(state["required"])
         self.assertTrue({"transition_sequence", "last_transition", "blocker"}.issubset(required))
         transition = state["properties"]["last_transition"]["anyOf"][1]
@@ -193,6 +193,7 @@ class CoreContractsTest(unittest.TestCase):
         self.assertIn(".yaaw-core/system/tools/orchestration-runtime.mjs", execution)
         self.assertNotIn(".yaaw-core/tools/framework-integrity.mjs", execution)
         self.assertTrue((CORE / "tools/orchestration-runtime.mjs").is_file())
+        self.assertTrue((CORE / "tools/orchestration-engine.mjs").is_file())
         route = (CORE / "workflows/orchestration/route.md").read_text()
         inspect = (CORE / "workflows/orchestration/inspect-state.md").read_text()
         determine = (CORE / "workflows/orchestration/determine-next-action.md").read_text()
@@ -209,11 +210,13 @@ class CoreContractsTest(unittest.TestCase):
             "planning.create-tickets",
             "planning.replan",
             "implementation.implement-ticket",
+            "implementation.verify-ticket",
             "implementation.repair-ticket",
             "review.review-ticket",
         }
         policies = self.handoff_policy["workflows"]
         self.assertEqual(set(policies), expected)
+        self.assertEqual(set(policies["implementation.verify-ticket"]["writes"]), {"evidence"})
         for workflow_id, policy in policies.items():
             role = self.workflows[workflow_id]["role"]
             self.assertNotEqual(role, "orchestrator")
@@ -239,6 +242,19 @@ class CoreContractsTest(unittest.TestCase):
         self.assertIn('status !== "HEALTHY"', tool)
         for mutator in ("writeFile(", "rename(", "unlink(", "rm("):
             self.assertNotIn(mutator, tool)
+
+    def test_planner_and_implementer_read_state_but_never_write_it(self):
+        for role in ("planner", "implementer"):
+            contract = self.role_io["roles"][role]
+            self.assertIn("state", contract["reads"])
+            self.assertIn("state", contract["forbidden_writes"])
+            self.assertNotIn("state", contract["writes"])
+
+    def test_public_skills_define_machine_intent(self):
+        for skill, entry in self.skills.items():
+            for field in ("destination_role","requested_workflow","desired_outcome","completion_kind"):
+                self.assertIn(field, entry, f"{skill}:{field}")
+            self.assertEqual(entry["requested_workflow"], entry["workflow_id"])
 
     def test_reviewer_reads_state_but_only_writes_review(self):
         reviewer = self.role_io["roles"]["reviewer"]

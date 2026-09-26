@@ -20,14 +20,15 @@
     "build:payload": "node scripts/build_npm_payload.mjs",
     "verify:payload": "node scripts/verify_npm_payload.mjs",
     "build": "npm run clean && npm run build:ts && npm run build:payload && npm run verify:payload",
-    "validate:core": "python scripts/validate_core.py && python scripts/validate_behavior.py && python scripts/behavior_oracle.py",
+    "validate:core": "npm run validate:schemas && python scripts/validate_core.py && python scripts/validate_behavior.py && node scripts/run_lifecycle_cases.mjs",
     "validate:distribution": "python scripts/validate_distribution.py",
     "test:python": "python -m unittest discover -s tests -v",
     "test:cli": "npm run build:payload && vitest run tests/cli",
     "test": "npm run validate:core && npm run validate:distribution && npm run test:python && npm run test:cli",
     "prepack": "npm run test && npm run build",
     "smoke:tarball": "npm run build && node scripts/smoke_npm_tarball.mjs",
-    "smoke:update": "npm run build && node scripts/smoke_npm_update.mjs"
+    "smoke:update": "npm run build && node scripts/smoke_npm_update.mjs",
+    "validate:schemas": "node scripts/validate_schemas.mjs"
   },
   "dependencies": {
     "@clack/prompts": "1.8.1",

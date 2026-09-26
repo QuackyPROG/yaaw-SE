@@ -39,11 +39,16 @@ for (const rel of [
   "yaaw-core/system/core/dispatch-execution.md",
   "yaaw-core/system/core/framework-integrity.md",
   "yaaw-core/system/tools/framework-integrity.mjs",
+  "yaaw-core/system/tools/orchestration-engine.mjs",
   "yaaw-core/system/rules/research-admission.md",
   "yaaw-core/system/registries/execution-policy.json",
+  "yaaw-core/system/registries/reconciliation-policy.json",
   "yaaw-core/system/registries/role-io.json",
   "yaaw-core/system/registries/artifacts.json",
   "yaaw-core/system/schemas/engineering-research.schema.json",
+  "yaaw-core/system/schemas/engineering-v2.schema.json",
+  "yaaw-core/system/schemas/project-state-v2.schema.json",
+  "yaaw-core/system/schemas/evidence-v3.schema.json",
   "yaaw-core/system/schemas/intent.schema.json",
   "integrations/codex/yaaw-runtime.md"
 ]) {

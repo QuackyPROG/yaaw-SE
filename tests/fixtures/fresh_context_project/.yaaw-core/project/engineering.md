@@ -1,10 +1,11 @@
 ---
-schema: yaaw.engineering/v1
+schema: yaaw.engineering/v2
 revision: 5
 status: ready
 product_revision: 3
 current_frontier: F-001
 readiness: PASS
+scope_status: COMPLETE
 ---
 # Engineering
 

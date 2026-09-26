@@ -101,6 +101,7 @@ def main() -> int:
         "planning.create-tickets",
         "planning.replan",
         "implementation.implement-ticket",
+        "implementation.verify-ticket",
         "implementation.repair-ticket",
         "review.review-ticket",
     }
@@ -176,6 +177,8 @@ def main() -> int:
             descriptions.add(desc)
         if f"ROLE: `{entry['role']}`" not in body or f"WORKFLOW: `{wf}`" not in body:
             errors.append(f"{skill_id}: body does not declare registry role/workflow")
+        for intent_field in ("destination_role","requested_workflow","desired_outcome","completion_kind"):
+            if not entry.get(intent_field): errors.append(f"{skill_id}: missing {intent_field}")
         if len(path.read_text(encoding="utf-8").splitlines()) > 24:
             errors.append(f"{skill_id}: public wrapper too large")
 
@@ -289,7 +292,7 @@ def main() -> int:
             schemas[schema_path.name] = schema
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{schema_path.relative_to(ROOT)}: invalid JSON: {exc}")
-    state = schemas.get("project-state.schema.json", {})
+    state = schemas.get("project-state-v2.schema.json", {})
     state_required = set(state.get("required", []))
     for field in {"transition_sequence", "last_transition", "blocker"}:
         if field not in state_required:
@@ -307,7 +310,7 @@ def main() -> int:
     # Templates: machine-readable metadata + required human-readable sections.
     template_meta = {
         "product.md": {"schema", "revision", "status"},
-        "engineering.md": {"schema", "revision", "status", "product_revision", "current_frontier", "readiness"},
+        "engineering.md": {"schema", "revision", "status", "product_revision", "current_frontier", "readiness", "scope_status"},
         "spec.md": {"schema", "id", "revision", "status", "product_revision", "engineering_revision", "frontier_id", "decision_ids"},
         "ticket.md": {"schema", "id", "revision", "spec", "spec_revision", "product_revision", "engineering_revision", "status", "dependencies", "decision_ids", "expertise"},
         "review.md": {"schema", "ticket", "round", "result", "ticket_revision", "spec_revision", "repository", "evidence"},
@@ -377,6 +380,10 @@ def main() -> int:
         errors.append("missing canonical repository identity utility")
     if not (CORE / "tools/orchestration-runtime.mjs").is_file():
         errors.append("missing deterministic orchestration runtime")
+    if not (CORE / "tools/orchestration-engine.mjs").is_file():
+        errors.append("missing importable production orchestration engine")
+    if not (CORE / "registries/reconciliation-policy.json").is_file():
+        errors.append("missing reconciliation policy")
     if (ROOT / ".yaaw-core" / "tools").exists():
         errors.append("legacy flat .yaaw-core/tools must not coexist with canonical system tools")
     if not (CORE / "schemas/repository-identity.schema.json").is_file():

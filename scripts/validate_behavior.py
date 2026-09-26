@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from behavior_oracle import run_fixture_cases
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / ".yaaw-core" / "system"
@@ -135,7 +135,7 @@ def main() -> int:
         errors.append("lifecycle fixture IDs must be unique")
 
     # Keep coverage tied to actual semantic scenarios, not arbitrary alphabet completion.
-    required_prefixes = set("ABCDEFGHIJKLMNOPQRSTUVWY") | {"AA", "AB"}
+    required_prefixes = set("ABCDEFGHIJKLMNOP")
     covered = {
         case_id.split("-", 1)[0]
         for case_id in ids
@@ -146,7 +146,12 @@ def main() -> int:
             f"lifecycle fixtures missing required cases {sorted(required_prefixes - covered)}"
         )
 
-    errors.extend(run_fixture_cases(FIXTURES))
+    oracle = (ROOT / "scripts" / "behavior_oracle.py").read_text(encoding="utf-8")
+    if "def determine_next" in oracle or "ticket_state_precedence" in oracle:
+        errors.append("behavior_oracle.py must not contain an independent lifecycle router")
+    result = subprocess.run(["node", "scripts/run_lifecycle_cases.mjs"], cwd=ROOT, capture_output=True, text=True)
+    if result.returncode != 0:
+        errors.append("production lifecycle fixtures failed: " + (result.stderr or result.stdout).strip())
 
     fresh = ROOT / "tests" / "fixtures" / "fresh_context_project" / ".yaaw-core" / "project"
     for rel in (

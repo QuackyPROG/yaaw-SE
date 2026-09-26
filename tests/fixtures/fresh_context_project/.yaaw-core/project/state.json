@@ -1,8 +1,8 @@
 {
-  "schema": "yaaw.project-state/v1",
+  "schema": "yaaw.project-state/v2",
   "phase": "complete",
   "product": {"artifact": ".yaaw-core/project/product.md", "status": "ready", "revision": 3},
-  "planning": {"artifact": ".yaaw-core/project/engineering.md", "status": "ready", "revision": 5, "current_frontier": "F-001", "readiness": "PASS", "active_spec": "SPEC-001"},
+  "planning": {"artifact": ".yaaw-core/project/engineering.md", "status": "ready", "revision": 5, "current_frontier": "F-001", "readiness": "PASS", "active_spec": "SPEC-001", "scope_status": "COMPLETE"},
   "active_ticket": null,
   "tickets": {"TASK-001": "PASS"},
   "transition_sequence": 4,
