@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const roots: string[] = [];
-const tool = resolve(".yaaw-core/tools/repository-identity.mjs");
+const tool = resolve(".yaaw-core/system/tools/repository-identity.mjs");
 
 function git(root: string, ...args: string[]) {
   return execFileSync("git", ["-C", root, ...args], { encoding: "utf8" });
@@ -57,6 +57,29 @@ describe("canonical repository identity", () => {
 
     await writeFile(join(root, "untracked.bin"), Buffer.from([0, 1, 3, 255]));
     expect(identity(root).worktree_digest).not.toBe(untracked.worktree_digest);
+  });
+
+  it("ignores lifecycle-generated YAAW outputs but observes semantic project files", async () => {
+    const root = await repo();
+    const baseline = identity(root);
+
+    await mkdir(join(root, ".yaaw-core", "runtime"), { recursive: true });
+    await mkdir(join(root, ".yaaw-core", "project", "evidence"), { recursive: true });
+    await mkdir(join(root, ".yaaw-core", "project", "reviews"), { recursive: true });
+    await writeFile(join(root, ".yaaw-core", "runtime", "handoff.json"), "{}\n");
+    await writeFile(join(root, ".yaaw-core", "runtime", "observed-state.json"), "{}\n");
+    await writeFile(join(root, ".yaaw-core", "project", "state.json"), "{}\n");
+    await writeFile(join(root, ".yaaw-core", "project", "evidence", "EVIDENCE-TASK-001-V1.json"), "{}\n");
+    await writeFile(join(root, ".yaaw-core", "project", "reviews", "TASK-001-R1.md"), "review\n");
+
+    const afterLifecycleOutputs = identity(root);
+    expect(afterLifecycleOutputs.worktree_digest).toBe(baseline.worktree_digest);
+    expect(afterLifecycleOutputs.changed_paths).toEqual([]);
+
+    await writeFile(join(root, ".yaaw-core", "project", "product.md"), "product intent\n");
+    const afterProduct = identity(root);
+    expect(afterProduct.worktree_digest).not.toBe(baseline.worktree_digest);
+    expect(afterProduct.changed_paths.some((x: any) => x.path.endsWith(".yaaw-core/project/product.md"))).toBe(true);
   });
 
   it("does not include unrelated sibling changes when workspace is nested", async () => {

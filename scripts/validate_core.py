@@ -69,6 +69,7 @@ def main() -> int:
     execution_policy = load_json(CORE / "registries/execution-policy.json")
     role_io = load_json(CORE / "registries/role-io.json")
     artifacts = load_json(CORE / "registries/artifacts.json")
+    handoff_policy = load_json(CORE / "registries/handoff-policy.json")
     errors: list[str] = []
     allowed_roles = {"prd", "planner", "implementer", "reviewer", "orchestrator"}
 
@@ -90,6 +91,36 @@ def main() -> int:
             unknown = set(contract.get(field, [])) - artifact_ids
             if unknown:
                 errors.append(f"{role}: unknown {field} artifacts {sorted(unknown)}")
+
+    # Deterministic route-to-handoff policy is explicit and must stay inside role authority.
+    deterministic_handoffs = handoff_policy.get("workflows", {})
+    expected_handoffs = {
+        "prd.route",
+        "planning.route",
+        "planning.create-spec",
+        "planning.create-tickets",
+        "planning.replan",
+        "implementation.implement-ticket",
+        "implementation.repair-ticket",
+        "review.review-ticket",
+    }
+    if set(deterministic_handoffs) != expected_handoffs:
+        errors.append(f"handoff-policy coverage drifted: {sorted(deterministic_handoffs)}")
+    for workflow_id, policy in deterministic_handoffs.items():
+        if workflow_id not in workflows:
+            errors.append(f"handoff-policy references unknown workflow {workflow_id}")
+            continue
+        role = workflows[workflow_id].get("role")
+        if role == "orchestrator":
+            errors.append(f"handoff-policy must not construct Orchestrator semantic handoff: {workflow_id}")
+            continue
+        contract = io_roles.get(role, {})
+        if not set(policy.get("reads", [])).issubset(set(contract.get("reads", []))):
+            errors.append(f"{workflow_id}: handoff reads exceed {role} role I/O")
+        if not set(policy.get("writes", [])).issubset(set(contract.get("writes", []))):
+            errors.append(f"{workflow_id}: handoff writes exceed {role} role I/O")
+        if not policy.get("expected_output") or not policy.get("result_vocabulary"):
+            errors.append(f"{workflow_id}: incomplete deterministic handoff contract")
 
     if "planning.research" not in workflows:
         errors.append("planning.research must be a canonical internal Planner workflow")
@@ -344,13 +375,22 @@ def main() -> int:
         errors.append("missing invalidation or repository-identity contract")
     if not (CORE / "tools/repository-identity.mjs").is_file():
         errors.append("missing canonical repository identity utility")
+    if not (CORE / "tools/orchestration-runtime.mjs").is_file():
+        errors.append("missing deterministic orchestration runtime")
+    if (ROOT / ".yaaw-core" / "tools").exists():
+        errors.append("legacy flat .yaaw-core/tools must not coexist with canonical system tools")
     if not (CORE / "schemas/repository-identity.schema.json").is_file():
         errors.append("missing shared repository identity schema")
     for rel in ("core/execution-context.md", "core/io-contract.md", "rules/research-admission.md"):
         if not (CORE / rel).is_file():
             errors.append(f"missing runtime hardening contract {rel}")
     require_phrases(CORE / "core/context-loading.md", ["Progressive-disclosure invariant", "must not preload sibling or downstream workflow bodies"], errors)
-    require_phrases(CORE / "core/execution-context.md", ["git -C <WORKSPACE_ROOT>", "UNVERSIONED", "IDENTITY"], errors)
+    require_phrases(CORE / "core/execution-context.md", ["git -C <WORKSPACE_ROOT>", "UNVERSIONED", "IDENTITY", "orchestration-runtime.mjs"], errors)
+    execution_context_text = (CORE / "core/execution-context.md").read_text(encoding="utf-8")
+    if execution_context_text.count("## Framework integrity") != 1:
+        errors.append("execution-context must contain exactly one Framework integrity section")
+    if ".yaaw-core/tools/framework-integrity.mjs" in execution_context_text:
+        errors.append("execution-context references legacy flat framework-integrity utility")
     require_phrases(CORE / "rules/research-admission.md", ["Availability of a Codex/host skill is not an admission basis", "primary sources", "RSH-NNN"], errors)
 
 
@@ -366,6 +406,19 @@ def main() -> int:
         for forbidden_mutator in ("writeFile(", "rename(", "unlink(", "rm("):
             if forbidden_mutator in tool_text:
                 errors.append(f"framework integrity utility must remain read-only: contains {forbidden_mutator}")
+
+    repository_rule = (CORE / "rules/repository-identity.md").read_text(encoding="utf-8")
+    if "yaaw-worktree-v2" not in repository_rule:
+        errors.append("repository identity contract must declare yaaw-worktree-v2")
+    for rel in (
+        "workflows/orchestration/route.md",
+        "workflows/orchestration/inspect-state.md",
+        "workflows/orchestration/determine-next-action.md",
+    ):
+        if "orchestration-runtime.mjs" not in (CORE / rel).read_text(encoding="utf-8"):
+            errors.append(f"{rel}: must consume deterministic orchestration runtime")
+    if "--check-handoff" not in (CORE / "workflows/orchestration/dispatch.md").read_text(encoding="utf-8"):
+        errors.append("orchestration dispatch must use deterministic --check-handoff freshness gate")
 
     reviewer_io = io_roles.get("reviewer", {})
     if "state" not in reviewer_io.get("reads", []):

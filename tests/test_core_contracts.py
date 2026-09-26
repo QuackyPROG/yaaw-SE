@@ -15,6 +15,7 @@ class CoreContractsTest(unittest.TestCase):
         cls.execution = json.loads((CORE / "registries/execution-policy.json").read_text())
         cls.role_io = json.loads((CORE / "registries/role-io.json").read_text())
         cls.artifacts = json.loads((CORE / "registries/artifacts.json").read_text())
+        cls.handoff_policy = json.loads((CORE / "registries/handoff-policy.json").read_text())
 
     def test_every_public_skill_routes_to_canonical_workflow(self):
         for skill, entry in self.skills.items():
@@ -183,7 +184,44 @@ class CoreContractsTest(unittest.TestCase):
         self.assertTrue((CORE / "tools/repository-identity.mjs").is_file())
         rule = (CORE / "rules/repository-identity.md").read_text()
         self.assertIn("must not reimplement", rule.lower())
-        self.assertIn("yaaw-worktree-v1", rule)
+        self.assertIn("yaaw-worktree-v2", rule)
+        self.assertFalse((ROOT / ".yaaw-core" / "tools").exists())
+
+    def test_deterministic_orchestration_runtime_owns_prepare_and_freshness(self):
+        execution = (CORE / "core/execution-context.md").read_text()
+        self.assertEqual(execution.count("## Framework integrity"), 1)
+        self.assertIn(".yaaw-core/system/tools/orchestration-runtime.mjs", execution)
+        self.assertNotIn(".yaaw-core/tools/framework-integrity.mjs", execution)
+        self.assertTrue((CORE / "tools/orchestration-runtime.mjs").is_file())
+        route = (CORE / "workflows/orchestration/route.md").read_text()
+        inspect = (CORE / "workflows/orchestration/inspect-state.md").read_text()
+        determine = (CORE / "workflows/orchestration/determine-next-action.md").read_text()
+        dispatch = (CORE / "workflows/orchestration/dispatch.md").read_text()
+        for text in (route, inspect, determine):
+            self.assertIn("orchestration-runtime.mjs", text)
+        self.assertIn("--check-handoff", dispatch)
+
+    def test_handoff_policy_is_machine_checked_against_role_io(self):
+        expected = {
+            "prd.route",
+            "planning.route",
+            "planning.create-spec",
+            "planning.create-tickets",
+            "planning.replan",
+            "implementation.implement-ticket",
+            "implementation.repair-ticket",
+            "review.review-ticket",
+        }
+        policies = self.handoff_policy["workflows"]
+        self.assertEqual(set(policies), expected)
+        for workflow_id, policy in policies.items():
+            role = self.workflows[workflow_id]["role"]
+            self.assertNotEqual(role, "orchestrator")
+            contract = self.role_io["roles"][role]
+            self.assertTrue(set(policy["reads"]).issubset(set(contract["reads"])), workflow_id)
+            self.assertTrue(set(policy["writes"]).issubset(set(contract["writes"])), workflow_id)
+            self.assertTrue(policy["expected_output"], workflow_id)
+            self.assertTrue(policy["result_vocabulary"], workflow_id)
 
     def test_context_loading_is_progressive_and_git_is_root_anchored(self):
         context = (CORE / "core/context-loading.md").read_text()

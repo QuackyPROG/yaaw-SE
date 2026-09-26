@@ -7,7 +7,7 @@ ticket_revision: 1
 spec_revision: 1
 repository:
   schema: yaaw.repository-identity/v2
-  algorithm: yaaw-worktree-v1
+  algorithm: yaaw-worktree-v2
   status: READY
   workspace_scope: .
   git_root_relation: same

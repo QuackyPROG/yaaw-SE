@@ -4,7 +4,14 @@ import { lstatSync, readFileSync, readlinkSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
-const ALGORITHM = "yaaw-worktree-v1";
+const ALGORITHM = "yaaw-worktree-v2";
+const CONTROL_OUTPUT_EXCLUDES = [
+  ".yaaw-core/runtime/**",
+  ".yaaw-core/project/state.json",
+  ".yaaw-core/project/evidence/**",
+  ".yaaw-core/project/reviews/**"
+];
+const EXCLUDE_PATHSPECS = CONTROL_OUTPUT_EXCLUDES.map(path => `:(exclude)${path}`);
 const hash = value => createHash("sha256").update(value).digest("hex");
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
@@ -53,13 +60,14 @@ catch(error){ fail("UNVERSIONED",error instanceof Error?error.message:String(err
 if(workspacePrefix !== undefined){
   try {
       const head=git(workspace,["rev-parse","HEAD"]).toString("utf8").trim();
-      const status=git(workspace,["status","--porcelain=v1","-z","--untracked-files=all","--","."]);
-      const unstaged=git(workspace,["diff","--binary","--no-ext-diff","--no-textconv","HEAD","--","."]);
-      const staged=git(workspace,["diff","--cached","--binary","--no-ext-diff","--no-textconv","HEAD","--","."]);
-      const untracked=nulPaths(git(workspace,["ls-files","--others","--exclude-standard","-z","--","."])).map(p=>untrackedRecord(workspace,p));
+      const scoped=[".",...EXCLUDE_PATHSPECS];
+      const status=git(workspace,["status","--porcelain=v1","-z","--untracked-files=all","--",...scoped]);
+      const unstaged=git(workspace,["diff","--binary","--no-ext-diff","--no-textconv","HEAD","--",...scoped]);
+      const staged=git(workspace,["diff","--cached","--binary","--no-ext-diff","--no-textconv","HEAD","--",...scoped]);
+      const untracked=nulPaths(git(workspace,["ls-files","--others","--exclude-standard","-z","--",...scoped])).map(p=>untrackedRecord(workspace,p));
       const tracked=new Set([
-        ...nulPaths(git(workspace,["diff","--name-only","-z","HEAD","--","."])),
-        ...nulPaths(git(workspace,["diff","--cached","--name-only","-z","HEAD","--","."]))
+        ...nulPaths(git(workspace,["diff","--name-only","-z","HEAD","--",...scoped])),
+        ...nulPaths(git(workspace,["diff","--cached","--name-only","-z","HEAD","--",...scoped]))
       ]);
       const components={
         status_sha256:hash(status),
@@ -67,7 +75,7 @@ if(workspacePrefix !== undefined){
         staged_diff_sha256:hash(staged),
         untracked_manifest_sha256:hash(Buffer.from(canonicalJson(untracked),"utf8"))
       };
-      const payload={algorithm:ALGORITHM,workspace_scope:".",head_commit:head,...components,untracked};
+      const payload={algorithm:ALGORITHM,workspace_scope:".",head_commit:head,excluded:CONTROL_OUTPUT_EXCLUDES,...components,untracked};
       const changed_paths=[
         ...[...tracked].sort().map(path=>({path,kind:"tracked"})),
         ...untracked.map(x=>({path:x.path,kind:"untracked",sha256:x.sha256}))

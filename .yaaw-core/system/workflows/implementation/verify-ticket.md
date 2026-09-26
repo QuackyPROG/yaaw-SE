@@ -17,5 +17,4 @@ Ticket requirements/tests, changed surface, project tooling/rules, current repos
 Evidence record(s). Verification never transitions a ticket to PASS; only Reviewer can accept.
 
 ## Verification identity
-
-After verification commands finish, invoke `.yaaw-core/tools/repository-identity.mjs` and record that exact output in `yaaw.evidence/v2`. Do not reserialize it through a second digest implementation. Changeability requirements remain in force.
+After verification commands finish, invoke `.yaaw-core/system/tools/repository-identity.mjs` and record that exact output in `yaaw.evidence/v2`. Do not reserialize it through a second digest implementation. Replaceable `.yaaw-core/runtime/**` coordination files are excluded by canonical `yaaw-worktree-v2`; all semantic/project/application changes remain in the basis. Changeability requirements remain in force.

@@ -1,0 +1,177 @@
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, relative, resolve } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+
+const roots: string[] = [];
+const sourceSystem = resolve(".yaaw-core/system");
+
+function git(root: string, ...args: string[]) {
+  return execFileSync("git", ["-C", root, ...args], { encoding: "utf8" });
+}
+
+async function walk(dir: string): Promise<string[]> {
+  const result: string[] = [];
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) result.push(...await walk(path));
+    else result.push(path);
+  }
+  return result;
+}
+
+async function sha256(path: string) {
+  return createHash("sha256").update(await readFile(path)).digest("hex");
+}
+
+async function fixture() {
+  const root = await mkdtemp(join(tmpdir(), "yaaw-runtime-"));
+  roots.push(root);
+  await mkdir(join(root, ".yaaw-core"), { recursive: true });
+  await cp(sourceSystem, join(root, ".yaaw-core", "system"), { recursive: true });
+  for (const dir of [
+    ".yaaw-core/project/specs",
+    ".yaaw-core/project/tickets",
+    ".yaaw-core/project/evidence",
+    ".yaaw-core/project/reviews",
+    ".yaaw-core/project/research",
+    ".yaaw-core/project/rules",
+    ".yaaw-core/runtime",
+    ".yaaw-core/install",
+  ]) await mkdir(join(root, dir), { recursive: true });
+
+  await writeFile(join(root, ".yaaw-core/project/product.md"), `---
+schema: yaaw.product/v1
+revision: 1
+status: ready
+---
+# Product
+`);
+  await writeFile(join(root, ".yaaw-core/project/engineering.md"), `---
+schema: yaaw.engineering/v1
+revision: 1
+status: ready
+product_revision: 1
+current_frontier: FRONTIER-001
+readiness: PASS
+---
+# Engineering
+`);
+  await writeFile(join(root, ".yaaw-core/project/specs/SPEC-001.md"), `---
+schema: yaaw.spec/v1
+id: SPEC-001
+revision: 1
+status: ACCEPTED
+product_revision: 1
+engineering_revision: 1
+frontier_id: FRONTIER-001
+decision_ids: []
+---
+# SPEC-001
+`);
+  await writeFile(join(root, ".yaaw-core/project/tickets/TASK-001.md"), `---
+schema: yaaw.ticket/v1
+id: TASK-001
+revision: 1
+spec: SPEC-001
+spec_revision: 1
+product_revision: 1
+engineering_revision: 1
+status: READY
+dependencies: []
+decision_ids: []
+expertise: []
+---
+# TASK-001
+`);
+  await writeFile(join(root, ".yaaw-core/project/state.json"), JSON.stringify({
+    schema: "yaaw.project-state/v1",
+    phase: "implementation",
+    product: { artifact: ".yaaw-core/project/product.md", status: "ready", revision: 1 },
+    planning: {
+      artifact: ".yaaw-core/project/engineering.md",
+      status: "ready",
+      revision: 1,
+      current_frontier: "FRONTIER-001",
+      readiness: "PASS",
+      active_spec: "SPEC-001"
+    },
+    active_ticket: "TASK-001",
+    tickets: { "TASK-001": "READY" },
+    transition_sequence: 1,
+    last_transition: null,
+    blocker: null,
+    last_observed_commit: null,
+    last_workflow: "planning.create-tickets"
+  }, null, 2) + "\n");
+
+  const managedFiles: Record<string, any> = {};
+  for (const path of await walk(join(root, ".yaaw-core/system"))) {
+    const rel = relative(root, path).replaceAll("\\", "/");
+    managedFiles[rel] = { owner: "package:system", sha256: await sha256(path), localOverride: false };
+  }
+  await writeFile(join(root, ".yaaw-core/install/manifest.json"), JSON.stringify({
+    schema: "yaaw.installation/v2",
+    yaawVersion: "0.3.0-test",
+    systemSchema: 2,
+    installationSchema: 1,
+    projectSchema: 1,
+    project: { root: "." },
+    managedFiles
+  }, null, 2) + "\n");
+
+  git(root, "init");
+  git(root, "config", "user.email", "yaaw@example.test");
+  git(root, "config", "user.name", "YAAW Test");
+  git(root, "add", ".");
+  git(root, "commit", "-m", "fixture");
+  return root;
+}
+
+function run(root: string, ...extra: string[]) {
+  const tool = join(root, ".yaaw-core/system/tools/orchestration-runtime.mjs");
+  try {
+    return JSON.parse(execFileSync(process.execPath, [tool, "--workspace", root, ...extra], { encoding: "utf8" }));
+  } catch (error: any) {
+    const stdout = error?.stdout?.toString?.() ?? "";
+    if (stdout) return JSON.parse(stdout);
+    throw error;
+  }
+}
+
+afterEach(async () => {
+  await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })));
+});
+
+describe("deterministic orchestration runtime", () => {
+  it("prepares one route/handoff and validates that exact basis before dispatch", async () => {
+    const root = await fixture();
+    const prepared = run(root);
+    expect(prepared.status).toBe("DISPATCH_READY");
+    expect(prepared.workflow).toBe("implementation.implement-ticket");
+    expect(prepared.role).toBe("implementer");
+
+    const handoff = JSON.parse(await readFile(join(root, ".yaaw-core/runtime/handoff.json"), "utf8"));
+    expect(handoff.workflow).toBe("implementation.implement-ticket");
+    expect(handoff.repository.status).toBe("READY");
+    expect(handoff.repository.worktree_digest).toMatch(/^sha256:/);
+    expect(handoff.expertise).toContain("changeability");
+
+    expect(run(root, "--check-handoff").status).toBe("HANDOFF_FRESH");
+
+    await writeFile(join(root, ".yaaw-core/runtime/observed-state.json"), "{\"replaceable\":true}\n");
+    expect(run(root, "--check-handoff").status).toBe("HANDOFF_FRESH");
+
+    await writeFile(join(root, ".yaaw-core/project/product.md"), `---
+schema: yaaw.product/v1
+revision: 1
+status: ready
+---
+# Product
+Changed semantic product text.
+`);
+    expect(run(root, "--check-handoff").status).toBe("HANDOFF_STALE");
+  });
+});

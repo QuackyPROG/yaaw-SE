@@ -3,24 +3,32 @@
 ## Purpose
 Continuously restore project reality and execute one safe canonical workflow at a time until a true stop condition.
 
-## Progressive routing
-Selection is metadata-first. Do not preload candidate target workflow bodies, templates, or expertise before `orchestration.determine-next-action` chooses exactly one workflow.
+## Deterministic preparation
+Normal routing uses one command per basis:
+
+```text
+node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT>
+```
+
+This command performs framework integrity, canonical repository identity, durable metadata inspection, route selection, and handoff construction together. Do not separately reconstruct those stages in shell/Python/model reasoning.
 
 ## Procedure
 Repeat:
-1. execute `orchestration.inspect-state`;
-2. if framework integrity is not `HEALTHY`, invalidate executable handoffs and stop with the typed framework failure; do not reconcile project lifecycle state;
-3. execute `orchestration.reconcile-state` when project inconsistencies exist;
-4. execute `orchestration.determine-next-action`;
-5. if terminal/blocked/human-input/framework stop condition is returned, stop;
-6. execute `orchestration.dispatch` for the one persisted handoff;
+1. run deterministic preparation once;
+2. on `FRAMEWORK_STOP`, invalidate executable handoffs and stop with the typed framework failure;
+3. on `RECONCILE_REQUIRED`, execute `orchestration.reconcile-state` only, then return to step 1;
+4. on `ROOT_ACTION`, execute the returned Orchestrator workflow only, then return to step 1;
+5. on `TERMINAL` or `BLOCKED`, stop;
+6. on `DISPATCH_READY`, execute `orchestration.dispatch` for the persisted handoff;
 7. require the dispatched execution to persist its authorized durable output or legal typed prerequisite/stop result;
-8. whether dispatch reports success, failure, interruption, or no response, discard/validate the consumed handoff as appropriate and return to step 1 before loading another target workflow.
+8. whether dispatch reports success, failure, interruption, or no response, return to step 1 before another semantic workflow.
+
+`orchestration.inspect-state` and `orchestration.determine-next-action` remain canonical compatibility/debug workflows, but the normal loop does not execute them as separate model-driven reconstruction passes.
 
 There is no direct `worker A result -> worker B` authority chain. Reality reconstruction always sits between authority-role dispatches.
 
 ## Loop safety
-If the same repository capability/identity, state, handoff, and expected output repeat without any durable mutation/evidence change, stop as `BLOCKED` with `no_progress` rather than spinning.
+If the same repository basis, lifecycle state, route, and expected output repeat without durable mutation/evidence change, stop as `BLOCKED` with `no_progress` rather than spinning.
 
 ## Stop conditions
-Framework integrity unavailable/unhealthy; framework contract inconsistency; Human product/engineering answer required; evidence/permission unavailable; target workflow requires repository `IDENTITY` but status is not `READY`; active host/runtime policy blocks required isolation; host requires approval for consequential action; or accepted scope is terminal `COMPLETE`.
+Framework integrity unavailable/unhealthy; framework contract inconsistency; Human product/engineering answer required; evidence/permission unavailable; target workflow requires repository `IDENTITY` but status is not `READY`; active host/runtime policy blocks required isolation/profile fidelity; host requires approval for consequential action; or accepted scope is terminal `COMPLETE`.

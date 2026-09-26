@@ -1,0 +1,85 @@
+{
+  "schema": "yaaw.handoff-policy/v1",
+  "workflows": {
+    "prd.route": {
+      "desired_intent": "CONTINUE_PRODUCT",
+      "active_artifact": "product",
+      "reads": ["product", "state"],
+      "writes": ["product"],
+      "required_expertise": [],
+      "ticket_expertise": false,
+      "expected_output": "Current product intent or an explicit human-input/blocker result.",
+      "result_vocabulary": ["READY", "HUMAN_INPUT_REQUIRED", "BLOCKED"]
+    },
+    "planning.route": {
+      "desired_intent": "CONTINUE_PLANNING",
+      "active_artifact": "engineering",
+      "reads": ["product", "engineering", "engineering_research", "spec", "ticket", "project_rule", "repository"],
+      "writes": ["engineering", "engineering_research", "spec", "ticket", "project_rule"],
+      "required_expertise": [],
+      "ticket_expertise": false,
+      "expected_output": "Current engineering frontier readiness or one typed planning stop/result.",
+      "result_vocabulary": ["READY", "HUMAN_INPUT_REQUIRED", "REPLAN", "BLOCKED"]
+    },
+    "planning.create-spec": {
+      "desired_intent": "CREATE_SPEC",
+      "active_artifact": "engineering",
+      "reads": ["product", "engineering", "engineering_research", "project_rule", "repository"],
+      "writes": ["spec"],
+      "required_expertise": [],
+      "ticket_expertise": false,
+      "expected_output": "One accepted specification for the current frontier or a typed prerequisite/stop result.",
+      "result_vocabulary": ["SUCCESS", "PRECONDITION_UNSATISFIED", "BLOCKED"]
+    },
+    "planning.create-tickets": {
+      "desired_intent": "CREATE_TICKETS",
+      "active_artifact": "spec",
+      "reads": ["product", "engineering", "engineering_research", "spec", "project_rule", "repository"],
+      "writes": ["ticket"],
+      "required_expertise": [],
+      "ticket_expertise": false,
+      "expected_output": "Dependency-aware executable tickets for the accepted specification or a typed prerequisite/stop result.",
+      "result_vocabulary": ["SUCCESS", "PRECONDITION_UNSATISFIED", "BLOCKED"]
+    },
+    "planning.replan": {
+      "desired_intent": "REPLAN",
+      "active_artifact": "ticket",
+      "reads": ["product", "engineering", "engineering_research", "spec", "ticket", "project_rule", "repository"],
+      "writes": ["engineering", "engineering_research", "spec", "ticket", "project_rule"],
+      "required_expertise": [],
+      "ticket_expertise": true,
+      "expected_output": "Updated engineering contract and downstream admission state for the invalidated work.",
+      "result_vocabulary": ["READY", "HUMAN_INPUT_REQUIRED", "BLOCKED"]
+    },
+    "implementation.implement-ticket": {
+      "desired_intent": "IMPLEMENT",
+      "active_artifact": "ticket",
+      "reads": ["product", "engineering", "engineering_research", "spec", "ticket", "project_rule", "repository", "evidence", "review", "application_files"],
+      "writes": ["application_files", "evidence"],
+      "required_expertise": ["changeability"],
+      "ticket_expertise": true,
+      "expected_output": "Bounded implementation plus verification evidence and one legal lifecycle result.",
+      "result_vocabulary": ["REVIEW_REQUIRED", "REPLAN_REQUIRED", "PRECONDITION_UNSATISFIED", "BLOCKED"]
+    },
+    "implementation.repair-ticket": {
+      "desired_intent": "REPAIR",
+      "active_artifact": "ticket",
+      "reads": ["product", "engineering", "engineering_research", "spec", "ticket", "project_rule", "repository", "evidence", "review", "application_files"],
+      "writes": ["application_files", "evidence"],
+      "required_expertise": ["changeability"],
+      "ticket_expertise": true,
+      "expected_output": "Bounded repair plus fresh verification evidence and one legal lifecycle result.",
+      "result_vocabulary": ["REVIEW_REQUIRED", "REPLAN_REQUIRED", "BLOCKED"]
+    },
+    "review.review-ticket": {
+      "desired_intent": "REVIEW",
+      "active_artifact": "ticket",
+      "reads": ["product", "engineering", "engineering_research", "spec", "ticket", "project_rule", "repository", "evidence", "review", "application_files", "state"],
+      "writes": ["review"],
+      "required_expertise": ["testing", "changeability"],
+      "ticket_expertise": true,
+      "expected_output": "One immutable independent review round tied to the current contract and repository basis.",
+      "result_vocabulary": ["PASS", "REPAIR", "REPLAN", "BLOCKED"]
+    }
+  }
+}

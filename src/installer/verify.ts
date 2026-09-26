@@ -16,6 +16,8 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
     ".yaaw-core/system/templates",
     ".yaaw-core/system/core/framework-integrity.md",
     ".yaaw-core/system/tools/framework-integrity.mjs",
+    ".yaaw-core/system/tools/repository-identity.mjs",
+    ".yaaw-core/system/tools/orchestration-runtime.mjs",
     ".yaaw-core/project/product.md",
     ".yaaw-core/project/engineering.md",
     ".yaaw-core/project/research",
@@ -29,10 +31,6 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
   if (await exists(join(projectRoot, ".yaaw"))) {
     issues.push("legacy .yaaw root exists; automatic merge is intentionally unsupported");
   }
-  if (await exists(join(projectRoot, ".yaaw-core", "system"))) {
-    issues.push("legacy/parallel .yaaw-core/system framework layout exists; canonical execution is ambiguous");
-  }
-
   for (const legacy of ["core","roles","workflows","expertise","rules","registries","schemas","templates","tools"]) {
     if (await exists(join(projectRoot, ".yaaw-core", legacy))) issues.push(`legacy flat package directory remains: .yaaw-core/${legacy}`);
   }

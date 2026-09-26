@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yaaw.evidence/v2",
+  "type": "object",
+  "required": ["schema","id","ticket","ticket_revision","spec_revision","kind","repository","workflow","commands","checks"],
+  "properties": {
+    "schema": {"const": "yaaw.evidence/v2"},
+    "id": {"type": "string"},
+    "ticket": {"type": "string", "pattern": "^TASK-[0-9]+$"},
+    "ticket_revision": {"type": "integer", "minimum": 0},
+    "spec_revision": {"type": "integer", "minimum": 0},
+    "kind": {"type": "string"},
+    "repository": {"$ref": "repository-identity.schema.json"},
+    "workflow": {"type": "string"},
+    "commands": {"type": "array"},
+    "checks": {"type": "array"}
+  },
+  "additionalProperties": false
+}

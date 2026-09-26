@@ -213,15 +213,18 @@ export async function doctor(projectRoot: string) {
     });
   }
 
-  const canonicalCore = await exists(join(projectRoot, ".yaaw-core", "core"));
-  const canonicalWorkflows = await exists(join(projectRoot, ".yaaw-core", "workflows"));
-  const legacySystem = await exists(join(projectRoot, ".yaaw-core", "system"));
+  const canonicalCore = await exists(join(projectRoot, ".yaaw-core", "system", "core"));
+  const canonicalWorkflows = await exists(join(projectRoot, ".yaaw-core", "system", "workflows"));
+  const legacyFlat = (await Promise.all(
+    ["core","roles","workflows","expertise","rules","registries","schemas","templates","tools"]
+      .map(name => exists(join(projectRoot, ".yaaw-core", name)))
+  )).some(Boolean);
   checks.push({
     name: "framework-layout",
-    ok: canonicalCore && canonicalWorkflows && !legacySystem,
-    detail: legacySystem
-      ? "legacy/parallel .yaaw-core/system framework layout exists; canonical execution is ambiguous"
-      : (!canonicalCore || !canonicalWorkflows ? "canonical .yaaw-core/core or .yaaw-core/workflows is missing" : undefined)
+    ok: canonicalCore && canonicalWorkflows && !legacyFlat,
+    detail: legacyFlat
+      ? "legacy flat package directories exist beside canonical .yaaw-core/system; execution is ambiguous"
+      : (!canonicalCore || !canonicalWorkflows ? "canonical .yaaw-core/system/core or .yaaw-core/system/workflows is missing" : undefined)
   });
 
   const manifest = await readManifest(projectRoot);

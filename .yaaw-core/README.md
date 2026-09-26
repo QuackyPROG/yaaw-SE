@@ -17,10 +17,11 @@ Normal package updates refresh `.yaaw-core/system/`; they never replace the whol
 ## System composition
 
 ```text
-skills/ -> system/registries -> role + workflow + applicable shared rules + selected expertise
+skills/ -> system/registries -> deterministic orchestration preparation
+        -> role + workflow + applicable shared rules + selected expertise
         -> durable project artifacts + repository reality
         -> evidence-backed state transition
-        -> orchestration re-inspection
+        -> orchestration re-preparation
 ```
 
 Roles own semantic authority. Workflows own process. Shared rules provide reusable cross-cutting behavior without creating another authority or lifecycle layer. Expertise provides specialist knowledge only.
@@ -33,13 +34,13 @@ The canonical assumption-challenge rule is `.yaaw-core/system/rules/assumption-c
 - Planner: engineering decisions, specs, readiness, tickets.
 - Implementer: bounded code changes within an admitted ticket.
 - Reviewer: independent acceptance and defect classification.
-- Orchestrator: continuity, reconciliation, invalidation coordination, and routing.
+- Orchestrator: continuity, reconciliation, invalidation coordination, and routing/dispatch.
 
 ## Durable project root
 
 `.yaaw-core/project/` stores product, engineering, admitted research, specs, tickets, reviews, evidence, project rules, and `state.json`.
 
-`.yaaw-core/runtime/` stores replaceable observed-state, handoff, and intent caches used only for coordination.
+`.yaaw-core/runtime/` stores replaceable observed-state, handoff, intent, and dispatch-failure caches used only for coordination. Repository identity v2 excludes runtime caches plus the lifecycle-generated state/evidence/review outputs whose writes would otherwise self-invalidate their attestations; product, engineering, research, specs, tickets, rules, framework/install files, provider config, and application files remain observable.
 
 `.yaaw-core/install/` stores package/install ownership and version metadata. Installer metadata is not semantic project truth.
 
@@ -63,7 +64,10 @@ Any workflow context may disappear after durable output without destroying proje
 
 ## Runtime hardening
 
-- `.yaaw-core/system/core/framework-integrity.md` plus `.yaaw-core/system/tools/framework-integrity.mjs` make package health a fail-closed prerequisite. Consumer roles report framework defects; they never rewrite package contracts to unblock themselves.
+- `.yaaw-core/system/core/framework-integrity.md` plus the single `.yaaw-core/system/tools/framework-integrity.mjs` make package health a fail-closed prerequisite.
+- `.yaaw-core/system/tools/repository-identity.mjs` is the only worktree digest implementation (`yaaw-worktree-v2`).
+- `.yaaw-core/system/tools/orchestration-runtime.mjs` performs framework check, repository identity, metadata inspection, route selection, and handoff construction from one deterministic basis; Orchestrator consumes its typed result instead of reconstructing those steps manually.
+- `.yaaw-core/system/registries/handoff-policy.json` keeps route-to-handoff semantics machine-readable and checked against role I/O.
 - `.yaaw-core/system/core/execution-context.md` resolves the consumer workspace root and requires root-anchored Git.
 - `.yaaw-core/system/registries/execution-policy.json` classifies every workflow as `NONE`, `INSPECT`, or `IDENTITY` for repository requirements.
 - `.yaaw-core/system/core/context-loading.md` requires metadata-first progressive workflow loading.
