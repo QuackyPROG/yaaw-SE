@@ -1,8 +1,8 @@
 # YAAW-SE Framework Immutability + Consumer Recovery Plan
 
-Status: implementation plan  
-Target development branch: yaaw-SEv2  
-Promotion target: main after implementation and validation  
+Status: historical implementation plan; implemented and promoted to `main`  
+Canonical current architecture: `.yaaw-core/system/**` package framework, `.yaaw-core/project/**` durable memory, `.yaaw-core/runtime/**` coordination state  
+Operational reference: `docs/distribution.md`  
 Incident class: runtime framework self-modification / consumer framework drift  
 Primary objective: preserve autonomous orchestration while making package-managed YAAW framework semantics non-self-modifiable during consumer execution, and safely repair consumer installations already altered by the defect.
 
@@ -62,15 +62,15 @@ The implementation is not complete unless all of these are simultaneously true.
 
 The following consumer paths are package-managed framework content:
 
-- .yaaw-core/core/**
-- .yaaw-core/roles/**
-- .yaaw-core/workflows/**
-- .yaaw-core/expertise/**
-- .yaaw-core/rules/**, except project-specific rules under .yaaw-core/project/rules/**
-- .yaaw-core/registries/**
-- .yaaw-core/schemas/**
-- .yaaw-core/templates/**
-- .yaaw-core/tools/**
+- .yaaw-core/system/core/**
+- .yaaw-core/system/roles/**
+- .yaaw-core/system/workflows/**
+- .yaaw-core/system/expertise/**
+- .yaaw-core/system/rules/**, except project-specific rules under .yaaw-core/project/rules/**
+- .yaaw-core/system/registries/**
+- .yaaw-core/system/schemas/**
+- .yaaw-core/system/templates/**
+- .yaaw-core/system/tools/**
 - package-owned provider adapters generated from the selected integrations
 
 No PRD, Planner, Implementer, Reviewer, or Orchestrator execution may intentionally rewrite these paths during normal consumer project work.
@@ -316,7 +316,7 @@ The Orchestrator persists only safe coordination evidence and stops.
 
 Create a canonical file such as:
 
-- .yaaw-core/core/framework-integrity.md
+- .yaaw-core/system/core/framework-integrity.md
 
 It should define:
 
@@ -333,11 +333,11 @@ It should define:
 
 Update:
 
-- .yaaw-core/core/authority.md
-- .yaaw-core/core/artifact-model.md
-- .yaaw-core/core/recovery.md
-- .yaaw-core/core/execution-context.md if needed
-- .yaaw-core/core/io-contract.md
+- .yaaw-core/system/core/authority.md
+- .yaaw-core/system/core/artifact-model.md
+- .yaaw-core/system/core/recovery.md
+- .yaaw-core/system/core/execution-context.md if needed
+- .yaaw-core/system/core/io-contract.md
 - .yaaw-core/README.md
 
 Clarify that package content is input to consumer execution, never an output of semantic project workflows.
@@ -346,11 +346,11 @@ Clarify that package content is input to consumer execution, never an output of 
 
 Update:
 
-- .yaaw-core/roles/orchestrator.md
-- .yaaw-core/workflows/orchestration/inspect-state.md
-- .yaaw-core/workflows/orchestration/reconcile-state.md
-- .yaaw-core/workflows/orchestration/route.md
-- .yaaw-core/workflows/orchestration/determine-next-action.md
+- .yaaw-core/system/roles/orchestrator.md
+- .yaaw-core/system/workflows/orchestration/inspect-state.md
+- .yaaw-core/system/workflows/orchestration/reconcile-state.md
+- .yaaw-core/system/workflows/orchestration/route.md
+- .yaaw-core/system/workflows/orchestration/determine-next-action.md
 
 Required behavior:
 
@@ -373,7 +373,7 @@ Responsibilities:
 - compare disk SHA-256 against manifest SHA-256;
 - identify missing/modified managed files;
 - detect localOverride flags;
-- detect .yaaw-core/system legacy/parallel framework;
+- detect legacy flat package directories beside the canonical `.yaaw-core/system/` framework;
 - return machine-readable JSON;
 - never modify files.
 
@@ -399,7 +399,7 @@ The tool should share hash/path-boundary implementation with installer code wher
 
 Update:
 
-- .yaaw-core/registries/role-io.json
+- .yaaw-core/system/registries/role-io.json
 
 Reviewer reads must include state.
 
@@ -409,7 +409,7 @@ Reviewer remains forbidden from writing state.
 
 Update:
 
-- .yaaw-core/core/state-model.md
+- .yaaw-core/system/core/state-model.md
 
 Explicit rule:
 
@@ -422,7 +422,7 @@ Explicit rule:
 
 Update:
 
-- .yaaw-core/workflows/review/review-ticket.md
+- .yaaw-core/system/workflows/review/review-ticket.md
 
 Required precondition:
 
@@ -436,7 +436,7 @@ The Reviewer must not infer current lifecycle from ticket frontmatter alone.
 
 Update:
 
-- .yaaw-core/workflows/review/record-review.md
+- .yaaw-core/system/workflows/review/record-review.md
 
 New responsibility split:
 
@@ -459,8 +459,8 @@ Orchestrator after review:
 
 Update:
 
-- .yaaw-core/registries/transitions.json
-- .yaaw-core/core/transitions.md
+- .yaaw-core/system/registries/transitions.json
+- .yaaw-core/system/core/transitions.md
 
 Preferred minimal approach:
 
@@ -529,7 +529,7 @@ Add checks to scripts/validate_core.py and/or a dedicated validator:
 7. Orchestrator write set contains only state/runtime coordination outputs.
 8. No role write set includes core, roles, workflows, registries, schemas, templates, tools, or install artifacts.
 9. Package-managed paths and project-durable paths do not overlap.
-10. Legacy .yaaw-core/system is never a canonical execution target.
+10. Legacy flat package directories beneath `.yaaw-core/` are never canonical execution targets; `.yaaw-core/system/` is the canonical package framework root.
 
 ### D2. Add contract lint fixtures
 
@@ -665,11 +665,9 @@ A package framework localOverride may remain technically supported for framework
 
 ---
 
-## 12. Workstream G — migrate the affected legacy .yaaw-core/system layout
+## 12. Workstream G — migrate affected legacy flat `.yaaw-core/*` package layouts
 
-The incident consumer uses an older/parallel layout under .yaaw-core/system.
-
-The current distribution correctly considers that ambiguous. We need a safe migration path.
+The current implementation treats `.yaaw-core/system/` as canonical. Older v1 installations may instead have package-owned framework directories directly beneath `.yaaw-core/`; those flat layouts require a safe ownership-proven migration path.
 
 ### G1. Migration decision matrix
 
@@ -867,8 +865,8 @@ Add tests for:
 - modified package core backup + replacement;
 - durable project byte-for-byte preservation;
 - runtime invalidation after repair;
-- old manifest managed system/** migration;
-- locally modified old system/** backup before removal;
+- old manifest managed legacy flat framework files migration;
+- locally modified old flat framework directories backup before removal;
 - invalid/unknown ownership fail-closed;
 - transactional rollback;
 - Windows path handling;

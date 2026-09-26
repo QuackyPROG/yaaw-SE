@@ -162,14 +162,14 @@ jobs:
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
-          for attempt in {1..12}; do
+          for attempt in {1..36}; do
             PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@next version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
               echo "Verified npm next -> yaaw-se@${TARGET}"
               exit 0
             fi
-            echo "Waiting for npm next propagation (${attempt}/12): version=${PUBLISHED:-missing} tag=${TAG:-missing} target=${TARGET}"
+            echo "Waiting for npm next propagation (${attempt}/36): version=${PUBLISHED:-missing} tag=${TAG:-missing} target=${TARGET}"
             sleep 10
           done
           echo "npm publish returned success but yaaw-se@${TARGET} / next was not observable from the registry." >&2
@@ -239,14 +239,14 @@ jobs:
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
-          for attempt in {1..12}; do
+          for attempt in {1..36}; do
             PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@latest version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
               echo "Verified npm latest -> yaaw-se@${TARGET}"
               exit 0
             fi
-            echo "Waiting for npm latest propagation (${attempt}/12): version=${PUBLISHED:-missing} tag=${TAG:-missing} target=${TARGET}"
+            echo "Waiting for npm latest propagation (${attempt}/36): version=${PUBLISHED:-missing} tag=${TAG:-missing} target=${TARGET}"
             sleep 10
           done
           echo "npm publish returned success but yaaw-se@${TARGET} / latest was not observable from the registry." >&2
