@@ -221,7 +221,7 @@ jobs:
               echo "Verified npm next -> yaaw-se@${TARGET}"
               exit 0
             fi
-            echo "Waiting for npm next propagation (${attempt}/36)"
+            echo "Waiting for npm next propagation (${attempt}/18)"
             sleep 5
           done
           exit 1
@@ -296,7 +296,7 @@ jobs:
               echo "Verified npm latest -> yaaw-se@${TARGET}"
               exit 0
             fi
-            echo "Waiting for npm latest propagation (${attempt}/36)"
+            echo "Waiting for npm latest propagation (${attempt}/18)"
             sleep 5
           done
           exit 1
