@@ -3,7 +3,7 @@ import { defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, type CodexM
 import { CODEX_CONFIGURATION_REVISION, codexModels, codexReasoningEfforts, getCodexModel, recommendedCodexProfile } from "../integrations/codex-catalog.js";
 import type { ConfigurationContext, ConfigurationSelection, IntegrationConfigurationProfile } from "../integrations/types.js";
 import { navigationBack, navigationCancel, navigationValue, type NavigationResult } from "./navigation.js";
-import { backOption, withEscapeNavigation } from "./prompt-navigation.js";
+import { backOption, runBackPrompt } from "./prompt-navigation.js";
 
 function displayReasoning(value: string | null): string {
   if (!value) return "Inherit";
@@ -34,13 +34,13 @@ function setupInitialValue(currentProfile: IntegrationConfigurationProfile | nul
 }
 
 async function textValue(message: string, current: string | null): Promise<NavigationResult<string | null>> {
-  const result = await p.text({
+  const prompt = await runBackPrompt(() => p.text({
     message,
     placeholder: current ?? "inherit",
     defaultValue: current ?? ""
-  });
-  if (p.isCancel(result)) return navigationBack();
-  const trimmed = String(result).trim();
+  }));
+  if (prompt.kind !== "value") return prompt;
+  const trimmed = String(prompt.value).trim();
   return navigationValue(trimmed ? trimmed : null);
 }
 
@@ -51,7 +51,7 @@ async function reasoningPicker(
 ): Promise<NavigationResult<string | null>> {
   const known = getCodexModel(model);
   const values = known?.reasoningEfforts ?? [...codexReasoningEfforts];
-  const result = await p.select({
+  const prompt = await runBackPrompt(() => p.select({
     message: `${label}: reasoning`,
     initialValue: current ?? "inherit",
     options: [
@@ -62,15 +62,17 @@ async function reasoningPicker(
       { value: "inherit", label: "Inherit" },
       backOption()
     ]
-  });
-  if (p.isCancel(result) || result === "back") return navigationBack();
+  }));
+  if (prompt.kind !== "value") return prompt;
+  const result = prompt.value;
+  if (result === "back") return navigationBack();
   return navigationValue(result === "inherit" ? null : String(result));
 }
 
 async function modelPair(label: string, current: CodexModelSettings): Promise<NavigationResult<CodexModelSettings>> {
   const draft = structuredClone(current);
   while (true) {
-    const result = await p.select({
+    const prompt = await runBackPrompt(() => p.select({
       message: `${label}: model`,
       initialValue: draft.model ?? "inherit",
       options: [
@@ -79,14 +81,17 @@ async function modelPair(label: string, current: CodexModelSettings): Promise<Na
         { value: "custom", label: "Custom model ID…", hint: "Enter a model not known to this YAAW release" },
         backOption()
       ]
-    });
-    if (p.isCancel(result) || result === "back") return navigationBack();
+    }));
+    if (prompt.kind !== "value") return prompt;
+    const result = prompt.value;
+    if (result === "back") return navigationBack();
 
     if (result === "inherit") {
       draft.model = null;
     } else if (result === "custom") {
       const custom = await textValue(`${label} custom model ID`, draft.model);
-      if (custom.kind !== "value") continue;
+      if (custom.kind === "cancel") return navigationCancel();
+      if (custom.kind === "back") continue;
       draft.model = custom.value;
     } else {
       draft.model = String(result);
@@ -113,9 +118,9 @@ function recommendedNote(settings: CodexRuntimeSettings) {
   ].join("\n"), "Recommended Codex setup");
 }
 
-async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
+async function editAdvanced(settings: CodexRuntimeSettings): Promise<NavigationResult<void>> {
   while (true) {
-    const choice = await p.select({
+    const prompt = await runBackPrompt(() => p.select({
       message: "Advanced settings",
       options: [
         { value: "threads", label: `Concurrent agent threads   ${settings.maxConcurrentThreads ?? "Inherit"}` },
@@ -125,17 +130,21 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
         { value: "tier", label: `Service tier              ${serviceTierSummary(settings.serviceTier)}` },
         backOption()
       ]
-    });
-    if (p.isCancel(choice) || choice === "back") return;
+    }));
+    if (prompt.kind === "cancel") return navigationCancel();
+    if (prompt.kind === "back") return navigationBack();
+    const choice = prompt.value;
+    if (choice === "back") return navigationBack();
 
     if (choice === "threads") {
-      const result = await p.text({
+      const result = await runBackPrompt(() => p.text({
         message: "Concurrent agent threads (blank = inherit)",
         placeholder: settings.maxConcurrentThreads === null ? "inherit" : String(settings.maxConcurrentThreads),
         defaultValue: settings.maxConcurrentThreads === null ? "" : String(settings.maxConcurrentThreads)
-      });
-      if (p.isCancel(result)) continue;
-      const raw = String(result).trim();
+      }));
+      if (result.kind === "cancel") return navigationCancel();
+      if (result.kind === "back") continue;
+      const raw = String(result.value).trim();
       if (!raw) {
         settings.maxConcurrentThreads = null;
         continue;
@@ -155,14 +164,15 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
         choice === "sandbox" ? "Sandbox mode (blank = inherit)" : "Approval policy (blank = inherit)",
         current
       );
-      if (result.kind !== "value") continue;
+      if (result.kind === "cancel") return navigationCancel();
+      if (result.kind === "back") continue;
       if (choice === "sandbox") settings.sandboxMode = result.value;
       else settings.approvalPolicy = result.value;
       continue;
     }
 
     if (choice === "tier") {
-      const result = await p.select({
+      const result = await runBackPrompt(() => p.select({
         message: "Service tier",
         initialValue: settings.serviceTier ?? "inherit",
         options: [
@@ -172,14 +182,15 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
           { value: "flex", label: "Flex", hint: "Lower-cost, higher-latency processing where supported" },
           backOption()
         ]
-      });
-      if (p.isCancel(result) || result === "back") continue;
-      settings.serviceTier = result === "inherit" ? null : result as CodexRuntimeSettings["serviceTier"];
+      }));
+      if (result.kind === "cancel") return navigationCancel();
+      if (result.kind === "back" || result.value === "back") continue;
+      settings.serviceTier = result.value === "inherit" ? null : result.value as CodexRuntimeSettings["serviceTier"];
       continue;
     }
 
     if (choice === "web") {
-      const result = await p.select({
+      const result = await runBackPrompt(() => p.select({
         message: "Web search",
         initialValue: settings.webSearch ?? "inherit",
         options: [
@@ -190,17 +201,18 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
           { value: "live", label: "Live" },
           backOption()
         ]
-      });
-      if (p.isCancel(result) || result === "back") continue;
-      settings.webSearch = result === "inherit" ? null : result as CodexRuntimeSettings["webSearch"];
+      }));
+      if (result.kind === "cancel") return navigationCancel();
+      if (result.kind === "back" || result.value === "back") continue;
+      settings.webSearch = result.value === "inherit" ? null : result.value as CodexRuntimeSettings["webSearch"];
     }
   }
 }
 
-async function editFailureFallback(settings: CodexRuntimeSettings): Promise<void> {
+async function editFailureFallback(settings: CodexRuntimeSettings): Promise<NavigationResult<void>> {
   while (true) {
     const threshold = settings.failureFallback.afterFailures;
-    const choice = await p.select({
+    const prompt = await runBackPrompt(() => p.select({
       message: "Failure fallback",
       options: [
         { value: "threshold", label: `Escalate after            ${threshold === null ? "Disabled" : `${threshold} no-progress failures`}` },
@@ -208,17 +220,21 @@ async function editFailureFallback(settings: CodexRuntimeSettings): Promise<void
         { value: "reviewer", label: `Reviewer fallback         ${pairSummary(settings.failureFallback.reviewer)}` },
         backOption()
       ]
-    });
-    if (p.isCancel(choice) || choice === "back") return;
+    }));
+    if (prompt.kind === "cancel") return navigationCancel();
+    if (prompt.kind === "back") return navigationBack();
+    const choice = prompt.value;
+    if (choice === "back") return navigationBack();
 
     if (choice === "threshold") {
-      const result = await p.text({
+      const result = await runBackPrompt(() => p.text({
         message: "Fallback threshold (blank = disabled)",
         placeholder: threshold === null ? "3" : String(threshold),
         defaultValue: threshold === null ? "" : String(threshold)
-      });
-      if (p.isCancel(result)) continue;
-      const raw = String(result).trim();
+      }));
+      if (result.kind === "cancel") return navigationCancel();
+      if (result.kind === "back") continue;
+      const raw = String(result.value).trim();
       if (!raw) {
         settings.failureFallback.afterFailures = null;
         continue;
@@ -235,13 +251,14 @@ async function editFailureFallback(settings: CodexRuntimeSettings): Promise<void
     const role = choice as "implementer" | "reviewer";
     const label = role === "implementer" ? "Implementer fallback" : "Reviewer fallback";
     const edited = await modelPair(label, settings.failureFallback[role]);
+    if (edited.kind === "cancel") return navigationCancel();
     if (edited.kind === "value") settings.failureFallback[role] = edited.value;
   }
 }
 
 async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationResult<CodexRuntimeSettings>> {
   while (true) {
-    const choice = await p.select({
+    const prompt = await runBackPrompt(() => p.select({
       message: "Choose a role to edit",
       options: [
         { value: "orchestrator", label: `Orchestrator          ${pairSummary(settings.orchestrator)}` },
@@ -256,17 +273,22 @@ async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationRe
         backOption(),
         { value: "cancel", label: "Cancel configuration" }
       ]
-    });
+    }));
 
-    if (p.isCancel(choice) || choice === "back") return navigationBack();
+    if (prompt.kind === "cancel") return navigationCancel();
+    if (prompt.kind === "back") return navigationBack();
+    const choice = prompt.value;
+    if (choice === "back") return navigationBack();
     if (choice === "cancel") return navigationCancel();
     if (choice === "review") return navigationValue(normalizeCodexRuntimeSettings(settings));
     if (choice === "advanced") {
-      await editAdvanced(settings);
+      const advanced = await editAdvanced(settings);
+      if (advanced.kind === "cancel") return navigationCancel();
       continue;
     }
     if (choice === "fallback") {
-      await editFailureFallback(settings);
+      const fallback = await editFailureFallback(settings);
+      if (fallback.kind === "cancel") return navigationCancel();
       continue;
     }
 
@@ -285,7 +307,8 @@ async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationRe
     }
 
     const edited = await modelPair(label, current);
-    if (edited.kind !== "value") continue;
+    if (edited.kind === "cancel") return navigationCancel();
+    if (edited.kind === "back") continue;
     if (choice === "orchestrator") settings.orchestrator = edited.value;
     else if (choice === "defaultWorker") settings.defaultWorker = edited.value;
     else settings.roles[choice as keyof CodexRuntimeSettings["roles"]] = edited.value;
@@ -328,7 +351,7 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
 
   while (true) {
     if (step === "mode") {
-      const mode = await p.select({
+      const mode = await runBackPrompt(() => p.select({
         message: "Worker mode",
         initialValue: settings.mode,
         options: [
@@ -337,13 +360,14 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
           { value: "inline", label: "Inline only", hint: "Never spawn workers" },
           backOption()
         ]
-      });
-      if (p.isCancel(mode) || mode === "back") return navigationBack();
-      settings.mode = mode as CodexRuntimeSettings["mode"];
+      }));
+      if (mode.kind === "cancel") return navigationCancel();
+      if (mode.kind === "back" || mode.value === "back") return navigationBack();
+      settings.mode = mode.value as CodexRuntimeSettings["mode"];
       step = "strategy";
     }
 
-    const strategy = await p.select({
+    const strategy = await runBackPrompt(() => p.select({
       message: "Model setup",
       initialValue: strategyValue,
       options: [
@@ -353,22 +377,25 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
         { value: "inherit", label: "Use Codex defaults", hint: "Do not pin models or reasoning" },
         backOption()
       ]
-    });
+    }));
 
-    if (p.isCancel(strategy) || strategy === "back") {
+    if (strategy.kind === "cancel") return navigationCancel();
+    if (strategy.kind === "back" || strategy.value === "back") {
       step = "mode";
       continue;
     }
 
-    strategyValue = String(strategy);
+    const strategyValueSelected = strategy.value;
+    strategyValue = String(strategyValueSelected);
 
-    if (strategy === "recommended") {
+    if (strategyValueSelected === "recommended") {
       assignRecommendedModels(settings);
-    } else if (strategy === "inherit") {
+    } else if (strategyValueSelected === "inherit") {
       assignInheritedModels(settings);
-    } else if (strategy === "shared") {
+    } else if (strategyValueSelected === "shared") {
       const shared = await modelPair("Shared worker", settings.defaultWorker);
-      if (shared.kind !== "value") continue;
+      if (shared.kind === "cancel") return navigationCancel();
+      if (shared.kind === "back") continue;
       settings.orchestrator = structuredClone(shared.value);
       settings.defaultWorker = structuredClone(shared.value);
       settings.roles = {
@@ -390,11 +417,10 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
 }
 
 export async function configureCodex(current: unknown, context: ConfigurationContext): Promise<ConfigurationSelection> {
-  return withEscapeNavigation(async () => {
-    const base = normalizeCodexRuntimeSettings(current ?? defaultCodexRuntimeSettings());
-    const customDraft = structuredClone(base);
+  const base = normalizeCodexRuntimeSettings(current ?? defaultCodexRuntimeSettings());
+  const customDraft = structuredClone(base);
 
-    while (true) {
+  while (true) {
       const setup = await p.select({
         message: "Choose a Codex setup",
         initialValue: setupInitialValue(context.currentProfile),
@@ -430,9 +456,8 @@ export async function configureCodex(current: unknown, context: ConfigurationCon
     if (custom.kind === "cancel") {
       return { settings: base, profile: context.currentProfile ?? null, cancelled: true };
     }
-      return { settings: custom.value, profile: profile("custom") };
-    }
-  });
+    return { settings: custom.value, profile: profile("custom") };
+  }
 }
 
 export async function configureCodexRuntime(current?: unknown): Promise<CodexRuntimeSettings> {
