@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "yaaw.handoff/v2",
+  "$id": "yaaw.handoff/v3",
   "type": "object",
   "required": [
     "schema",
@@ -24,7 +24,7 @@
   ],
   "properties": {
     "schema": {
-      "const": "yaaw.handoff/v2"
+      "const": "yaaw.handoff/v3"
     },
     "role": {
       "enum": [
@@ -119,64 +119,7 @@
       ]
     },
     "repository": {
-      "type": "object",
-      "required": [
-        "status",
-        "workspace_scope",
-        "git_root_relation",
-        "head_commit",
-        "dirty",
-        "worktree_digest",
-        "error"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "READY",
-            "UNVERSIONED",
-            "UNAVAILABLE",
-            "ROOT_MISMATCH",
-            "IDENTITY_FAILED"
-          ]
-        },
-        "workspace_scope": {
-          "type": "string",
-          "minLength": 1
-        },
-        "git_root_relation": {
-          "enum": [
-            "same",
-            "ancestor",
-            "none",
-            "unknown"
-          ]
-        },
-        "head_commit": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "dirty": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "worktree_digest": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "error": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "additionalProperties": false
+      "$ref": "repository-identity.schema.json"
     },
     "transition_sequence": {
       "type": "integer",
