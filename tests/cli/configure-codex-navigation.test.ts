@@ -5,11 +5,18 @@ const promptState = vi.hoisted(() => ({
   cancel: Symbol("cancel"),
   queue: [] as any[],
   messages: [] as string[],
-  configs: [] as any[]
+  configs: [] as any[],
+  aliases: new Map<string, any>()
 }));
 
 vi.mock("@clack/prompts", () => ({
   note: vi.fn(),
+  settings: { aliases: promptState.aliases },
+  updateSettings: vi.fn((updates: any) => {
+    for (const [key, value] of Object.entries(updates.aliases ?? {})) {
+      if (!promptState.aliases.has(key)) promptState.aliases.set(key, value);
+    }
+  }),
   isCancel: vi.fn((value: unknown) => value === promptState.cancel),
   text: vi.fn(async (config: any) => {
     promptState.messages.push(config.message);
@@ -39,6 +46,7 @@ describe("Codex configuration navigation", () => {
     promptState.queue = [];
     promptState.messages = [];
     promptState.configs = [];
+    promptState.aliases.clear();
   });
 
   it("treats ESC at Planner reasoning as Back to Planner model", async () => {
@@ -56,9 +64,9 @@ describe("Codex configuration navigation", () => {
     const result = await configureCodex(defaultCodexRuntimeSettings(), context);
     expect(result.cancelled).toBe(true);
 
-    const reasoningIndex = promptState.messages.indexOf("Planner reasoning effort");
+    const reasoningIndex = promptState.messages.indexOf("Planner: reasoning");
     expect(reasoningIndex).toBeGreaterThan(-1);
-    expect(promptState.messages[reasoningIndex + 1]).toBe("Planner model");
+    expect(promptState.messages[reasoningIndex + 1]).toBe("Planner: model");
   });
 
   it("treats ESC at Planner model as Back to the role hub", async () => {
@@ -74,9 +82,27 @@ describe("Codex configuration navigation", () => {
     const result = await configureCodex(defaultCodexRuntimeSettings(), context);
     expect(result.cancelled).toBe(true);
 
-    const modelIndex = promptState.messages.indexOf("Planner model");
+    const modelIndex = promptState.messages.indexOf("Planner: model");
     expect(modelIndex).toBeGreaterThan(-1);
-    expect(promptState.messages[modelIndex + 1]).toBe("Codex role configuration");
+    expect(promptState.messages[modelIndex + 1]).toBe("Choose a role to edit");
+  });
+
+  it("shows Esc beside the visible Back action", async () => {
+    promptState.queue.push(
+      "custom",
+      "auto",
+      "roles",
+      "planner",
+      promptState.cancel,
+      "cancel"
+    );
+
+    await configureCodex(defaultCodexRuntimeSettings(), context);
+    const modelPrompt = promptState.configs.find(config => config.message === "Planner: model");
+    expect(modelPrompt.options.find((option: any) => option.value === "back")).toMatchObject({
+      label: "← Back",
+      hint: "Esc"
+    });
   });
 
   it("allows inherited model with explicit reasoning", async () => {
@@ -108,7 +134,7 @@ describe("Codex configuration navigation", () => {
   it("reopens a saved custom profile with Custom highlighted", async () => {
     promptState.queue.push(promptState.cancel);
     await configureCodex(defaultCodexRuntimeSettings(), context);
-    expect(promptState.configs[0].message).toBe("How should YAAW configure Codex?");
+    expect(promptState.configs[0].message).toBe("Choose a Codex setup");
     expect(promptState.configs[0].initialValue).toBe("custom");
   });
 });
