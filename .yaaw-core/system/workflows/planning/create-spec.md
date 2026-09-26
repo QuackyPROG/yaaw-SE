@@ -16,3 +16,6 @@ Current frontier readiness is `PASS`; its product/engineering revisions remain c
 
 ## Output
 One current accepted spec or an explicit planning gap.
+
+## Adoption
+Planner writes the accepted spec only. Orchestrator detects the unique current accepted spec and adopts it into state on the next observation. Planner never writes `state.json`.

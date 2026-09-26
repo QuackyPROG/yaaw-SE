@@ -50,3 +50,6 @@ A normal framework update may announce newer configuration capabilities, but it 
 `yaaw config [integration]` is a configuration-only transaction. It updates only the selected integration's YAAW-managed configuration surface and manifest metadata, while reusing the same ownership/conflict rules as installation. It does not refresh the whole framework, copy skills, or mutate other integrations.
 
 Codex currently provides the full configuration capability. Claude Code, Gemini CLI, and Cline remain installable integrations but do not advertise model configurators until provider-specific support exists.
+
+## Public intent parity
+All provider-generated public skills use the same intent-entry contract. Codex may execute an exact handoff in isolated workers and other providers may execute inline when that is their supported mechanism, but no provider shortcut may bypass Orchestrator preparation or invent a second lifecycle engine.

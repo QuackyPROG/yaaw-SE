@@ -8,7 +8,7 @@ YAAW-SE keeps the root Codex session as Orchestrator during autonomous operation
 - `isolated-required`: exact named worker first, then only profile-equivalent/correctable generic isolation. No isolation returns `BLOCKED:HOST_ISOLATION_UNAVAILABLE`; isolation that cannot honor the profile returns `BLOCKED:HOST_EXECUTION_PROFILE_UNAVAILABLE`.
 - `inline`: deliberate same-context execution. Per-role model isolation is not provided in this mode.
 
-Direct public role invocation may still run in the current context. The isolation ladder applies to Orchestrator dispatch.
+Direct public skills do not execute role semantics directly. They create machine-readable intent and enter the same Orchestrator preparation loop; the isolation ladder applies only after an exact handoff is selected.
 
 ## Project layout
 

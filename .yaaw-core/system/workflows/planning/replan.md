@@ -20,3 +20,5 @@ Current engineering contract plus updated downstream admission state.
 ## Admission guard
 
 Repository identity change alone is not sufficient reason to replan. Require stale source/contract revisions or Reviewer `REPLAN` evidence.
+
+Planner may revise engineering/spec/ticket artifacts but never writes lifecycle state directly. Orchestrator observes the durable revised contract and applies legal admission/invalidation transitions.

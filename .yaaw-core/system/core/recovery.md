@@ -1,29 +1,15 @@
-# Recovery policy
+# Recovery contract
 
-Recovery compares claimed state with observed reality and returns to the last trustworthy boundary.
+Recovery reconstructs the last trustworthy durable boundary; conversation loss is never permission to repeat semantic work.
 
-## Framework precondition
-Framework integrity is checked before project recovery. If `.yaaw-core/system/core/framework-integrity.md` is not `HEALTHY`, stop with `FRAMEWORK_INTEGRITY_VIOLATION`, `FRAMEWORK_INTEGRITY_UNKNOWN`, or `FRAMEWORK_CONTRACT_INCONSISTENCY` as appropriate. Do not repair project lifecycle state while the governing package is untrusted, and never edit package-managed framework files as a recovery action. Resolve the workspace root first and use only root-anchored, workspace-scoped repository evidence from `.yaaw-core/system/core/execution-context.md`.
+- Accepted current spec not reflected in state -> adopt exactly that spec; multiple candidates block.
+- Current ticket file absent from state -> register one ticket per reconciliation cycle.
+- `READY` plus valid implementation-start evidence -> `IN_PROGRESS`.
+- `IN_PROGRESS` plus current PASS verification -> `REVIEW_REQUIRED`.
+- `IN_PROGRESS` plus start evidence but no PASS verification -> `implementation.verify-ticket`.
+- `REVIEW_REQUIRED` plus a valid current immutable review -> adopt its result before another Reviewer dispatch.
+- Source drift -> use routing-policy invalidation, normally `REPLAN_REQUIRED`.
+- Source-current acceptance/repository drift -> `REVIEW_REQUIRED`.
+- Missing proof -> exact `BLOCKED`, never guessing.
 
-## Evidence authority
-- Product intent: current accepted `product.md` revision.
-- Engineering decisions: current `engineering.md` decisions and accepted non-stale specs.
-- Implementation reality: repository contents plus repository identity/diff history.
-- Acceptance: fresh review evidence tied to the exact ticket/spec revisions and repository identity.
-- Routing cache: `state.json`, reconciled against stronger evidence.
-
-## Rules
-- Never reimplement solely because state is stale.
-- `IN_PROGRESS` + implementation + required verification evidence + no review -> reconcile to `REVIEW_REQUIRED`.
-- `READY` + implementation already present -> inspect/recover rather than duplicate the change.
-- `PASS` + source/contract revision mismatch -> reconcile to `REPLAN_REQUIRED`.
-- `PASS` + source-current missing/stale/unreproducible review or verification basis -> reconcile to `REVIEW_REQUIRED`.
-- Repository identity mismatch alone invalidates acceptance proof, not planning meaning. Never route a source-current PASS to Planner solely because repository identity changed.
-- A stale `.yaaw-core/runtime/handoff.json` is discarded, not executed.
-- If repository identity is required but status is not `READY`, return `PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE` or `BLOCKED` with exact missing proof.
-- If a dispatched worker ends unexpectedly, returns no response, loses its context, or its response is lost, treat that as an ordinary context interruption: inspect durable artifacts/repository/evidence and route from reality.
-- Never blindly retry a worker that was successfully created; first determine whether it already produced durable effects.
-- Do not persist host worker/session IDs into durable project memory. Replaceable coordination data, if ever required, belongs under `.yaaw-core/runtime/`.
-- If the last trustworthy boundary cannot be proven, return `BLOCKED` with exact missing proof.
-
-Every reconciliation uses a legal transition and records its reason/evidence in state provenance.
+Each observation applies at most one legal reconciliation and increments transition provenance once.

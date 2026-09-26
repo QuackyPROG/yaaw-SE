@@ -24,7 +24,9 @@ Choose the AI coding tools you want to use, finish the installer, then open your
 yaaw-orchestrator
 ```
 
-The Orchestrator inspects the project, determines what is missing or ready, and routes the next valid workflow. Under Codex, orchestrated PRD/Planner/Implementer/Reviewer work runs in fresh authority-worker contexts when the host supports it; durable artifacts remain the source of truth.
+The Orchestrator inspects durable project reality, applies at most one evidence-backed reconciliation, and routes the next valid workflow. Under Codex, orchestrated PRD/Planner/Implementer/Reviewer work runs in fresh authority-worker contexts when the host supports it; durable artifacts remain the source of truth.
+
+Worker output does not update lifecycle state directly. Workers write durable semantic facts. Orchestrator observes those facts and records legal lifecycle changes.
 
 You can start with only an idea, an existing codebase, a partially planned feature, or work already in progress.
 
@@ -59,7 +61,9 @@ Repair   Replan    Pass
       Continue
 ```
 
-You do not need to manually run every stage. In normal use, `yaaw-orchestrator` is the main entrypoint and routes work based on the artifacts already present.
+You do not need to manually run every stage. In normal use, `yaaw-orchestrator` is the main entrypoint and uses `CONTINUE` intent until human input, `BLOCKED`, a framework stop, or `COMPLETE`.
+
+Shortcut skills are destination intents, not bypasses. For example, `yaaw-implement` declares desired outcome `IMPLEMENT`; if product, planning, spec, or ticket prerequisites are missing, YAAW resolves them first and stops once one implementation reaches `REVIEW_REQUIRED`.
 
 ## Supported AI Coding Tools
 

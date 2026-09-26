@@ -5,7 +5,7 @@ This file defines **Codex execution mechanics only**. Canonical YAAW role/workfl
 Configured YAAW runtime mode: **{{RUNTIME_MODE}}**.
 
 ## Root ownership
-During autonomous `@yaaw-orchestrator` operation, the active/root Codex session is the YAAW Orchestrator. Never spawn a child `yaaw_orchestrator`.
+Every public YAAW skill first becomes canonical runtime intent. During autonomous `@yaaw-orchestrator` operation, the active/root Codex session is the YAAW Orchestrator. Never spawn a child `yaaw_orchestrator`; shortcut skills also return to this same root preparation loop before any semantic dispatch.
 
 ## Authority worker mapping
 When `orchestration.dispatch` selects a non-Orchestrator role, map it only after YAAW has already selected the handoff:

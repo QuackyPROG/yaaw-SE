@@ -18,3 +18,6 @@ Source spec is `ACCEPTED`, product/engineering revisions remain current, and rep
 
 ## Output
 Dependency-aware tickets requiring no planning-chat memory and preserving focused, reviewable change boundaries.
+
+## Registration
+Planner writes ticket artifacts only. Orchestrator registers current tickets into `state.json` one reconciliation at a time, preventing duplicate ticket creation when Planner output text is lost.

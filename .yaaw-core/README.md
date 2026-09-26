@@ -2,86 +2,51 @@
 
 `.yaaw-core/` is the single project-local YAAW root.
 
-Its ownership boundaries are structural:
-
 ```text
 .yaaw-core/
-├── system/   package-owned canonical YAAW implementation
+├── system/   package-owned canonical implementation
 ├── project/  durable project-owned semantic memory
 ├── runtime/  replaceable coordination caches
 └── install/  installer metadata
 ```
 
-Normal package updates refresh `.yaaw-core/system/`; they never replace the whole `.yaaw-core/` tree.
+## Mental model
 
-## System composition
+Agents/authority contexts are disposable. Durable artifacts are the memory.
 
 ```text
-skills/ -> system/registries -> deterministic orchestration preparation
-        -> role + workflow + applicable shared rules + selected expertise
-        -> durable project artifacts + repository reality
-        -> evidence-backed state transition
-        -> orchestration re-preparation
+PUBLIC SKILL
+    ↓ intent
+ORCHESTRATION RUNTIME
+    ↓ observe framework/repository/artifacts
+RECONCILIATION ENGINE
+    ↓ exactly one legal adoption
+STATE LEDGER
+    ↓ route + exact handoff
+ONE SEMANTIC AUTHORITY
+    ↓ durable fact
+OBSERVE AGAIN
 ```
 
-Roles own semantic authority. Workflows own process. Shared rules provide reusable cross-cutting behavior without creating another authority or lifecycle layer. Expertise provides specialist knowledge only.
+PRD owns product meaning. Planner owns engineering meaning, specs, tickets, and `scope_status`. Implementer owns application changes plus implementation-start/verification evidence. Reviewer owns immutable acceptance judgment. Orchestrator alone physically writes `state.json`, but only from durable facts authorized by those roles.
 
-The canonical assumption-challenge rule is `.yaaw-core/system/rules/assumption-challenge.md`. PRD consumes it for product-semantics scrutiny and Planner consumes it for repository-backed engineering scrutiny. It is not a public skill, workflow phase, state, or durable artifact.
+Worker output does not update lifecycle state directly. Workers write durable semantic facts. Orchestrator observes those facts and records legal lifecycle changes.
 
-## Authority
+## Durable project memory
 
-- Human/PRD: product intent and scope.
-- Planner: engineering decisions, specs, readiness, tickets.
-- Implementer: bounded code changes within an admitted ticket.
-- Reviewer: independent acceptance and defect classification.
-- Orchestrator: continuity, reconciliation, invalidation coordination, and routing/dispatch.
+`.yaaw-core/project/` stores product, engineering, research, specs, tickets, reviews, evidence, project rules, and `state.json` (`yaaw.project-state/v2`). Runtime intent/handoff/observed-state caches are replaceable.
 
-## Durable project root
+Implementation recovery uses `yaaw.evidence/v3`:
+- `implementation_start + STARTED` authorizes `READY -> IN_PROGRESS`;
+- only current `implementation_verification + PASS` authorizes review admission;
+- failed verification remains durable history and never counts as success.
 
-`.yaaw-core/project/` stores product, engineering, admitted research, specs, tickets, reviews, evidence, project rules, and `state.json`.
+Planner-owned `scope_status` is `UNKNOWN | OPEN | COMPLETE`. Orchestrator cannot infer project completion merely because no READY ticket exists.
 
-`.yaaw-core/runtime/` stores replaceable observed-state, handoff, intent, and dispatch-failure caches used only for coordination. Repository identity v2 excludes runtime caches plus the lifecycle-generated state/evidence/review outputs whose writes would otherwise self-invalidate their attestations; product, engineering, research, specs, tickets, rules, framework/install files, provider config, and application files remain observable.
+## Public entrypoints
 
-`.yaaw-core/install/` stores package/install ownership and version metadata. Installer metadata is not semantic project truth.
-
-## Canonical lifecycle
-
-`PRD -> planning -> readiness -> spec -> tickets -> implement -> review -> repair/replan/pass -> next frontier -> COMPLETE`.
-
-Read these package contracts together:
-
-- `.yaaw-core/system/core/lifecycle.md`
-- `.yaaw-core/system/core/authority.md`
-- `.yaaw-core/system/core/routing.md`
-- `.yaaw-core/system/core/transitions.md`
-- `.yaaw-core/system/core/invalidation.md`
-- `.yaaw-core/system/core/recovery.md`
-- `.yaaw-core/system/core/context-loading.md`
-- `.yaaw-core/system/rules/assumption-challenge.md`
-- `.yaaw-core/system/rules/question-format.md`
-
-Any workflow context may disappear after durable output without destroying project understanding.
-
-## Runtime hardening
-
-- `.yaaw-core/system/core/framework-integrity.md` plus the single `.yaaw-core/system/tools/framework-integrity.mjs` make package health a fail-closed prerequisite.
-- `.yaaw-core/system/tools/repository-identity.mjs` is the only worktree digest implementation (`yaaw-worktree-v2`).
-- `.yaaw-core/system/tools/orchestration-runtime.mjs` performs framework check, repository identity, metadata inspection, route selection, and handoff construction from one deterministic basis; Orchestrator consumes its typed result instead of reconstructing those steps manually.
-- `.yaaw-core/system/registries/handoff-policy.json` keeps route-to-handoff semantics machine-readable and checked against role I/O.
-- `.yaaw-core/system/core/execution-context.md` resolves the consumer workspace root and requires root-anchored Git.
-- `.yaaw-core/system/registries/execution-policy.json` classifies every workflow as `NONE`, `INSPECT`, or `IDENTITY` for repository requirements.
-- `.yaaw-core/system/core/context-loading.md` requires metadata-first progressive workflow loading.
-- `.yaaw-core/system/core/io-contract.md` plus `.yaaw-core/system/registries/role-io.json` keep peer roles from privately delegating or searching for alternate YAAW artifact locations.
-- Planner owns admitted primary-source research through `.yaaw-core/project/research/RSH-*.md`; `.yaaw-core/system/rules/research-admission.md` prevents host skill availability from choosing architecture.
+Every `skills/yaaw-*/SKILL.md` is a thin intent door into the same orchestration engine. A shortcut never skips framework integrity, reconciliation, source-current validation, repository policy, or exact handoff construction.
 
 ## Update safety
 
-Current installers emit `yaaw.installation/v2` and accept the original v1 manifest for upgrade. The installer tracks YAAW/system/project/install/adapter versions independently, plans skipped-version project migrations through registered adjacent steps, blocks unsupported downgrades, verifies before manifest commit, and rolls back failed transactions.
-
-Installer-managed mutations beneath `.yaaw-core/project/` are rejected at preflight. Only initialization-if-missing and explicit registered project-schema migrations may transform durable project state.
-
-## State and review ownership
-
-`.yaaw-core/project/state.json` is the current lifecycle ledger for workflow admission. Ticket frontmatter status is historical/artifact metadata and does not override reconciled lifecycle state.
-
-Reviewer reads state but writes only immutable review rounds. Orchestrator validates the durable review result and applies exactly the corresponding state transition/provenance; it never substitutes its own acceptance judgment.
+Package updates replace `.yaaw-core/system/**` but preserve `.yaaw-core/project/**`. Project schema v1 migrates to v2 by preserving engineering body/history, adding `scope_status`, and regenerating replaceable runtime caches. Historical evidence/reviews are never rewritten.

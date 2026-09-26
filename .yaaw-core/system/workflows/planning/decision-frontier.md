@@ -28,3 +28,6 @@ Assign/update a stable frontier ID. Only current-frontier decisions/research/pro
 
 ## Output
 Durable bounded frontier plus zero or more admitted research artifacts. The next route is research, question-round, PRD, readiness, or READY as the persisted partition requires.
+
+## Scope completion signal
+Maintain `engineering.scope_status` on every meaningful frontier update. Use `UNKNOWN` when completion is not proven, `OPEN` when accepted product scope remains after this frontier, and `COMPLETE` only when durable product/planning evidence proves no accepted scope remains. Future ideas/non-goals do not keep accepted scope open.
