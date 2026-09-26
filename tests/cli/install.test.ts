@@ -332,9 +332,15 @@ describe("headless installation", () => {
     expect(await exists(join(root, ".yaaw-core", "core"))).toBe(false);
     const upgraded: any = JSON.parse(await readFile(manifestPath, "utf8"));
     expect(upgraded.schema).toBe("yaaw.installation/v2");
-    expect(upgraded.systemSchema).toBe(2);
-    expect(upgraded.projectSchema).toBe(1);
+    expect(upgraded.systemSchema).toBe(3);
+    expect(upgraded.projectSchema).toBe(2);
     expect(upgraded.installationSchema).toBe(3);
+    const migratedState: any = JSON.parse(await readFile(join(root, ".yaaw-core", "project", "state.json"), "utf8"));
+    expect(migratedState.schema).toBe("yaaw.project-state/v2");
+    expect(["UNKNOWN", "COMPLETE"]).toContain(migratedState.planning.scope_status);
+    const migratedEngineering = await readFile(join(root, ".yaaw-core", "project", "engineering.md"), "utf8");
+    expect(migratedEngineering).toContain("schema: yaaw.engineering/v2");
+    expect(migratedEngineering).toMatch(/scope_status: (UNKNOWN|COMPLETE)/);
   });
 
   it("blocks a package that cannot understand the installed project schema", async () => {

@@ -144,8 +144,8 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
   const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
 
   expect(manifest.schema).toBe("yaaw.installation/v2");
-  expect(manifest.systemSchema).toBe(2);
-  expect(manifest.projectSchema).toBe(1);
+  expect(manifest.systemSchema).toBe(3);
+  expect(manifest.projectSchema).toBe(2);
   expect(manifest.installationSchema).toBe(3);
   expect(Object.keys(manifest.integrations).sort()).toEqual([...selectedTools].sort());
   expect(manifest.skills.length).toBeGreaterThan(0);
