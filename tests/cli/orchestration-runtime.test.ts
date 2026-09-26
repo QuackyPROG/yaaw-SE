@@ -168,6 +168,21 @@ async function writeVerification(root: string, repository: any, result: "PASS"|"
     checks: []
   }, null, 2) + "\n");
 }
+async function writeReview(root: string, repository: any, evidence: string[]) {
+  await writeFile(join(root, ".yaaw-core/project/reviews/TASK-001-R1.md"), `---
+schema: yaaw.review/v2
+ticket: TASK-001
+round: 1
+result: PASS
+ticket_revision: 1
+spec_revision: 1
+repository:
+  worktree_digest: ${repository.worktree_digest}
+evidence: ${JSON.stringify(evidence)}
+---
+# TASK-001 review
+`);
+}
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })));
@@ -239,5 +254,26 @@ Changed semantic product text.
     expect(next.workflow).toBe("implementation.verify-ticket");
     const state = JSON.parse(await readFile(join(root, ".yaaw-core/project/state.json"), "utf8"));
     expect(state.tickets["TASK-001"]).toBe("IN_PROGRESS");
+  });
+
+  it("creates recovery handoffs for stale review evidence instead of BLOCKED", async () => {
+    const root = await fixture();
+    const prepared = run(root);
+    const statePath = join(root, ".yaaw-core/project/state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.tickets["TASK-001"] = "REVIEW_REQUIRED";
+    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
+    await writeReview(root, prepared.handoff.repository, ["EVIDENCE-TASK-001-OLD"]);
+
+    const recoverVerification = run(root);
+    expect(recoverVerification.status).toBe("DISPATCH_READY");
+    expect(recoverVerification.workflow).toBe("implementation.verify-ticket");
+    expect(recoverVerification.role).toBe("implementer");
+
+    await writeVerification(root, recoverVerification.handoff.repository, "PASS");
+    const refreshReview = run(root);
+    expect(refreshReview.status).toBe("DISPATCH_READY");
+    expect(refreshReview.workflow).toBe("review.review-ticket");
+    expect(refreshReview.role).toBe("reviewer");
   });
 });

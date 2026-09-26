@@ -38,9 +38,51 @@ describe("production orchestration engine",()=>{
     const p:any=planNext(x); expect(p.reconciliation.id).toBe("REVIEW_RESULT_UNAPPLIED"); expect(p.reconciliation.to).toBe("PASS");
   });
 
-  it("rejects review adoption when it does not reference current PASS verification",async()=>{
+  it("recovers missing review verification instead of terminally blocking",async()=>{
+    const x:any=await base("REVIEW_REQUIRED"); x.reviews.push(review("PASS",["EVIDENCE-TASK-001-OLD"])); x.artifacts.reviews=x.reviews;
+    const p:any=planNext(x); expect(p.kind).toBe("DISPATCH_READY"); expect(p.workflow).toBe("implementation.verify-ticket"); expect(p.ticket).toBe("TASK-001");
+  });
+
+  it("refreshes review when current PASS verification is not referenced",async()=>{
     const x:any=await base("REVIEW_REQUIRED"); x.evidence.push(verify()); x.reviews.push(review("PASS",["OTHER"])); x.artifacts.evidence=x.evidence; x.artifacts.reviews=x.reviews;
-    const p:any=planNext(x); expect(p.kind).toBe("BLOCKED"); expect(p.reason).toBe("REVIEW_EVIDENCE_INVALID");
+    const p:any=planNext(x); expect(p.kind).toBe("DISPATCH_READY"); expect(p.workflow).toBe("review.review-ticket"); expect(p.ticket).toBe("TASK-001");
+  });
+
+  it("repairs stale acceptance evidence before advancing to the next ready ticket",async()=>{
+    const x:any=await base("PASS");
+    x.state.tickets["TASK-003"]="READY";
+    x.artifacts.tickets["TASK-003"]={path:".yaaw-core/project/tickets/TASK-003.md",meta:{id:"TASK-003",revision:1,spec:"SPEC-001",spec_revision:1,product_revision:1,engineering_revision:1,status:"READY",dependencies:["TASK-001"]}};
+    const stale=verify("PASS","V1"); stale.value.repository=repo("sha256:stale");
+    x.evidence.push(stale);
+    x.reviews.push(review("PASS",["EVIDENCE-TASK-001-V1"]));
+    x.artifacts.evidence=x.evidence; x.artifacts.reviews=x.reviews;
+
+    const invalidate:any=planNext(x);
+    expect(invalidate.reconciliation.id).toBe("ACCEPTANCE_STALE");
+    expect(invalidate.reconciliation.to).toBe("REVIEW_REQUIRED");
+    x.state=applyReconciliation(x.state,invalidate.reconciliation,x.repository);
+
+    const recover:any=planNext(x);
+    expect(recover.kind).toBe("DISPATCH_READY");
+    expect(recover.workflow).toBe("implementation.verify-ticket");
+    expect(recover.ticket).toBe("TASK-001");
+
+    x.evidence.push(verify("PASS","V2")); x.artifacts.evidence=x.evidence;
+    const rereview:any=planNext(x);
+    expect(rereview.workflow).toBe("review.review-ticket");
+    expect(rereview.ticket).toBe("TASK-001");
+
+    x.reviews.push({path:".yaaw-core/project/reviews/TASK-001-R2.md",value:{schema:"yaaw.review/v2",ticket:"TASK-001",round:2,result:"PASS",ticket_revision:1,spec_revision:1,repository:repo(),evidence:["EVIDENCE-TASK-001-V2"]}});
+    x.artifacts.reviews=x.reviews;
+    const accept:any=planNext(x);
+    expect(accept.reconciliation.id).toBe("REVIEW_RESULT_UNAPPLIED");
+    expect(accept.reconciliation.to).toBe("PASS");
+    x.state=applyReconciliation(x.state,accept.reconciliation,x.repository);
+
+    const next:any=planNext(x);
+    expect(next.kind).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("implementation.implement-ticket");
+    expect(next.ticket).toBe("TASK-003");
   });
 
   it("requires a new repair verification not already consumed by the REPAIR review",async()=>{

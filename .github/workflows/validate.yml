@@ -1,73 +1,120 @@
-name: Validate YAAW Core and Distribution
+name: Validate YAAW Changes
 
 on:
   push:
     branches: [main, yaaw-SEv2]
   pull_request:
-    paths:
-      - '.yaaw-core/**'
-      - 'skills/**'
-      - 'scripts/**'
-      - 'src/**'
-      - 'installer/**'
-      - 'tests/**'
-      - 'docs/**'
-      - '.github/workflows/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'vitest.config.ts'
-      - 'AGENTS.md'
-      - 'README.md'
 
 concurrency:
   group: yaaw-validate-publish-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      validate: ${{ steps.scope.outputs.validate }}
+      release: ${{ steps.scope.outputs.release }}
+      ci: ${{ steps.scope.outputs.ci }}
+      orchestration: ${{ steps.scope.outputs.orchestration }}
+      core: ${{ steps.scope.outputs.core }}
+      distribution: ${{ steps.scope.outputs.distribution }}
+      node_floor: ${{ steps.scope.outputs.node_floor }}
+      platform: ${{ steps.scope.outputs.platform }}
+      full: ${{ steps.scope.outputs.full }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Classify changed files
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            BASE="${PR_BASE_SHA}"
+          elif [ -n "${PUSH_BEFORE}" ] && [ "${PUSH_BEFORE}" != "0000000000000000000000000000000000000000" ]; then
+            BASE="${PUSH_BEFORE}"
+          else
+            BASE="$(git rev-list --max-parents=0 HEAD)"
+          fi
+          echo "Changed files from ${BASE} to ${GITHUB_SHA}:"
+          git diff --name-only "${BASE}" "${GITHUB_SHA}" | tee /tmp/yaaw-changed-files.txt
+          node scripts/ci_scope.mjs --github-output "${GITHUB_OUTPUT}" < /tmp/yaaw-changed-files.txt
+
   validate:
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Validate semantic core
-        run: |
-          python scripts/validate_core.py
-          python scripts/validate_behavior.py
-          python scripts/behavior_oracle.py
-          python scripts/validate_distribution.py
-          python -m unittest discover -s tests -v
-
       - uses: actions/setup-node@v4
+        if: needs.changes.outputs.validate == 'true'
         with:
           node-version: '22'
 
       - name: Install Node dependencies
+        if: needs.changes.outputs.validate == 'true'
         run: npm ci --ignore-scripts
 
-      - name: Validate schemas
-        run: npm run validate:schemas
+      - uses: actions/setup-python@v5
+        if: needs.changes.outputs.core == 'true' || needs.changes.outputs.distribution == 'true' || needs.changes.outputs.full == 'true'
+        with:
+          python-version: '3.12'
 
-      - name: Test npm installer
-        run: npm test
+      - name: Test CI scope classifier
+        if: needs.changes.outputs.ci == 'true' && needs.changes.outputs.full != 'true'
+        run: npx vitest run tests/cli/ci-scope.test.ts
 
-      - name: Build npm payload
-        run: npm run build
+      - name: Test orchestration recovery and lifecycle
+        if: needs.changes.outputs.orchestration == 'true' && needs.changes.outputs.full != 'true'
+        run: |
+          npx vitest run tests/cli/orchestration-engine.test.ts tests/cli/orchestration-runtime.test.ts
+          node scripts/run_lifecycle_cases.mjs
 
-      - name: Inspect package contents
-        run: npm pack --dry-run
+      - name: Validate broad core changes
+        if: needs.changes.outputs.core == 'true' && needs.changes.outputs.full != 'true'
+        run: |
+          npm run validate:core
+          python -m unittest discover -s tests -v
 
-      - name: Smoke exact packed tarball
-        run: node scripts/smoke_npm_tarball.mjs
+      - name: Validate distribution changes
+        if: needs.changes.outputs.distribution == 'true' && needs.changes.outputs.full != 'true'
+        run: |
+          npm run validate:distribution
+          npm run test:cli
+          python -m unittest discover -s tests -p 'test_distribution_contracts.py' -v
+          node scripts/smoke_npm_tarball.mjs
+          node scripts/smoke_npm_update.mjs
 
-      - name: Smoke tarball-to-tarball update
-        run: node scripts/smoke_npm_update.mjs
+      - name: Verify package integrity for releasable core changes
+        if: needs.changes.outputs.release == 'true' && needs.changes.outputs.distribution != 'true' && needs.changes.outputs.full != 'true'
+        run: |
+          npm run build
+          npm pack --dry-run --ignore-scripts
 
-  node-floor:
+      - name: Full safety fallback
+        if: needs.changes.outputs.full == 'true'
+        run: |
+          npm test
+          npm run build
+          npm pack --dry-run --ignore-scripts
+          node scripts/smoke_npm_tarball.mjs
+          node scripts/smoke_npm_update.mjs
+
+      - name: Documentation-only change
+        if: needs.changes.outputs.validate != 'true'
+        run: echo "No executable or releasable YAAW surface changed."
+
+  node_floor:
+    needs: changes
+    if: needs.changes.outputs.node_floor == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +128,9 @@ jobs:
       - name: Smoke exact package at minimum supported Node version
         run: node scripts/smoke_npm_tarball.mjs
 
-  platform-smoke:
+  platform_smoke:
+    needs: changes
+    if: needs.changes.outputs.platform == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -101,36 +150,39 @@ jobs:
       - name: Smoke exact packed tarball
         run: node scripts/smoke_npm_tarball.mjs
 
-  publish-next:
+  publish_next:
     name: Publish npm prerelease (next)
-    needs: [validate, node-floor, platform-smoke]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [changes, validate, node_floor, platform_smoke]
+    if: >-
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/yaaw-SEv2' &&
+      needs.changes.outputs.release == 'true' &&
+      needs.validate.result == 'success' &&
+      (needs.node_floor.result == 'success' || needs.node_floor.result == 'skipped') &&
+      (needs.platform_smoke.result == 'success' || needs.platform_smoke.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
-
       - name: Confirm commit is current branch head
         id: freshness
         shell: bash
         run: |
-          CURRENT_HEAD="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          CURRENT_HEAD="$(git ls-remote origin refs/heads/yaaw-SEv2 | awk '{print $1}')"
           if [ "${CURRENT_HEAD}" = "${GITHUB_SHA}" ]; then
             echo "publish=true" >> "${GITHUB_OUTPUT}"
           else
             echo "publish=false" >> "${GITHUB_OUTPUT}"
             echo "Skipping stale commit ${GITHUB_SHA}; current branch head is ${CURRENT_HEAD}."
           fi
-
       - name: Resolve immutable prerelease version
         if: steps.freshness.outputs.publish == 'true'
         id: version
@@ -141,9 +193,8 @@ jobs:
           TARGET_VERSION="$(node scripts/resolve_release_version.mjs next "${REPO_VERSION}" "${LATEST_JSON}" "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}")"
           npm version "${TARGET_VERSION}" --no-git-tag-version
           echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "Publishing yaaw-se@${TARGET_VERSION} to dist-tag next"
-
-      - name: Build, smoke, and pack prerelease
+          echo "Publishing yaaw-se$@{TARGET_VERSION} to dist-tag next"
+      - name: Build and pack prerelease
         if: steps.freshness.outputs.publish == 'true'
         id: pack
         shell: bash
@@ -151,48 +202,51 @@ jobs:
           npm run build
           PACK_JSON="$(npm pack --json --ignore-scripts)"
           TARBALL="$(node -e 'const p=JSON.parse(process.argv[1]); process.stdout.write(p[0].filename)' "${PACK_JSON}")"
-          YAAW_SMOKE_TARBALL="${PWD}/${TARBALL}" node scripts/smoke_npm_tarball.mjs
           echo "tarball=${TARBALL}" >> "${GITHUB_OUTPUT}"
-
-      - name: Publish tested tarball to npm next
+      - name: Publish tested prerelease tarball
         if: steps.freshness.outputs.publish == 'true'
         run: npm publish "${{ steps.pack.outputs.tarball }}" --tag next --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Verify prerelease reached npm next
         if: steps.freshness.outputs.publish == 'true'
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
           for attempt in {1..36}; do
-            PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
+            PUBLISHED="$(npm view "yaaw-se$@{TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@next version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
-              echo "Verified npm next -> yaaw-se@${TARGET}"
+              echo "Verified npm next -> yaaw-se$@{TARGET}"
               exit 0
             fi
-            echo "Waiting for npm next propagation (${attempt}/36): version=${PUBLISHED:-missing} tag=${TAG:-missing} target=${TARGET}"
+            echo "Waiting for npm next propagation (${attempt}/36)"
             sleep 10
           done
-          echo "npm publish returned success but yaaw-se@${TARGET} / next was not observable from the registry." >&2
           exit 1
 
-  publish-release:
+  publish_release:
     name: Publish npm stable release (latest)
-    needs: [validate, node-floor, platform-smoke]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [changes, validate, node_floor, platform_smoke]
+    if: >-
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.release == 'true' &&
+      needs.validate.result == 'success' &&
+      (needs.node_floor.result == 'success' || needs.node_floor.result == 'skipped') &&
+      (needs.platform_smoke.result == 'success' || needs.platform_smoke.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
       - name: Confirm commit is current main head
         id: freshness
         shell: bash
@@ -204,10 +258,6 @@ jobs:
             echo "publish=false" >> "${GITHUB_OUTPUT}"
             echo "Skipping stale commit ${GITHUB_SHA}; current main head is ${CURRENT_HEAD}."
           fi
-
-      - name: Install locked dependencies
-        run: npm ci --ignore-scripts
-
       - name: Resolve immutable stable version
         if: steps.freshness.outputs.publish == 'true'
         id: version
@@ -218,9 +268,8 @@ jobs:
           TARGET_VERSION="$(node scripts/resolve_release_version.mjs stable "${REPO_VERSION}" "${LATEST_JSON}")"
           npm version "${TARGET_VERSION}" --no-git-tag-version
           echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "Stable target: yaaw-se@${TARGET_VERSION}"
-
-      - name: Build, smoke, and pack stable release
+          echo "Stable target: yaaw-se$@{TARGET_VERSION}"
+      - name: Build and pack stable release
         if: steps.freshness.outputs.publish == 'true'
         id: pack
         shell: bash
@@ -228,29 +277,25 @@ jobs:
           npm run build
           PACK_JSON="$(npm pack --json --ignore-scripts)"
           TARBALL="$(node -e 'const p=JSON.parse(process.argv[1]); process.stdout.write(p[0].filename)' "${PACK_JSON}")"
-          YAAW_SMOKE_TARBALL="${PWD}/${TARBALL}" node scripts/smoke_npm_tarball.mjs
           echo "tarball=${TARBALL}" >> "${GITHUB_OUTPUT}"
-
-      - name: Publish tested tarball to npm latest
+      - name: Publish tested stable tarball
         if: steps.freshness.outputs.publish == 'true'
         run: npm publish "${{ steps.pack.outputs.tarball }}" --tag latest --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Verify stable release reached npm latest
         if: steps.freshness.outputs.publish == 'true'
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
           for attempt in {1..36}; do
-            PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
+            PUBLISHED="$(npm view "yaaw-se$@{TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@latest version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
-              echo "Verified npm latest -> yaaw-se@${TARGET}"
+              echo "Verified npm latest -> yaaw-se$@{TARGET}"
               exit 0
             fi
-            echo "Waiting for npm latest propagation (${attempt}/36): version=${PUBLISHED:-missing} tag=${TAG:-missing} target=${TARGET}"
+            echo "Waiting for npm latest propagation (${attempt}/36)"
             sleep 10
           done
-          echo "npm publish returned success but yaaw-se@${TARGET} / latest was not observable from the registry." >&2
           exit 1

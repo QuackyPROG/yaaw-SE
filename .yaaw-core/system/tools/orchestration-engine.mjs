@@ -94,10 +94,9 @@ export function selectReconciliation({state,artifacts:a,evidence=[],reviews=[],r
       if(st==="REVIEW_REQUIRED"){
         const v=verify(evidence,id,tr,sr),r=review(reviews,id,tr,sr),to={PASS:"PASS",REPAIR:"REPAIR_REQUIRED",REPLAN:"REPLAN_REQUIRED",BLOCKED:"BLOCKED"}[r?.value?.result];
         if(r&&to&&currentRepo(r,repository)){
-          if(!v||v.value?.schema!=="yaaw.evidence/v3"||v.value.result!=="PASS"||!currentRepo(v,repository))
-            return{id:"REVIEW_EVIDENCE_INVALID",kind:"BLOCKED",reason:"current review lacks current PASS verification"};
-          if(!evidenceRefs(r).has(String(v.value.id)))
-            return{id:"REVIEW_EVIDENCE_INVALID",kind:"BLOCKED",reason:"current review does not reference current PASS verification"};
+          const verificationCurrent=Boolean(v?.value?.schema==="yaaw.evidence/v3"&&v.value.result==="PASS"&&currentRepo(v,repository));
+          if(!verificationCurrent)return null;
+          if(!evidenceRefs(r).has(String(v.value.id)))return null;
           if(!legal(transitions,"REVIEW_REQUIRED",to))
             return{id:"ILLEGAL_REVIEW_TRANSITION",kind:"BLOCKED",reason:"review result is not a legal lifecycle transition"};
           return transition("REVIEW_RESULT_UNAPPLIED",id,"REVIEW_REQUIRED",to,"REVIEW_"+r.value.result,[r.path,v.path]);
@@ -125,14 +124,23 @@ export function selectReconciliation({state,artifacts:a,evidence=[],reviews=[],r
   return null;
 }
 function deps(id,a,state){return (a?.tickets?.[id]?.meta?.dependencies??[]).every(d=>state.tickets?.[d]==="PASS");}
-function baseRoute(state,a,evidence,p){
+function baseRoute(state,a,evidence,reviews,repository,p){
   if(state?.blocker)return{kind:"BLOCKED",terminal:"BLOCKED",reason:state.blocker.kind??"PROJECT_BLOCKED"};
   if(normalizeStatus(state?.product?.status)!=="ready")return{kind:"DISPATCH_READY",workflow:p.product_unready_workflow};
   const tickets=state?.tickets??{},replan=Object.keys(tickets).sort().find(id=>tickets[id]==="REPLAN_REQUIRED");if(replan)return{kind:"DISPATCH_READY",workflow:"planning.replan",ticket:replan};
   if(normalizeStatus(state?.planning?.status)!=="ready"||state.planning.readiness!=="PASS")return{kind:"DISPATCH_READY",workflow:p.planning_unready_workflow};
   const s=activeSpec(state,a);if(!s||normalizeStatus(s.status)!=="accepted")return{kind:"DISPATCH_READY",workflow:p.missing_spec_workflow};
   const ids=currentTicketIds(state,a);if(!ids.length)return{kind:"DISPATCH_READY",workflow:p.missing_tickets_workflow};
-  for(const [st,w] of [["REPAIR_REQUIRED","implementation.repair-ticket"],["REVIEW_REQUIRED","review.review-ticket"]]){const id=ids.find(x=>tickets[x]===st);if(id)return{kind:"DISPATCH_READY",workflow:w,ticket:id};}
+  const repair=ids.find(x=>tickets[x]==="REPAIR_REQUIRED");if(repair)return{kind:"DISPATCH_READY",workflow:"implementation.repair-ticket",ticket:repair};
+  const reviewRequired=ids.find(x=>tickets[x]==="REVIEW_REQUIRED");
+  if(reviewRequired){
+    const m=a.tickets[reviewRequired].meta,tr=Number(m.revision),sr=Number(s.revision),v=verify(evidence,reviewRequired,tr,sr);
+    const verificationCurrent=Boolean(v?.value?.schema==="yaaw.evidence/v3"&&v.value.result==="PASS"&&currentRepo(v,repository));
+    if(!verificationCurrent)return{kind:"DISPATCH_READY",workflow:"implementation.verify-ticket",ticket:reviewRequired,reason:"REVIEW_VERIFICATION_RECOVERY_REQUIRED"};
+    const r=review(reviews,reviewRequired,tr,sr),reviewCurrent=Boolean(r&&currentRepo(r,repository)&&evidenceRefs(r).has(String(v.value.id)));
+    if(!reviewCurrent)return{kind:"DISPATCH_READY",workflow:"review.review-ticket",ticket:reviewRequired,reason:"REVIEW_REFRESH_REQUIRED"};
+    return{kind:"DISPATCH_READY",workflow:"review.review-ticket",ticket:reviewRequired,reason:"REVIEW_RESULT_REFRESH_REQUIRED"};
+  }
   const ip=ids.find(x=>tickets[x]==="IN_PROGRESS");if(ip){const m=a.tickets[ip].meta;return start(evidence,ip,Number(m.revision),Number(s.revision))?{kind:"DISPATCH_READY",workflow:"implementation.verify-ticket",ticket:ip}:{kind:"ROOT_ACTION",workflow:"orchestration.recover-interruption",ticket:ip,reason:"IMPLEMENTATION_START_EVIDENCE_MISSING"};}
   const ready=ids.find(x=>tickets[x]==="READY"&&deps(x,a,state));if(ready)return{kind:"DISPATCH_READY",workflow:"implementation.implement-ticket",ticket:ready};
   const vals=ids.map(x=>tickets[x]);if(vals.some(x=>x==="BLOCKED"))return{kind:"BLOCKED",terminal:"BLOCKED",reason:"TICKET_BLOCKED"};
@@ -163,8 +171,8 @@ export function intentComplete(i,state,a){
   if(o==="PLANNING_REVIEW")return ["PASS","MISSING_DECISIONS","PRODUCT_GAP","REPLAN","BLOCKED"].includes(state.planning?.readiness);
   return false;
 }
-export function selectRoute({state,artifacts:a,evidence=[],intent,routingPolicy}){
-  const normal=baseRoute(state,a,evidence,routingPolicy);if(!intent||intent.desired_outcome==="CONTINUE")return normal;
+export function selectRoute({state,artifacts:a,evidence=[],reviews=[],repository,intent,routingPolicy}){
+  const normal=baseRoute(state,a,evidence,reviews,repository,routingPolicy);if(!intent||intent.desired_outcome==="CONTINUE")return normal;
   if(intentComplete(intent,state,a))return{kind:"INTENT_COMPLETE",reason:intent.completion_kind};
   if(intent.requested_workflow&&legalNow(intent.requested_workflow,state,a)){const map={"implementation.implement-ticket":"READY","implementation.repair-ticket":"REPAIR_REQUIRED","review.review-ticket":"REVIEW_REQUIRED"},st=map[intent.requested_workflow],ticket=st&&Object.keys(state.tickets??{}).sort().find(id=>state.tickets[id]===st);return{kind:"DISPATCH_READY",workflow:intent.requested_workflow,...(ticket?{ticket}:{})};}
   if(["REVIEW","REPAIR"].includes(intent.desired_outcome))return{kind:"ROOT_ACTION",workflow:"orchestration.recover-interruption",reason:intent.desired_outcome+"_PRECONDITION_UNSATISFIED"};
