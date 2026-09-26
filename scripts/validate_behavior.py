@@ -83,7 +83,7 @@ def main() -> int:
         if workflow not in workflows:
             errors.append(f"routing policy references unregistered workflow {workflow}")
 
-    state_schema = load_json(CORE / "schemas" / "project-state.schema.json")
+    state_schema = load_json(CORE / "schemas" / "project-state-v2.schema.json")
     schema_states = set(state_schema["properties"]["tickets"]["additionalProperties"]["enum"])
     transition_states = set(transitions.get("ticket_states", []))
     if transition_states != schema_states:
