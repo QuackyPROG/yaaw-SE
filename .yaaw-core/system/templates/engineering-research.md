@@ -1,13 +1,13 @@
 ---
 schema: yaaw.engineering-research/v1
-id: RSH-XXX
+id: RSH-000
 revision: 1
 status: PENDING
 product_revision: 1
 engineering_revision: 1
 frontier_id: FRONTIER-001
 ---
-# RSH-XXX
+# RSH-000
 
 ## Question
 

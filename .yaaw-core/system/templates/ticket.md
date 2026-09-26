@@ -1,8 +1,8 @@
 ---
 schema: yaaw.ticket/v1
-id: TASK-XXX
+id: TASK-000
 revision: 1
-spec: SPEC-XXX
+spec: SPEC-000
 spec_revision: 1
 product_revision: 1
 engineering_revision: 1
@@ -11,7 +11,7 @@ dependencies: []
 decision_ids: []
 expertise: []
 ---
-# TASK-XXX
+# TASK-000
 
 ## Goal
 ## Source specification

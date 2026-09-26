@@ -1,6 +1,6 @@
 ---
 schema: yaaw.spec/v1
-id: SPEC-XXX
+id: SPEC-000
 revision: 1
 status: DRAFT
 product_revision: 1
@@ -8,7 +8,7 @@ engineering_revision: 1
 frontier_id: FRONTIER-001
 decision_ids: []
 ---
-# SPEC-XXX
+# SPEC-000
 
 ## Goal
 ## Product source

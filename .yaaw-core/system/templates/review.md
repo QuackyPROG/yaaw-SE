@@ -1,8 +1,8 @@
 ---
 schema: yaaw.review/v2
-ticket: TASK-XXX
+ticket: TASK-000
 round: 1
-result: RESULT
+result: PASS
 ticket_revision: 1
 spec_revision: 1
 repository:
@@ -14,12 +14,12 @@ repository:
   head_commit: COMMIT
   dirty: true
   worktree_digest: sha256:DIGEST
-  components: {}
+  components: null
   changed_paths: []
   error: null
 evidence: []
 ---
-# REVIEW-TASK-XXX-R1
+# REVIEW-TASK-000-R1
 
 ## Result rationale
 
