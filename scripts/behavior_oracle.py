@@ -63,7 +63,7 @@ def reconcile_observed(observed: dict[str, Any]) -> tuple[dict[str, Any], list[d
             continue
 
         if state == "READY" and implementation:
-            next_state = "REVIEW_REQUIRED" if verification_present else "IN_PROGRESS"
+            next_state = "REVIEW_REQUIRED" if verification else "IN_PROGRESS"
             ticket["state"] = next_state
             changes.append(_change(ticket_id, "READY", next_state, "IMPLEMENTATION_ALREADY_PRESENT"))
     return current, changes
