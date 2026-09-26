@@ -1,6 +1,7 @@
 import * as p from "@clack/prompts";
 import { getIntegration } from "../integrations/registry.js";
 import type { IntegrationConfigurationProfile, IntegrationId } from "../integrations/types.js";
+import { backOption, withEscapeNavigation } from "./prompt-navigation.js";
 
 export type ConfigurationConfirmation = "apply" | "back" | "cancel";
 
@@ -14,33 +15,43 @@ export async function confirmConfiguration(input: {
 }): Promise<ConfigurationConfirmation> {
   const adapter = getIntegration(input.integrationId);
   const describe = adapter.configuration?.describe ?? (() => []);
+  const current = describe(input.currentSettings);
+  const next = describe(input.newSettings);
+  const currentProfile = input.currentProfile ? `${input.currentProfile.id} r${input.currentProfile.revision}` : "custom";
+  const newProfile = input.newProfile ? `${input.newProfile.id} r${input.newProfile.revision}` : "custom";
+
+  const changes: string[] = [];
+  for (let index = 0; index < Math.max(current.length, next.length); index++) {
+    const before = current[index];
+    const after = next[index];
+    if (before === after || after === undefined) continue;
+    const separator = after.indexOf(":");
+    if (before !== undefined && separator > 0 && before.startsWith(after.slice(0, separator + 1))) {
+      changes.push(`${before} → ${after.slice(separator + 1).trim()}`);
+    } else {
+      changes.push(before === undefined ? after : `${before} → ${after}`);
+    }
+  }
+
   const lines = [
     `Project: ${input.projectRoot}`,
+    `Profile: ${currentProfile === newProfile ? newProfile : `${currentProfile} → ${newProfile}`}`,
     "",
-    "Current:",
-    `  Profile: ${input.currentProfile ? `${input.currentProfile.id} r${input.currentProfile.revision}` : "custom"}`,
-    ...describe(input.currentSettings).map(line => `  ${line}`),
+    ...(changes.length ? ["Changes:", ...changes.map(line => `  ${line}`)] : ["No runtime setting changes."]),
     "",
-    "New:",
-    `  Profile: ${input.newProfile ? `${input.newProfile.id} r${input.newProfile.revision}` : "custom"}`,
-    ...describe(input.newSettings).map(line => `  ${line}`),
-    "",
-    "Will:",
-    `  Update YAAW-managed ${adapter.displayName} configuration`,
-    "  Preserve user-owned provider settings",
-    "  Preserve unrelated integrations and project memory"
+    `Only YAAW-managed ${adapter.displayName} settings will be updated.`
   ];
-  p.note(lines.join("\n"), `${adapter.displayName} configuration change`);
+  p.note(lines.join("\n"), `Review ${adapter.displayName} settings`);
 
-  const result = await p.select({
-    message: "What would you like to do?",
+  const result = await withEscapeNavigation(() => p.select({
+    message: "Apply these settings?",
     initialValue: "apply",
     options: [
       { value: "apply", label: "Apply configuration" },
-      { value: "back", label: "Back to edit" },
+      backOption("← Back to edit"),
       { value: "cancel", label: "Cancel configuration" }
     ]
-  });
-  if (p.isCancel(result)) return "cancel";
+  }));
+  if (p.isCancel(result)) return "back";
   return result as ConfigurationConfirmation;
 }
