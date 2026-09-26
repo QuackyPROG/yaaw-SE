@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const promptState = vi.hoisted(() => ({
   cancel: Symbol("cancel"),
+  escape: Symbol("escape"),
   queue: [] as any[],
   configs: [] as any[],
   aliases: new Map<string, any>()
@@ -19,7 +20,18 @@ vi.mock("@clack/prompts", () => ({
   select: vi.fn(async (config: any) => {
     promptState.configs.push(config);
     if (!promptState.queue.length) throw new Error("No queued response");
-    return promptState.queue.shift();
+    const response = promptState.queue.shift();
+    if (response === promptState.escape) {
+      process.stdin.emit("keypress", undefined, {
+        name: "escape",
+        sequence: "\x1b",
+        ctrl: false,
+        meta: false,
+        shift: false
+      });
+      return "apply";
+    }
+    return response;
   })
 }));
 
@@ -45,7 +57,7 @@ describe("configuration review navigation", () => {
   });
 
   it("treats Esc as Back instead of cancelling configuration", async () => {
-    promptState.queue.push(promptState.cancel);
+    promptState.queue.push(promptState.escape);
 
     const result = await confirmConfiguration({
       projectRoot: "/tmp/project",
@@ -62,5 +74,20 @@ describe("configuration review navigation", () => {
       label: "← Back to edit",
       hint: "Esc"
     });
+  });
+
+  it("keeps Ctrl+C as an explicit cancel", async () => {
+    promptState.queue.push(promptState.cancel);
+
+    const result = await confirmConfiguration({
+      projectRoot: "/tmp/project",
+      integrationId: "codex",
+      currentSettings: { mode: "auto", planner: "old" },
+      newSettings: { mode: "auto", planner: "new" },
+      currentProfile: { id: "custom", revision: 4 },
+      newProfile: { id: "custom", revision: 4 }
+    });
+
+    expect(result).toBe("cancel");
   });
 });
