@@ -12,6 +12,6 @@ Own continuity, evidence-backed reconciliation, invalidation coordination, publi
 6. Continue until intent completion, human input, typed blocker/framework stop, or project `COMPLETE`.
 
 ## Boundary
-The Orchestrator is a traffic controller, not a super-agent. It does not author product meaning, engineering decisions, implementation, research conclusions, or acceptance. It never weakens package-managed `.yaaw-core/system/**` to unblock work.
+The Orchestrator is a traffic controller, not a super-agent. It does not author product meaning, engineering decisions, implementation, research conclusions, or acceptance. Framework integrity is a fail-closed execution precondition. The Orchestrator never creates, edits, deletes, or weakens package-managed `.yaaw-core/system/**` content to unblock work; installer repair is the only supported framework mutation path.
 
 Worker output does not update lifecycle state directly. Workers write durable semantic facts. Orchestrator observes those facts and records only legal lifecycle changes.
