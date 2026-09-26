@@ -14,6 +14,7 @@ import type { IntegrationConfigurationProfile, IntegrationId } from "../../integ
 import type { ConflictPolicy } from "../../installer/types.js";
 import { configureIntegration } from "../../tui/configure-integration.js";
 import { confirmConfiguration } from "../../tui/confirm-configuration.js";
+import { backOption, withEscapeNavigation } from "../../tui/prompt-navigation.js";
 
 export interface ConfigCommandOptions { directory?: string; yes?: boolean; json?: boolean; config?: string; conflictPolicy?: ConflictPolicy; }
 
@@ -93,17 +94,19 @@ export async function configureProjectIntegration(input: {
     } catch (error) {
       if (!(error instanceof ManagedConflictError) || !input.interactive || input.conflictPolicy) throw error;
       p.note(error.conflicts.join("\n"), `Modified YAAW-managed ${adapter.displayName} configuration found`);
-      const selected = await p.select({
+      const selected = await withEscapeNavigation(() => p.select({
         message: "How should this change be handled?",
         initialValue: sessionConflictPolicy === "fail" ? "keep" : sessionConflictPolicy,
         options: [
           { value: "keep", label: "Keep local value" },
           { value: "replace", label: "Replace with selected YAAW configuration" },
           { value: "backup-replace", label: "Backup local configuration and replace" },
-          { value: "fail", label: "Cancel" }
+          backOption("← Back to settings"),
+          { value: "fail", label: "Cancel configuration" }
         ]
-      });
-      if (p.isCancel(selected) || selected === "fail") return { cancelled: true };
+      }));
+      if (p.isCancel(selected) || selected === "back") continue;
+      if (selected === "fail") return { cancelled: true };
       conflictPolicy = selected as ConflictPolicy;
       sessionConflictPolicy = conflictPolicy;
       built = await buildConfigurationPlan({
@@ -196,10 +199,10 @@ export async function runConfig(integration: string | undefined, options: Config
     else {
       if (!interactive) throw new Error("Headless yaaw config requires an integration argument.");
       p.intro("YAAW-SE — Project configuration");
-      const selected = await p.select({
+      const selected = await withEscapeNavigation(() => p.select({
         message: "Which integration would you like to configure?",
         options: configurable.map(adapter => ({ value: adapter.id, label: adapter.displayName }))
-      });
+      }));
       if (p.isCancel(selected)) return;
       integrationId = selected as IntegrationId;
     }
