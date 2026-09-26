@@ -275,12 +275,6 @@ Changed semantic product text.
 
   it("honors block-list ticket dependencies instead of crashing on .every", async () => {
     const root = await fixture();
-    const statePath = join(root, ".yaaw-core/project/state.json");
-    const state = JSON.parse(await readFile(statePath, "utf8"));
-    state.tickets["TASK-001"] = "PASS";
-    state.tickets["TASK-002"] = "READY";
-    state.active_ticket = "TASK-002";
-    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
     await writeFile(join(root, ".yaaw-core/project/tickets/TASK-002.md"), `---
 schema: yaaw.ticket/v1
 id: TASK-002
@@ -298,6 +292,16 @@ expertise: []
 ---
 # TASK-002
 `);
+    const repository = run(root).observed.repository;
+
+    const statePath = join(root, ".yaaw-core/project/state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.tickets["TASK-001"] = "PASS";
+    state.tickets["TASK-002"] = "READY";
+    state.active_ticket = "TASK-002";
+    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
+    await writeVerification(root, repository, "PASS");
+    await writeReview(root, repository, ["EVIDENCE-TASK-001-V1"]);
 
     const next = run(root);
     expect(next.status).toBe("DISPATCH_READY");
