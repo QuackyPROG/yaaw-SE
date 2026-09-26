@@ -3,6 +3,7 @@ import { defaultCodexRuntimeSettings, normalizeCodexRuntimeSettings, type CodexM
 import { CODEX_CONFIGURATION_REVISION, codexModels, codexReasoningEfforts, getCodexModel, recommendedCodexProfile } from "../integrations/codex-catalog.js";
 import type { ConfigurationContext, ConfigurationSelection, IntegrationConfigurationProfile } from "../integrations/types.js";
 import { navigationBack, navigationCancel, navigationValue, type NavigationResult } from "./navigation.js";
+import { backOption, withEscapeNavigation } from "./prompt-navigation.js";
 
 function displayReasoning(value: string | null): string {
   if (!value) return "Inherit";
@@ -51,7 +52,7 @@ async function reasoningPicker(
   const known = getCodexModel(model);
   const values = known?.reasoningEfforts ?? [...codexReasoningEfforts];
   const result = await p.select({
-    message: `${label} reasoning effort`,
+    message: `${label}: reasoning`,
     initialValue: current ?? "inherit",
     options: [
       ...values.map(value => ({
@@ -59,7 +60,7 @@ async function reasoningPicker(
         label: displayReasoning(value)
       })),
       { value: "inherit", label: "Inherit" },
-      { value: "back", label: "← Back" }
+      backOption()
     ]
   });
   if (p.isCancel(result) || result === "back") return navigationBack();
@@ -70,13 +71,13 @@ async function modelPair(label: string, current: CodexModelSettings): Promise<Na
   const draft = structuredClone(current);
   while (true) {
     const result = await p.select({
-      message: `${label} model`,
+      message: `${label}: model`,
       initialValue: draft.model ?? "inherit",
       options: [
         ...codexModels.map(model => ({ value: model.id, label: model.label, hint: model.description })),
         { value: "inherit", label: "Inherit", hint: "Use the parent/default Codex model" },
         { value: "custom", label: "Custom model ID…", hint: "Enter a model not known to this YAAW release" },
-        { value: "back", label: "← Back" }
+        backOption()
       ]
     });
     if (p.isCancel(result) || result === "back") return navigationBack();
@@ -100,33 +101,29 @@ async function modelPair(label: string, current: CodexModelSettings): Promise<Na
 }
 
 function recommendedNote(settings: CodexRuntimeSettings) {
+  const fallback = settings.failureFallback.afterFailures === null
+    ? "Disabled"
+    : `after ${settings.failureFallback.afterFailures} failures → ${pairSummary(settings.failureFallback.implementer)}`;
   p.note([
-    `Orchestrator    ${pairSummary(settings.orchestrator)}`,
-    `PRD             ${pairSummary(settings.roles.prd)}`,
-    `Planner         ${pairSummary(settings.roles.planner)}`,
-    `Implementer     ${pairSummary(settings.roles.implementer)}`,
-    `Reviewer        ${pairSummary(settings.roles.reviewer)}`,
-    `Default worker  ${pairSummary(settings.defaultWorker)}`,
-    `Impl fallback   ${settings.failureFallback.afterFailures === null ? "Disabled" : `after ${settings.failureFallback.afterFailures} -> ${pairSummary(settings.failureFallback.implementer)}`}`,
-    `Review fallback ${settings.failureFallback.afterFailures === null ? "Disabled" : `after ${settings.failureFallback.afterFailures} -> ${pairSummary(settings.failureFallback.reviewer)}`}`,
-    "",
-    `Runtime         ${settings.mode}`,
-    `Service tier    ${serviceTierSummary(settings.serviceTier)}`,
-    `Agent threads   ${settings.maxConcurrentThreads ?? "Inherit"}`
-  ].join("\n"), "Recommended Codex profile");
+    `Orchestrator  ${pairSummary(settings.orchestrator)}`,
+    `Planning      PRD ${pairSummary(settings.roles.prd)} · Planner ${pairSummary(settings.roles.planner)}`,
+    `Delivery      Implementer ${pairSummary(settings.roles.implementer)} · Reviewer ${pairSummary(settings.roles.reviewer)}`,
+    `Fallback      ${fallback}`,
+    `Runtime       ${settings.mode} · ${settings.maxConcurrentThreads ?? "inherit"} threads · ${serviceTierSummary(settings.serviceTier)}`
+  ].join("\n"), "Recommended Codex setup");
 }
 
 async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
   while (true) {
     const choice = await p.select({
-      message: "Advanced Codex settings",
+      message: "Advanced settings",
       options: [
         { value: "threads", label: `Concurrent agent threads   ${settings.maxConcurrentThreads ?? "Inherit"}` },
         { value: "sandbox", label: `Sandbox mode               ${settings.sandboxMode ?? "Inherit"}` },
         { value: "approval", label: `Approval policy            ${settings.approvalPolicy ?? "Inherit"}` },
         { value: "web", label: `Web search                 ${settings.webSearch ?? "Inherit"}` },
         { value: "tier", label: `Service tier              ${serviceTierSummary(settings.serviceTier)}` },
-        { value: "back", label: "← Back" }
+        backOption()
       ]
     });
     if (p.isCancel(choice) || choice === "back") return;
@@ -166,14 +163,14 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
 
     if (choice === "tier") {
       const result = await p.select({
-        message: "Codex service tier",
+        message: "Service tier",
         initialValue: settings.serviceTier ?? "inherit",
         options: [
           { value: "inherit", label: "Inherit", hint: "Do not force Fast mode; use the surrounding Codex/project setting" },
           { value: "default", label: "Standard", hint: "Explicitly disable Fast/Flex for YAAW turns" },
           { value: "fast", label: "Fast", hint: "Lower latency with higher usage/cost where supported" },
           { value: "flex", label: "Flex", hint: "Lower-cost, higher-latency processing where supported" },
-          { value: "back", label: "← Back" }
+          backOption()
         ]
       });
       if (p.isCancel(result) || result === "back") continue;
@@ -191,7 +188,7 @@ async function editAdvanced(settings: CodexRuntimeSettings): Promise<void> {
           { value: "cached", label: "Cached" },
           { value: "indexed", label: "Indexed" },
           { value: "live", label: "Live" },
-          { value: "back", label: "← Back" }
+          backOption()
         ]
       });
       if (p.isCancel(result) || result === "back") continue;
@@ -204,12 +201,12 @@ async function editFailureFallback(settings: CodexRuntimeSettings): Promise<void
   while (true) {
     const threshold = settings.failureFallback.afterFailures;
     const choice = await p.select({
-      message: "Implementer / Reviewer failure fallback",
+      message: "Failure fallback",
       options: [
         { value: "threshold", label: `Escalate after            ${threshold === null ? "Disabled" : `${threshold} no-progress failures`}` },
         { value: "implementer", label: `Implementer fallback      ${pairSummary(settings.failureFallback.implementer)}` },
         { value: "reviewer", label: `Reviewer fallback         ${pairSummary(settings.failureFallback.reviewer)}` },
-        { value: "back", label: "← Back" }
+        backOption()
       ]
     });
     if (p.isCancel(choice) || choice === "back") return;
@@ -245,7 +242,7 @@ async function editFailureFallback(settings: CodexRuntimeSettings): Promise<void
 async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationResult<CodexRuntimeSettings>> {
   while (true) {
     const choice = await p.select({
-      message: "Codex role configuration",
+      message: "Choose a role to edit",
       options: [
         { value: "orchestrator", label: `Orchestrator          ${pairSummary(settings.orchestrator)}` },
         { value: "defaultWorker", label: `Default worker        ${pairSummary(settings.defaultWorker)}` },
@@ -253,10 +250,10 @@ async function editRoleHub(settings: CodexRuntimeSettings): Promise<NavigationRe
         { value: "planner", label: `Planner               ${pairSummary(settings.roles.planner)}` },
         { value: "implementer", label: `Implementer           ${pairSummary(settings.roles.implementer)}` },
         { value: "reviewer", label: `Reviewer              ${pairSummary(settings.roles.reviewer)}` },
-        { value: "fallback", label: `Failure fallback      ${settings.failureFallback.afterFailures === null ? "Disabled" : `after ${settings.failureFallback.afterFailures} -> Astra/role config`}` },
+        { value: "fallback", label: `Failure fallback      ${settings.failureFallback.afterFailures === null ? "Disabled" : `after ${settings.failureFallback.afterFailures} failures`}` },
         { value: "advanced", label: "Advanced settings" },
-        { value: "review", label: "Review changes" },
-        { value: "back", label: "← Back" },
+        { value: "review", label: "Review and apply" },
+        backOption(),
         { value: "cancel", label: "Cancel configuration" }
       ]
     });
@@ -332,13 +329,13 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
   while (true) {
     if (step === "mode") {
       const mode = await p.select({
-        message: "YAAW Codex execution mode",
+        message: "Worker mode",
         initialValue: settings.mode,
         options: [
-          { value: "auto", label: "Auto", hint: "Named worker → generic worker → inline fallback" },
-          { value: "isolated-required", label: "Require isolated workers", hint: "Block authority execution if isolation is unavailable" },
-          { value: "inline", label: "Inline only", hint: "Do not spawn YAAW authority workers" },
-          { value: "back", label: "← Back" }
+          { value: "auto", label: "Auto", hint: "Use workers when available; continue inline when safe" },
+          { value: "isolated-required", label: "Require isolated workers", hint: "Stop if isolated workers are unavailable" },
+          { value: "inline", label: "Inline only", hint: "Never spawn workers" },
+          backOption()
         ]
       });
       if (p.isCancel(mode) || mode === "back") return navigationBack();
@@ -347,14 +344,14 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
     }
 
     const strategy = await p.select({
-      message: "How should models be assigned?",
+      message: "Model setup",
       initialValue: strategyValue,
       options: [
-        { value: "recommended", label: "Recommended role profile", hint: "Use YAAW's recommended model/reasoning split" },
-        { value: "shared", label: "One model for all workers", hint: "Choose a shared worker model" },
-        { value: "roles", label: "Customize individual roles", hint: "Configure roles from a reusable editor hub" },
-        { value: "inherit", label: "Inherit Codex defaults", hint: "Do not pin model IDs or reasoning" },
-        { value: "back", label: "← Back" }
+        { value: "recommended", label: "Recommended per-role models", hint: "Apply YAAW defaults, then edit if needed" },
+        { value: "shared", label: "One model for every role", hint: "Use the same model and reasoning everywhere" },
+        { value: "roles", label: "Choose models by role", hint: "Edit each YAAW role individually" },
+        { value: "inherit", label: "Use Codex defaults", hint: "Do not pin models or reasoning" },
+        backOption()
       ]
     });
 
@@ -393,20 +390,21 @@ async function configureCustom(settings: CodexRuntimeSettings): Promise<Navigati
 }
 
 export async function configureCodex(current: unknown, context: ConfigurationContext): Promise<ConfigurationSelection> {
-  const base = normalizeCodexRuntimeSettings(current ?? defaultCodexRuntimeSettings());
-  const customDraft = structuredClone(base);
+  return withEscapeNavigation(async () => {
+    const base = normalizeCodexRuntimeSettings(current ?? defaultCodexRuntimeSettings());
+    const customDraft = structuredClone(base);
 
-  while (true) {
-    const setup = await p.select({
-      message: "How should YAAW configure Codex?",
-      initialValue: setupInitialValue(context.currentProfile),
-      options: [
-        { value: "recommended", label: "Recommended", hint: "YAAW-managed worker configuration with recommended models" },
-        { value: "inherit", label: "Inherit Codex defaults", hint: "Keep model/reasoning selection outside YAAW" },
-        { value: "custom", label: "Custom", hint: "Choose runtime, models, reasoning, and worker settings" },
-        { value: "inline", label: "Inline only", hint: "Run authorities in the current session without worker spawning" }
-      ]
-    });
+    while (true) {
+      const setup = await p.select({
+        message: "Choose a Codex setup",
+        initialValue: setupInitialValue(context.currentProfile),
+        options: [
+          { value: "recommended", label: "Recommended", hint: "YAAW picks sensible models and reasoning by role" },
+          { value: "inherit", label: "Use Codex defaults", hint: "Keep model and reasoning outside YAAW" },
+          { value: "custom", label: "Customize", hint: "Pick worker mode and models by role" },
+          { value: "inline", label: "Inline only", hint: "Run every role in this session; no workers" }
+        ]
+      });
     if (p.isCancel(setup)) {
       return { settings: base, profile: context.currentProfile ?? null, cancelled: true };
     }
@@ -418,23 +416,12 @@ export async function configureCodex(current: unknown, context: ConfigurationCon
     }
     if (setup === "inherit") {
       const settings = defaultCodexRuntimeSettings();
-      p.note([
-        "Runtime workers will use YAAW authority isolation when available.",
-        "Model and reasoning selection will inherit from Codex.",
-        "",
-        "You can configure explicit models later with:",
-        "  yaaw config codex"
-      ].join("\n"), "Codex configuration");
+      p.note("YAAW will not pin models or reasoning. Your existing Codex defaults stay in control.", "Using Codex defaults");
       return { settings, profile: profile("inherit") };
     }
     if (setup === "inline") {
       const settings = { ...defaultCodexRuntimeSettings(), mode: "inline" as const };
-      p.note([
-        "YAAW authority roles will execute in the current Codex session.",
-        "YAAW will not spawn isolated authority workers.",
-        "",
-        "Durable project artifacts still remain the source of workflow state."
-      ].join("\n"), "Inline Codex execution");
+      p.note("YAAW roles will run in this Codex session. No isolated workers are spawned.", "Inline only");
       return { settings, profile: profile("inline") };
     }
 
@@ -443,8 +430,9 @@ export async function configureCodex(current: unknown, context: ConfigurationCon
     if (custom.kind === "cancel") {
       return { settings: base, profile: context.currentProfile ?? null, cancelled: true };
     }
-    return { settings: custom.value, profile: profile("custom") };
-  }
+      return { settings: custom.value, profile: profile("custom") };
+    }
+  });
 }
 
 export async function configureCodexRuntime(current?: unknown): Promise<CodexRuntimeSettings> {
