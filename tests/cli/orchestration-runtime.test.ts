@@ -11,7 +11,6 @@ const sourceSystem = resolve(".yaaw-core/system");
 function git(root: string, ...args: string[]) {
   return execFileSync("git", ["-C", root, ...args], { encoding: "utf8" });
 }
-
 async function walk(dir: string): Promise<string[]> {
   const result: string[] = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -21,25 +20,18 @@ async function walk(dir: string): Promise<string[]> {
   }
   return result;
 }
-
 async function sha256(path: string) {
   return createHash("sha256").update(await readFile(path)).digest("hex");
 }
-
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), "yaaw-runtime-"));
   roots.push(root);
   await mkdir(join(root, ".yaaw-core"), { recursive: true });
   await cp(sourceSystem, join(root, ".yaaw-core", "system"), { recursive: true });
   for (const dir of [
-    ".yaaw-core/project/specs",
-    ".yaaw-core/project/tickets",
-    ".yaaw-core/project/evidence",
-    ".yaaw-core/project/reviews",
-    ".yaaw-core/project/research",
-    ".yaaw-core/project/rules",
-    ".yaaw-core/runtime",
-    ".yaaw-core/install",
+    ".yaaw-core/project/specs", ".yaaw-core/project/tickets", ".yaaw-core/project/evidence",
+    ".yaaw-core/project/reviews", ".yaaw-core/project/research", ".yaaw-core/project/rules",
+    ".yaaw-core/runtime", ".yaaw-core/install"
   ]) await mkdir(join(root, dir), { recursive: true });
 
   await writeFile(join(root, ".yaaw-core/project/product.md"), `---
@@ -50,12 +42,13 @@ status: ready
 # Product
 `);
   await writeFile(join(root, ".yaaw-core/project/engineering.md"), `---
-schema: yaaw.engineering/v1
+schema: yaaw.engineering/v2
 revision: 1
 status: ready
 product_revision: 1
 current_frontier: FRONTIER-001
 readiness: PASS
+scope_status: UNKNOWN
 ---
 # Engineering
 `);
@@ -87,16 +80,13 @@ expertise: []
 # TASK-001
 `);
   await writeFile(join(root, ".yaaw-core/project/state.json"), JSON.stringify({
-    schema: "yaaw.project-state/v1",
+    schema: "yaaw.project-state/v2",
     phase: "implementation",
     product: { artifact: ".yaaw-core/project/product.md", status: "ready", revision: 1 },
     planning: {
-      artifact: ".yaaw-core/project/engineering.md",
-      status: "ready",
-      revision: 1,
-      current_frontier: "FRONTIER-001",
-      readiness: "PASS",
-      active_spec: "SPEC-001"
+      artifact: ".yaaw-core/project/engineering.md", status: "ready", revision: 1,
+      current_frontier: "FRONTIER-001", readiness: "PASS",
+      active_spec: ".yaaw-core/project/specs/SPEC-001.md", scope_status: "UNKNOWN"
     },
     active_ticket: "TASK-001",
     tickets: { "TASK-001": "READY" },
@@ -115,11 +105,17 @@ expertise: []
   await writeFile(join(root, ".yaaw-core/install/manifest.json"), JSON.stringify({
     schema: "yaaw.installation/v2",
     yaawVersion: "0.3.0-test",
-    systemSchema: 2,
-    installationSchema: 1,
-    projectSchema: 1,
+    systemSchema: 3,
+    installationSchema: 3,
+    projectSchema: 2,
+    installedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
     project: { root: "." },
-    managedFiles
+    integrations: {},
+    skills: [],
+    managedFiles,
+    managedSections: {},
+    managedConfigKeys: {}
   }, null, 2) + "\n");
 
   git(root, "init");
@@ -129,7 +125,6 @@ expertise: []
   git(root, "commit", "-m", "fixture");
   return root;
 }
-
 function run(root: string, ...extra: string[]) {
   const tool = join(root, ".yaaw-core/system/tools/orchestration-runtime.mjs");
   try {
@@ -140,100 +135,57 @@ function run(root: string, ...extra: string[]) {
     throw error;
   }
 }
+function evidenceRepository(repository: any) {
+  return structuredClone(repository);
+}
+async function writeStart(root: string, repository: any) {
+  await writeFile(join(root, ".yaaw-core/project/evidence/EVIDENCE-TASK-001-S1.json"), JSON.stringify({
+    schema: "yaaw.evidence/v3",
+    id: "EVIDENCE-TASK-001-S1",
+    ticket: "TASK-001",
+    ticket_revision: 1,
+    spec_revision: 1,
+    kind: "implementation_start",
+    result: "STARTED",
+    repository: evidenceRepository(repository),
+    workflow: "implementation.implement-ticket",
+    commands: [],
+    checks: []
+  }, null, 2) + "\n");
+}
+async function writeVerification(root: string, repository: any, result: "PASS"|"FAIL"|"BLOCKED") {
+  await writeFile(join(root, ".yaaw-core/project/evidence/EVIDENCE-TASK-001-V1.json"), JSON.stringify({
+    schema: "yaaw.evidence/v3",
+    id: "EVIDENCE-TASK-001-V1",
+    ticket: "TASK-001",
+    ticket_revision: 1,
+    spec_revision: 1,
+    kind: "implementation_verification",
+    result,
+    repository: evidenceRepository(repository),
+    workflow: "implementation.verify-ticket",
+    commands: [],
+    checks: []
+  }, null, 2) + "\n");
+}
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })));
 });
 
 describe("deterministic orchestration runtime", () => {
-  it("routes stale PASS acceptance through reconciliation instead of completion", async () => {
-    const root = await fixture();
-    const prepared = run(root);
-    const currentDigest = prepared.handoff.repository.worktree_digest;
-
-    const statePath = join(root, ".yaaw-core/project/state.json");
-    const state = JSON.parse(await readFile(statePath, "utf8"));
-    state.phase = "complete";
-    state.active_ticket = null;
-    state.tickets["TASK-001"] = "PASS";
-    state.transition_sequence = 2;
-    state.last_workflow = "review.record-review";
-    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
-
-    await writeFile(join(root, ".yaaw-core/project/evidence/EVIDENCE-TASK-001-V1.json"), JSON.stringify({
-      schema: "yaaw.evidence/v2",
-      id: "EVIDENCE-TASK-001-V1",
-      ticket: "TASK-001",
-      ticket_revision: 1,
-      spec_revision: 1,
-      kind: "implementation_verification",
-      repository: {
-        schema: "yaaw.repository-identity/v2",
-        algorithm: "yaaw-worktree-v2",
-        status: "READY",
-        workspace_scope: ".",
-        git_root_relation: "same",
-        head_commit: prepared.handoff.repository.head_commit,
-        dirty: false,
-        worktree_digest: "sha256:stale",
-        components: {
-          status_sha256: "x",
-          unstaged_diff_sha256: "x",
-          staged_diff_sha256: "x",
-          untracked_manifest_sha256: "x"
-        },
-        changed_paths: [],
-        error: null
-      },
-      workflow: "implementation.verify-ticket",
-      commands: [],
-      checks: []
-    }, null, 2) + "\n");
-
-    await writeFile(join(root, ".yaaw-core/project/reviews/TASK-001-R1.md"), `---
-schema: yaaw.review/v2
-ticket: TASK-001
-round: 1
-result: PASS
-ticket_revision: 1
-spec_revision: 1
-repository:
-  schema: yaaw.repository-identity/v2
-  algorithm: yaaw-worktree-v2
-  status: READY
-  workspace_scope: .
-  git_root_relation: same
-  head_commit: ${prepared.handoff.repository.head_commit}
-  dirty: false
-  worktree_digest: sha256:stale
-  components: {}
-  changed_paths: []
-  error: null
-evidence: ["EVIDENCE-TASK-001-V1"]
----
-# Review
-`);
-
-    const reconciled = run(root);
-    expect(currentDigest).toMatch(/^sha256:/);
-    expect(reconciled.status).toBe("RECONCILE_REQUIRED");
-    expect(reconciled.observed.inconsistencies).toContain("REVIEW_REPOSITORY_STALE:TASK-001");
-    expect(reconciled.observed.inconsistencies).toContain("VERIFICATION_REPOSITORY_STALE:TASK-001");
-  });
-
-  it("prepares one route/handoff and validates that exact basis before dispatch", async () => {
+  it("prepares one v3 handoff and validates that exact basis before dispatch", async () => {
     const root = await fixture();
     const prepared = run(root);
     expect(prepared.status).toBe("DISPATCH_READY");
     expect(prepared.workflow).toBe("implementation.implement-ticket");
     expect(prepared.role).toBe("implementer");
-
     const handoff = JSON.parse(await readFile(join(root, ".yaaw-core/runtime/handoff.json"), "utf8"));
-    expect(handoff.workflow).toBe("implementation.implement-ticket");
+    expect(handoff.schema).toBe("yaaw.handoff/v3");
     expect(handoff.repository.status).toBe("READY");
     expect(handoff.repository.worktree_digest).toMatch(/^sha256:/);
+    expect(handoff.reads).toContain("state");
     expect(handoff.expertise).toContain("changeability");
-
     expect(run(root, "--check-handoff").status).toBe("HANDOFF_FRESH");
 
     await writeFile(join(root, ".yaaw-core/runtime/observed-state.json"), "{\"replaceable\":true}\n");
@@ -248,5 +200,44 @@ status: ready
 Changed semantic product text.
 `);
     expect(run(root, "--check-handoff").status).toBe("HANDOFF_STALE");
+  });
+
+  it("recovers start and PASS verification through two legal reconciliation passes", async () => {
+    const root = await fixture();
+    const prepared = run(root);
+    await writeStart(root, prepared.handoff.repository);
+    const first = run(root);
+    expect(first.status).toBe("RECONCILE_REQUIRED");
+    expect(first.reconciliation.id).toBe("IMPLEMENTATION_STARTED");
+    expect(first.reconciliation.to).toBe("IN_PROGRESS");
+    expect(run(root, "--reconcile-one").status).toBe("RECONCILED");
+
+    let state = JSON.parse(await readFile(join(root, ".yaaw-core/project/state.json"), "utf8"));
+    expect(state.tickets["TASK-001"]).toBe("IN_PROGRESS");
+
+    await writeVerification(root, prepared.handoff.repository, "PASS");
+    const second = run(root);
+    expect(second.status).toBe("RECONCILE_REQUIRED");
+    expect(second.reconciliation.id).toBe("IMPLEMENTATION_VERIFIED");
+    expect(second.reconciliation.to).toBe("REVIEW_REQUIRED");
+    expect(run(root, "--reconcile-one").status).toBe("RECONCILED");
+
+    state = JSON.parse(await readFile(join(root, ".yaaw-core/project/state.json"), "utf8"));
+    expect(state.tickets["TASK-001"]).toBe("REVIEW_REQUIRED");
+    expect(state.transition_sequence).toBe(3);
+  });
+
+  it("does not promote a failed verification merely because evidence exists", async () => {
+    const root = await fixture();
+    const prepared = run(root);
+    await writeStart(root, prepared.handoff.repository);
+    expect(run(root, "--reconcile-one").status).toBe("RECONCILED");
+    await writeVerification(root, prepared.handoff.repository, "FAIL");
+
+    const next = run(root);
+    expect(next.status).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("implementation.verify-ticket");
+    const state = JSON.parse(await readFile(join(root, ".yaaw-core/project/state.json"), "utf8"));
+    expect(state.tickets["TASK-001"]).toBe("IN_PROGRESS");
   });
 });

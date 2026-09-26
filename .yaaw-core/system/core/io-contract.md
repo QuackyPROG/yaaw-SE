@@ -18,3 +18,6 @@ public intent
 ```
 
 Worker text is an execution signal, not project truth. Filesystem access never grants semantic authority.
+
+## Host-execution typed stops
+`HOST_EXECUTION_PROFILE_UNAVAILABLE` means an execution mechanism existed, but it could not guarantee the configured authority profile. `HOST_ISOLATION_UNAVAILABLE` means strict isolation was required but unavailable. When either stop happens before child creation, no authority worker ran, so it is not an authority execution failure.

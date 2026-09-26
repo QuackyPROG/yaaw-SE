@@ -50,7 +50,7 @@ class FreshContextConformanceTest(unittest.TestCase):
     def test_fixture_frontmatter_covers_schema_required_fields(self):
         pairs = [
             ("product.schema.json", FIXTURE / "product.md"),
-            ("engineering.schema.json", FIXTURE / "engineering.md"),
+            ("engineering-v2.schema.json", FIXTURE / "engineering.md"),
             ("spec.schema.json", FIXTURE / "specs" / "SPEC-001.md"),
             ("ticket.schema.json", FIXTURE / "tickets" / "TASK-001.md"),
             ("review.schema.json", FIXTURE / "reviews" / "TASK-001-R1.md"),

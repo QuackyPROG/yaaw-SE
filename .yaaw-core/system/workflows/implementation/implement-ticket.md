@@ -7,7 +7,7 @@ Implement one admitted bounded ticket while making interruption recoverable from
 Reconciled state says the ticket is `READY`; source revisions are current; dependencies pass; repository identity is `READY`.
 
 ## Procedure
-1. Read the exact handoff, state, ticket, source contracts, applicable rules/expertise, and minimal code.
+1. Read the exact handoff, state, ticket, source contracts, `.yaaw-core/system/rules/changeability.md`, applicable expertise, and minimal code.
 2. Before editing any application file, write immutable v3 `implementation_start` evidence with result `STARTED`, current ticket/spec revisions, workflow ID, and the exact pre-edit repository identity.
 3. Only after that durable start fact exists, implement strictly inside allowed scope.
 4. If a material contract gap appears, stop with `REPLAN_REQUIRED` or `BLOCKED`; do not invent it.
