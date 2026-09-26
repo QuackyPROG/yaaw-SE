@@ -321,7 +321,7 @@ export async function runInstall(options: InstallCommandOptions = {}) {
   const changed = await executePlan(built.plan, {
     manifestPath,
     manifestContent: serializeManifest(built.manifest!),
-    beforeManifest: async () => verifyInstalledState(projectRoot, tools, skills)
+    beforeManifest: async () => verifyInstalledState(projectRoot, tools, skills, built.manifest!)
   } as any);
   spinner?.stop("Changes applied and verified");
   const result = { ok:true, projectRoot, version, tools, skills, changed, configurationUpdates: pendingConfigurationUpdates };

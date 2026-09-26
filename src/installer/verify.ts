@@ -2,12 +2,13 @@ import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getIntegration } from "../integrations/registry.js";
 import type { IntegrationId } from "../integrations/types.js";
+import type { InstallationManifest } from "./types.js";
 
 async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
 }
 
-export async function verifyInstalledState(projectRoot: string, integrations: IntegrationId[], skills: string[]): Promise<void> {
+export async function verifyInstalledState(projectRoot: string, integrations: IntegrationId[], skills: string[], prospectiveManifest?: InstallationManifest): Promise<void> {
   const required = [
     ".yaaw-core/system/core",
     ".yaaw-core/system/roles",
@@ -36,7 +37,9 @@ export async function verifyInstalledState(projectRoot: string, integrations: In
   }
 
   for (const id of integrations) {
-    const result = await getIntegration(id).verify({ projectRoot, payloadRoot: "" }, skills);
+    const record = prospectiveManifest?.integrations?.[id];
+    const settings = record?.configuration?.settings ?? record?.runtime;
+    const result = await getIntegration(id).verify({ projectRoot, payloadRoot: "", settings }, skills);
     issues.push(...result.issues.map(issue=>`${id}: ${issue}`));
   }
 
