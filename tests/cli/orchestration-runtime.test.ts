@@ -309,6 +309,43 @@ expertise: []
     expect(next.handoff.active_artifact).toBe(".yaaw-core/project/tickets/TASK-002.md");
   });
 
+  it("routes and adopts registered DRAFT admission without entering recovery", async () => {
+    const root = await fixture();
+    const statePath = join(root, ".yaaw-core/project/state.json");
+    const ticketPath = join(root, ".yaaw-core/project/tickets/TASK-001.md");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.tickets["TASK-001"] = "DRAFT";
+    state.active_ticket = "TASK-001";
+    await writeFile(statePath, JSON.stringify(state, null, 2) + "\n");
+
+    const originalTicket = await readFile(ticketPath, "utf8");
+    await writeFile(ticketPath, originalTicket.replace("status: READY", "status: DRAFT"));
+
+    const planner = run(root);
+    expect(planner.status).toBe("DISPATCH_READY");
+    expect(planner.workflow).toBe("planning.create-tickets");
+    expect(planner.role).toBe("planner");
+    expect(planner.handoff.references).toContain(".yaaw-core/project/tickets/TASK-001.md");
+
+    const draftTicket = await readFile(ticketPath, "utf8");
+    await writeFile(ticketPath, draftTicket.replace("status: DRAFT", "status: READY"));
+
+    const admission = run(root);
+    expect(admission.status).toBe("RECONCILE_REQUIRED");
+    expect(admission.reconciliation.id).toBe("TICKET_ADMISSION");
+    expect(admission.reconciliation.from).toBe("DRAFT");
+    expect(admission.reconciliation.to).toBe("READY");
+
+    expect(run(root, "--reconcile-one").status).toBe("RECONCILED");
+    const reconciled = JSON.parse(await readFile(statePath, "utf8"));
+    expect(reconciled.tickets["TASK-001"]).toBe("READY");
+
+    const implement = run(root);
+    expect(implement.status).toBe("DISPATCH_READY");
+    expect(implement.workflow).toBe("implementation.implement-ticket");
+    expect(implement.role).toBe("implementer");
+  });
+
   it("creates recovery handoffs for stale review evidence instead of BLOCKED", async () => {
     const root = await fixture();
     const prepared = run(root);

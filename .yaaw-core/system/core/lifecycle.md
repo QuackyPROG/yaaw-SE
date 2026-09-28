@@ -7,6 +7,8 @@ product missing/unready -> PRD
 product ready, planning unresolved -> Planner
 planning ready, spec missing -> create/adopt spec
 spec accepted, tickets missing -> create/register tickets
+registered DRAFT + dependencies PASS -> Planner re-evaluates admission
+Planner persists current DRAFT -> READY -> Orchestrator adopts TICKET_ADMISSION
 READY -> implementation_start fact -> IN_PROGRESS
 IN_PROGRESS -> PASS verification fact -> REVIEW_REQUIRED
 REVIEW_REQUIRED -> immutable Reviewer result -> PASS | REPAIR_REQUIRED | REPLAN_REQUIRED | BLOCKED
@@ -15,7 +17,7 @@ PASS + scope_status OPEN/UNKNOWN -> Planner
 all current tickets PASS/CANCELLED + scope_status COMPLETE -> COMPLETE
 ```
 
-One reconciliation is applied per observation cycle; recovery never jumps directly from `READY` to `REVIEW_REQUIRED`.
+One reconciliation is applied per observation cycle; recovery never jumps directly from `READY` to `REVIEW_REQUIRED`. Recovery is interruption-only and must not be used as the fallback for a current `DRAFT` ticket or missing planning admission.
 
 ## Fresh-context invariant
 Conversation may disappear at any point. Durable artifacts and repository evidence must still identify the correct next boundary.

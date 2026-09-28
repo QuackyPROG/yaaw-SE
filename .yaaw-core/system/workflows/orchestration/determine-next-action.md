@@ -14,7 +14,7 @@ The runtime reads the machine routing/execution/role-I/O/handoff policies, curre
 
 - `DISPATCH_READY`: consume the persisted handoff; do not rebuild it.
 - `RECONCILE_REQUIRED`: execute only `orchestration.reconcile-state` before preparing again.
-- `ROOT_ACTION`: execute only the selected Orchestrator recovery workflow.
+- `ROOT_ACTION`: execute only the selected Orchestrator recovery workflow. This result is valid only for a proven interruption boundary; ordinary `DRAFT` admission routes to Planner.
 - `TERMINAL`/`BLOCKED`/`FRAMEWORK_STOP`: write no executable handoff.
 
 ## Boundary

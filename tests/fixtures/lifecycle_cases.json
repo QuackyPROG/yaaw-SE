@@ -15,7 +15,9 @@
     {"id":"L-more-scope","scenario":{"ticket_state":"PASS","verify":"PASS","review":"PASS","scope_status":"OPEN","phase":"implementation"},"expected":{"kind":"DISPATCH_READY","workflow":"planning.route"}},
     {"id":"M-unknown-completion","scenario":{"ticket_state":"PASS","verify":"PASS","review":"PASS","scope_status":"UNKNOWN","phase":"implementation"},"expected":{"kind":"DISPATCH_READY","workflow":"planning.route"}},
     {"id":"N-implement-intent-prerequisite","scenario":{"spec":true,"ticket_state":null,"intent":"IMPLEMENT"},"expected":{"kind":"DISPATCH_READY","workflow":"planning.create-tickets"}},
-    {"id":"O-review-intent-wrong-state","scenario":{"ticket_state":"READY","intent":"REVIEW"},"expected":{"kind":"ROOT_ACTION","workflow":"orchestration.recover-interruption"}},
-    {"id":"P-framework-modified","scenario":{"framework_status":"MODIFIED","ticket_state":"READY"},"expected":{"kind":"FRAMEWORK_STOP"}}
+    {"id":"O-review-intent-wrong-state","scenario":{"ticket_state":"READY","intent":"REVIEW"},"expected":{"kind":"BLOCKED"}},
+    {"id":"P-framework-modified","scenario":{"framework_status":"MODIFIED","ticket_state":"READY"},"expected":{"kind":"FRAMEWORK_STOP"}},
+    {"id":"Q-draft-admission-route","scenario":{"ticket_state":"DRAFT","ticket_artifact_state":"DRAFT"},"expected":{"kind":"DISPATCH_READY","workflow":"planning.create-tickets"}},
+    {"id":"R-draft-admission-adoption","scenario":{"ticket_state":"DRAFT","ticket_artifact_state":"READY"},"expected":{"kind":"RECONCILE_REQUIRED","reconciliation":"TICKET_ADMISSION","to":"READY"}}
   ]
 }

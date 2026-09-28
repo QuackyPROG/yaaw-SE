@@ -6,12 +6,13 @@
     {"id": "PLANNING_LEDGER_SYNC", "priority": 3},
     {"id": "ACTIVE_SPEC_UNADOPTED", "priority": 4},
     {"id": "TICKET_UNREGISTERED", "priority": 5},
-    {"id": "CONTRACT_SOURCE_STALE", "priority": 6},
-    {"id": "IMPLEMENTATION_STARTED", "priority": 7},
-    {"id": "IMPLEMENTATION_VERIFIED", "priority": 8},
-    {"id": "REVIEW_RESULT_UNAPPLIED", "priority": 9},
-    {"id": "ACCEPTANCE_STALE", "priority": 10},
-    {"id": "PROJECT_COMPLETION_SYNC", "priority": 11}
+    {"id": "TICKET_ADMISSION", "priority": 6},
+    {"id": "CONTRACT_SOURCE_STALE", "priority": 7},
+    {"id": "IMPLEMENTATION_STARTED", "priority": 8},
+    {"id": "IMPLEMENTATION_VERIFIED", "priority": 9},
+    {"id": "REVIEW_RESULT_UNAPPLIED", "priority": 10},
+    {"id": "ACCEPTANCE_STALE", "priority": 11},
+    {"id": "PROJECT_COMPLETION_SYNC", "priority": 12}
   ],
   "one_reconciliation_per_cycle": true
 }

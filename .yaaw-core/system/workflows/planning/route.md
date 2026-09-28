@@ -18,8 +18,9 @@ Do not open candidate planning workflow bodies before one route is selected.
 6. unresolved human-owned engineering decisions -> `planning.question-round`;
 7. readiness not current -> `planning.readiness-review`;
 8. readiness PASS but no current accepted spec -> `planning.create-spec`;
-9. accepted spec lacks admitted tickets -> `planning.create-tickets`;
-10. otherwise return planning frontier `READY`.
+9. accepted spec lacks tickets, or a current dependency-satisfied `DRAFT` needs admission re-evaluation -> `planning.create-tickets`;
+10. current `DRAFT` tickets whose dependencies are not yet `PASS` do not preempt runnable implementation/review work; normal orchestration continues their prerequisites;
+11. otherwise return planning frontier `READY`.
 
 After each selected workflow persists durable output, return to routing before loading another workflow.
 
