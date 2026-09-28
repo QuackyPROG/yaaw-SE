@@ -189,7 +189,7 @@ export function intentComplete(i,state,a){
 export function selectRoute({state,artifacts:a,evidence=[],reviews=[],repository,intent,routingPolicy}){
   const normal=baseRoute(state,a,evidence,reviews,repository,routingPolicy);if(!intent||intent.desired_outcome==="CONTINUE")return normal;
   if(intentComplete(intent,state,a))return{kind:"INTENT_COMPLETE",reason:intent.completion_kind};
-  if(intent.requested_workflow&&legalNow(intent.requested_workflow,state,a)){const map={"implementation.implement-ticket":"READY","implementation.repair-ticket":"REPAIR_REQUIRED","review.review-ticket":"REVIEW_REQUIRED"},st=map[intent.requested_workflow],ticket=st&&Object.keys(state.tickets??{}).sort().find(id=>state.tickets[id]===st);return{kind:"DISPATCH_READY",workflow:intent.requested_workflow,...(ticket?{ticket}:{})};}
+  if(intent.requested_workflow&&legalNow(intent.requested_workflow,state,a)){const map={"implementation.implement-ticket":"READY","implementation.repair-ticket":"REPAIR_REQUIRED","review.review-ticket":"REVIEW_REQUIRED"},st=map[intent.requested_workflow];let ticket=st&&Object.keys(state.tickets??{}).sort().find(id=>state.tickets[id]===st);if(intent.requested_workflow==="planning.create-tickets")ticket=currentTicketIds(state,a).find(id=>state.tickets?.[id]==="DRAFT"&&deps(id,a,state))??null;return{kind:"DISPATCH_READY",workflow:intent.requested_workflow,...(ticket?{ticket}:{})};}
   if(["REVIEW","REPAIR"].includes(intent.desired_outcome))return{kind:"BLOCKED",terminal:"BLOCKED",reason:intent.desired_outcome+"_PRECONDITION_UNSATISFIED"};
   return normal;
 }
