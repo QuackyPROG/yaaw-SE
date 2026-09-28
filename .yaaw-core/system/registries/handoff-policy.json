@@ -23,9 +23,9 @@
     },
     "planning.create-tickets": {
       "desired_intent": "CREATE_TICKETS", "active_artifact": "spec",
-      "reads": ["product","engineering","engineering_research","spec","project_rule","repository","state"], "writes": ["ticket"],
+      "reads": ["product","engineering","engineering_research","spec","ticket","project_rule","repository","state"], "writes": ["ticket"],
       "required_expertise": [], "ticket_expertise": false,
-      "expected_output": "Dependency-aware executable tickets for the accepted specification or a typed prerequisite/stop result.",
+      "expected_output": "Dependency-aware tickets for the accepted specification, including re-evaluation of current DRAFT admission candidates, or a typed prerequisite/stop result.",
       "result_vocabulary": ["SUCCESS","PRECONDITION_UNSATISFIED","BLOCKED"]
     },
     "planning.replan": {

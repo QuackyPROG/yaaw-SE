@@ -92,6 +92,59 @@ describe("production orchestration engine",()=>{
     const p:any=planNext(x); expect(p.reconciliation.to).toBe("REVIEW_REQUIRED");
   });
 
+  it("routes an actionable registered DRAFT back to Planner admission instead of recovery",async()=>{
+    const x:any=await base("DRAFT");
+    x.artifacts.tickets["TASK-001"].meta.status="DRAFT";
+    const p:any=planNext(x);
+    expect(p.kind).toBe("DISPATCH_READY");
+    expect(p.workflow).toBe("planning.create-tickets");
+    expect(p.ticket).toBe("TASK-001");
+    expect(p.reason).toBe("TICKET_ADMISSION_REQUIRED");
+  });
+
+  it("adopts Planner READY admission for an already-registered DRAFT before implementation",async()=>{
+    const x:any=await base("DRAFT");
+    const admission:any=planNext(x);
+    expect(admission.kind).toBe("RECONCILE_REQUIRED");
+    expect(admission.reconciliation.id).toBe("TICKET_ADMISSION");
+    expect(admission.reconciliation.from).toBe("DRAFT");
+    expect(admission.reconciliation.to).toBe("READY");
+    x.state=applyReconciliation(x.state,admission.reconciliation,x.repository);
+    const next:any=planNext(x);
+    expect(next.kind).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("implementation.implement-ticket");
+    expect(next.ticket).toBe("TASK-001");
+  });
+
+  it("keeps a runnable prerequisite ahead of a dependency-blocked DRAFT",async()=>{
+    const x:any=await base("READY");
+    x.state.tickets["TASK-002"]="DRAFT";
+    x.artifacts.tickets["TASK-002"]={path:".yaaw-core/project/tickets/TASK-002.md",meta:{id:"TASK-002",revision:1,spec:"SPEC-001",spec_revision:1,product_revision:1,engineering_revision:1,status:"DRAFT",dependencies:["TASK-001"]}};
+    const p:any=planNext(x);
+    expect(p.kind).toBe("DISPATCH_READY");
+    expect(p.workflow).toBe("implementation.implement-ticket");
+    expect(p.ticket).toBe("TASK-001");
+  });
+
+  it("does not declare CREATE_TICKETS intent complete while actionable DRAFT admission remains",async()=>{
+    const x:any=await base("DRAFT");
+    x.artifacts.tickets["TASK-001"].meta.status="DRAFT";
+    x.intent={schema:"yaaw.intent/v2",source_skill:"yaaw-create-tickets",desired_outcome:"CREATE_TICKETS",requested_workflow:"planning.create-tickets",target_artifact:null,completion_kind:"TICKETS_REGISTERED",created_from_transition_sequence:1};
+    const p:any=planNext(x);
+    expect(p.kind).toBe("DISPATCH_READY");
+    expect(p.workflow).toBe("planning.create-tickets");
+    expect(p.ticket).toBe("TASK-001");
+  });
+
+  it("uses typed shortcut precondition failure instead of interruption recovery",async()=>{
+    const x:any=await base("READY");
+    x.intent={schema:"yaaw.intent/v2",source_skill:"yaaw-review",desired_outcome:"REVIEW",requested_workflow:"review.review-ticket",target_artifact:null,completion_kind:"TICKET_REVIEW_APPLIED",created_from_transition_sequence:1};
+    const p:any=planNext(x);
+    expect(p.kind).toBe("BLOCKED");
+    expect(p.reason).toBe("REVIEW_PRECONDITION_UNSATISFIED");
+    expect(p.workflow).toBeUndefined();
+  });
+
   it("blocks ambiguous multiple current accepted specs instead of guessing newest",async()=>{
     const x:any=await base(null); x.state.planning.active_spec=null;
     x.artifacts.specs["SPEC-002"]={path:".yaaw-core/project/specs/SPEC-002.md",meta:{id:"SPEC-002",revision:1,status:"ACCEPTED",product_revision:1,engineering_revision:1,frontier_id:"FRONTIER-001"}};

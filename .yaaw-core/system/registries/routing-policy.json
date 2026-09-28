@@ -4,6 +4,7 @@
   "planning_unready_workflow": "planning.route",
   "missing_spec_workflow": "planning.create-spec",
   "missing_tickets_workflow": "planning.create-tickets",
+  "draft_admission_workflow": "planning.create-tickets",
   "next_frontier_workflow": "planning.route",
   "complete_terminal": "COMPLETE",
   "ticket_state_precedence": [

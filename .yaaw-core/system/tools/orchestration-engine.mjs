@@ -31,7 +31,7 @@ function transition(id,subject,from,to,reason,evidence=[]){return{id,kind:"STATE
 function currentTicketIds(state,a){const s=activeSpec(state,a);return s?Object.keys(state?.tickets??{}).filter(id=>ticketSourceStatus(a?.tickets?.[id]?.meta,state,s)==="CURRENT").sort():[];}
 
 export function selectReconciliation({state,artifacts:a,evidence=[],reviews=[],repository,transitions,reconciliationPolicy,routingPolicy}){
-  const order=["PROJECT_STATE_SCHEMA_MIGRATION_REQUIRED","PRODUCT_LEDGER_SYNC","PLANNING_LEDGER_SYNC","ACTIVE_SPEC_UNADOPTED","TICKET_UNREGISTERED","CONTRACT_SOURCE_STALE","IMPLEMENTATION_STARTED","IMPLEMENTATION_VERIFIED","REVIEW_RESULT_UNAPPLIED","ACCEPTANCE_STALE","PROJECT_COMPLETION_SYNC"];
+  const order=["PROJECT_STATE_SCHEMA_MIGRATION_REQUIRED","PRODUCT_LEDGER_SYNC","PLANNING_LEDGER_SYNC","ACTIVE_SPEC_UNADOPTED","TICKET_UNREGISTERED","TICKET_ADMISSION","CONTRACT_SOURCE_STALE","IMPLEMENTATION_STARTED","IMPLEMENTATION_VERIFIED","REVIEW_RESULT_UNAPPLIED","ACCEPTANCE_STALE","PROJECT_COMPLETION_SYNC"];
   const declared=(reconciliationPolicy?.priority??[]).map(x=>typeof x==="string"?x:x.id);
   if(declared.length&&JSON.stringify(declared)!==JSON.stringify(order))return{id:"RECONCILIATION_POLICY_DRIFT",kind:"BLOCKED",reason:"reconciliation priority differs from engine contract"};
   if(!state)return{id:"PROJECT_STATE_MISSING",kind:"BLOCKED",reason:"project state missing"};
@@ -64,6 +64,17 @@ export function selectReconciliation({state,artifacts:a,evidence=[],reviews=[],r
       if(!["DRAFT","READY"].includes(String(x?.meta?.status)))continue;
       if(ticketSourceStatus(x.meta,state,s)!=="CURRENT")continue;
       return{id:"TICKET_UNREGISTERED",kind:"STATE",subject:id,from:null,to:x.meta.status,reason:"current ticket artifact not registered",workflow:"orchestration.reconcile-state",evidence:[x.path],patch:{ticket:id,status:x.meta.status}};
+    }
+    for(const id of Object.keys(state.tickets??{}).sort()){
+      const st=state.tickets[id],m=a?.tickets?.[id]?.meta;
+      if(st!=="DRAFT"||String(m?.status??"")!=="READY")continue;
+      if(ticketSourceStatus(m,state,s)!=="CURRENT")continue;
+      if(normalizeStatus(state?.planning?.status)!=="ready"||state?.planning?.readiness!=="PASS")continue;
+      if(!deps(id,a,state)||repository?.status!=="READY")continue;
+      const contract=(transitions?.legal??[]).find(x=>x.from==="DRAFT"&&x.to==="READY");
+      if(contract?.owner!=="planner"||contract?.workflow!=="planning.create-tickets")
+        return{id:"ILLEGAL_TICKET_ADMISSION_CONTRACT",kind:"BLOCKED",reason:"DRAFT -> READY admission must be owned by Planner planning.create-tickets"};
+      return transition("TICKET_ADMISSION",id,"DRAFT","READY","PLANNER_ADMISSION_CURRENT",[a.tickets[id].path,s.path]);
     }
     for(const id of Object.keys(state.tickets??{}).sort()){
       const st=state.tickets[id];if(!EXECUTABLE.has(st))continue;
@@ -143,9 +154,13 @@ function baseRoute(state,a,evidence,reviews,repository,p){
   }
   const ip=ids.find(x=>tickets[x]==="IN_PROGRESS");if(ip){const m=a.tickets[ip].meta;return start(evidence,ip,Number(m.revision),Number(s.revision))?{kind:"DISPATCH_READY",workflow:"implementation.verify-ticket",ticket:ip}:{kind:"ROOT_ACTION",workflow:"orchestration.recover-interruption",ticket:ip,reason:"IMPLEMENTATION_START_EVIDENCE_MISSING"};}
   const ready=ids.find(x=>tickets[x]==="READY"&&deps(x,a,state));if(ready)return{kind:"DISPATCH_READY",workflow:"implementation.implement-ticket",ticket:ready};
+  const draft=ids.find(x=>tickets[x]==="DRAFT"&&deps(x,a,state));if(draft)return{kind:"DISPATCH_READY",workflow:p.draft_admission_workflow??"planning.create-tickets",ticket:draft,reason:"TICKET_ADMISSION_REQUIRED"};
   const vals=ids.map(x=>tickets[x]);if(vals.some(x=>x==="BLOCKED"))return{kind:"BLOCKED",terminal:"BLOCKED",reason:"TICKET_BLOCKED"};
   if(vals.length&&vals.every(x=>x==="PASS"||x==="CANCELLED"))return state.planning.scope_status==="COMPLETE"?{kind:"TERMINAL",terminal:p.complete_terminal}:{kind:"DISPATCH_READY",workflow:p.next_frontier_workflow};
-  return{kind:"ROOT_ACTION",workflow:"orchestration.recover-interruption",reason:"NO_SAFE_SEMANTIC_ROUTE"};
+  if(vals.some(x=>x==="DRAFT"))return{kind:"DISPATCH_READY",workflow:p.next_frontier_workflow,reason:"DRAFT_DEPENDENCIES_UNSATISFIED"};
+  const unsupported=vals.find(x=>!["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","REPLAN_REQUIRED","BLOCKED","PASS","CANCELLED","DRAFT"].includes(x));
+  if(unsupported)return{kind:"BLOCKED",terminal:"BLOCKED",reason:"UNSUPPORTED_TICKET_STATE:"+unsupported};
+  return{kind:"DISPATCH_READY",workflow:p.next_frontier_workflow,reason:"PLANNING_ROUTE_REQUIRED"};
 }
 function legalNow(w,state,a){
   const s=activeSpec(state,a),t=state?.tickets??{},productReady=normalizeStatus(state?.product?.status)==="ready";
@@ -153,7 +168,7 @@ function legalNow(w,state,a){
   if(["prd.revise","prd.refine"].includes(w))return Boolean(a?.product?.meta);
   if(["planning.route","planning.readiness-review"].includes(w))return productReady;
   if(w==="planning.create-spec")return productReady&&normalizeStatus(state.planning.status)==="ready"&&state.planning.readiness==="PASS"&&!s;
-  if(w==="planning.create-tickets")return Boolean(s)&&currentTicketIds(state,a).length===0;
+  if(w==="planning.create-tickets"){const ids=currentTicketIds(state,a);return Boolean(s)&&(ids.length===0||ids.some(id=>t[id]==="DRAFT"&&deps(id,a,state)));}
   if(w==="implementation.implement-ticket")return Object.values(t).includes("READY");
   if(w==="implementation.repair-ticket")return Object.values(t).includes("REPAIR_REQUIRED");
   if(w==="review.review-ticket")return Object.values(t).includes("REVIEW_REQUIRED");
@@ -162,7 +177,7 @@ function legalNow(w,state,a){
 export function intentComplete(i,state,a){
   if(!i)return false;const target=String(i.target_artifact??"").match(/TASK-[0-9]+/)?.[0]??null,o=i.desired_outcome,advanced=Number(state?.last_transition?.sequence??0)>Number(i.created_from_transition_sequence??0);
   if(o==="CREATE_SPEC")return currentAcceptedSpecs(state,a).length===1;
-  if(o==="CREATE_TICKETS")return currentTicketIds(state,a).length>0;
+  if(o==="CREATE_TICKETS"){const ids=currentTicketIds(state,a);return ids.length>0&&!ids.some(id=>state.tickets?.[id]==="DRAFT"&&deps(id,a,state));}
   if(o==="IMPLEMENT"||o==="REPAIR")return target?state.tickets?.[target]==="REVIEW_REQUIRED":advanced&&state.last_transition?.to==="REVIEW_REQUIRED";
   if(o==="REVIEW")return target?Boolean(state.tickets?.[target]&&state.tickets[target]!=="REVIEW_REQUIRED"):advanced&&state.last_transition?.workflow==="review.record-review";
   if(o==="CONTINUE_PRODUCT")return normalizeStatus(state.product?.status)==="ready";
@@ -174,8 +189,8 @@ export function intentComplete(i,state,a){
 export function selectRoute({state,artifacts:a,evidence=[],reviews=[],repository,intent,routingPolicy}){
   const normal=baseRoute(state,a,evidence,reviews,repository,routingPolicy);if(!intent||intent.desired_outcome==="CONTINUE")return normal;
   if(intentComplete(intent,state,a))return{kind:"INTENT_COMPLETE",reason:intent.completion_kind};
-  if(intent.requested_workflow&&legalNow(intent.requested_workflow,state,a)){const map={"implementation.implement-ticket":"READY","implementation.repair-ticket":"REPAIR_REQUIRED","review.review-ticket":"REVIEW_REQUIRED"},st=map[intent.requested_workflow],ticket=st&&Object.keys(state.tickets??{}).sort().find(id=>state.tickets[id]===st);return{kind:"DISPATCH_READY",workflow:intent.requested_workflow,...(ticket?{ticket}:{})};}
-  if(["REVIEW","REPAIR"].includes(intent.desired_outcome))return{kind:"ROOT_ACTION",workflow:"orchestration.recover-interruption",reason:intent.desired_outcome+"_PRECONDITION_UNSATISFIED"};
+  if(intent.requested_workflow&&legalNow(intent.requested_workflow,state,a)){const map={"implementation.implement-ticket":"READY","implementation.repair-ticket":"REPAIR_REQUIRED","review.review-ticket":"REVIEW_REQUIRED"},st=map[intent.requested_workflow];let ticket=st&&Object.keys(state.tickets??{}).sort().find(id=>state.tickets[id]===st);if(intent.requested_workflow==="planning.create-tickets")ticket=currentTicketIds(state,a).find(id=>state.tickets?.[id]==="DRAFT"&&deps(id,a,state))??null;return{kind:"DISPATCH_READY",workflow:intent.requested_workflow,...(ticket?{ticket}:{})};}
+  if(["REVIEW","REPAIR"].includes(intent.desired_outcome))return{kind:"BLOCKED",terminal:"BLOCKED",reason:intent.desired_outcome+"_PRECONDITION_UNSATISFIED"};
   return normal;
 }
 export function applyReconciliation(state,r,repo){
