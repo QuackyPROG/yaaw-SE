@@ -165,3 +165,33 @@ TASK-006 DRAFT + dependencies PASS
 ```
 
 Ordinary `DRAFT` handling must never select `orchestration.recover-interruption`.
+
+
+## Cross-platform handoff path normalization
+
+The cumulative PR gate exposed a Windows-only portability defect in the runtime handoff serializer. Artifact discovery used absolute filesystem paths internally, then attempted to strip the workspace prefix with string replacement:
+
+```text
+p.replace(workspace + "/", "")
+```
+
+That is not portable because Windows resolves the workspace with backslash separators while the stripping suffix used a forward slash. The replacement therefore missed, and handoffs leaked absolute temporary paths such as:
+
+```text
+C:/Users/.../Temp/.../.yaaw-core/project/tickets/TASK-001.md
+```
+
+This violated the handoff contract and also made persisted runtime state machine output host-specific.
+
+The runtime now computes artifact paths using `node:path.relative(workspace, artifactPath)` and then normalizes separators to `/`.
+
+Required invariant:
+
+```text
+internal filesystem path
+  -> path.relative(workspace, artifact)
+  -> normalize separator to "/"
+  -> .yaaw-core/project/...
+```
+
+This keeps `active_artifact` and `references` canonical across Linux, macOS, and Windows. Existing runtime tests already required these portable paths; the Windows PR job exposed that the previous implementation only satisfied the assertion on POSIX hosts.
