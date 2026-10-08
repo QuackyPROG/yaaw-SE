@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseFrontmatter } from "./frontmatter.mjs";
 import { deriveState, planNext, chooseIntentTarget } from "./routing.mjs";
@@ -9,21 +9,22 @@ import { deriveState, planNext, chooseIntentTarget } from "./routing.mjs";
 const hash=v=>"sha256:"+createHash("sha256").update(v).digest("hex");
 const stable=value=>Array.isArray(value)?value.map(stable):(value&&typeof value==="object"?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value);
 const same=(a,b)=>JSON.stringify(stable(a))===JSON.stringify(stable(b));
+const rel=(root,path)=>relative(root,path).replaceAll("\\","/");
 async function exists(path){try{await access(path);return true}catch{return false}}
 async function json(path,fallback=null){try{return JSON.parse(await readFile(path,"utf8"))}catch{return fallback}}
-async function meta(path){try{const raw=await readFile(path,"utf8");return{path,meta:parseFrontmatter(raw),digest:hash(Buffer.from(raw,"utf8"))}}catch{return null}}
+async function meta(root,path){try{const raw=await readFile(path,"utf8");return{path:rel(root,path),meta:parseFrontmatter(raw),digest:hash(Buffer.from(raw,"utf8"))}}catch{return null}}
 async function list(dir,ext){try{return(await readdir(dir)).filter(x=>x.endsWith(ext)).sort()}catch{return[]}}
 function execJson(file,workspace){const r=spawnSync(process.execPath,[file,"--workspace",workspace],{encoding:"utf8",windowsHide:true});let value=null;try{value=JSON.parse(r.stdout)}catch{}return value??{status:"UNKNOWN",error:r.stderr||`exit ${r.status}`}}
 function argsOf(argv){const out={workspace:process.cwd(),invoke:null,inspect:false,reconcile:false,check:false};for(let i=0;i<argv.length;i+=1){const x=argv[i];if(x==="--workspace"&&argv[i+1]){out.workspace=argv[++i]}else if(x==="--invoke-skill"&&argv[i+1]){out.invoke=argv[++i]}else if(x==="--inspect-only")out.inspect=true;else if(x==="--reconcile-one")out.reconcile=true;else if(x==="--check-handoff")out.check=true;else throw new Error(`unknown argument: ${x}`)}return out}
 
 async function inspectArtifacts(root){
-  const p=join(root,".yaaw-core","project"),product=await meta(join(p,"product.md")),engineering=await meta(join(p,"engineering.md")),specs={},tickets={},reviews={},evidence={},research={},rules={};
-  for(const name of await list(join(p,"specs"),".md")){const x=await meta(join(p,"specs",name));if(x?.meta?.id)specs[x.meta.id]=x}
-  for(const name of await list(join(p,"tickets"),".md")){const x=await meta(join(p,"tickets",name));if(x?.meta?.id)tickets[x.meta.id]=x}
-  for(const name of await list(join(p,"reviews"),".md")){const x=await meta(join(p,"reviews",name));if(x?.meta?.ticket)reviews[name]=x}
-  for(const name of await list(join(p,"evidence"),".json")){const x=await json(join(p,"evidence",name));if(x?.id){x.path=join(p,"evidence",name);evidence[x.id]=x}}
-  for(const name of await list(join(p,"research"),".md")){const x=await meta(join(p,"research",name));if(x)research[name]=x}
-  for(const name of await list(join(p,"rules"),".md")){const x=await meta(join(p,"rules",name));if(x)rules[name]=x}
+  const p=join(root,".yaaw-core","project"),product=await meta(root,join(p,"product.md")),engineering=await meta(root,join(p,"engineering.md")),specs={},tickets={},reviews={},evidence={},research={},rules={};
+  for(const name of await list(join(p,"specs"),".md")){const x=await meta(root,join(p,"specs",name));if(x?.meta?.id)specs[x.meta.id]=x}
+  for(const name of await list(join(p,"tickets"),".md")){const x=await meta(root,join(p,"tickets",name));if(x?.meta?.id)tickets[x.meta.id]=x}
+  for(const name of await list(join(p,"reviews"),".md")){const x=await meta(root,join(p,"reviews",name));if(x?.meta?.ticket)reviews[name]=x}
+  for(const name of await list(join(p,"evidence"),".json")){const x=await json(join(p,"evidence",name));if(x?.id){x.path=rel(root,join(p,"evidence",name));evidence[x.id]=x}}
+  for(const name of await list(join(p,"research"),".md")){const x=await meta(root,join(p,"research",name));if(x)research[name]=x}
+  for(const name of await list(join(p,"rules"),".md")){const x=await meta(root,join(p,"rules",name));if(x)rules[name]=x}
   return{product,engineering,specs,tickets,reviews,evidence,research,rules};
 }
 function frameworkBasis(i){return{yaaw_version:i.package_version??"unknown",system_schema:Number(i.system_schema??0),installation_schema:Number(i.installation_schema??0),project_schema:Number(i.project_schema??0),manifest_digest:i.manifest_digest??"unknown",integrity_status:i.status??"UNKNOWN"}}
@@ -46,11 +47,11 @@ async function main(){
   let intent=await json(join(runtime,"intent.json"));if(opt.invoke)intent=await seedIntent(root,kernel,opt.invoke,state,a);
   const planned=planNext(kernel,state,a,repo,intent),reconciliation=planned.type==="RECONCILE_REQUIRED"?planned.reconciliation:null;await observed(root,integrity,repo,state,a,reconciliation);
   if(opt.inspect){console.log(JSON.stringify({type:"INSPECTED",state,reconciliation}));return}
-  if(opt.reconcile){if(!reconciliation){console.log(JSON.stringify({type:"NO_RECONCILIATION"}));return}if(reconciliation.kind==="BLOCKED"){console.log(JSON.stringify({type:"BLOCKED",reason:reconciliation.reason}));return}const ticket=a.tickets?.[reconciliation.subject];if(!ticket)throw new Error(`reconciliation ticket missing: ${reconciliation.subject}`);const raw=await readFile(ticket.path,"utf8");await writeFile(ticket.path,patchStatus(raw,reconciliation.to),"utf8");for(const file of ["observed-state.json","handoff.json"])try{await writeFile(join(runtime,file),"")}catch{}console.log(JSON.stringify({type:"RECONCILED",reconciliation}));return}
+  if(opt.reconcile){if(!reconciliation){console.log(JSON.stringify({type:"NO_RECONCILIATION"}));return}if(reconciliation.kind==="BLOCKED"){console.log(JSON.stringify({type:"BLOCKED",reason:reconciliation.reason}));return}const ticket=a.tickets?.[reconciliation.subject];if(!ticket)throw new Error(`reconciliation ticket missing: ${reconciliation.subject}`);const ticketPath=join(root,ticket.path),raw=await readFile(ticketPath,"utf8");await writeFile(ticketPath,patchStatus(raw,reconciliation.to),"utf8");for(const file of ["observed-state.json","handoff.json"])try{await writeFile(join(runtime,file),"")}catch{}console.log(JSON.stringify({type:"RECONCILED",reconciliation}));return}
   if(opt.check){const old=await json(join(runtime,"handoff.json"));if(!old){console.log(JSON.stringify({type:"HANDOFF_STALE",reason:"missing handoff"}));return}const candidate=handoff(kernel,integrity,state,a,repo,old.workflow,old.ticket,intent);console.log(JSON.stringify(same(old,candidate)?{type:"HANDOFF_FRESH"}:{type:"HANDOFF_STALE",reason:"durable basis changed"}));return}
   if(planned.type!=="ROUTE"){if(planned.type!=="RECONCILE_REQUIRED")try{await writeFile(join(runtime,"handoff.json"),"")}catch{}console.log(JSON.stringify(planned));return}
   if(planned.terminal){console.log(JSON.stringify({type:"TERMINAL",terminal:planned.terminal}));return}if(planned.blocked){console.log(JSON.stringify({type:"BLOCKED",reason:planned.blocked,ticket:planned.ticket??null}));return}
   const wf=kernel.workflows[planned.workflow];if(!wf)throw new Error(`unknown workflow ${planned.workflow}`);if(wf.role==="orchestrator"){console.log(JSON.stringify({type:"ROOT_ACTION",workflow:planned.workflow,ticket:planned.ticket??null}));return}if(!repoAllowed(wf.repository_requirement,repo)){console.log(JSON.stringify({type:"BLOCKED",reason:"PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE",workflow:planned.workflow}));return}
-  const h=handoff(kernel,integrity,state,a,repo,planned.workflow,planned.ticket??null,intent);await mkdir(runtime,{recursive:true});await writeFile(join(runtime,"handoff.json"),JSON.stringify(h,null,2)+"\n");console.log(JSON.stringify({type:"DISPATCH_READY",workflow:planned.workflow,role:h.role,operation:h.operation,ticket:h.ticket,handoff:join(runtime,"handoff.json")}));
+  const h=handoff(kernel,integrity,state,a,repo,planned.workflow,planned.ticket??null,intent);await mkdir(runtime,{recursive:true});await writeFile(join(runtime,"handoff.json"),JSON.stringify(h,null,2)+"\n");console.log(JSON.stringify({type:"DISPATCH_READY",workflow:planned.workflow,role:h.role,operation:h.operation,ticket:h.ticket,handoff:rel(root,join(runtime,"handoff.json"))}));
 }
 main().catch(error=>{process.stdout.write(JSON.stringify({type:"FRAMEWORK_STOP",reason:"FRAMEWORK_CONTRACT_INCONSISTENCY",error:String(error?.stack??error)})+"\n");process.exitCode=2});

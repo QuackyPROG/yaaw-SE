@@ -2,13 +2,13 @@
 
 This project uses YAAW-SE.
 
-- Canonical YAAW implementation: `.yaaw-core/system/`
+- Canonical compact system contract: `.yaaw-core/system/SYSTEM.md`
+- Machine kernel: `.yaaw-core/system/kernel.yaml`
+- Deterministic runtime: `.yaaw-core/system/engine/runtime.mjs`
 - Durable project memory: `.yaaw-core/project/`
+- Replaceable coordination: `.yaaw-core/runtime/`
 - Public Codex skills: `.agents/skills/yaaw-*/`
 - Codex execution adapter: `.codex/yaaw-runtime.md`
-- Treat `.yaaw-core/project/` as durable project state.
-- Do not duplicate YAAW workflow logic into `AGENTS.md` or `.codex/`.
-- Resolve the YAAW workspace root before shell/repository work; follow `.yaaw-core/system/core/execution-context.md`.
-- Load workflows progressively; follow `.yaaw-core/system/core/context-loading.md`.
-- When a YAAW skill is invoked, treat it as a public intent entrypoint: run the canonical orchestration runtime with `--invoke-skill <skill-id>`; never execute semantic role logic directly from the wrapper.
-- When autonomous orchestration reaches `orchestration.dispatch`, follow `.codex/yaaw-runtime.md` for host-specific isolated-worker execution.
+- Never treat runtime cache or worker prose as semantic truth; reconstruct from durable artifacts.
+- When a YAAW skill is invoked, run the compact runtime with `--invoke-skill <skill-id>`; never execute semantic role logic directly from the wrapper.
+- When runtime returns `DISPATCH_READY`, follow `.codex/yaaw-runtime.md` for host-specific isolated authority execution.

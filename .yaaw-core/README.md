@@ -4,49 +4,51 @@
 
 ```text
 .yaaw-core/
-├── system/   package-owned canonical implementation
+├── system/   package-owned compact kernel
 ├── project/  durable project-owned semantic memory
-├── runtime/  replaceable coordination caches
+├── runtime/  replaceable derived coordination
 └── install/  installer metadata
 ```
 
 ## Mental model
-
 Agents/authority contexts are disposable. Durable artifacts are the memory.
 
 ```text
 PUBLIC SKILL
     ↓ intent
-ORCHESTRATION RUNTIME
-    ↓ observe framework/repository/artifacts
-RECONCILIATION ENGINE
-    ↓ exactly one legal adoption
-STATE LEDGER
-    ↓ route + exact handoff
+COMPACT RUNTIME
+    ↓ inspect framework/repository/artifacts
+DERIVE STATE + ONE LEGAL RECONCILIATION
+    ↓ exact route/handoff
 ONE SEMANTIC AUTHORITY
     ↓ durable fact
 OBSERVE AGAIN
 ```
 
-PRD owns product meaning. Planner owns engineering meaning, specs, tickets, and `scope_status`. Implementer owns application changes plus implementation-start/verification evidence. Reviewer owns immutable acceptance judgment. Orchestrator alone physically writes `state.json`, but only from durable facts authorized by those roles.
+PRD owns product meaning. Planner owns engineering meaning, specs, tickets, and `scope_status`. Implementer owns application changes plus implementation evidence. Reviewer owns immutable acceptance judgment. Orchestrator owns observation/routing and may physically update only the ticket lifecycle `status` scalar when durable evidence or an authorized semantic result proves a legal transition.
 
-Worker output does not update lifecycle state directly. Workers write durable semantic facts. Orchestrator observes those facts and records legal lifecycle changes.
+There is no durable global `state.json`. Ticket status is stored with the ticket contract; product/planning/spec state is derived from their own frontmatter. `.yaaw-core/runtime/` contains only replaceable intent, observation, handoff, and failure caches.
+
+## Compact system
+`.yaaw-core/system/` contains:
+- `SYSTEM.md` — human-readable invariants and architecture;
+- `kernel.yaml` — machine contract for paths, artifacts, roles, workflows, handoffs, skills, modules, and lifecycle;
+- `roles/` — five semantic authorities with named operations;
+- `modules/` — optional expertise loaded after routing;
+- `schemas/` and `templates/` — artifact/runtime contracts;
+- `engine/` — integrity, repository identity, frontmatter, routing, and runtime utilities.
+
+The old `core/`, `workflows/`, `rules/`, `registries/`, `expertise/`, and `tools/` semantic directory fan-out is intentionally removed.
 
 ## Durable project memory
+`.yaaw-core/project/` stores product, engineering, research, specs, tickets, reviews, evidence, and project rules. Runtime caches can be deleted at any time and must be reconstructable from these artifacts plus repository evidence.
 
-`.yaaw-core/project/` stores product, engineering, research, specs, tickets, reviews, evidence, project rules, and `state.json` (`yaaw.project-state/v2`). Runtime intent/handoff/observed-state caches are replaceable.
+Implementation recovery uses immutable `yaaw.evidence/v3` records. Current PASS verification admits review; failed verification remains history. Review outcomes remain immutable; Orchestrator only adopts a legal lifecycle transition after validating their current ticket/spec/repository basis.
 
-Implementation recovery uses `yaaw.evidence/v3`:
-- `implementation_start + STARTED` authorizes `READY -> IN_PROGRESS`;
-- only current `implementation_verification + PASS` authorizes review admission;
-- failed verification remains durable history and never counts as success.
-
-Planner-owned `scope_status` is `UNKNOWN | OPEN | COMPLETE`. Orchestrator cannot infer project completion merely because no READY ticket exists.
+Planner-owned `scope_status` is `UNKNOWN | OPEN | COMPLETE`. Completion is derived from current ticket states plus this explicit planner-owned fact; it is never inferred from an empty runnable queue alone.
 
 ## Public entrypoints
-
-Every `skills/yaaw-*/SKILL.md` is a thin intent door into the same orchestration engine. A shortcut never skips framework integrity, reconciliation, source-current validation, repository policy, or exact handoff construction.
+Every `skills/yaaw-*/SKILL.md` is a thin intent door into `.yaaw-core/system/engine/runtime.mjs`. Shortcuts never bypass framework integrity, reconstruction, source-current validation, repository policy, or exact handoff construction.
 
 ## Update safety
-
-Package updates replace `.yaaw-core/system/**` but preserve `.yaaw-core/project/**`. Project schema v1 migrates to v2 by preserving engineering body/history, adding `scope_status`, and regenerating replaceable runtime caches. Historical evidence/reviews are never rewritten.
+Package updates replace managed `.yaaw-core/system/**` and provider adapters but preserve `.yaaw-core/project/**` except explicit typed schema migrations. Project schema v3 transfers legacy lifecycle values from `project/state.json` into owning ticket frontmatter and removes only that legacy ledger. Historical reviews/evidence are never rewritten.
