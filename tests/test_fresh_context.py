@@ -11,12 +11,12 @@ CHALLENGE=ROOT/'tests/fixtures/assumption_challenge_fresh_context/.yaaw-core/pro
 def parse(path:Path):
     lines=path.read_text().splitlines(); end=next(i for i in range(1,len(lines)) if lines[i].strip()=='---'); data={}
     for raw in lines[1:end]:
-        if not raw or raw.startswith(' ' ) or ':' not in raw: continue
+        if not raw or raw.startswith(' ') or ':' not in raw: continue
         key,value=raw.split(':',1); value=value.strip()
         if value.startswith('['): data[key]=json.loads(value)
         elif value in ('true','false'): data[key]=value=='true'
         elif re.fullmatch(r'\d+',value): data[key]=int(value)
-        else: data[key]=value.strip('"\'')
+        else: data[key]=value.strip("\"'")
     return data,'\n'.join(lines[end+1:])
 
 class FreshContextConformanceTest(unittest.TestCase):
