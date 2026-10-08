@@ -39,8 +39,13 @@ jobs:
         run: |
           if [ "${EVENT_NAME}" = "pull_request" ]; then
             BASE="${PR_BASE_SHA}"
-          elif [ -n "${PUSH_BEFORE}" ] && [ "${PUSH_BEFORE}" != "0000000000000000000000000000000000000000" ]; then
+          elif [ -n "${PUSH_BEFORE}" ] && [ "${PUSH_BEFORE}" != "0000000000000000000000000000000000000000" ] && git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
             BASE="${PUSH_BEFORE}"
+          elif [ "${GITHUB_REF}" != "refs/heads/main" ] && git show-ref --verify --quiet refs/remotes/origin/main; then
+            BASE="$(git merge-base origin/main HEAD || true)"
+            if [ -z "${BASE}" ]; then
+              BASE="$(git rev-list --max-parents=0 HEAD)"
+            fi
           else
             BASE="$(git rev-list --max-parents=0 HEAD)"
           fi

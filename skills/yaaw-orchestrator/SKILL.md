@@ -7,8 +7,7 @@ ROLE: `orchestrator`
 WORKFLOW: `orchestration.route`
 INTENT: `CONTINUE`
 
-## Execute
 Resolve the YAAW workspace root, then invoke:
-`node .yaaw-core/system/tools/orchestration-runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-orchestrator`
+`node .yaaw-core/system/engine/runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-orchestrator`
 
-Follow `orchestration.route` until `CONTINUE_UNTIL_STOP` is satisfied or a human-input, BLOCKED, or framework stop occurs. A `FRAMEWORK_STOP` is terminal for the current invocation: report it once and do not re-run the unchanged runtime unless the installation version, manifest, or managed framework bytes have changed. Do not execute orchestrator semantics directly from this wrapper; every semantic execution requires the exact runtime handoff.
+Follow the Orchestrator `route` operation until `CONTINUE_UNTIL_STOP` is satisfied or a human-input, BLOCKED, terminal, or framework stop occurs. Never execute semantic worker authority directly from this wrapper; every worker execution uses the exact fresh runtime handoff.

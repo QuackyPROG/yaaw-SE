@@ -1,9 +1,9 @@
 {
-  "schema": "yaaw.intent/v2",
+  "schema": "yaaw.intent/v3",
   "source_skill": "yaaw-orchestrator",
   "desired_outcome": "CONTINUE",
   "requested_workflow": "orchestration.route",
   "target_artifact": null,
   "completion_kind": "CONTINUE_UNTIL_STOP",
-  "created_from_transition_sequence": 0
+  "created_from": {}
 }

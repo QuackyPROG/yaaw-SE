@@ -1,6 +1,6 @@
 # Integration adapters
 
-YAAW providers are discovery/invocation adapters around one canonical engine under `.yaaw-core/system/`.
+YAAW providers are discovery/invocation adapters around one canonical compact engine under `.yaaw-core/system/`.
 
 | ID | Skills root | Bootstrap | Maturity |
 | --- | --- | --- | --- |
@@ -9,47 +9,38 @@ YAAW providers are discovery/invocation adapters around one canonical engine und
 | `gemini-cli` | `.gemini/skills` | `GEMINI.md` managed section | stable |
 | `cline` | `.cline/skills` | `.cline/rules/yaaw-se.md` | stable |
 
-Detection is informational. A missing host executable never blocks explicit selection.
+Detection is informational. A missing host executable never blocks explicit selection. Every adapter implements one installer contract: detect, skills root, bootstrap planning, skill planning, verification, invocation hints, and an `adapterVersion`.
 
-Every adapter implements one registry contract: detect, skills root, bootstrap planning, skill planning, verification, invocation hints, and an `adapterVersion`. Adding a provider should require one adapter registration plus tests rather than conditionals spread throughout installer logic.
-
-Generated provider skills remain semantically identical to canonical `skills/*/SKILL.md` and keep project-root-relative references to `.yaaw-core/system/`.
-
-## Adapter updates
-
-The install manifest records the adapter version used for each selected tool. Quick Update regenerates selected adapters from the current package and removes obsolete YAAW-owned provider files through manifest ownership.
-
-If an installed adapter version is newer than the running package supports, the installer blocks the downgrade rather than guessing how to rewrite newer provider state.
-
-Changing or removing one provider must not modify another provider's surface or durable `.yaaw-core/project/` data.
+Generated provider skills remain semantically identical to canonical `skills/*/SKILL.md`; they are thin public intents and never carry canonical workflow logic.
 
 ## Runtime parity
 
-All provider adapters point to the same `.yaaw-core/system/core/execution-context.md` and `.yaaw-core/system/core/context-loading.md` contracts. No provider may substitute ambient CWD, preload a different workflow graph, or treat an installed host skill as semantic authority. Provider-specific expertise remains advisory and is admitted only by the canonical research rule.
+All providers share `.yaaw-core/system/SYSTEM.md`, `.yaaw-core/system/kernel.yaml`, and `.yaaw-core/system/engine/runtime.mjs`. No provider may substitute ambient CWD, invent a second lifecycle engine, preload a different workflow graph, or treat an installed host skill as semantic authority. Optional provider expertise is advisory; canonical modules are selected only after routing.
 
+The runtime reconstructs aggregate state from durable artifacts. `.yaaw-core/runtime/` is replaceable, and no provider may depend on a durable global `project/state.json`.
+
+## Adapter updates
+
+The installation manifest records the adapter version used for each selected tool. Quick Update regenerates selected adapters from the current package and removes obsolete YAAW-owned provider files through manifest ownership. If an installed adapter version is newer than the running package supports, the installer blocks the downgrade rather than guessing how to rewrite newer provider state. Changing or removing one provider must not modify another provider's surface or durable `.yaaw-core/project/` data.
 
 ## Codex adapter v5
 
-Codex is the first provider with a host-specific runtime layer in addition to thin skills/bootstrap. The canonical YAAW router still selects the role/workflow; the Codex adapter only decides how to execute that already-selected handoff.
+Codex has a host-specific execution layer in addition to thin skills/bootstrap. The canonical compact runtime selects the role/workflow; the Codex adapter only decides how to execute the already-selected exact handoff.
 
-A Codex consumer gets `.codex/yaaw-runtime.md`, four primary runtime-only authority-role config files, optional Implementer/Reviewer fallback role files when capability fallback is enabled, and YAAW-owned role declarations in the project's shared `.codex/config.toml`. The root Codex session remains Orchestrator, so no Orchestrator child role is generated.
+A Codex consumer gets `.codex/yaaw-runtime.md`, four primary authority-role config files, optional Implementer/Reviewer fallback role files when capability fallback is enabled, and YAAW-owned role declarations in the project's shared `.codex/config.toml`. The root Codex session remains Orchestrator, so no Orchestrator child role is generated.
 
-The Codex adapter supports `auto`, `isolated-required`, and `inline` modes, GPT-6 Astra model selection, bounded role-specific capability fallback, and explicit service-tier configuration. Adapter v5 resolves an effective model/reasoning profile for each authority and fails closed rather than silently substituting a different profile. `auto` prefers the exact named worker, permits generic execution only when equivalent or authoritatively correctable, and permits inline fallback only when the root profile is equivalent. Named-role/override availability remains an active runtime capability and is not inferred merely from installed config files.
+The adapter supports `auto`, `isolated-required`, and `inline` modes, GPT-6 Astra model selection, bounded role-specific capability fallback, and explicit service-tier configuration. It resolves an effective model/reasoning profile for each authority and fails closed rather than silently substituting a different profile. `HOST_INHERIT` remains symbolic when the host value is unknown.
 
-Codex configuration revision remains 4 for adapter v5 because no new user-selectable setting is introduced; the change hardens how existing settings are honored. Quick Update therefore preserves the stored profile/settings instead of re-running setup.
-
-Codex project configuration is managed at semantic-key granularity. Existing unrelated model settings, MCP servers, profiles, hooks, comments, custom agents, and formatting remain user-owned. See [Codex runtime](codex-runtime.md).
-
+Codex configuration revision remains independent from adapter/package versions. Quick Update preserves stored profile/settings unless the user explicitly reconfigures them. Project configuration is managed at semantic-key granularity, preserving unrelated user settings, MCP servers, profiles, hooks, comments, custom agents, and formatting. See [Codex runtime](codex-runtime.md).
 
 ## Provider configuration lifecycle
 
-Provider configuration capability revisions are independent from package and adapter versions. The installation manifest records the settings a project actually chose, the revision under which those settings were reviewed, and the newest revision already shown to the user.
+Provider configuration capability revisions are independent from package and adapter versions. The installation manifest records the settings a project chose, the revision under which they were reviewed, and the newest revision already shown to the user. A framework update may announce newer capabilities but does not silently change model/runtime policy.
 
-A normal framework update may announce newer configuration capabilities, but it does not silently change model/runtime policy. Interactive updates acknowledge a shown notice once; headless updates keep reporting it until a human configures the provider.
-
-`yaaw config [integration]` is a configuration-only transaction. It updates only the selected integration's YAAW-managed configuration surface and manifest metadata, while reusing the same ownership/conflict rules as installation. It does not refresh the whole framework, copy skills, or mutate other integrations.
+`yaaw config [integration]` is configuration-only. It updates only the selected integration's YAAW-managed configuration surface and manifest metadata using the same ownership/conflict rules as installation. It does not refresh the whole framework, copy skills, or mutate other integrations.
 
 Codex currently provides the full configuration capability. Claude Code, Gemini CLI, and Cline remain installable integrations but do not advertise model configurators until provider-specific support exists.
 
 ## Public intent parity
-All provider-generated public skills use the same intent-entry contract. Codex may execute an exact handoff in isolated workers and other providers may execute inline when that is their supported mechanism, but no provider shortcut may bypass Orchestrator preparation or invent a second lifecycle engine.
+
+All provider-generated public skills use the same intent-entry contract. A provider may use isolated workers or inline execution according to its host capabilities, but no shortcut may bypass Orchestrator preparation, framework integrity, derived-state reconstruction, repository requirements, or exact handoff validation.

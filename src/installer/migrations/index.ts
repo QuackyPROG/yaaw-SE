@@ -1,22 +1,11 @@
 import type { InstallOperation } from "../types.js";
 
-export interface MigrationContext {
-  projectRoot: string;
-  payloadRoot: string;
-  fromVersion: number;
-  toVersion: number;
-}
+export interface MigrationContext { projectRoot: string; payloadRoot: string; fromVersion: number; toVersion: number; }
+export interface Migration { from: number; to: number; describe(): string; plan(ctx: MigrationContext): Promise<InstallOperation[]>; }
 
-export interface Migration {
-  from: number;
-  to: number;
-  describe(): string;
-  plan(ctx: MigrationContext): Promise<InstallOperation[]>;
-}
-
-export const CURRENT_SYSTEM_SCHEMA = 3;
+export const CURRENT_SYSTEM_SCHEMA = 4;
 export const CURRENT_INSTALLATION_SCHEMA = 3;
-export const CURRENT_PROJECT_SCHEMA = 2;
+export const CURRENT_PROJECT_SCHEMA = 3;
 
 export function migrationPath(migrations: Migration[], from: number, to: number): Migration[] {
   if (from === to) return [];

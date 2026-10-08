@@ -1,168 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "yaaw.observed-state/v3",
+  "$id": "yaaw.observed-state/v4",
   "type": "object",
-  "required": [
-    "schema",
-    "framework",
-    "repository",
-    "transition_sequence",
-    "claims",
-    "artifacts",
-    "inconsistencies",
-    "candidate_actions",
-    "reconciliation"
-  ],
+  "required": ["schema","framework","repository","derived","reconstructable","artifacts","inconsistencies","candidate_actions","reconciliation"],
   "properties": {
-    "schema": {
-      "const": "yaaw.observed-state/v3"
-    },
-    "repository": {
-      "$ref": "repository-identity.schema.json"
-    },
-    "transition_sequence": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "claims": {
-      "type": "object"
-    },
-    "artifacts": {
-      "type": "object"
-    },
-    "inconsistencies": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "candidate_actions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "framework": {
-      "type": "object",
-      "required": [
-        "yaaw_version",
-        "system_schema",
-        "installation_schema",
-        "project_schema",
-        "manifest_digest",
-        "integrity_status",
-        "modified",
-        "missing",
-        "local_overrides",
-        "repair_required"
-      ],
-      "properties": {
-        "yaaw_version": {
-          "type": "string",
-          "minLength": 1
-        },
-        "system_schema": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "installation_schema": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "project_schema": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "manifest_digest": {
-          "type": "string",
-          "minLength": 1
-        },
-        "integrity_status": {
-          "type": "string",
-          "enum": [
-            "HEALTHY",
-            "MODIFIED",
-            "MISSING",
-            "LOCAL_OVERRIDE",
-            "MANIFEST_INVALID",
-            "UNKNOWN",
-            "CONTRACT_INCONSISTENT"
-          ]
-        },
-        "modified": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "missing": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "local_overrides": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "repair_required": {
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
-    },
-    "reconciliation": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "object",
-          "required": [
-            "id",
-            "kind",
-            "reason"
-          ],
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "kind": {
-              "enum": [
-                "STATE",
-                "BLOCKED"
-              ]
-            },
-            "subject": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "from": {},
-            "to": {},
-            "reason": {
-              "type": "string"
-            },
-            "workflow": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "evidence": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "additionalProperties": true
-        }
-      ]
-    }
+    "schema":{"const":"yaaw.observed-state/v4"},
+    "framework":{"type":"object"},
+    "repository":{"$ref":"repository-identity.schema.json"},
+    "derived":{"type":"object"},
+    "reconstructable":{"const":true},
+    "artifacts":{"type":"object"},
+    "inconsistencies":{"type":"array","items":{"type":"string"}},
+    "candidate_actions":{"type":"array","items":{"type":"string"}},
+    "reconciliation":{"anyOf":[{"type":"null"},{"type":"object","required":["id","kind","reason"],"properties":{"id":{"type":"string"},"kind":{"enum":["TICKET_STATUS","BLOCKED"]},"subject":{"type":["string","null"]},"from":{},"to":{},"reason":{"type":"string"},"workflow":{"type":["string","null"]},"evidence":{"type":"array","items":{"type":"string"}}},"additionalProperties":true}]}
   },
-  "additionalProperties": false
+  "additionalProperties":false
 }
