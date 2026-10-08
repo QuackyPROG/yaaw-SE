@@ -30,6 +30,7 @@ export type InstallOperation =
   | { type: "copy-managed-file"; source: string; path: string; owner: string }
   | { type: "write-project-file-if-missing"; path: string; content: Buffer | string }
   | { type: "migrate-project-file"; path: string; content: Buffer | string; migration: string }
+  | { type: "remove-project-file-migration"; path: string; migration: string }
   | { type: "update-managed-section"; path: string; sectionId: string; content: string; owner: string }
   | { type: "update-managed-config-keys"; path: string; format: "toml"; entries: ManagedConfigEntry[]; owner: string }
   | { type: "remove-managed-config-keys"; path: string; format: "toml"; keys: string[]; owner: string }
@@ -39,44 +40,13 @@ export type InstallOperation =
   | { type: "remove-empty-dir"; path: string; owner: string }
   | { type: "preserve"; path: string; reason: string };
 
-export interface ConfigurationSummary {
-  integrationId: IntegrationId;
-  profile: string;
-  description: string[];
-}
-
-export interface InstallPlan {
-  action: InstallAction;
-  projectRoot: string;
-  operations: InstallOperation[];
-  selectedIntegrations: IntegrationId[];
-  selectedSkills: string[];
-  warnings: string[];
-  configurationSummaries?: ConfigurationSummary[];
-  configurationUpdates?: ConfigurationUpdate[];
-}
-
+export interface ConfigurationSummary { integrationId: IntegrationId; profile: string; description: string[]; }
+export interface InstallPlan { action: InstallAction; projectRoot: string; operations: InstallOperation[]; selectedIntegrations: IntegrationId[]; selectedSkills: string[]; warnings: string[]; configurationSummaries?: ConfigurationSummary[]; configurationUpdates?: ConfigurationUpdate[]; }
 export interface ManagedFileRecord { owner: string; sha256: string; packageSha256?: string; localOverride?: boolean; }
 export interface ManagedSectionRecord { owner: string; sha256: string; packageSha256?: string; localOverride?: boolean; }
 export interface ManagedConfigKeyRecord { owner: string; sha256: string; value: ManagedConfigScalar; packageSha256?: string; localOverride?: boolean; }
-
-export interface IntegrationConfigurationRecord {
-  schema: "yaaw.integration-config/v1";
-  appliedRevision: number;
-  notifiedRevision: number;
-  profile: IntegrationConfigurationProfile | null;
-  settings: unknown;
-}
-
-export interface IntegrationInstallationRecord {
-  adapterVersion: number;
-  skillsRoot: string;
-  bootstrap: string;
-  configuration?: IntegrationConfigurationRecord;
-  /** Temporary compatibility mirror for pre-lifecycle consumers. */
-  runtime?: unknown;
-}
-
+export interface IntegrationConfigurationRecord { schema: "yaaw.integration-config/v1"; appliedRevision: number; notifiedRevision: number; profile: IntegrationConfigurationProfile | null; settings: unknown; }
+export interface IntegrationInstallationRecord { adapterVersion: number; skillsRoot: string; bootstrap: string; configuration?: IntegrationConfigurationRecord; /** Temporary compatibility mirror for pre-lifecycle consumers. */ runtime?: unknown; }
 export interface InstallationManifest {
   schema: "yaaw.installation/v2";
   yaawVersion: string;
@@ -92,13 +62,4 @@ export interface InstallationManifest {
   managedSections: Record<string, Record<string, ManagedSectionRecord>>;
   managedConfigKeys: Record<string, Record<string, ManagedConfigKeyRecord>>;
 }
-
-export interface ConfigurationUpdate {
-  integrationId: IntegrationId;
-  displayName: string;
-  appliedRevision: number;
-  notifiedRevision: number;
-  availableRevision: number;
-  changes: import("../integrations/types.js").IntegrationConfigChange[];
-  command: string;
-}
+export interface ConfigurationUpdate { integrationId: IntegrationId; displayName: string; appliedRevision: number; notifiedRevision: number; availableRevision: number; changes: import("../integrations/types.js").IntegrationConfigChange[]; command: string; }

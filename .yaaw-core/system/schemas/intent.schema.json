@@ -1,70 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "yaaw.intent/v2",
+  "$id": "yaaw.intent/v3",
   "type": "object",
-  "required": [
-    "schema",
-    "source_skill",
-    "desired_outcome",
-    "requested_workflow",
-    "target_artifact",
-    "completion_kind",
-    "created_from_transition_sequence"
-  ],
+  "required": ["schema","source_skill","desired_outcome","requested_workflow","target_artifact","completion_kind","created_from"],
   "properties": {
-    "schema": {
-      "const": "yaaw.intent/v2"
-    },
-    "source_skill": {
-      "type": "string",
-      "minLength": 1
-    },
-    "desired_outcome": {
-      "enum": [
-        "CONTINUE",
-        "CONTINUE_PRODUCT",
-        "REVISE_PRODUCT",
-        "REFINE_PRODUCT",
-        "CONTINUE_PLANNING",
-        "PLANNING_REVIEW",
-        "CREATE_SPEC",
-        "CREATE_TICKETS",
-        "IMPLEMENT",
-        "REPAIR",
-        "REVIEW"
-      ]
-    },
-    "requested_workflow": {
-      "type": "string",
-      "minLength": 1
-    },
-    "target_artifact": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "completion_kind": {
-      "enum": [
-        "CONTINUE_UNTIL_STOP",
-        "PRODUCT_READY",
-        "PRODUCT_REVISION_ADVANCED",
-        "PRODUCT_REFINED",
-        "PLANNING_READY",
-        "PLANNING_READINESS_DECIDED",
-        "CURRENT_SPEC_ACCEPTED",
-        "CURRENT_TICKETS_REGISTERED",
-        "TICKET_REVIEW_REQUIRED",
-        "TICKET_REVIEW_APPLIED"
-      ]
-    },
-    "created_from_transition_sequence": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "note": {
-      "type": "string"
-    }
+    "schema":{"const":"yaaw.intent/v3"},
+    "source_skill":{"type":"string","minLength":1},
+    "desired_outcome":{"enum":["CONTINUE","CONTINUE_PRODUCT","REVISE_PRODUCT","REFINE_PRODUCT","CONTINUE_PLANNING","PLANNING_REVIEW","CREATE_SPEC","CREATE_TICKETS","IMPLEMENT","REPAIR","REVIEW"]},
+    "requested_workflow":{"type":"string","minLength":1},
+    "target_artifact":{"type":["string","null"]},
+    "completion_kind":{"enum":["CONTINUE_UNTIL_STOP","PRODUCT_READY","PRODUCT_REVISION_ADVANCED","PRODUCT_REFINED","PLANNING_READY","PLANNING_READINESS_DECIDED","CURRENT_SPEC_ACCEPTED","CURRENT_TICKETS_REGISTERED","TICKET_REVIEW_REQUIRED","TICKET_REVIEW_APPLIED"]},
+    "created_from":{"type":"object"},
+    "note":{"type":"string"}
   },
-  "additionalProperties": false
+  "additionalProperties":false
 }

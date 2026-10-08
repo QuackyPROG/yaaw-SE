@@ -29,19 +29,8 @@ export async function planProjectInitialization(payloadRoot: string, projectRoot
     });
   }
 
-  const state = JSON.parse(await readFile(join(templates, "project-state.json"), "utf8"));
-  state.product.status = "draft";
-  state.product.revision = 1;
-  state.planning.status = "discovery";
-  state.planning.revision = 1;
-  state.planning.current_frontier = "FRONTIER-001";
-  state.planning.scope_status = "UNKNOWN";
-  state.last_workflow = null;
-  operations.push({
-    type: "write-project-file-if-missing",
-    path: join(project, "state.json"),
-    content: JSON.stringify(state, null, 2) + "\n"
-  });
-
+  // No global project state file is initialized. Product, engineering, specs,
+  // ticket frontmatter, evidence, and reviews are the durable state model.
+  // Runtime observation/intent/handoff files are derived on demand.
   return operations;
 }

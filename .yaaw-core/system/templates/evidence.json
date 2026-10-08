@@ -6,24 +6,7 @@
   "spec_revision": 1,
   "kind": "implementation_verification",
   "result": "PASS",
-  "repository": {
-    "schema": "yaaw.repository-identity/v2",
-    "algorithm": "yaaw-worktree-v2",
-    "status": "READY",
-    "workspace_scope": ".",
-    "git_root_relation": "same",
-    "head_commit": "COMMIT",
-    "dirty": false,
-    "worktree_digest": "sha256:DIGEST",
-    "components": {
-      "status_sha256": "HASH",
-      "unstaged_diff_sha256": "HASH",
-      "staged_diff_sha256": "HASH",
-      "untracked_manifest_sha256": "HASH"
-    },
-    "changed_paths": [],
-    "error": null
-  },
+  "repository": {"schema":"yaaw.repository-identity/v2","algorithm":"yaaw-worktree-v3","status":"READY","workspace_scope":".","git_root_relation":"same","head_commit":"COMMIT","dirty":false,"worktree_digest":"sha256:DIGEST","components":{"status_sha256":"HASH","unstaged_diff_sha256":"HASH","staged_diff_sha256":"HASH","untracked_manifest_sha256":"HASH"},"changed_paths":[],"error":null},
   "workflow": "implementation.verify-ticket",
   "commands": [],
   "checks": []
