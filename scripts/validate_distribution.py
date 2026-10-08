@@ -44,10 +44,14 @@ def main()->int:
         if entry.get('requested_workflow') not in workflows: errors.append(f'{skill_id}: unresolved requested workflow')
 
     scan_roots=[CORE,ROOT/'skills',ROOT/'scripts',ROOT/'src',ROOT/'installer',ROOT/'tests',ROOT/'README.md',ROOT/'AGENTS.md']
+    ignored={
+        (ROOT/'scripts/validate_distribution.py').resolve(),
+        (ROOT/'tests/test_distribution_contracts.py').resolve(),
+    }
     for base in scan_roots:
         candidates=[base] if base.is_file() else ([p for p in base.rglob('*') if p.is_file()] if base.exists() else [])
         for path in candidates:
-            if path.resolve() in {(ROOT/'scripts/validate_distribution.py').resolve(),(ROOT/'tests/test_distribution_contracts.py').resolve()}): continue
+            if path.resolve() in ignored: continue
             if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in {'AGENTS.md','README.md'}: continue
             text=path.read_text(encoding='utf-8',errors='ignore')
             if LEGACY_RE.search(text): errors.append(f'live legacy .yaaw root reference: {path.relative_to(ROOT)}')

@@ -39,12 +39,8 @@ vi.mock("@clack/prompts", () => ({
   }),
   select: vi.fn(async (config: any) => {
     promptState.messages.push(config.message);
-    if (config.message === "Which YAAW entrypoints should be exposed?") {
-      return promptState.profile;
-    }
-    if (config.message === "Choose a Codex setup") {
-      return "inherit";
-    }
+    if (config.message === "Which YAAW entrypoints should be exposed?") return promptState.profile;
+    if (config.message === "Choose a Codex setup") return "inherit";
     throw new Error(`Unexpected select prompt: ${config.message}`);
   }),
   confirm: vi.fn(async (config: any) => {
@@ -63,89 +59,31 @@ interface ProviderSurface {
 }
 
 const providerSurfaces: Record<IntegrationId, ProviderSurface> = {
-  codex: {
-    providerRoot: ".agents",
-    skillsRoot: ".agents/skills",
-    bootstrap: "AGENTS.md"
-  },
-  "claude-code": {
-    providerRoot: ".claude",
-    skillsRoot: ".claude/skills",
-    bootstrap: "CLAUDE.md"
-  },
-  "gemini-cli": {
-    providerRoot: ".gemini",
-    skillsRoot: ".gemini/skills",
-    bootstrap: "GEMINI.md"
-  },
-  cline: {
-    providerRoot: ".cline",
-    skillsRoot: ".cline/skills",
-    bootstrap: ".cline/rules/yaaw-se.md"
-  }
+  codex: { providerRoot: ".agents", skillsRoot: ".agents/skills", bootstrap: "AGENTS.md" },
+  "claude-code": { providerRoot: ".claude", skillsRoot: ".claude/skills", bootstrap: "CLAUDE.md" },
+  "gemini-cli": { providerRoot: ".gemini", skillsRoot: ".gemini/skills", bootstrap: "GEMINI.md" },
+  cline: { providerRoot: ".cline", skillsRoot: ".cline/skills", bootstrap: ".cline/rules/yaaw-se.md" }
 };
 
-const expectedCoreEntries = [
-  "install",
-  "project",
-  "runtime",
-  "system"
-].sort();
-
-const expectedSystemEntries = [
-  "core",
-  "expertise",
-  "registries",
-  "roles",
-  "rules",
-  "schemas",
-  "templates",
-  "tools",
-  "workflows"
-].sort();
-
-const expectedProjectEntries = [
-  "engineering.md",
-  "evidence",
-  "product.md",
-  "research",
-  "reviews",
-  "rules",
-  "specs",
-  "state.json",
-  "tickets"
-].sort();
+const expectedCoreEntries = ["install", "project", "runtime", "system"].sort();
+const expectedSystemEntries = ["SYSTEM.md", "engine", "kernel.yaml", "modules", "roles", "schemas", "templates"].sort();
+const expectedProjectEntries = ["engineering.md", "evidence", "product.md", "research", "reviews", "rules", "specs", "tickets"].sort();
 
 async function exists(path: string): Promise<boolean> {
-  try {
-    await readdir(path);
-    return true;
-  } catch {
-    try {
-      await readFile(path);
-      return true;
-    } catch {
-      return false;
-    }
-  }
+  try { await readdir(path); return true; }
+  catch { try { await readFile(path); return true; } catch { return false; } }
 }
 
-async function entries(path: string): Promise<string[]> {
-  return (await readdir(path)).sort();
-}
-
-function firstSegment(path: string): string {
-  return path.split("/")[0]!;
-}
+async function entries(path: string): Promise<string[]> { return (await readdir(path)).sort(); }
+function firstSegment(path: string): string { return path.split("/")[0]!; }
 
 async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]) {
   const selected = new Set<IntegrationId>(selectedTools);
-  const manifestPath = join(root, ".yaaw-core", "install", "manifest.json");
-  const manifest: any = JSON.parse(await readFile(manifestPath, "utf8"));
+  const manifest: any = JSON.parse(await readFile(join(root, ".yaaw-core", "install", "manifest.json"), "utf8"));
 
   expect(manifest.schema).toBe("yaaw.installation/v2");
-  expect(manifest.systemSchema).toBe(3);
-  expect(manifest.projectSchema).toBe(2);
+  expect(manifest.systemSchema).toBe(4);
+  expect(manifest.projectSchema).toBe(3);
   expect(manifest.installationSchema).toBe(3);
   expect(Object.keys(manifest.integrations).sort()).toEqual([...selectedTools].sort());
   expect(manifest.skills.length).toBeGreaterThan(0);
@@ -161,12 +99,21 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
 
   expect(await entries(root)).toEqual([...expectedRoot].sort());
   expect(await exists(join(root, ".yaaw"))).toBe(false);
-
   expect(await entries(join(root, ".yaaw-core"))).toEqual(expectedCoreEntries);
   expect(await entries(join(root, ".yaaw-core", "system"))).toEqual(expectedSystemEntries);
   expect(await entries(join(root, ".yaaw-core", "project"))).toEqual(expectedProjectEntries);
+  expect(await exists(join(root, ".yaaw-core", "project", "state.json"))).toBe(false);
   expect(await entries(join(root, ".yaaw-core", "runtime"))).toEqual([]);
   expect(await entries(join(root, ".yaaw-core", "install"))).toEqual(["manifest.json"]);
+
+  const kernel: any = JSON.parse(await readFile(join(root, ".yaaw-core", "system", "kernel.yaml"), "utf8"));
+  expect(kernel.schema).toBe("yaaw.kernel/v1");
+  expect(kernel.paths.state).toBeUndefined();
+  expect(kernel.paths.project_root).toBe(".yaaw-core/project");
+
+  for (const legacy of ["core", "workflows", "rules", "registries", "expertise", "tools"]) {
+    expect(await exists(join(root, ".yaaw-core", "system", legacy))).toBe(false);
+  }
 
   const manifestOwners = [
     ...Object.values(manifest.managedFiles).map((record: any) => record.owner),
@@ -187,12 +134,15 @@ async function assertConsumerLayout(root: string, selectedTools: IntegrationId[]
         expect(await entries(skillDir)).toEqual(["SKILL.md"]);
         const skillText = await readFile(join(skillDir, "SKILL.md"), "utf8");
         expect(skillText).toContain(`\nname: ${skill}\n`);
-        expect(skillText).toContain(".yaaw-core/");
+        expect(skillText).toContain(".yaaw-core/system/engine/runtime.mjs");
       }
 
       const bootstrapText = await readFile(join(root, surface.bootstrap), "utf8");
-      expect(bootstrapText).toContain(".yaaw-core/");
+      expect(bootstrapText).toContain(".yaaw-core/system/SYSTEM.md");
+      expect(bootstrapText).toContain(".yaaw-core/system/kernel.yaml");
+      expect(bootstrapText).toContain(".yaaw-core/system/engine/runtime.mjs");
       expect(manifestOwners).toContain(`integration:${id}`);
+
       if (id === "codex") {
         expect(await entries(join(root, ".codex"))).toEqual(["agents", "config.toml", "yaaw-runtime.md"]);
         expect(await entries(join(root, ".codex", "agents"))).toEqual([
@@ -244,7 +194,6 @@ describe("interactive TUI consumer journeys", () => {
 
     try {
       const result = await runInstall({ directory: root });
-
       expect(result?.tools).toEqual(tools);
       expect(promptState.toolOptions.sort()).toEqual([...integrationIds].sort());
       expect(promptState.messages).toEqual([
@@ -254,7 +203,6 @@ describe("interactive TUI consumer journeys", () => {
         ...(tools.includes("codex") ? ["Choose a Codex setup"] : []),
         "Continue?"
       ]);
-
       await assertConsumerLayout(root, tools);
     } finally {
       await rm(root, { recursive: true, force: true });
