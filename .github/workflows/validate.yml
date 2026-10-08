@@ -219,14 +219,14 @@ jobs:
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
-          for attempt in {1..18}; do
+          for attempt in {1..60}; do
             PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@next version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
               echo "Verified npm next -> yaaw-se@${TARGET}"
               exit 0
             fi
-            echo "Waiting for npm next propagation (${attempt}/18)"
+            echo "Waiting for npm next propagation (${attempt}/60)"
             sleep 5
           done
           exit 1
@@ -294,14 +294,14 @@ jobs:
         shell: bash
         run: |
           TARGET="${{ steps.version.outputs.target }}"
-          for attempt in {1..18}; do
+          for attempt in {1..60}; do
             PUBLISHED="$(npm view "yaaw-se@${TARGET}" version 2>/dev/null || true)"
             TAG="$(npm view yaaw-se@latest version 2>/dev/null || true)"
             if [ "${PUBLISHED}" = "${TARGET}" ] && [ "${TAG}" = "${TARGET}" ]; then
               echo "Verified npm latest -> yaaw-se@${TARGET}"
               exit 0
             fi
-            echo "Waiting for npm latest propagation (${attempt}/18)"
+            echo "Waiting for npm latest propagation (${attempt}/60)"
             sleep 5
           done
           exit 1
