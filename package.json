@@ -1,6 +1,6 @@
 {
   "name": "yaaw-se",
-  "version": "0.3.0",
+  "version": "0.3.13",
   "description": "Artifact-first autonomous software engineering workflow installer.",
   "type": "module",
   "bin": {
@@ -28,7 +28,9 @@
     "prepack": "npm run test && npm run build",
     "smoke:tarball": "npm run build && node scripts/smoke_npm_tarball.mjs",
     "smoke:update": "npm run build && node scripts/smoke_npm_update.mjs",
-    "validate:schemas": "node scripts/validate_schemas.mjs"
+    "validate:schemas": "node scripts/validate_schemas.mjs",
+    "validate:contracts": "node scripts/validate_contracts.mjs .yaaw-core/system skills",
+    "smoke:dispatch-update": "npm run build && node scripts/smoke_dispatch_update.mjs"
   },
   "dependencies": {
     "@clack/prompts": "1.8.1",

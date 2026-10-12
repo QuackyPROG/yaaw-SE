@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Distribution invariants for the compact YAAW-SE kernel."""
 from __future__ import annotations
+import subprocess
 import json
 import re
 from pathlib import Path
@@ -15,6 +16,7 @@ LEGACY_SYSTEM={'core','workflows','expertise','rules','registries','tools'}
 def load(path:Path): return json.loads(path.read_text(encoding='utf-8'))
 
 def main()->int:
+    subprocess.run(['node', str(ROOT/'scripts/validate_contracts.mjs'), str(SYSTEM), str(ROOT/'skills')], check=True)
     errors=[]
     if not SYSTEM.is_dir():
         errors.append('missing canonical .yaaw-core/system package root'); kernel={}

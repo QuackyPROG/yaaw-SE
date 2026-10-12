@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { extname, join, relative } from "node:path";
@@ -11,3 +12,7 @@ const kernel=JSON.parse(await readFile(join(coreOut,"kernel.yaml"),"utf8"));awai
 async function walk(dir){const entries=await readdir(dir,{withFileTypes:true}),result=[];for(const entry of entries){const full=join(dir,entry.name);if(entry.isDirectory())result.push(...await walk(full));else result.push(full)}return result}
 const textExtensions=new Set([".md",".json",".toml",".yaml",".mjs"]);for(const file of await walk(out))if(textExtensions.has(extname(file).toLowerCase())){const text=await readFile(file,"utf8");await writeFile(file,text.replace(/\r\n/g,"\n"),"utf8")}
 const files=(await walk(out)).filter(p=>!p.endsWith("payload-files.json")).sort(),manifest=[];for(const file of files){const bytes=await readFile(file);manifest.push({path:relative(out,file).replaceAll("\\","/"),sha256:createHash("sha256").update(bytes).digest("hex"),bytes:bytes.length})}await writeFile(join(out,"payload.json"),JSON.stringify({schema:"yaaw.payload/v1",version:packageMetadata.version},null,2)+"\n");const payloadBytes=await readFile(join(out,"payload.json"));manifest.push({path:"payload.json",sha256:createHash("sha256").update(payloadBytes).digest("hex"),bytes:payloadBytes.length});await writeFile(join(out,"payload-files.json"),JSON.stringify({schema:"yaaw.payload-files/v1",files:manifest.sort((a,b)=>a.path.localeCompare(b.path))},null,2)+"\n");console.log(`Built YAAW npm payload with ${manifest.length} files.`);
+
+const { validateSystemContracts }=await import(pathToFileURL(join(coreOut,"engine/contracts.mjs")));
+const contractErrors=await validateSystemContracts(coreOut,join(out,"skills"));
+if(contractErrors.length)throw new Error("Generated payload dispatch contracts invalid:\n"+contractErrors.join("\n"));

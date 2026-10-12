@@ -82,6 +82,10 @@ Workers never privately command or spawn peer YAAW authorities. After every work
 
 Before semantic routing, verify the installer manifest and package-managed system bytes. `MODIFIED`, `MISSING`, `LOCAL_OVERRIDE`, unknown integrity, or contract inconsistency fails closed. Semantic workers never edit `.yaaw-core/system/**` to unblock themselves.
 
+Dispatch completeness is a framework invariant. A worker dispatch target is the union of non-Orchestrator public-skill requests, deterministic router targets (the values used by router branches), and declared worker handoffs. Other role operations are internal suboperations; root Orchestrator operations do not require worker handoffs. Every target must resolve a workflow, owning role, valid handoff, role-bounded reads/writes, active artifact, authorized existing modules, and the typed worker result protocol. Public skill metadata and completion vocabulary must agree with the kernel. `engine/contracts.mjs` is the canonical validator used by core, distribution, payload generation/verification, and runtime. Missing contracts stop as framework defects, never consumer semantic blockers.
+
+Product revision changes the downstream product basis. Orchestrator derives stale ticket authority and performs only legal status reconciliation; Planner owns changed downstream contracts. Engineering readiness based on an older product revision cannot authorize a specification. Clarity-only product refinement preserves semantic revision and downstream source authority.
+
 ## Repository identity
 
 Repository identity is produced only by `.yaaw-core/system/engine/repository-identity.mjs`; roles do not reimplement it. Runtime caches, ticket lifecycle files, immutable implementation evidence, and immutable reviews are excluded from the application worktree digest because their normal lifecycle writes would otherwise invalidate their own basis. Ticket semantic freshness is instead bound explicitly by ticket revision and ticket content digest in handoffs/evidence/reviews.

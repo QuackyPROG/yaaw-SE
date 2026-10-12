@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,4 +11,6 @@ const kernel=JSON.parse(await readFile(join(payload,"yaaw-core","system","kernel
 for(const [id,entry] of Object.entries(workflows)){const role=kernel.roles?.[entry.role];if(!role)errors.push(`${id}: unknown role ${entry.role}`);else try{await stat(join(payload,role.document.replace(/^\.yaaw-core\/system\//,"yaaw-core/system/")))}catch{errors.push(`${id}: missing role document ${role.document}`)}}
 const generated=JSON.parse(await readFile(join(payload,"yaaw-core","registries","skills.json"),"utf8"));if(JSON.stringify(Object.keys(generated).sort())!==JSON.stringify(Object.keys(skills).sort()))errors.push("generated CLI skill discovery metadata disagrees with kernel");
 for(const file of all){if(!/\.(md|json|ts|js|mjs|yaml)$/i.test(file))continue;const text=await readFile(file,"utf8");if(/BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY/.test(text))errors.push(`private key material in ${relative(payload,file)}`)}
+const {validateSystemContracts}=await import(pathToFileURL(join(payload,"yaaw-core/system/engine/contracts.mjs")));
+errors.push(...await validateSystemContracts(join(payload,"yaaw-core/system"),join(payload,"skills")));
 if(errors.length){console.error("YAAW npm payload verification failed:");errors.forEach(e=>console.error(`- ${e}`));process.exit(1)}console.log(`YAAW npm payload verified: ${all.length} files.`);

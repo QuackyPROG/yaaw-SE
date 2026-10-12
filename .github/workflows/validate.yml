@@ -96,8 +96,10 @@ jobs:
           npm run validate:distribution
           npm run test:cli
           python -m unittest discover -s tests -p 'test_distribution_contracts.py' -v
+          npm run build
           node scripts/smoke_npm_tarball.mjs
           node scripts/smoke_npm_update.mjs
+          node scripts/smoke_dispatch_update.mjs
 
       - name: Verify package integrity for releasable core changes
         if: needs.changes.outputs.release == 'true' && needs.changes.outputs.distribution != 'true' && needs.changes.outputs.full != 'true'
@@ -113,6 +115,7 @@ jobs:
           npm pack --dry-run --ignore-scripts
           node scripts/smoke_npm_tarball.mjs
           node scripts/smoke_npm_update.mjs
+          node scripts/smoke_dispatch_update.mjs
 
       - name: Documentation-only change
         if: needs.changes.outputs.validate != 'true'
