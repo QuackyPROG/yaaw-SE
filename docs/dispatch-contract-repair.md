@@ -131,3 +131,7 @@ Then invoke the installed `yaaw-revise-prd` shortcut or continue the typed revis
 No declared/legal standalone worker workflow remains without a valid dispatch contract. Internal and root operations remain intentionally distinct. True FAST routing and broader terminal acceptance-freshness concerns were not folded into this repair. Only product-evolution admission and revision-draft completion behavior necessary for these regressions changed.
 
 Candidate version: **0.3.13**. npm publication and remote platform CI must be observed before claiming a released, universally validated fix. The local framework invariants and supported tarball rollout pass; this report does not fabricate published availability.
+
+## Remote release validation
+
+PR #20 merged at `6878a91`. The PR run [38288545106](https://github.com/QuackyPROG/yaaw-SE/actions/runs/38288545106) and merged-source run [38335191721](https://github.com/QuackyPROG/yaaw-SE/actions/runs/38335191721) both passed Ubuntu validation, macOS and Windows package smoke, and Node 20.12.0 build/package smoke. The merged-source publish job stopped before publication because its npm version command rejected the already-declared 0.3.13 as unchanged. The release adapter now permits that no-op version step; immutable version selection and payload validation are preserved.
