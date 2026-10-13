@@ -2,7 +2,7 @@
 
 Upstream baseline: `origin/main` at `6d20141`. Work is isolated on branch `fix/dispatch-contract-completeness` in the upstream YAAW-SE repository. Ahoge was inspected only to locate its installed version; its framework and durable project artifacts were not changed.
 
-Release candidate: **0.3.13** (package.json and package-lock.json agree). Publication is a separate observable event: this document does not claim the candidate is already available on npm.
+Released fix: **0.3.13** (package.json and package-lock.json agree). npm exact-version and latest-tag availability were verified after the successful release job.
 
 ## 1. Root cause and reproduction
 
@@ -116,9 +116,9 @@ The existing Windows directory-symlink escape test used a privileged symlink. It
 
 `scripts/smoke_dispatch_update.mjs` verifies supported **published 0.3.12 → exact candidate 0.3.13** quick-update: all project-owned bytes preserved, package-managed system replaced, runtime caches removed/regenerated, installed standard-profile skill/contract validation passed, and both direct revision and subsequent orchestration continuation dispatch. No project deletion or manual managed-system edit is required. CI runs this rollout regression alongside current package/update smoke gates.
 
-The repository CI also defines Ubuntu, macOS, Windows and minimum-Node jobs. Local Windows and minimum-Node execution are reported separately from cloud job results; unrun platforms are not claimed as passed.
+The repository CI defines Ubuntu, macOS, Windows and minimum-Node jobs. All passed for the framework fix, both before merge and on the merged source. Local Windows validation and cloud platform evidence are recorded separately below.
 
-Once 0.3.13 is published, the consumer rollout uses the existing supported command:
+The published 0.3.13 consumer rollout uses the existing supported command:
 
 ```text
 npx yaaw-se@0.3.13 install --directory <consumer-root> --action quick-update --yes
@@ -130,8 +130,12 @@ Then invoke the installed `yaaw-revise-prd` shortcut or continue the typed revis
 
 No declared/legal standalone worker workflow remains without a valid dispatch contract. Internal and root operations remain intentionally distinct. True FAST routing and broader terminal acceptance-freshness concerns were not folded into this repair. Only product-evolution admission and revision-draft completion behavior necessary for these regressions changed.
 
-Candidate version: **0.3.13**. npm publication and remote platform CI must be observed before claiming a released, universally validated fix. The local framework invariants and supported tarball rollout pass; this report does not fabricate published availability.
+Released version: **0.3.13**. Source, payload, local tests, remote platform CI, supported tarball rollout, and actual registry-package rollout all passed. No consumer managed system or durable project data was patched during this work.
 
 ## Remote release validation
 
 PR #20 merged at `6878a91`. The PR run [38288545106](https://github.com/QuackyPROG/yaaw-SE/actions/runs/38288545106) and merged-source run [38335191721](https://github.com/QuackyPROG/yaaw-SE/actions/runs/38335191721) both passed Ubuntu validation, macOS and Windows package smoke, and Node 20.12.0 build/package smoke. The merged-source publish job stopped before publication because its npm version command rejected the already-declared 0.3.13 as unchanged. The release adapter now permits that no-op version step; immutable version selection and payload validation are preserved.
+
+PR #21 fixed the no-op release adapter and merged at `8ed9843`. [Release run 38335841393](https://github.com/QuackyPROG/yaaw-SE/actions/runs/38335841393) completed successfully, including npm stable publication and propagation verification. Both `npm view yaaw-se@0.3.13 version --json` and `npm view yaaw-se@latest version --json` returned `0.3.13`.
+
+The final verification ran from an isolated consumer directory against the actual registry packages, not a locally packed substitute. Published 0.3.12 reproduced the contract failure; `npm exec --package=yaaw-se@0.3.13 -- yaaw-se install --directory <fixture> --action quick-update --yes` upgraded the fixture without changing any durable project bytes. All four runtime caches were invalidated, installed standard-profile contracts validated, and the published kernel/validator bytes matched the validated generated payload. Direct `yaaw-revise-prd` and subsequent runtime continuation both returned `DISPATCH_READY` for `prd.revise`. Final registry rollout result: **PASS**.
