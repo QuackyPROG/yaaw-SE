@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import subprocess
 import json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]; SYSTEM=ROOT/'.yaaw-core/system'; errors=[]
@@ -6,6 +7,7 @@ def err(x): errors.append(x)
 def load(path):
     try:return json.loads(path.read_text())
     except Exception as exc:err(f'{path.relative_to(ROOT)}: invalid JSON-compatible contract: {exc}');return {}
+subprocess.run(['node', str(ROOT/'scripts/validate_contracts.mjs'), str(SYSTEM), str(ROOT/'skills')], check=True)
 kernel=load(SYSTEM/'kernel.yaml')
 expected={'SYSTEM.md','kernel.yaml','roles','modules','schemas','templates','engine'}
 actual={p.name for p in SYSTEM.iterdir()}

@@ -13,7 +13,7 @@ describe("project boundary", () => {
   it("rejects symlink escapes", async () => {
     const root = await mkdtemp(join(tmpdir(), "yaaw-boundary-"));
     const outside = await mkdtemp(join(tmpdir(), "yaaw-outside-"));
-    await symlink(outside, join(root, ".agents"), "dir");
+    await symlink(outside, join(root, ".agents"), process.platform === "win32" ? "junction" : "dir");
     await expect(assertSafeDestination(root, join(root, ".agents", "skills", "x"))).rejects.toThrow(/escape/i);
   });
 

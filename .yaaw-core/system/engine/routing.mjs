@@ -1,3 +1,4 @@
+import { ROUTES, dispatchableWorkflows } from "./contracts.mjs";
 const ACTIVE = new Set(["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","PASS"]);
 const TERMINAL = new Set(["PASS","CANCELLED"]);
 const REVIEW_RESULT = { PASS:"PASS", REPAIR:"REPAIR_REQUIRED", REPLAN:"REPLAN_REQUIRED", BLOCKED:"BLOCKED" };
@@ -28,6 +29,7 @@ export function deriveState(a){
   const p=a.product?.meta??{},e=a.engineering?.meta??{};
   const product={artifact:a.product?.path??null,status:String(p.status??"missing"),revision:Number(p.revision??0)};
   const planning={artifact:a.engineering?.path??null,status:String(e.status??"missing"),revision:Number(e.revision??0),current_frontier:e.current_frontier??null,readiness:e.readiness??"pending",scope_status:e.scope_status??"UNKNOWN",active_spec:null};
+  if(e.product_revision!==undefined&&Number(e.product_revision)!==product.revision)planning.readiness="pending";
   const accepted=Object.entries(a.specs??{}).filter(([,x])=>x.meta?.status==="ACCEPTED"&&Number(x.meta.product_revision??0)===product.revision&&Number(x.meta.engineering_revision??0)===planning.revision).sort(([x],[y])=>byId(x,y));
   if(accepted.length===1)planning.active_spec=accepted[0][1].path;
   const tickets=Object.fromEntries(Object.entries(a.tickets??{}).map(([id,x])=>[id,String(x.meta?.status??"DRAFT")]));
@@ -86,7 +88,7 @@ export function intentComplete(intent,state,a){
   if(!intent)return false;const o=intent.desired_outcome,target=requestedTicket(intent,state),base=intent.created_from??{};
   if(o==="CONTINUE")return false;
   if(o==="CONTINUE_PRODUCT")return state.product.status==="ready";
-  if(o==="REVISE_PRODUCT")return Number(state.product.revision)>Number(base.product_revision??0);
+  if(o==="REVISE_PRODUCT")return state.product.status==="ready"&&Number(state.product.revision)>Number(base.product_revision??0);
   if(o==="REFINE_PRODUCT")return Boolean(a.product?.digest&&base.product_digest&&a.product.digest!==base.product_digest);
   if(o==="CONTINUE_PLANNING")return planningReady(state);
   if(o==="PLANNING_REVIEW")return state.planning.readiness!==base.planning_readiness||a.engineering?.digest!==base.engineering_digest;
@@ -98,23 +100,24 @@ export function intentComplete(intent,state,a){
 }
 
 function baseRoute(state,a){
-  if(state.product.status!=="ready")return {workflow:"prd.route",ticket:null};
-  const replan=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED");if(replan)return{workflow:"planning.replan",ticket:replan};
-  if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")return{workflow:"planning.route",ticket:null};
-  if(!currentSpecId(state))return{workflow:"planning.create-spec",ticket:null};
+  if(state.product.status!=="ready")return {workflow:ROUTES.product,ticket:null};
+  const replan=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED");if(replan)return{workflow:ROUTES.replan,ticket:replan};
+  if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")return{workflow:ROUTES.planning,ticket:null};
+  if(!currentSpecId(state))return{workflow:ROUTES.spec,ticket:null};
   const ids=currentTicketIds(state,a);
-  const repair=ids.find(id=>state.tickets[id]==="REPAIR_REQUIRED");if(repair)return{workflow:"implementation.repair-ticket",ticket:repair};
-  const review=ids.find(id=>state.tickets[id]==="REVIEW_REQUIRED");if(review)return{workflow:"review.review-ticket",ticket:review};
-  const progress=ids.find(id=>state.tickets[id]==="IN_PROGRESS");if(progress)return{workflow:"implementation.verify-ticket",ticket:progress};
-  const ready=ids.find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a));if(ready)return{workflow:"implementation.implement-ticket",ticket:ready};
-  const draft=ids.find(id=>state.tickets[id]==="DRAFT"&&dependenciesPass(id,state,a));if(draft)return{workflow:"planning.create-tickets",ticket:draft};
-  if(ids.length===0)return{workflow:"planning.create-tickets",ticket:null};
-  if(ids.every(id=>TERMINAL.has(state.tickets[id]))){if(state.planning.scope_status==="COMPLETE")return{terminal:"COMPLETE"};return{workflow:"planning.route",ticket:null};}
+  const repair=ids.find(id=>state.tickets[id]==="REPAIR_REQUIRED");if(repair)return{workflow:ROUTES.repair,ticket:repair};
+  const review=ids.find(id=>state.tickets[id]==="REVIEW_REQUIRED");if(review)return{workflow:ROUTES.review,ticket:review};
+  const progress=ids.find(id=>state.tickets[id]==="IN_PROGRESS");if(progress)return{workflow:ROUTES.verify,ticket:progress};
+  const ready=ids.find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a));if(ready)return{workflow:ROUTES.implement,ticket:ready};
+  const draft=ids.find(id=>state.tickets[id]==="DRAFT"&&dependenciesPass(id,state,a));if(draft)return{workflow:ROUTES.tickets,ticket:draft};
+  if(ids.length===0)return{workflow:ROUTES.tickets,ticket:null};
+  if(ids.every(id=>TERMINAL.has(state.tickets[id]))){if(state.planning.scope_status==="COMPLETE")return{terminal:"COMPLETE"};return{workflow:ROUTES.planning,ticket:null};}
   const blocked=ids.find(id=>state.tickets[id]==="BLOCKED");if(blocked)return{blocked:`ticket ${blocked} is BLOCKED`,ticket:blocked};
   return{blocked:"no legal next workflow from current durable artifacts",ticket:null};
 }
 
-function legalRequested(workflow,ticket,state,a){
+function legalRequested(kernel,workflow,ticket,state,a){
+  if(!dispatchableWorkflows(kernel).has(workflow))return false;
   if(workflow==="prd.route"||workflow==="prd.revise"||workflow==="prd.refine")return true;
   if(workflow==="planning.route"||workflow==="planning.readiness-review")return state.product.status==="ready";
   if(workflow==="planning.create-spec")return planningReady(state)&&!currentSpecId(state);
@@ -128,13 +131,14 @@ function legalRequested(workflow,ticket,state,a){
 export function planNext(kernel,state,a,repo,intent){
   const reconciliation=selectReconciliation(kernel,state,a,repo);if(reconciliation)return{type:"RECONCILE_REQUIRED",reconciliation};
   if(intentComplete(intent,state,a))return{type:"INTENT_COMPLETE",completion_kind:intent.completion_kind};
-  if(state.phase==="complete")return{type:"TERMINAL",terminal:"COMPLETE"};
+  if(state.phase==="complete"&&!["prd.revise","prd.refine"].includes(intent?.requested_workflow))return{type:"TERMINAL",terminal:"COMPLETE"};
+  if(intent?.desired_outcome==="REVISE_PRODUCT"&&Number(state.product.revision)>Number(intent.created_from?.product_revision??0)&&state.product.status!=="ready")return{type:"ROUTE",workflow:ROUTES.product,ticket:null};
   if(intent&&intent.requested_workflow&&intent.requested_workflow!=="orchestration.route"){
     let ticket=requestedTicket(intent,state);
     if(!ticket&&intent.desired_outcome==="IMPLEMENT")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a))??null;
     if(!ticket&&intent.desired_outcome==="REPAIR")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPAIR_REQUIRED")??null;
     if(!ticket&&intent.desired_outcome==="REVIEW")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REVIEW_REQUIRED")??null;
-    if(legalRequested(intent.requested_workflow,ticket,state,a))return{type:"ROUTE",workflow:intent.requested_workflow,ticket};
+    if(legalRequested(kernel,intent.requested_workflow,ticket,state,a))return{type:"ROUTE",workflow:intent.requested_workflow,ticket};
     return{type:"BLOCKED",reason:`PRECONDITION_UNSATISFIED:${intent.requested_workflow}`,ticket};
   }
   return{type:"ROUTE",...baseRoute(state,a)};
