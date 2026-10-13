@@ -200,7 +200,7 @@ jobs:
           REPO_VERSION="$(node -p "require('./package.json').version")"
           LATEST_JSON="$(npm view yaaw-se@latest version --json 2>/dev/null || true)"
           TARGET_VERSION="$(node scripts/resolve_release_version.mjs next "${REPO_VERSION}" "${LATEST_JSON}" "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}")"
-          npm version "${TARGET_VERSION}" --no-git-tag-version
+          npm version "${TARGET_VERSION}" --no-git-tag-version --allow-same-version
           echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
           echo "Publishing yaaw-se@${TARGET_VERSION} to dist-tag next"
       - name: Build and pack prerelease
@@ -275,7 +275,7 @@ jobs:
           REPO_VERSION="$(node -p "require('./package.json').version")"
           LATEST_JSON="$(npm view yaaw-se@latest version --json 2>/dev/null || true)"
           TARGET_VERSION="$(node scripts/resolve_release_version.mjs stable "${REPO_VERSION}" "${LATEST_JSON}")"
-          npm version "${TARGET_VERSION}" --no-git-tag-version
+          npm version "${TARGET_VERSION}" --no-git-tag-version --allow-same-version
           echo "target=${TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
           echo "Stable target: yaaw-se@${TARGET_VERSION}"
       - name: Build and pack stable release

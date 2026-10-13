@@ -30,7 +30,8 @@
     "smoke:update": "npm run build && node scripts/smoke_npm_update.mjs",
     "validate:schemas": "node scripts/validate_schemas.mjs",
     "validate:contracts": "node scripts/validate_contracts.mjs .yaaw-core/system skills",
-    "smoke:dispatch-update": "npm run build && node scripts/smoke_dispatch_update.mjs"
+    "smoke:dispatch-update": "npm run build && node scripts/smoke_dispatch_update.mjs",
+    "audit:workflows": "node scripts/audit_workflow_contracts.mjs .yaaw-core/system skills"
   },
   "dependencies": {
     "@clack/prompts": "1.8.1",
