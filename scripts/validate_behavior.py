@@ -6,7 +6,7 @@ def need(path,*phrases):
     for phrase in phrases:
         if phrase.lower() not in text:errors.append(f'{path.relative_to(ROOT)} missing behavioral contract {phrase!r}')
 need(S/'roles/orchestrator.md','traffic controller','delete `.yaaw-core/runtime/`','one deterministic','never authors product')
-need(S/'roles/planner.md','facts before questions','future fog','create-tickets','status-only draft->ready')
+need(S/'roles/planner.md','facts before questions','future fog','create-tickets','status-only draft->ready','1 to 10','recommended: <label>','do not manufacture choices','do not start another question round')
 need(S/'roles/implementer.md','before the first application mutation','immutable','never self-approve','do not edit ticket lifecycle status')
 need(S/'roles/reviewer.md','actual repository work','semantically independent','immutable','style preference')
 need(S/'roles/prd.md','product','not the question/challenge transcript','future fog')
