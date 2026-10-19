@@ -1,139 +1,49 @@
-# YAAW-SE
+# YAAW-SE v3 — PRD foundation
 
-**Autonomous software engineering with durable context.**
+A clean v3 branch for YAAW-SE, beginning with an independent, product-only interview workflow. **This is an implemented PRD workflow foundation, not a full autonomous coding system.** The Planner → Implementer → Reviewer → Orchestrator loop belongs to later slices.
 
-YAAW-SE turns an idea or change request into planned, implemented, independently reviewed work without making every new AI session start from zero.
+## Core principle
 
-> **Agents are disposable. Artifacts are durable.**
+**Product intent is interviewed, persisted, checked, and re-evaluated after every batch.** Product meaning survives context limits because accepted requirements and their source answers are stored on disk, not in chat.
 
-YAAW keeps product decisions, engineering decisions, specs, tickets, reviews, and evidence in the project so the workflow can reconstruct what is true and continue from there.
+## Start the PRD
 
-## Start Building
+1. Read `AGENTS.md` and invoke `skills/yaaw-prd/SKILL.md` in your coding agent.
+2. Initialize a target project: `node scripts/prd.mjs init --workspace /path/to/project`.
+3. The PRD skill drafts a `questions.json` batch with **1–10** short questions in A/B/C form and a recommendation. Validate and persist: `node scripts/prd.mjs prepare --workspace /path/to/project --questions questions.json`.
+4. Ask the human. Preserve the *verbatim* answer in `answers.md`: `node scripts/prd.mjs capture --workspace /path/to/project --answers answers.md`.
+5. The PRD interpreter writes `proposal.json` (only supported conclusions); run `node scripts/prd.mjs fingerprint --workspace /path/to/project --proposal proposal.json` for review hashes. A fresh semantic critic writes `review.json` using the current ledger, unedited answers, and exact proposal. The critic must examine conflicts and drift, not merely approve.
+6. Gate acceptance: `node scripts/prd.mjs commit --workspace /path/to/project --proposal proposal.json --review review.json`. This updates the decision ledger and regenerates the readable `product.md`.
+7. Re-inspect the PRD, identify remaining product questions, and repeat. Check projection integrity with `node scripts/prd.mjs audit --workspace /path/to/project`. After all material questions are resolved, run `node scripts/prd.mjs finalize --workspace /path/to/project`.
 
-**Prerequisite:** Node.js 20.12+
+All commands use built-in Node.js APIs. Node.js 20+ is recommended.
 
-Run YAAW-SE inside your project:
+## Hook boundaries
 
-```bash
-npx yaaw-se install
-```
+| Workflow hook | Trigger | Enforced action |
+| --- | --- | --- |
+| Pre-question | `prepare` | Validate 1–10 questions, A/B/C choices, recommendation, section, and no pending batch |
+| Post-answer | `capture` | Preserve raw input and its hash |
+| Pre-commit | `commit` | Require full interpretation/deferral coverage, exact user quote, reviewer PASS tied to proposal/answers/context hashes, no silent overwrites |
+| Post-commit | `commit` | Persist append-only interview audit bundle and regenerate `product.md`; skill must re-read result |
+| Readiness | `finalize` | Reject unfinished batch, unresolved questions or required empty sections |
 
-Choose the AI coding tools you want to use, finish the installer, then open your project in one of them and invoke:
+**Important:** These are executable, explicitly invoked **workflow hooks**, not provider-native event hooks. Native Codex/Claude adapters are intentionally not installed yet. A content hash does not detect every semantic contradiction; an independent semantic review is part of the protocol and unresolved human intent must be clarified.
 
-```text
-yaaw-orchestrator
-```
-
-The Orchestrator inspects durable project reality, applies at most one evidence-backed reconciliation, and routes the next valid workflow. Under Codex, orchestrated PRD/Planner/Implementer/Reviewer work runs in fresh authority-worker contexts when the host supports it; durable artifacts remain the source of truth.
-
-Worker output does not update lifecycle state directly. Workers write durable semantic facts. Orchestrator observes those facts and records legal lifecycle changes.
-
-You can start with only an idea, an existing codebase, a partially planned feature, or work already in progress.
-
-## Why YAAW?
-
-AI coding tools are good at producing code, but long-running software work needs more than a conversation history.
-
-- **Autonomous continuity** — YAAW reconstructs project state and decides what workflow should happen next.
-- **Durable context** — Product and engineering decisions survive new chats, new agents, and interrupted sessions.
-- **Artifact-first development** — PRDs, specs, tickets, reviews, and evidence become the source of truth.
-- **Independent review** — Implementation does not approve itself; review is a separate authority.
-- **Repository-aware planning** — Engineering work is grounded in the actual codebase instead of invented assumptions.
-- **One workflow from idea to reviewed code** — Plan, implement, review, repair, and continue without manually rebuilding context.
-
-## How It Flows
+## Layout
 
 ```text
-Idea / Change
-      ↓
-     PRD
-      ↓
- Engineering Plan
-      ↓
- Spec + Tickets
-      ↓
- Implementation
-      ↓
- Independent Review
-   ↙       ↓       ↘
-Repair   Replan    Pass
-   \       |       /
-      Continue
+AGENTS.md                  Repository instructions for v3
+skills/yaaw-prd/SKILL.md   Public PRD skill entrypoint
+.yaaw-core/prd/            Canonical product workflow, sections and hooks
+scripts/prd.mjs            Deterministic interview transaction gate
+tests/prd.test.mjs         Test suite
 ```
 
-You do not need to manually run every stage. In normal use, `yaaw-orchestrator` is the main entrypoint and uses `CONTINUE` intent until human input, `BLOCKED`, a framework stop, or `COMPLETE`.
+Target projects receive `.yaaw-core/project/product.md`, `.yaaw-core/project/prd/ledger.json`, `.yaaw-core/project/prd/state.json`, and verbatim round evidence.
 
-Shortcut skills are destination intents, not bypasses. For example, `yaaw-implement` declares desired outcome `IMPLEMENT`; if product, planning, spec, or ticket prerequisites are missing, YAAW resolves them first and stops once one implementation reaches `REVIEW_REQUIRED`.
+## Scope
 
-## Supported AI Coding Tools
+Included: independent PRD initiation, sectional interviewing, staged question/answer rounds, audit-ready proposals, source checking, optional fresh-context semantic critic enforced at commit, conflict rejection, readable PRD projection, basic readiness gate.
 
-| Tool | Support |
-| --- | --- |
-| OpenAI Codex | Supported |
-| Claude Code | Supported |
-| Gemini CLI | Supported |
-| Cline | Supported |
-
-Multiple tools can be installed into the same project. They share the same YAAW project memory instead of maintaining separate workflow state.
-
-## Useful Entry Points
-
-Most users can stay with `yaaw-orchestrator`.
-
-| Skill | Use it when |
-| --- | --- |
-| `yaaw-orchestrator` | You want YAAW to inspect the project and continue the workflow |
-| `yaaw-prd` | You want to work directly on product definition |
-| `yaaw-planner` | You want to work directly on engineering planning |
-| `yaaw-implement` | You want to implement an admitted ticket |
-| `yaaw-review` | You want to independently review current work |
-
-The installer can also expose direct shortcuts for revising PRDs, creating specs or tickets, repair work, and planning review.
-
-## Project Memory
-
-YAAW stores its project-local state under:
-
-```text
-.yaaw-core/
-```
-
-That includes both the YAAW system and the durable project artifacts it creates. Package updates are designed to refresh the system without replacing your project memory.
-
-## Manage an Installation
-
-Check an installation or configure a provider:
-
-```bash
-npx yaaw-se status
-npx yaaw-se doctor
-npx yaaw-se config
-npx yaaw-se config codex
-```
-
-When installed globally, both `yaaw` and the backward-compatible `yaaw-se` binary are available. Provider configuration is project-local. YAAW may learn about newer provider/model capabilities during a framework update, but it preserves the project's current model/runtime policy until you explicitly reconfigure it.
-
-Run the installer again to update, change integrations, repair, or safely uninstall YAAW-SE.
-
-Package-managed `.yaaw-core/system/**` is immutable during normal YAAW execution. If Orchestrator detects framework drift, it stops before routing semantic work instead of editing its own governing contracts.
-
-For an installation whose managed framework files were modified, use backup-and-replace repair:
-
-```bash
-npx yaaw-se install --action repair --conflict-policy backup-replace --yes
-```
-
-Modified package bytes are preserved under `.yaaw-core/install/backups/<timestamp>/...` before the package version is restored. Durable `.yaaw-core/project/**` remains untouched, while replaceable runtime handoff/observation/intent caches are regenerated after the framework basis changes.
-
-To explicitly use the latest published version:
-
-```bash
-npx yaaw-se@latest install
-```
-
-## More
-
-- [Distribution and update behavior](docs/distribution.md)
-- [Coding-tool integrations](docs/integrations.md)
-- [Codex isolated-worker runtime](docs/codex-runtime.md)
-- [Report a bug or request a feature](https://github.com/QuackyPROG/yaaw-SE/issues)
+Not yet included: native provider hook adapters, autonomous multi-context launching, PRD revision approval workflow, lifecycle of planner/implementer/reviewer/orchestrator, installation packaging or release. Do not mistake skill prose for background automation.

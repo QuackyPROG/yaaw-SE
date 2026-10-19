@@ -1,10 +1,7 @@
 ---
 name: yaaw-prd
-description: Create or continue YAAW product definition and route clarification or revision work.
+description: Independently interview a user about a product, persist and review each answer batch, and build a nontechnical PRD.
 ---
 # yaaw-prd
-ROLE: `prd`
-WORKFLOW: `prd.route`
-INTENT: `CONTINUE_PRODUCT`
 
-Invoke `node .yaaw-core/system/engine/runtime.mjs --workspace <WORKSPACE_ROOT> --invoke-skill yaaw-prd` and follow Orchestrator routing until `PRODUCT_READY`, human input, BLOCKED, or framework stop.
+Read repository `AGENTS.md`, then `.yaaw-core/prd/WORKFLOW.md`, `SECTIONS.md`, and `HOOKS.md`. Use `scripts/prd.mjs` for each transaction gate. If working in another project, resolve its root and pass `--workspace` explicitly. Never invent a product decision, silently alter an accepted decision, or skip capture/review/commit. Stop for the human's answers when asking a question batch; this is the only routine human-intervention point.
