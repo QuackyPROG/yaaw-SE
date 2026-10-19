@@ -1,0 +1,31 @@
+name: One-time v3 branch cleanup
+on:
+  push:
+    branches: [yaaw-SEv3]
+    paths:
+      - .github/workflows/v3-branch-prune.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prune:
+    if: github.event.head_commit.message == 'chore(v3): one-time prune obsolete branches'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete only explicitly superseded branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for branch in \
+            docs/dispatch-release-evidence \
+            fix/dispatch-contract-completeness \
+            fix/release-explicit-version \
+            refactor/compact-semantic-kernel
+          do
+            echo "Deleting branch: ${branch}"
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${branch}" --silent
+          done
+          echo "One-time obsolete branch cleanup complete."
