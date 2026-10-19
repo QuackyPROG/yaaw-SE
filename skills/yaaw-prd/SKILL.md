@@ -1,7 +1,6 @@
 ---
 name: yaaw-prd
-description: Independently interview a user about a product, persist and review each answer batch, and build a nontechnical PRD.
+description: Interview a user to create, revise, audit, or finish an artifact-first plain-language product requirements document.
 ---
-# yaaw-prd
 
-Read repository `AGENTS.md`, then `.yaaw-core/prd/WORKFLOW.md`, `SECTIONS.md`, and `HOOKS.md`. Use `scripts/prd.mjs` for each transaction gate. If working in another project, resolve its root and pass `--workspace` explicitly. Never invent a product decision, silently alter an accepted decision, or skip capture/review/commit. Stop for the human's answers when asking a question batch; this is the only routine human-intervention point.
+Read `AGENTS.md`, `.yaaw-core/system/SYSTEM.md`, and `.yaaw-core/system/workflows/prd/interview.md`. Determine the consumer workspace root. Use `node bin/yaaw-prd.mjs` for each state transition. Ask targeted A/B/C/recommendation question batches, preserve free-form answers, stage interpretations, run an independent semantic drift review, then accept or clarify. Do not skip CLI validation, silently invent product intent, or claim host-native hooks are installed.

@@ -1,7 +1,8 @@
 {
-  "name": "yaaw-se-v3-prd-foundation",
+  "name": "yaaw-se-v3-prototype",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test tests/*.test.mjs", "check": "node --check scripts/prd.mjs" }
+  "engines": {"node": ">=20"},
+  "scripts": {"test": "node --test tests/*.test.mjs", "prd": "node bin/yaaw-prd.mjs"}
 }

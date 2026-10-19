@@ -1,49 +1,40 @@
-# YAAW-SE v3 — PRD foundation
+# YAAW-SE v3 — PRD-first clean foundation
 
-A clean v3 branch for YAAW-SE, beginning with an independent, product-only interview workflow. **This is an implemented PRD workflow foundation, not a full autonomous coding system.** The Planner → Implementer → Reviewer → Orchestrator loop belongs to later slices.
+**Status: experimental PRD engine, not a complete autonomous engineering framework and not an npm release.** This branch is built as a new working tree rather than a modification to v2. `main` and `yaaw-SEv2` are unchanged.
 
-## Core principle
+## Model
 
-**Product intent is interviewed, persisted, checked, and re-evaluated after every batch.** Product meaning survives context limits because accepted requirements and their source answers are stored on disk, not in chat.
+`PRD (independent) → Planner → Spec → Tickets → Implementer → Reviewer → repeat`, with an Orchestrator reconstructing artifact truth and choosing the next admissible step. Only the **PRD transaction engine** is executable in this first v3 slice; downstream roles are design contracts for subsequent work.
 
-## Start the PRD
+## PRD workflow
 
-1. Read `AGENTS.md` and invoke `skills/yaaw-prd/SKILL.md` in your coding agent.
-2. Initialize a target project: `node scripts/prd.mjs init --workspace /path/to/project`.
-3. The PRD skill drafts a `questions.json` batch with **1–10** short questions in A/B/C form and a recommendation. Validate and persist: `node scripts/prd.mjs prepare --workspace /path/to/project --questions questions.json`.
-4. Ask the human. Preserve the *verbatim* answer in `answers.md`: `node scripts/prd.mjs capture --workspace /path/to/project --answers answers.md`.
-5. The PRD interpreter writes `proposal.json` (only supported conclusions); run `node scripts/prd.mjs fingerprint --workspace /path/to/project --proposal proposal.json` for review hashes. A fresh semantic critic writes `review.json` using the current ledger, unedited answers, and exact proposal. The critic must examine conflicts and drift, not merely approve.
-6. Gate acceptance: `node scripts/prd.mjs commit --workspace /path/to/project --proposal proposal.json --review review.json`. This updates the decision ledger and regenerates the readable `product.md`.
-7. Re-inspect the PRD, identify remaining product questions, and repeat. Check projection integrity with `node scripts/prd.mjs audit --workspace /path/to/project`. After all material questions are resolved, run `node scripts/prd.mjs finalize --workspace /path/to/project`.
+The agent interviews in topical rounds. Each question is short with A/B/C plus a recommendation, but any free-form answer is valid. The AI interprets the answers and writes **pending interpretations** into `product.md`. A semantic reviewer checks the interpretations against past accepted requirements and actual answers. A PASS commits accepted product meaning into the relevant section; CLARIFY rejects the staging and starts targeted follow-ups. Accepted product requirements have stable identifiers and source-question provenance.
 
-All commands use built-in Node.js APIs. Node.js 20+ is recommended.
+**Internal pre/post hooks are implemented as CLI state-transition gates**. No native Codex/Claude/Gemini hook has been installed yet, and the CLI does not invent answers or call a language model. When invoked inside a compatible coding agent, `skills/yaaw-prd/SKILL.md` directs the agent to operate the loop.
 
-## Hook boundaries
+## Try it locally
 
-| Workflow hook | Trigger | Enforced action |
-| --- | --- | --- |
-| Pre-question | `prepare` | Validate 1–10 questions, A/B/C choices, recommendation, section, and no pending batch |
-| Post-answer | `capture` | Preserve raw input and its hash |
-| Pre-commit | `commit` | Require full interpretation/deferral coverage, exact user quote, reviewer PASS tied to proposal/answers/context hashes, no silent overwrites |
-| Post-commit | `commit` | Persist append-only interview audit bundle and regenerate `product.md`; skill must re-read result |
-| Readiness | `finalize` | Reject unfinished batch, unresolved questions or required empty sections |
+Requirements: Node.js 20 or newer. No npm install necessary.
 
-**Important:** These are executable, explicitly invoked **workflow hooks**, not provider-native event hooks. Native Codex/Claude adapters are intentionally not installed yet. A content hash does not detect every semantic contradiction; an independent semantic review is part of the protocol and unresolved human intent must be clarified.
-
-## Layout
-
-```text
-AGENTS.md                  Repository instructions for v3
-skills/yaaw-prd/SKILL.md   Public PRD skill entrypoint
-.yaaw-core/prd/            Canonical product workflow, sections and hooks
-scripts/prd.mjs            Deterministic interview transaction gate
-tests/prd.test.mjs         Test suite
+```bash
+npm test
+node bin/yaaw-prd.mjs init --workspace /path/to/my-project
+node bin/yaaw-prd.mjs status --workspace /path/to/my-project
+node bin/yaaw-prd.mjs batch examples/batch.json --workspace /path/to/my-project
+node bin/yaaw-prd.mjs answer examples/answers.json --workspace /path/to/my-project
+node bin/yaaw-prd.mjs propose examples/proposals.json --workspace /path/to/my-project
+# Copy the reviewBasis value returned by propose into review.json.
+node bin/yaaw-prd.mjs review review.json --workspace /path/to/my-project
 ```
 
-Target projects receive `.yaaw-core/project/product.md`, `.yaaw-core/project/prd/ledger.json`, `.yaaw-core/project/prd/state.json`, and verbatim round evidence.
+Templates and exact formats: `examples/`; semantic workflow: `.yaaw-core/system/workflows/prd/interview.md`.
 
-## Scope
+## Safety invariants
 
-Included: independent PRD initiation, sectional interviewing, staged question/answer rounds, audit-ready proposals, source checking, optional fresh-context semantic critic enforced at commit, conflict rejection, readable PRD projection, basic readiness gate.
-
-Not yet included: native provider hook adapters, autonomous multi-context launching, PRD revision approval workflow, lifecycle of planner/implementer/reviewer/orchestrator, installation packaging or release. Do not mistake skill prose for background automation.
+- Durable artifacts, not the chat window, are the source of accepted meaning.
+- An unanswered or unreviewed batch blocks the next batch.
+- Candidates are **not** requirements until reviewed.
+- Review basis hashes block stale approvals, and replacement of accepted requirements requires an explicitly authorized replacement.
+- Semantic contradiction detection requires reviewer judgment; string checks are not a substitute.
+- Product requirements describe people, journeys, features, constraints and outcomes — not unrequested technical implementation.
+- Do not use this prototype as `npx yaaw-se install`; the v3 packaging, orchestration and provider integration are not yet implemented.

@@ -1,37 +1,60 @@
-# YAAW-SE v3 repository contract
+# YAAW-SE v3 — authoritative repository instructions
 
-This is the **authoritative repository instruction file** for work on `yaaw-SEv3`. Before inspecting, editing, reviewing, or pushing this branch, read this file and the specific `.yaaw-core` workflow being changed. Do not assume v2 rules govern v3. Preserve `main` and `yaaw-SEv2` unless the user explicitly directs otherwise.
+Read this file **first** on every repository operation, followed by `.yaaw-core/system/SYSTEM.md` and only the active workflow. If the user changes these rules explicitly, resolve that instruction against host and safety constraints. Do not assume instructions or state from `main`, `yaaw-SEv2`, old chats, or other branches govern v3.
 
-## v3 architecture and authority
+## Branch and change discipline
+- The active experimental branch is `yaaw-SEv3`; do not modify `main` or `yaaw-SEv2` while doing v3 work.
+- v3 is intentionally a clean new file tree; do not copy v2 installer/runtime by default. Reintroduce capabilities only when contracted and tested.
+- Read the branch's own `AGENTS.md`, relevant core contract, and affected files **before** edits. Always identify current branch, diff, and untracked changes before writing.
+- Never call a prototype complete autonomous orchestration or publicly shipped npm release. Current executable scope is the **PRD interview transaction**; downstream Planner, Implementer, Reviewer and Orchestrator are architectural next steps, not shipped runtime behavior.
+- Test changes to CLI, hooks, acceptance, recovery, and document rendering together. Run `npm test`, `node --check src/prd-engine.mjs`, and a CLI smoke before merging.
 
-- This branch is a **clean v3 redesign**, intentionally starting with the PRD vertical slice, not a copy of v2. Do not implement Planner, Implementer, Reviewer, or Orchestrator until the user requests the next slice.
-- Public Agent Skills are thin entrypoints under `skills/`; canonical workflow contracts and rules belong in `.yaaw-core/`. Do not duplicate complex procedures in skills.
-- PRD is independently invocable, and owns **product meaning** only: audience, problems, expected behaviors, user journeys, feature outcomes, exclusions, and acceptance. **No solution architecture, stack, database, framework, or infrastructure choice belongs in the PRD**, except an explicit user-specified product constraint.
-- Agents are disposable; accepted decisions, original user answers, and audit evidence persist in project files. A chat transcript is not a source of truth.
-- All required work is staged into small, verifiable transactions. A model's claim that it ran a check is not evidence.
-- `.yaaw-core/prd/WORKFLOW.md`, `.yaaw-core/prd/SECTIONS.md`, and `.yaaw-core/prd/HOOKS.md` govern product interviews. The concrete transaction gate is `scripts/prd.mjs`.
-- Runtime product memory is `.yaaw-core/project/` in an installed target workspace. Within it, `product.md` is the readable projection, `prd/ledger.json` is the structured decision record, and `prd/rounds/` holds the original interview evidence.
-- No model may silently rewrite a previously recorded product decision. A conflict requires targeted clarification and an explicit revision procedure (not implemented in this initial slice).
+## Roles and authority
+- **PRD**: owns product intent, user groups, needs, features, journeys, business rules, constraints, success measures. Uses plain language; no architecture choices by inference.
+- **Planner**: future role; owns technical interpretation, architecture, specs, and tickets, never invents product intent.
+- **Implementer**: future role; implements a bounded admitted ticket, never approves itself.
+- **Reviewer**: independently evaluates semantic agreement and downstream changes. A deterministic validator never masquerades as a semantic reviewer.
+- **Orchestrator**: future role; reconstructs durable reality and routes to exactly one valid operation, never resolves product disagreements unilaterally.
 
-## Interview protocol
+## Artifact ownership
+- `skills/`: thin public invocation entrypoints. The PRD skill is `skills/yaaw-prd/SKILL.md`.
+- `.yaaw-core/system/`: package/workflow instruction contract; no project decisions live here.
+- `.yaaw-core/project/product.md`: canonical accepted product requirements, plus clearly labeled **unapproved** staging area.
+- `.yaaw-core/project/prd/rounds/NNNN.json`: durable provenance for each question/answer/interpretation/review transaction. Avoid duplicating entire chat logs elsewhere.
+- `.yaaw-core/project/prd/readiness.json`: signed-off readiness coverage; never treat the filename alone as proof of readiness.
+- `.yaaw-core/runtime/`: replaceable caches only (not required for the PRD engine). Do not put accepted meaning here.
+- Downstream product changes must invalidate engineering/spec/ticket bases once those layers are implemented.
 
-1. Read existing product state before asking anything; avoid repeat questions.
-2. Ask **1–10 brief high-value questions** per batch, always with A/B/C, a concise reasoned recommendation, and an explicit free-form option.
-3. Capture the user's *unaltered* response. Interpret it into product-level decision proposals with exact source quotations and stable keys; separate assumptions and open questions.
-4. Use a fresh, independent semantic review context where available. Compare new interpretations against the original user answers, previous decisions, and the PRD; check contradictions, edge cases, accidental narrowing, invented requirements, and wording drift.
-5. Only commit a reviewed proposal using the deterministic PRD gate. The CLI checks coverage, source anchoring, revision conflicts, and matching hashes. It cannot judge truth or semantic equivalence; the reviewer remains necessary.
-6. Re-read the persisted PRD before generating the next batch; ask only newly discovered or unresolved product questions.
-7. Mark READY only if necessary product sections are defined, open questions are resolved, and the document is comprehensible to a fresh non-engineer.
+## PRD lifecycle: enforce, don't merely suggest
+1. Pre-question gate: 1–10 nonredundant, short questions, each with A/B/C options and one marked recommendation; user may answer freely or choose another option.
+2. Post-answer gate: record exact answers with question ID and batch ID. Do not proceed to next batch until each answer is handled.
+3. Interpretation: extract product statements into the PRD's **pending** area; cite the specific answered question(s). Never label them accepted before review.
+4. Pre-acceptance gate: check prior accepted requirements, candidate interpretations, user answers, scope, edge cases, contradictions and drift. This is a **semantic reviewer** responsibility; the local code enforces structure, freshness and authority boundaries only.
+5. Post-review gate: PASS promotes staged statements to accepted requirements with stable IDs and an incremented revision; CLARIFY removes staging, records the discrepancy, and requires a targeted follow-up batch.
+6. Readiness gate: an independent reviewer checks all eight PRD sections, remaining ambiguity, outcomes, users, journeys, exclusions and acceptance criteria; machine validates the declared coverage.
+7. Pause only when a **meaningful** product decision requires human authority. Missing implementation details go to Planner, not the PRD user.
 
-## Hooks and provider compatibility
+## Hook boundaries
+`before_batch`, `after_answer`, `before_propose`, `after_propose`, `before_review`, `after_review`, and `before_finalize` are real **internal CLI validation boundaries** implemented by `src/prd-engine.mjs` and called by `bin/yaaw-prd.mjs`. They are **not** claims of native Codex/Claude/Gemini host hooks. Wire provider-native hook adapters separately after verifying each provider's supported API.
 
-- v3 defines **workflow hooks** as CLI stages: pre-question, post-answer, pre-commit, post-commit, and readiness. They run when invoked via the script/skill, **not automatically on every model message**.
-- Do not claim model-agnostic native hook enforcement. Native hooks vary by provider and require separate tested adapters and trust configuration. Do not install host hooks or global settings without user approval.
-- A source quote/hash check catches misattribution or stale proposals; it is **not** independent semantic assurance. Phrase checks and fixed question counts are never substitutes for reasoning.
+## Non-negotiable behavioral guarantees
+- Files, not transient chat context, carry accepted meaning and answer provenance.
+- Never overwrite a pre-existing product file during initialization.
+- A free-form answer overrides recommended multiple-choice defaults.
+- Revisions to an existing requirement demand an explicit `replaceId` and independent review authorization, linked back to the human's instruction.
+- A stale review basis fails closed; a review with findings cannot PASS.
+- The engine cannot automatically infer semantic agreement from string equality. The skill must use a fresh review context where available, or disclose that independence is limited.
+- Preserve human language for the PRD. Technical mechanisms and vendor choices belong in later engineering decisions unless explicitly required by the human as a product constraint.
+- Do not optimize question count. Minimize unneeded questions; default to 3–6 high-impact questions and never exceed 10.
 
-## Engineering discipline
+## Verification
+From repository root:
 
-- Write small, dependency-free code. Every new gate must have tests for valid paths, rejected invalid inputs, conflict handling, and recovery behavior.
-- Avoid modifying upstream branches. Target `yaaw-SEv3` for all v3 changes.
-- Verify scripts with `node --test tests/*.test.mjs` and `node --check scripts/prd.mjs` before pushing.
-- Report precisely which claims are enforced by code, which rely on model instructions, and which need human review. Never claim an unimplemented native hook or CI integration is active.
+```bash
+npm test
+node --check src/prd-engine.mjs
+node bin/yaaw-prd.mjs init --workspace /path/to/a/new/project
+node bin/yaaw-prd.mjs status --workspace /path/to/a/new/project
+```
+
+The code is a PRD-engine prototype, not a complete installable `yaaw-se` distribution. Do not publish it to npm before distribution and host-integrations are implemented and tested.

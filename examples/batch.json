@@ -1,0 +1,6 @@
+{
+  "questions": [
+    {"id":"Q1","section":"vision","question":"Who should benefit from this product first?","choices":{"A":"Individual users","B":"Small teams","C":"Anyone"},"recommendation":"A","why":"Start with a clearly defined audience."},
+    {"id":"Q2","section":"problems","question":"What is their biggest problem today?","choices":{"A":"Too much manual work","B":"Hard to find information","C":"Too many disconnected tools"},"recommendation":"A"}
+  ]
+}
