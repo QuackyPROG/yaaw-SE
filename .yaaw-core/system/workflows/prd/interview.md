@@ -1,27 +1,18 @@
-# PRD interview workflow for the host agent
+# PRD interview — single public skill
 
-This workflow is for **product discovery**, not code architecture. Read `AGENTS.md`, `SYSTEM.md`, then run the CLI with the consumer **workspace root**, not the YAAW framework repository root unless it is the actual target project.
+Read `AGENTS.md` and `SYSTEM.md` first. Use the consumer project workspace, not the framework root unless that is actually the target project.
 
-## Turn protocol
+## User-facing protocol
 
-1. `node bin/yaaw-prd.mjs status --workspace <root>`; if the product doesn't exist, `init` it. `context` gives accepted requirements and any active question/proposal frontier.
-2. For a new round, choose the smallest important unanswered frontier among the eight sections. Create `batch.json` matching `examples/batch.json`, invoke `batch`. Ask the exact questions with short A/B/C choices, recommendation, and optional rationale. End turn for human answers. Never use the engine to generate questions; the agent generates them.
-3. Interpret the user's numbered responses without assuming recommendations were selected. Put them in `answers.json` and call `answer`. A user can respond with A/B/C or arbitrary prose. Where a response is "skip", treat the uncertainty as unresolved; do not invent intent.
-4. Write independently meaningful product statements as `proposals.json` and call `propose`. The CLI appends them to a **pending / not accepted** area in `product.md`.
-5. Perform a semantic review **after staging**. Fresh reviewer context when available: read user answers, the relevant accepted requirements (including non-goals and related journeys), and staged proposals. Check conflicts with previous rounds, overreach, missing exceptions and scope drift. Emit `review.json` with the returned `reviewBasis`. `PASS` requires no findings and authorizations for any replacements. `CLARIFY` requires specific findings. Call `review` to promote or reject.
-6. On `CLARIFY`, generate the smallest targeted next batch. On PASS, reconsider unanswered frontiers; do not ask repetitive questions. Trigger cross-section audit periodically (for example after three batches) and before final readiness.
-7. Before marking READY, perform an independent product-readiness audit of all eight sections, explicitly declaring COVERED/NOT_APPLICABLE and the absence of material blockers. Call `finalize` with the audit; never mark READY solely because a template is filled.
+1. Invoke `node bin/yaaw-prd.mjs start --workspace <root>`. If no product exists, the engine creates it without overwriting existing documents and opens Q0: “What are you trying to build? Explain your idea in your own words. Focus on what the product should do and what people should experience.”
+2. Present questions returned as `AWAIT_ANSWERS`. Later batches have 1–10 concise questions (usually 3–6) with A/B/C and a recommendation. Accept free-form responses; never assume the recommendation was selected.
+3. Preserve the exact user responses in a temporary JSON file keyed by the returned question IDs, then invoke `submit` once. The engine saves original answers to `rounds/NNNN.json` before invoking workers.
+4. Fresh `DISCOVERY` Codex SDK thread interprets the answers, makes cited proposals, and stages them NOT ACCEPTED. Fresh, separate `AUDIT` thread compares proposals with exact input and accepted history. The engine validates the review basis, role identities, replacements, and current revision. PASS commits; CLARIFY asks focused follow-up; REJECT returns to interpretation; BLOCKED fails closed.
+5. After PASS/CLARIFY, a new Discovery context selects the next frontier. When it considers the PRD complete, a new full-product READINESS context evaluates eight sections and unresolved material product issues. The engine alone marks READY.
+6. Run `continue` after interruptions. Recovery reconstructs staged work and completes a durable, already-authorized COMMIT_PENDING journal without repeating a model review. Keep the main user-facing conversation; never manually renew/clear it or require another skill invocation.
 
-## Semantics that require human judgment
+## Codex execution and evidence
 
-A review basis hash only ensures the reviewer inspected the **same data** that was staged. It cannot establish true independence or semantic consistency. Review requires reasoning through changes to previously accepted product intent. If new answers imply contradictory user behavior, explicitly ask the human rather than merging conflicting statements. Never infer engineering details, even if some technical method would be convenient.
+The adapter uses the official `@openai/codex-sdk` with `Codex.startThread` for each worker, `sandboxMode: read-only`, `approvalPolicy: never`, and `networkAccessEnabled: false`. It never uses `resumeThread` for worker contexts. Each model output must match its machine-readable contract; worker thread IDs and immutable answer/proposal/review metadata are recorded for audit. The SDK and Codex authentication are necessary for autonomous inference. Mock tests are not real Codex isolation evidence. Provider-native hooks are not installed or required.
 
-## Example question style
-
-1. Who is the first audience for this product?
-   A. Individual users
-   B. Small teams
-   C. Everyone
-   Recommendation: A — narrower first audience usually makes product behavior easier to specify.
-
-Ask fewer than 10 when fewer are genuinely needed. Question sections can differ within a batch when dependent decisions are already resolved. Do not read all historical raw answers unless reviewing a reported contradiction.
+The accepted PRD is `.yaaw-core/project/product.md`; round records are `.yaaw-core/project/prd/rounds/`. Do not duplicate accepted product meaning in caches or conversation summaries. Planner owns engineering decisions. Semantic review is fallible; the code only proves gates, integrity, identity, and provenance, not user intent itself.

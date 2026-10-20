@@ -1,4 +1,4 @@
-name: v3 PRD prototype checks
+name: v3 PRD runtime checks
 on:
   push:
     branches: [yaaw-SEv3]
@@ -13,4 +13,10 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
-      - run: node --check src/prd-engine.mjs && node --check bin/yaaw-prd.mjs
+      - run: node --check src/prd-engine.mjs && node --check src/prd-session.mjs && node --check src/codex-worker.mjs && node --check bin/yaaw-prd.mjs
+      - name: CLI smoke without AI runtime
+        run: |
+          dir="$(mktemp -d)"
+          node bin/yaaw-prd.mjs start --workspace "$dir"
+          node bin/yaaw-prd.mjs status --workspace "$dir"
+          node bin/yaaw-prd.mjs recover --workspace "$dir"

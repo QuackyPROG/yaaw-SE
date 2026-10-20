@@ -6,7 +6,7 @@ Read this file **first** on every repository operation, followed by `.yaaw-core/
 - The active experimental branch is `yaaw-SEv3`; do not modify `main` or `yaaw-SEv2` while doing v3 work.
 - v3 is intentionally a clean new file tree; do not copy v2 installer/runtime by default. Reintroduce capabilities only when contracted and tested.
 - Read the branch's own `AGENTS.md`, relevant core contract, and affected files **before** edits. Always identify current branch, diff, and untracked changes before writing.
-- Never call a prototype complete autonomous orchestration or publicly shipped npm release. Current executable scope is the **PRD interview transaction**; downstream Planner, Implementer, Reviewer and Orchestrator are architectural next steps, not shipped runtime behavior.
+- Never claim a complete engineering orchestrator or published npm release. Executable scope is the **autonomous PRD transaction when the Codex SDK and authentication are available**; downstream planning, implementation and review remain unshipped.
 - Test changes to CLI, hooks, acceptance, recovery, and document rendering together. Run `npm test`, `node --check src/prd-engine.mjs`, and a CLI smoke before merging.
 
 ## Roles and authority
@@ -58,3 +58,7 @@ node bin/yaaw-prd.mjs status --workspace /path/to/a/new/project
 ```
 
 The code is a PRD-engine prototype, not a complete installable `yaaw-se` distribution. Do not publish it to npm before distribution and host-integrations are implemented and tested.
+
+## Autonomous PRD runtime
+
+The single public `yaaw-prd` entrypoint uses `start`, `submit`, `continue`, and `recover` commands. `src/prd-session.mjs` coordinates fresh read-only Codex SDK Discovery/Audit workers; `src/prd-engine.mjs` alone modifies the accepted PRD and validates checkpoint transitions, durable source evidence, worker identities, journals, and recovery. `@openai/codex-sdk` is an explicit local install prerequisite for live inference. Native Codex hooks remain uninstalled; do not rely on them as the controller. The manual `batch`, `answer`, `propose`, `review`, and `finalize` commands remain for backward compatibility/testing, not proof of independent semantic correctness. Mock tests are not real Codex integration tests. Never assume the parent thread can be renewed invisibly.
