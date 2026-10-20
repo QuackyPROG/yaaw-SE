@@ -152,6 +152,22 @@ test('crash during stage rehydrates pending proposal from journal',()=>{
   assert.equal(status(dir).accepted,0);
 });
 
+test('silent edit after staging invalidates semantic Audit basis even at same revision',()=>{
+  const dir=work();init(dir);
+  batch(dir,{questions:[basicQ()]});answer(dir,{answers:{Q1:'Anyone.'}});
+  const first=propose(dir,{requirements:[{section:'features',statement:'Anyone can register for this service.',sources:['Q1']}]});
+  review(dir,{basis:first.reviewBasis,verdict:'PASS',reviewer:'independent',findings:[]});
+  batch(dir,{questions:[basicQ()]});answer(dir,{answers:{Q1:'Invited users instead.'}});
+  const next=propose(dir,{requirements:[{section:'features',statement:'Invitations are required before registration.',sources:['Q1'],replaceId:'PR-0001'}]});
+  const file=path.join(dir,'.yaaw-core/project/product.md');
+  fs.writeFileSync(file,fs.readFileSync(file,'utf8').replace(
+    'Anyone can register for this service.','Anyone can register without restrictions.'),'utf8');
+  assert.throws(()=>review(dir,{basis:next.reviewBasis,verdict:'PASS',reviewer:'independent',
+    findings:[],authorizedReplacements:['PR-0001']}),/stale Audit basis/);
+  assert.equal(status(dir).phase,'REVIEW_PENDING');
+  assert.equal(status(dir).revision,1);
+});
+
 test('fresh SDK adapter starts distinct read-only threads and rejects reuse',async()=>{
   let i=0,starts=[];
   class FakeCodex {

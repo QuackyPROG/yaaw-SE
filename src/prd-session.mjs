@@ -22,8 +22,17 @@ function evidence(workspace) {
   const p=paths(workspace),ctx=context(workspace);
   const files=fs.existsSync(p.rounds)?fs.readdirSync(p.rounds).filter(f=>/^\d{4}\.json$/.test(f)).sort():[];
   const rounds=files.map(f=>JSON.parse(fs.readFileSync(path.join(p.rounds,f),'utf8')));
+  // Keep exact historical answers supporting active requirements. With long
+  // interviews select a bounded recent window plus sources relevant to replacements.
+  const replacing=new Set((ctx.pendingProposals??[]).map(p=>p.replaceId).filter(Boolean));
+  const relevant=new Set(ctx.requirements.filter(r=>replacing.has(r.id))
+    .map(r=>Number(/round (\d+)/.exec(r.source)?.[1])).filter(Number.isFinite));
+  const historicalAnswers=rounds.slice(0,-1).filter((r,index)=>
+    rounds.length<=8||index>=rounds.length-5||relevant.has(r.number))
+    .map(r=>({round:r.number,answers:r.answers??{},verdict:r.review?.verdict??null}));
   return {contract:'PRD product intent ONLY. Original free-form answers override recommended choices. Do not invent unrequested technical decisions.',
     revision:ctx.status.revision,accepted:ctx.requirements,round:rounds.at(-1)??null,
+    historicalAnswers,
     pastQuestions:rounds.map(r=>({round:r.number,questions:r.questions.map(q=>q.question),phase:r.phase,findings:r.review?.findings??[]}))};
 }
 function validateQuestions(items) {

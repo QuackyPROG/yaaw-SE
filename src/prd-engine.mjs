@@ -185,6 +185,9 @@ function formattedProposals(r) {
   return r.proposals.map((p,i)=>`- **Candidate ${i+1}** (${p.section}; ${p.sources.join(', ')}${p.replaceId?`; replaces ${p.replaceId}`:''}): ${p.statement}`).join('\n');
 }
 function enactCommit(doc,r) {
+  const actualBasis=digest({accepted:accepted(doc),round:r.number,answers:r.answers,proposals:r.proposals});
+  ensure(actualBasis===r.reviewBasis,
+    'Accepted product meaning changed since Audit; refusing unauthorized commit.');
   const current=Number(doc.match(statusRegex)?.[2]);
   ensure(current===r.baseRevision,'Stale product revision; refusing commit.');
   let result=pending(doc);
@@ -245,6 +248,9 @@ function reviewUnsafe(workspace,input) {
   ensure(['REVIEW_PENDING','BLOCKED'].includes(s.last?.phase),'Nothing awaiting review.');
   ensure(isObject(input) && input.basis===s.last.reviewBasis,'Stale or missing review basis.');
   ensure(Number(s.doc.match(statusRegex)[2])===s.last.baseRevision,'Stale product revision.');
+  ensure(digest({accepted:accepted(s.doc),round:s.last.number,
+    answers:s.last.answers,proposals:s.last.proposals})===s.last.reviewBasis,
+    'Accepted requirements changed after staging; stale Audit basis.');
   ensure(typeof input.reviewer==='string' && input.reviewer.trim().length>=3,'Reviewer identity/context required.');
   ensure(['PASS','CLARIFY','REJECT','BLOCKED'].includes(input.verdict),'Invalid review verdict.');
   ensure(Array.isArray(input.findings),'Review findings array required.');
