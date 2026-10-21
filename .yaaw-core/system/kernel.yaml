@@ -128,9 +128,9 @@
       {"from":"REPAIR_REQUIRED","to":"REPLAN_REQUIRED","owner":"planner","workflow":"planning.replan"},
       {"from":"REPLAN_REQUIRED","to":"DRAFT","owner":"planner","workflow":"planning.replan"},
       {"from":"REPLAN_REQUIRED","to":"READY","owner":"planner","workflow":"planning.replan"},
+      {"from":"REPLAN_REQUIRED","to":"PASS","owner":"orchestrator","workflow":"orchestration.reconcile-state","causes":["HISTORICAL_PASS_RESTORED"],"writer":"orchestrator"},
       {"from":"PASS","to":"CANCELLED","owner":"planner","workflow":"planning.replan"},
-      {"from":"PASS","to":"REVIEW_REQUIRED","owner":"orchestrator","workflow":"orchestration.reconcile-state","causes":["REVIEW_MISSING","REVIEW_REPOSITORY_STALE","VERIFICATION_MISSING","VERIFICATION_REPOSITORY_STALE","LEGACY_IDENTITY_UNVERIFIABLE"],"writer":"orchestrator"},
-      {"from":"PASS","to":"REPLAN_REQUIRED","owner":"orchestrator","workflow":"orchestration.reconcile-state","causes":["PRODUCT_SOURCE_STALE","ENGINEERING_SOURCE_STALE","SPEC_SOURCE_STALE","TICKET_SOURCE_STALE","CONTRACT_INVALIDATED"],"writer":"orchestrator"}
+      {"from":"PASS","to":"REVIEW_REQUIRED","owner":"orchestrator","workflow":"orchestration.reconcile-state","causes":["REVIEW_MISSING","REVIEW_REPOSITORY_STALE","VERIFICATION_MISSING","VERIFICATION_REPOSITORY_STALE","LEGACY_IDENTITY_UNVERIFIABLE"],"writer":"orchestrator"}
     ],
     "forbidden": [{"from":"DRAFT","to":"PASS"},{"from":"READY","to":"PASS"},{"from":"REPAIR_REQUIRED","to":"PASS"}],
     "routing": {
@@ -139,7 +139,7 @@
         "PRODUCT_SOURCE_STALE":{"state":"REPLAN_REQUIRED","workflow":"planning.replan"},"ENGINEERING_SOURCE_STALE":{"state":"REPLAN_REQUIRED","workflow":"planning.replan"},"SPEC_SOURCE_STALE":{"state":"REPLAN_REQUIRED","workflow":"planning.replan"},"TICKET_SOURCE_STALE":{"state":"REPLAN_REQUIRED","workflow":"planning.replan"},"CONTRACT_INVALIDATED":{"state":"REPLAN_REQUIRED","workflow":"planning.replan"},"REVIEW_MISSING":{"state":"REVIEW_REQUIRED","workflow":"review.review-ticket"},"REVIEW_REPOSITORY_STALE":{"state":"REVIEW_REQUIRED","workflow":"review.review-ticket"},"VERIFICATION_MISSING":{"state":"REVIEW_REQUIRED","workflow":"review.review-ticket"},"VERIFICATION_REPOSITORY_STALE":{"state":"REVIEW_REQUIRED","workflow":"review.review-ticket"},"LEGACY_IDENTITY_UNVERIFIABLE":{"state":"REVIEW_REQUIRED","workflow":"review.review-ticket"}
       }
     },
-    "reconciliation_priority": ["CONTRACT_SOURCE_STALE","IMPLEMENTATION_STARTED","IMPLEMENTATION_VERIFIED","REVIEW_RESULT_UNAPPLIED","ACCEPTANCE_STALE"],
+    "reconciliation_priority": ["HISTORICAL_PASS_RESTORED","CONTRACT_SOURCE_STALE","IMPLEMENTATION_STARTED","IMPLEMENTATION_VERIFIED","REVIEW_RESULT_UNAPPLIED","ACCEPTANCE_STALE"],
     "one_reconciliation_per_cycle": true
   }
 }
