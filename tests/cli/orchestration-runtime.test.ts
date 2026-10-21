@@ -33,5 +33,64 @@ describe("compact orchestration runtime",()=>{
   it("adopts implementation start and PASS verification into ticket frontmatter",async()=>{const root=await fixture();run(root);const repo=(await handoff(root)).repository;await writeStart(root,repo);let next=run(root);expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.to).toBe("IN_PROGRESS");expect(run(root,"--reconcile-one").type).toBe("RECONCILED");expect(await ticketStatus(root)).toBe("IN_PROGRESS");await writeVerification(root,repo);next=run(root);expect(next.reconciliation.to).toBe("REVIEW_REQUIRED");expect(run(root,"--reconcile-one").type).toBe("RECONCILED");expect(await ticketStatus(root)).toBe("REVIEW_REQUIRED")});
   it("does not promote failed verification",async()=>{const root=await fixture();run(root);const repo=(await handoff(root)).repository;await writeStart(root,repo);run(root,"--reconcile-one");await writeVerification(root,repo,"FAIL");const next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("implementation.verify-ticket");expect(await ticketStatus(root)).toBe("IN_PROGRESS")});
   it("adopts current independent review PASS",async()=>{const root=await fixture("REVIEW_REQUIRED");run(root);const inspected=run(root,"--inspect-only");const repo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;await writeVerification(root,repo);await writeReview(root,repo);const next=run(root);expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.id).toBe("REVIEW_RESULT_UNAPPLIED");expect(next.reconciliation.to).toBe("PASS");expect(run(root,"--reconcile-one").type).toBe("RECONCILED");expect(await ticketStatus(root)).toBe("PASS");void inspected});
+  it("retains a reviewed historical PASS after repository/engineering changes and restores the old bad status safely",async()=>{
+    const root=await fixture("REVIEW_REQUIRED");
+    run(root);
+    const repo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+    await writeVerification(root,repo);
+    await writeReview(root,repo);
+    expect(run(root).reconciliation.id).toBe("REVIEW_RESULT_UNAPPLIED");
+    expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
+    expect(await ticketStatus(root)).toBe("PASS");
+    // Unrelated later application work is not grounds to revoke this historical review.
+    await writeFile(join(root,"later-application-work.txt"),"later code changes are a different review basis\n");
+    let next=run(root);
+    expect(next.type).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("planning.route");
+    expect(await ticketStatus(root)).toBe("PASS");
+    // A new engineering frontier invalidates admission for future tickets, not prior acceptance.
+    await writeFile(join(root,".yaaw-core/project/engineering.md"),`---
+schema: yaaw.engineering/v2
+revision: 2
+status: ready
+product_revision: 1
+current_frontier: null
+readiness: pending
+scope_status: OPEN
+---
+# Updated engineering understanding
+`);
+    next=run(root);
+    expect(next.type).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("planning.route");
+    expect(await ticketStatus(root)).toBe("PASS");
+    // Model a status already demoted by an old runtime, without modifying evidence/reviews.
+    const ticketPath=join(root,".yaaw-core/project/tickets/TASK-001.md");
+    await writeFile(ticketPath,(await readFile(ticketPath,"utf8")).replace(/^status: PASS$/m,"status: REPLAN_REQUIRED"));
+    next=run(root);
+    expect(next.type).toBe("RECONCILE_REQUIRED");
+    expect(next.reconciliation.id).toBe("HISTORICAL_PASS_RESTORED");
+    expect(next.reconciliation.to).toBe("PASS");
+    expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
+    expect(await ticketStatus(root)).toBe("PASS");
+    next=run(root);
+    expect(next.type).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("planning.route");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    next=run(root);
+    expect(next.type).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("planning.route");
+  });
+  it("does not restore a current REPLAN_REQUIRED ticket without a stale source",async()=>{
+    const root=await fixture("REPLAN_REQUIRED");
+    run(root);
+    const repo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+    await writeVerification(root,repo);
+    await writeReview(root,repo);
+    const next=run(root);
+    expect(next.type).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("planning.replan");
+    expect(await ticketStatus(root)).toBe("REPLAN_REQUIRED");
+  });
   it("routes DRAFT tickets to Planner admission",async()=>{const root=await fixture("DRAFT");const next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("planning.create-tickets");expect(next.role).toBe("planner")});
 });

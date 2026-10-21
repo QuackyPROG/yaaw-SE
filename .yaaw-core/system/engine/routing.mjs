@@ -1,5 +1,5 @@
 import { ROUTES, dispatchableWorkflows } from "./contracts.mjs";
-const ACTIVE = new Set(["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","PASS"]);
+const ACTIVE = new Set(["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED"]);
 const TERMINAL = new Set(["PASS","CANCELLED"]);
 const REVIEW_RESULT = { PASS:"PASS", REPAIR:"REPAIR_REQUIRED", REPLAN:"REPLAN_REQUIRED", BLOCKED:"BLOCKED" };
 const idNum = value => Number(String(value??"").match(/(\d+)(?!.*\d)/)?.[1]??0);
@@ -24,6 +24,19 @@ const latestVerification=(ticket,a)=>evidenceFor(ticket,a).filter(x=>x.kind==="i
 const latestReview=(ticket,a)=>reviewFor(ticket,a).at(-1)??null;
 const verificationCurrent=(v,ticket,a,repo)=>Boolean(v&&v.result==="PASS"&&Number(v.ticket_revision??0)===Number(a.tickets?.[ticket]?.meta?.revision??0)&&Number(v.spec_revision??0)===Number(a.specs?.[a.tickets?.[ticket]?.meta?.spec]?.meta?.revision??0)&&repoEq(v.repository,repo));
 const reviewCurrent=(r,ticket,a,repo,v)=>Boolean(r&&REVIEW_RESULT[r.meta?.result]&&Number(r.meta.ticket_revision??0)===Number(a.tickets?.[ticket]?.meta?.revision??0)&&Number(r.meta.spec_revision??0)===Number(a.specs?.[a.tickets?.[ticket]?.meta?.spec]?.meta?.revision??0)&&repoEq(r.meta.repository,repo)&&Array.isArray(r.meta.evidence)&&(!v||r.meta.evidence.includes(v.id)));
+// Historical acceptance is evidence about the reviewed snapshot, not a claim about today's worktree.
+// An old PASS must not require a current engineering revision or an unchanged repository.
+const historicalPassProof=(ticket,a)=>{
+  const t=a.tickets?.[ticket]?.meta,s=a.specs?.[t?.spec]?.meta;
+  const v=latestVerification(ticket,a),r=latestReview(ticket,a);
+  return Boolean(t&&s&&v&&r&&v.result==="PASS"&&r.meta?.result==="PASS"
+    &&Number(v.ticket_revision??0)===Number(t.revision??0)
+    &&Number(v.spec_revision??0)===Number(s.revision??0)
+    &&Number(r.meta.ticket_revision??0)===Number(t.revision??0)
+    &&Number(r.meta.spec_revision??0)===Number(s.revision??0)
+    &&repoEq(v.repository,r.meta.repository)
+    &&Array.isArray(r.meta.evidence)&&r.meta.evidence.includes(v.id));
+};
 
 export function deriveState(a){
   const p=a.product?.meta??{},e=a.engineering?.meta??{};
@@ -55,13 +68,21 @@ export function selectReconciliation(kernel,state,a,repo){
   const ids=Object.keys(state.tickets??{}).sort(byId);
   for(const ticket of ids){
     const status=state.tickets[ticket];
-    if((ACTIVE.has(status)||status==="REPLAN_REQUIRED")&&!sourceCurrent(ticket,state,a)){
-      if(status==="REPLAN_REQUIRED")continue;
-      return transition(kernel,ticket,status,"REPLAN_REQUIRED","CONTRACT_SOURCE_STALE","ticket source revisions are stale",[],"planning.replan");
+    if(status==="REPLAN_REQUIRED"&&!sourceCurrent(ticket,state,a)&&historicalPassProof(ticket,a)){
+      return transition(kernel,ticket,"REPLAN_REQUIRED","PASS","HISTORICAL_PASS_RESTORED","restore previously reviewed PASS after source-only invalidation",[latestReview(ticket,a).path,latestVerification(ticket,a).id]);
+    }
+    if(ACTIVE.has(status)&&!sourceCurrent(ticket,state,a)){
+      return transition(kernel,ticket,status,"REPLAN_REQUIRED","CONTRACT_SOURCE_STALE","executable ticket source revisions are stale",[],"planning.replan");
     }
   }
   for(const ticket of ids){
-    const status=state.tickets[ticket];if(!sourceCurrent(ticket,state,a))continue;
+    const status=state.tickets[ticket];
+    if(status==="PASS"){
+      if(historicalPassProof(ticket,a))continue;
+      if(!sourceCurrent(ticket,state,a))return {id:"HISTORICAL_PASS_UNVERIFIABLE",kind:"BLOCKED",subject:ticket,from:"PASS",to:null,reason:"historical PASS lacks consistent immutable review and verification evidence",workflow:null,evidence:[]};
+      return transition(kernel,ticket,"PASS","REVIEW_REQUIRED","ACCEPTANCE_STALE","accepted ticket lacks consistent PASS review and verification evidence",[],"review.review-ticket");
+    }
+    if(!sourceCurrent(ticket,state,a))continue;
     const start=latestStart(ticket,a),verification=latestVerification(ticket,a),review=latestReview(ticket,a);
     if(status==="READY"&&start){
       const t=a.tickets[ticket].meta;
@@ -73,10 +94,6 @@ export function selectReconciliation(kernel,state,a,repo){
     }
     if(status==="REVIEW_REQUIRED"&&reviewCurrent(review,ticket,a,repo,verification)){
       const to=REVIEW_RESULT[review.meta.result];return transition(kernel,ticket,"REVIEW_REQUIRED",to,"REVIEW_RESULT_UNAPPLIED",`review result ${review.meta.result} authorizes ${to}`,[review.path,verification?.id].filter(Boolean));
-    }
-    if(status==="PASS"){
-      if(!verificationCurrent(verification,ticket,a,repo))return transition(kernel,ticket,"PASS","REVIEW_REQUIRED","ACCEPTANCE_STALE","accepted ticket lacks current PASS verification",verification?[verification.id]:[]);
-      if(!reviewCurrent(review,ticket,a,repo,verification))return transition(kernel,ticket,"PASS","REVIEW_REQUIRED","ACCEPTANCE_STALE","accepted ticket lacks current review for repository/evidence basis",review?[review.path]:[]);
     }
   }
   return null;
