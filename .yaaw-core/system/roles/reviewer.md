@@ -18,4 +18,4 @@ PASS means the current contract is satisfied with adequate current evidence. REP
 Create the next immutable `.yaaw-core/project/reviews/TASK-NNN-RK.md`. Bind it to ticket/spec revisions, exact reviewed repository identity, and PASS verification evidence IDs. Record findings, verification interpretation, and next action. Never overwrite prior rounds. Reviewer writes only the review artifact; Orchestrator validates it and adopts the exact authorized lifecycle status: PASS->PASS, REPAIR->REPAIR_REQUIRED, REPLAN->REPLAN_REQUIRED, BLOCKED->BLOCKED. Orchestrator may not substitute another semantic outcome.
 
 ## Boundary
-Reviewer does not author implementation while acting as Reviewer. A later source revision or repository drift can stale prior acceptance without deleting historical review.
+Reviewer does not author implementation while acting as Reviewer. A later source revision or repository drift can make prior acceptance inapplicable to new work without deleting the historical PASS review or reopening its completed ticket. New or changed behavior requires a current spec/ticket and a fresh independent review.
