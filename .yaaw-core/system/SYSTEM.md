@@ -146,3 +146,14 @@ The exact `yaaw-worktree-v3` repository identity remains mandatory for new execu
 
 ## PRD and Planner subworkflow continuation
 Generic `prd.route` and `planning.route` are selection entrypoints, not indefinitely repeated work. A durable `product_next` (in `product.md`) or `planning_next` (in `engineering.md`) names exactly one allowed next authority operation with matching source revision/status, plus a concrete reason. Kernel handoffs authorize separate workers to execute that operation; workers must consume or replace the directive when done. Unchanged repeated directives remain blocked by the dispatch guard. Routing after every PASS ticket while accepted scope remains OPEN must respect a current Planner selection rather than falling into the generic planning.route loop.
+
+## Historic PASS dependency recovery after a new accepted specification
+Suppose `TASK-001` has immutable evidence/review PASS, `SPEC-002` is accepted, and the new `TASK-002` depends on `TASK-001`. New project planning files may alter the global repository identity, particularly when the old review was captured in a dirty worktree. That is **not** an executable-contract defect and must not trigger `planning.replan` or leave an opaque `INSUFFICIENT_PROVENANCE:TASK-001` stop when current repository identity is READY. Reconcile the applicable old PASS to REVIEW_REQUIRED; obtain a NEW verifier record bound to the full current repo identity and the canonical `scope-identity.mjs` projection, then obtain a NEW independent Reviewer PASS with the matching scope fingerprint and certified conservative affected_paths. Only after this evidence-backed acceptance may dependent READY tickets run. Original ticket/spec revisions and historical reviews remain unchanged.
+
+The canonical scope command is:
+```text
+node .yaaw-core/system/engine/scope-identity.mjs --workspace <WORKSPACE_ROOT> --ticket TASK-001
+```
+A READY scope identity covers the exact file contents under ticket `affected_paths`, including untracked application files. It never relaxes the global repository identity required for verification and review. A change to any covered file causes new re-verification; product or engineering source contract changes still cause invalidation. Missing/unsafe scopes yield UNKNOWN and require a concrete scope audit, **not a guessed PASS**. The scope utility can refuse unsafe traversal/symlinks/empty coverage, in which case do not mask its blocker by clearing runtime caches.
+
+After every accepted frontier reaches PASS and `scope_status` is OPEN, the Orchestrator must also honor a current durable `planning_next` rather than infinitely re-dispatching `planning.route`. Similarly, incomplete product work uses durable `product_next` and a legal PRD handoff. `NO_PROGRESS_REPEATED_HANDOFF` remains a safety stop when selected work makes no durable progress.
