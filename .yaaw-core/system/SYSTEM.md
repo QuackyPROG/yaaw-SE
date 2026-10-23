@@ -129,3 +129,5 @@ Before executing a worker, call `--check-handoff` then `--dispatch-start`. An un
 ## Upgrading legacy consumer projects
 
 New provenance frontmatter (`revision_changes`, `requirement_ids`, `affected_paths`, `scope_verified`) is optional for existing artifacts. There is no forced rewrite of previously signed-off tickets or review history and no project-state migration for this lifecycle correction. When older artifacts lack sufficient provenance, reconciliation returns UNKNOWN and blocks only the unsafe acceptance/recovery path; it must not fabricate an unrelated-change attestation. Update the installer-managed system via the YAAW CLI; semantic roles must not patch framework bytes in a consumer workspace.
+
+The `dispatch_attempt` artifact is an Orchestrator-owned, replaceable runtime marker. It prevents immediate replay of identical semantic-worker handoffs without durable progress. It must be invalidated during installer update/repair and must never be treated as application, product, engineering, or acceptance evidence.

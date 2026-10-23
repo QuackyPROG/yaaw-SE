@@ -113,6 +113,12 @@
       "durability": "APPLICATION",
       "owner": "implementer",
       "mutable": true
+    },
+    "dispatch_attempt": {
+      "path": ".yaaw-core/runtime/dispatch-attempt.json",
+      "durability": "RUNTIME_REPLACEABLE",
+      "owner": "orchestrator",
+      "mutable": true
     }
   },
   "roles": {
@@ -199,14 +205,16 @@
         "handoff",
         "intent",
         "installation_manifest",
-        "dispatch_failures"
+        "dispatch_failures",
+        "dispatch_attempt"
       ],
       "writes": [
         "ticket_status",
         "observed_state",
         "handoff",
         "intent",
-        "dispatch_failures"
+        "dispatch_failures",
+        "dispatch_attempt"
       ]
     }
   },
