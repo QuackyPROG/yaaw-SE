@@ -99,11 +99,14 @@ jobs:
           node scripts/smoke_npm_tarball.mjs
           node scripts/smoke_npm_update.mjs
 
-      - name: Verify package integrity for releasable core changes
+      - name: Verify package and consumer upgrade for releasable core changes
         if: needs.changes.outputs.release == 'true' && needs.changes.outputs.distribution != 'true' && needs.changes.outputs.full != 'true'
         run: |
+          npm test
           npm run build
           npm pack --dry-run --ignore-scripts
+          node scripts/smoke_npm_tarball.mjs
+          node scripts/smoke_npm_update.mjs
 
       - name: Full safety fallback
         if: needs.changes.outputs.full == 'true'
