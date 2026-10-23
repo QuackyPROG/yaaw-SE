@@ -118,14 +118,13 @@ describe("scoped lifecycle regression matrix",()=>{
    a.specs["SPEC-001"].meta.product_revision=23;a.tickets["TASK-001"].meta.product_revision=23;
    a.engineering.meta.revision=8;
    a.specs["SPEC-001"].meta.engineering_revision=7;a.tickets["TASK-001"].meta.engineering_revision=7;
-   const unchanged=a.engineering.meta.revision_changes=[{revision:8,impact:"NONE",reason:"Audited repository-understanding refresh only; foundation unchanged"}];
+   const originalReviewCount=Object.keys(a.reviews).length;
    let p:any=next(a,current);
    expect(p.workflow).toBe("planning.audit-revision-impact");
    expect(p.ticket).toBe("TASK-001");
    expect(originalReview.meta.result).toBe("PASS");
-   p=next(a,current);
-   // Missing metadata is the only reason for the audit: once classified, no replan is legal.
-   expect(p.workflow).toBe("planning.audit-revision-impact");
+   // Missing metadata is the only reason for the audit.
+   expect(next(a,current).workflow).toBe("planning.audit-revision-impact");
    // The planner's complete revision-history classification is a durable engineering artifact.
    a.engineering.meta.revision_changes=[{revision:8,impact:"NONE",reason:"Foundation code/spec/ENG decisions unchanged by planning-only revision"}];
    p=next(a,current);
@@ -141,7 +140,7 @@ describe("scoped lifecycle regression matrix",()=>{
    p=next(a,current);expect(p.workflow).toBe("planning.create-spec");
    expect(a.tickets["TASK-001"].meta.revision).toBe(1);
    expect(a.specs["SPEC-001"].meta.revision).toBe(1);
-   expect(unchanged.length).toBe(1);
+   expect(originalReviewCount).toBe(1);
  });
  it("M: missing or mismatched immutable acceptance never shortcuts to PASS or review",()=>{
    const a=accepted(fixture("REPLAN_REQUIRED"));
