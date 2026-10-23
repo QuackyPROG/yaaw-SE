@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 const n=x=>Number(x??0);
 const eq=(a,b)=>Boolean(a&&b&&a.status==="READY"&&b.status==="READY"&&a.algorithm===b.algorithm&&a.head_commit===b.head_commit&&a.worktree_digest===b.worktree_digest);
 export function revisionImpact(from,to,changes,ids){
@@ -14,6 +15,32 @@ export function revisionImpact(from,to,changes,ids){
   }
   return {kind:"CURRENT",reason:"all intervening revisions proved unrelated"};
 }
+// A durable authority result is valid only for this exact contract/revision basis.
+// Excludes audit records themselves and mutable ticket status, not contract content.
+export function auditBasis(ticket,state,a){
+  const t=a.tickets?.[ticket],s=a.specs?.[t?.meta?.spec];
+  return "sha256:"+createHash("sha256").update(JSON.stringify([
+    t?.contract_digest??t?.digest??null,s?.digest??null,
+    state.product.revision,a.product?.meta?.revision_changes??[],
+    state.planning.revision,a.engineering?.meta?.revision_changes??[]
+  ])).digest("hex");
+}
+export function completedAudit(owner,ticket,state,a){
+  const records=(a[owner]?.meta?.revision_audits??[]).filter(x=>x?.ticket===ticket&&x.basis===auditBasis(ticket,state,a));
+  if(records.length!==1)return null; // conflicting attestations cannot establish applicability
+  const r=records[0],paths=new Set([a.product?.path,a.engineering?.path,a.tickets?.[ticket]?.path,
+    a.specs?.[a.tickets?.[ticket]?.meta?.spec]?.path,
+    ...Object.values(a.evidence??{}).map(x=>x.path),...Object.values(a.reviews??{}).map(x=>x.path)]);
+  const allowed=owner==="product"?["AUDITED","INSUFFICIENT_PROVENANCE"]:["CURRENT","INVALIDATED","INSUFFICIENT_PROVENANCE"];
+  return allowed.includes(r.result)&&typeof r.reason==="string"&&r.reason.trim()&&
+    Array.isArray(r.evidence)&&r.evidence.length>0&&r.evidence.every(x=>typeof x==="string"&&paths.has(x))&&
+    Array.isArray(r.missing_evidence)&&(r.result!=="INSUFFICIENT_PROVENANCE"||
+      (r.missing_evidence.length>0&&r.missing_evidence.every(x=>typeof x==="string"&&x.trim())))?r:null;
+}
+export function revisionRecordsComplete(from,to,changes){
+  // A sentinel catches SCOPED records without asserting any requirement mapping.
+  return revisionImpact(from,to,changes,["__lineage_check__"]).kind!=="UNKNOWN";
+}
 export function contractImpact(ticket,state,a){
   const t=a.tickets?.[ticket]?.meta,s=a.specs?.[t?.spec]?.meta;
   if(!t||!s)return {kind:"UNKNOWN",reason:"missing governing contract"};
@@ -29,7 +56,18 @@ export function contractImpact(ticket,state,a){
   // silently clear it or restore PASS: require an authorized Planner audit instead.
   if(typeof t.invalidated_by==="string"&&t.invalidated_by.trim())
     return {kind:"UNKNOWN",reason:`unaudited invalidated_by marker: ${t.invalidated_by}`};
-  return [p,e].find(x=>x.kind==="UNKNOWN")??{kind:"CURRENT",reason:"source lineage proves contract applicable"};
+  const unknown=[p,e].find(x=>x.kind==="UNKNOWN");
+  if(unknown){
+    const audit=completedAudit("engineering",ticket,state,a);
+    // Planner may compare legacy contracts with fully classified source history.
+    // Never let an attestation cover missing revision records or override proven invalidation.
+    if(audit&&["CURRENT","INVALIDATED"].includes(audit.result)&&
+       revisionRecordsComplete(n(t.product_revision),n(state.product.revision),a.product?.meta?.revision_changes)&&
+       revisionRecordsComplete(n(t.engineering_revision),n(state.planning.revision),a.engineering?.meta?.revision_changes))
+      return {kind:audit.result,reason:audit.reason};
+    return unknown;
+  }
+  return {kind:"CURRENT",reason:"source lineage proves contract applicable"};
 }
 const evidence=(ticket,a)=>Object.values(a.evidence??{}).filter(v=>v?.schema==="yaaw.evidence/v3"&&v.ticket===ticket);
 export function lastReview(ticket,a){return Object.values(a.reviews??{}).filter(r=>r?.meta?.schema==="yaaw.review/v2"&&r.meta.ticket===ticket).sort((x,y)=>n(x.meta.round)-n(y.meta.round)).at(-1)??null}

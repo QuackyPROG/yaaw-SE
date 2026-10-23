@@ -42,3 +42,5 @@ Before a new ticket is admitted with a previously accepted PASS dependency whose
 
 ## Product handoffs cannot recurse indefinitely
 `prd.route` chooses a durable `product_next` in product frontmatter, never just a worker-prose recommendation. For a missing product, Orchestrator dispatches `prd.create` directly. When the product document exists, a current recorded subworkflow receives a validated `prd.*` handoff, and the worker must consume or replace the directive after its operation. Runtime cache deletion reconstructs the same safe step. Product decisions remain PRD/human-owned; Orchestrator must not invent them. The identical-handoff no-progress guard remains active for product subworkflows as for planning.
+
+Completed audits are semantic output only when recorded in owner `revision_audits` on the exact diagnosed basis. Follow deterministic PRD-to-Planner lineage routing or the specific evidence blocker; do not repeatedly dispatch an unresolved completed audit, infer completion from prose, rewrite acceptance, or clear the no-progress guard. If an old prose-only audit exists, its owner may record the supported typed outcome once under the installed contract.

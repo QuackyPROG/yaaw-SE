@@ -723,7 +723,7 @@
       ],
       "required_modules": [],
       "ticket_modules": false,
-      "expected_output": "Audited source revision impact metadata without changing original ticket/spec or immutable evidence; or typed human/provenance stop.",
+      "expected_output": "Audited source revision impact metadata without changing original ticket/spec or immutable evidence; or typed human/provenance stop. Persist a basis-bound revision_audits record (including INSUFFICIENT_PROVENANCE) in the owning artifact; exact basis is exposed by runtime --diagnose. Include evidence paths and exact missing evidence or human decision.",
       "result_vocabulary": [
         "AUDITED",
         "HUMAN_INPUT_REQUIRED",
@@ -735,6 +735,7 @@
       "active_artifact": "product",
       "reads": [
         "product",
+        "engineering",
         "spec",
         "ticket",
         "evidence",
@@ -746,7 +747,7 @@
       ],
       "required_modules": [],
       "ticket_modules": false,
-      "expected_output": "Audited REQ-scoped product revision-impact records or typed evidence/human stop without editing historic tickets or reviews.",
+      "expected_output": "Audited REQ-scoped product revision-impact records or typed evidence/human stop without editing historic tickets or reviews. Persist a basis-bound revision_audits record (including INSUFFICIENT_PROVENANCE) in the owning artifact; exact basis is exposed by runtime --diagnose. Include evidence paths and exact missing evidence or human decision.",
       "result_vocabulary": [
         "AUDITED",
         "HUMAN_INPUT_REQUIRED",

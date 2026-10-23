@@ -299,3 +299,79 @@ describe("compact orchestration runtime",()=>{
   });
 
 });
+
+// TASK-001 accepted at product 23; REQ-047 added at product 24.
+async function legacyUiFixture(){
+  const root=await fixture("PASS");
+  for(const name of ["specs/SPEC-001.md","tickets/TASK-001.md"]){
+    const path=join(root,".yaaw-core/project",name);
+    await writeFile(path,(await readFile(path,"utf8")).replace("product_revision: 1","product_revision: 23"));
+  }
+  await writeFile(join(root,".yaaw-core/project/product.md"),'---\nschema: yaaw.product/v1\nrevision: 23\nstatus: ready\n---\n# Product\n');
+  run(root,"--inspect-only");
+  const repo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+  await writeVerification(root,repo);await writeReview(root,repo);
+  await writeFile(join(root,".yaaw-core/project/product.md"),'---\nschema: yaaw.product/v1\nrevision: 24\nstatus: ready\nrevision_changes: [{"revision":24,"impact":"SCOPED","ids":["REQ-047"],"reason":"Preserve original Flutter UI on corresponding PWA screens"}]\n---\n# Product\n');
+  return root;
+}
+async function recordAudit(root:string,owner="product",result="INSUFFICIENT_PROVENANCE",missing=["Planner comparison of accepted foundation contract against REQ-047"]){
+  const diagnostic=run(root,"--diagnose"),basis=diagnostic.tickets.find((x:any)=>x.ticket==="TASK-001").audit_basis;
+  const path=join(root,`.yaaw-core/project/${owner}.md`),text=await readFile(path,"utf8");
+  const record={ticket:"TASK-001",basis,result,reason:"Compared legacy foundation contract and original independent PASS with scoped UI addition",evidence:[".yaaw-core/project/specs/SPEC-001.md",".yaaw-core/project/reviews/TASK-001-R1.md"],missing_evidence:result==="INSUFFICIENT_PROVENANCE"?missing:[]};
+  await writeFile(path,text.replace(/\n---\n/,`\nrevision_audits: ${JSON.stringify([record])}\n---\n`));return record;
+}
+describe("completed legacy provenance audits",()=>{
+  it("routes the completed TASK-001 / REQ-047 PRD audit to Planner, including after cache removal",async()=>{
+    const root=await legacyUiFixture();
+    expect(run(root).workflow).toBe("prd.audit-revision-impact");
+    expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");expect(run(root,"--dispatch-start").type).toBe("DISPATCH_STARTED");
+    await recordAudit(root);
+    expect(run(root).workflow).toBe("planning.audit-revision-impact");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    expect(run(root).workflow).toBe("planning.audit-revision-impact");expect(await ticketStatus(root)).toBe("PASS");
+  });
+  it("stops a completed unresolved Planner audit with exact missing evidence, preserving historic bytes",async()=>{
+    const root=await legacyUiFixture();const review=await readFile(join(root,".yaaw-core/project/reviews/TASK-001-R1.md"),"utf8"),verification=await readFile(join(root,".yaaw-core/project/evidence/EVIDENCE-TASK-001-V1.json"),"utf8");
+    await recordAudit(root);await recordAudit(root,"engineering","INSUFFICIENT_PROVENANCE",["Human decision whether foundation overview must reproduce the legacy member shell"]);
+    for(let n=0;n<2;n++){
+      const next=run(root);expect(next.type).toBe("BLOCKED");expect(next.reason).toContain("AUDIT_INSUFFICIENT_PROVENANCE:TASK-001:planner:Human decision");
+      await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    }
+    expect(await ticketStatus(root)).toBe("PASS");
+    expect(await readFile(join(root,".yaaw-core/project/reviews/TASK-001-R1.md"),"utf8")).toBe(review);
+    expect(await readFile(join(root,".yaaw-core/project/evidence/EVIDENCE-TASK-001-V1.json"),"utf8")).toBe(verification);
+    expect(run(root,"--diagnose").tickets[0].contract.kind).toBe("UNKNOWN");
+  });
+  it("accepts evidence-backed Planner applicability without rewriting legacy IDs and requires fresh verification",async()=>{
+    const root=await legacyUiFixture();await recordAudit(root);await recordAudit(root,"engineering","CURRENT");
+    const next=run(root);expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.id).toBe("REVERIFY_UNCERTAIN");
+    run(root,"--reconcile-one");expect(run(root).workflow).toBe("implementation.verify-ticket");
+    expect(await readFile(join(root,".yaaw-core/project/tickets/TASK-001.md"),"utf8")).not.toContain("requirement_ids");
+  });
+  it("routes proven Planner invalidation to replan, while an insufficient audit alone never invalidates",async()=>{
+    const root=await legacyUiFixture();await recordAudit(root);await recordAudit(root,"engineering","INVALIDATED");
+    const next=run(root);expect(next.reconciliation.id).toBe("CONTRACT_INVALIDATED");
+    run(root,"--reconcile-one");expect(run(root).workflow).toBe("planning.replan");
+  });
+  it("blocks unresolved product revision records instead of handing missing product meaning to Planner",async()=>{
+    const root=await legacyUiFixture();const path=join(root,".yaaw-core/project/product.md");
+    await writeFile(path,(await readFile(path,"utf8")).replace(/^revision_changes:.*\n/m,""));
+    await recordAudit(root,"product","INSUFFICIENT_PROVENANCE",["Historical product 24 change classification"]);
+    const next=run(root);expect(next.type).toBe("BLOCKED");expect(next.reason).toContain("Historical product 24 change classification");
+  });
+  it("rejects stale audit results after contract text changes and never overrides explicit source invalidation",async()=>{
+    const root=await legacyUiFixture();await recordAudit(root);await recordAudit(root,"engineering","CURRENT");
+    const path=join(root,".yaaw-core/project/tickets/TASK-001.md");await writeFile(path,(await readFile(path,"utf8"))+"\nChanged contract obligation\n");
+    expect(run(root).workflow).toBe("prd.audit-revision-impact");
+    await writeFile(path,(await readFile(path,"utf8")).replace("expertise: []","expertise: []\nrequirement_ids: [REQ-047]"));
+    await recordAudit(root,"engineering","CURRENT");expect(run(root).reconciliation.id).toBe("CONTRACT_INVALIDATED");
+  });
+  it("permits admitted independent work but blocks a dependency on unknown acceptance",async()=>{
+    const root=await legacyUiFixture();await recordAudit(root);await recordAudit(root,"engineering","INSUFFICIENT_PROVENANCE",["Historical source mapping"]);
+    await writeFile(join(root,".yaaw-core/project/specs/SPEC-002.md"),'---\nschema: yaaw.spec/v1\nid: SPEC-002\nrevision: 1\nstatus: ACCEPTED\nproduct_revision: 24\nengineering_revision: 1\nfrontier_id: FRONTIER-002\n---\n# Independent UI\n');
+    const path=join(root,".yaaw-core/project/tickets/TASK-002.md");
+    const text='---\nschema: yaaw.ticket/v1\nid: TASK-002\nrevision: 1\nspec: SPEC-002\nspec_revision: 1\nproduct_revision: 24\nengineering_revision: 1\nstatus: READY\ndependencies: []\nexpertise: []\n---\n# Independent UI\n';
+    await writeFile(path,text);expect(run(root).ticket).toBe("TASK-002");expect(run(root).workflow).toBe("implementation.implement-ticket");
+    await writeFile(path,text.replace("dependencies: []","dependencies: [TASK-001]"));expect(run(root).type).toBe("BLOCKED");
+  });
+});

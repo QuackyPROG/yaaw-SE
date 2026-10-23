@@ -152,6 +152,59 @@
         }
       },
       "additionalProperties": false
+    },
+    "revision_audits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "ticket",
+          "basis",
+          "result",
+          "reason",
+          "evidence",
+          "missing_evidence"
+        ],
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "pattern": "^TASK-[0-9]+$"
+          },
+          "basis": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "result": {
+            "enum": [
+              "CURRENT",
+              "INVALIDATED",
+              "INSUFFICIENT_PROVENANCE"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "missing_evidence": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "additionalProperties": false
