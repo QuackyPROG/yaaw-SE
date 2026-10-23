@@ -209,6 +209,9 @@ describe("scoped lifecycle regression matrix",()=>{
    expect(next(a).workflow).toBe("planning.route");
    delete a.engineering.meta.planning_next;
    a.engineering.meta.readiness="PASS";
+   // New frontier source revision makes SPEC-001 historical, not the active spec.
+   a.engineering.meta.revision=2;
+   a.engineering.meta.revision_changes=[{revision:2,impact:"NONE",reason:"Next frontier only; accepted foundation decisions unchanged"}];
    expect(next(a).workflow).toBe("planning.create-spec");
  });
  it("R: reviewed work re-verifies before new frontier readiness but new tickets do not",()=>{

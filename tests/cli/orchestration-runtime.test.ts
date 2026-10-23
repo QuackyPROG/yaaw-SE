@@ -118,9 +118,14 @@ describe("compact orchestration runtime",()=>{
 
   it("after TASK-001 PASS, persists route selection and executes decision-frontier then next PRD spec",async()=>{
     const root=await fixture("PASS");
+    // The original independent review certified a conservative path scope.
+    const ticket=join(root,".yaaw-core/project/tickets/TASK-001.md");
+    await writeFile(ticket,(await readFile(ticket,"utf8")).replace("expertise: []","expertise: []\naffected_paths: [src/task1/]"));
     run(root,"--inspect-only");
     const repo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
     await writeVerification(root,repo);await writeReview(root,repo);
+    const review=join(root,".yaaw-core/project/reviews/TASK-001-R1.md");
+    await writeFile(review,(await readFile(review,"utf8")).replace("---\n# Review","affected_paths: [src/task1/]\nscope_verified: true\n---\n# Review"));
     const eng=join(root,".yaaw-core/project/engineering.md");
     await writeFile(eng,(await readFile(eng,"utf8")).replace("readiness: PASS","readiness: pending"));
     let p=run(root);
