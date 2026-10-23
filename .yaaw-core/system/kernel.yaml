@@ -1183,7 +1183,8 @@
           "LEGACY_IDENTITY_UNVERIFIABLE",
           "REVERIFY_REQUIRED",
           "ACCEPTANCE_UNPROVEN",
-          "LATEST_VERIFICATION_FAILED"
+          "LATEST_VERIFICATION_FAILED",
+          "REVERIFY_UNCERTAIN"
         ],
         "writer": "orchestrator"
       },
