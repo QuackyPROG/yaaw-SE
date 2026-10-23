@@ -189,6 +189,19 @@ describe("scoped lifecycle regression matrix",()=>{
    a.tickets["TASK-001"].meta.invalidated_by="revision drift";
    const p:any=next(a);expect(p.workflow).not.toBe("planning.audit-revision-impact");expect(p.reconciliation?.to).not.toBe("PASS");
  });
+
+ it("R: reviewed work re-verifies before new frontier readiness but new tickets do not",()=>{
+   const a=accepted(fixture("REVIEW_REQUIRED"),repository("foundation",true));
+   a.engineering.meta.readiness="pending";
+   a.engineering.meta.revision=2;
+   a.engineering.meta.revision_changes=[{revision:2,impact:"NONE",reason:"Only current frontier readiness reset"}];
+   const p:any=next(a,repository("after",true));
+   expect(p.workflow).toBe("implementation.verify-ticket");expect(p.ticket).toBe("TASK-001");
+   a.tickets["TASK-001"].meta.status="PASS";
+   expect(next(a,repository("after",true)).workflow).toBe("planning.route");
+   const b=fixture("REVIEW_REQUIRED");b.engineering.meta.readiness="pending";
+   expect(next(b).workflow).toBe("planning.route");
+ });
  it("legacy unscoped history is UNKNOWN and not silently accepted or falsely replanned",()=>{
   const a=accepted(fixture("REPLAN_REQUIRED"));engRevision(a);delete a.engineering.meta.revision_changes;
   const p:any=next(a);expect(p.reconciliation?.to).not.toBe("PASS");expect(p.reconciliation?.to).not.toBe("REPLAN_REQUIRED");

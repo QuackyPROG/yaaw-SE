@@ -131,6 +131,13 @@ function baseRoute(state,a,repo){
   if(audit)return audit;
   const invalid=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED"&&(contractImpact(id,state,a).kind==="INVALIDATED"||lastReview(id,a)?.meta?.result==="REPLAN"));
   if(invalid)return{workflow:"planning.replan",ticket:invalid};
+  // A previously accepted ticket undergoing repository re-verification is already
+  // governed by its original current/applicable spec. A new frontier readiness reset
+  // must not postpone its verification or independent review indefinitely.
+  const recovering=Object.keys(state.tickets).sort(byId).find(id=>
+    state.tickets[id]==="REVIEW_REQUIRED"&&Boolean(acceptedHistory(id,a))&&sourceCurrent(id,state,a));
+  if(recovering)return{workflow:verificationCurrent(latestVerification(recovering,a),recovering,a,repo)?
+    "review.review-ticket":"implementation.verify-ticket",ticket:recovering};
   if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")return{workflow:"planning.route",ticket:null};
   const ids=currentTicketIds(state,a);
   for(const [status,workflow] of [["REPAIR_REQUIRED","implementation.repair-ticket"],["IN_PROGRESS","implementation.verify-ticket"]]){
