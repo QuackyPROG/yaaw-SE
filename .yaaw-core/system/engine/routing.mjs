@@ -51,7 +51,9 @@ export function selectReconciliation(kernel,state,a,repo){
     const repository=repositoryImpact(ticket,pass,a,repo);
     if(status==="REPLAN_REQUIRED"&&last?.meta?.result!=="REPLAN"&&pass&&contract.kind==="CURRENT"){
       if(repository.kind==="CURRENT")return transition(kernel,ticket,status,"PASS","RECOVER_ACCEPTED_HISTORY","linked PASS remains applicable",[pass.review.path,pass.verification.id]);
-      if(repository.kind==="REVERIFY")return transition(kernel,ticket,status,"REVIEW_REQUIRED","REVERIFY_REQUIRED",repository.reason,[pass.review.path,pass.verification.id]);
+      if(repository.kind==="REVERIFY"||repository.kind==="UNKNOWN"){
+        if(repo?.status==="READY")return transition(kernel,ticket,status,"REVIEW_REQUIRED",repository.kind==="UNKNOWN"?"REVERIFY_UNCERTAIN":"REVERIFY_REQUIRED",repository.reason,[pass.review.path,pass.verification.id]);
+      }
     }
     if(contract.kind==="INVALIDATED"&&status!=="REPLAN_REQUIRED"&&status!=="CANCELLED"&&(ACTIVE.has(status)))
       return transition(kernel,ticket,status,"REPLAN_REQUIRED","CONTRACT_INVALIDATED",contract.reason,[a.tickets[ticket].path],"planning.replan");
@@ -110,6 +112,14 @@ export function intentComplete(intent,state,a){
 
 function baseRoute(state,a,repo){
   if(state.product.status!=="ready")return{workflow:"prd.route",ticket:null};
+  // Before opening a new frontier, resolve older accepted work's unknown source lineage.
+  // This is a read/metadata audit, not permission to rewrite the completed contract.
+  const audit=Object.keys(state.tickets).sort(byId).find(id=>{
+    const t=state.tickets[id],pass=acceptedHistory(id,a),impact=contractImpact(id,state,a);
+    return (t==="REPLAN_REQUIRED"||t==="PASS")&&pass&&impact.kind==="UNKNOWN"&&
+      /revision|lineage|scoped/i.test(impact.reason);
+  });
+  if(audit)return{workflow:"planning.audit-revision-impact",ticket:audit};
   const invalid=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED"&&(contractImpact(id,state,a).kind==="INVALIDATED"||lastReview(id,a)?.meta?.result==="REPLAN"));
   if(invalid)return{workflow:"planning.replan",ticket:invalid};
   if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")return{workflow:"planning.route",ticket:null};
@@ -139,9 +149,10 @@ function baseRoute(state,a,repo){
   const uncertain=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED"||(["READY","DRAFT","PASS"].includes(state.tickets[id])&&contractImpact(id,state,a).kind!=="CURRENT")||(state.tickets[id]==="PASS"&&repositoryImpact(id,acceptedHistory(id,a),a,repo).kind!=="CURRENT"));
   return{blocked:uncertain?`INSUFFICIENT_PROVENANCE:${uncertain}`:"no legal next workflow from durable artifacts",ticket:uncertain??null};
 }
-function legalRequested(workflow,ticket,state,a){
+function legalRequested(workflow,ticket,state,a,repo){
   if(workflow==="prd.route"||workflow==="prd.revise"||workflow==="prd.refine")return true;
   if(workflow==="planning.route"||workflow==="planning.readiness-review")return state.product.status==="ready";
+  if(workflow==="planning.audit-revision-impact")return state.product.status==="ready"&&Boolean(ticket&&acceptedHistory(ticket,a)&&contractImpact(ticket,state,a).kind==="UNKNOWN");
   if(workflow==="planning.create-spec")return planningReady(state)&&!currentSpecId(state);
   if(workflow==="planning.create-tickets")return planningReady(state)&&Boolean(currentSpecId(state));
   if(workflow==="implementation.implement-ticket")return Boolean(ticket&&state.tickets[ticket]==="READY"&&sourceCurrent(ticket,state,a)&&dependenciesPass(ticket,state,a,repo));
@@ -158,7 +169,7 @@ export function planNext(kernel,state,a,repo,intent){
     if(!ticket&&intent.desired_outcome==="IMPLEMENT")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a,repo))??null;
     if(!ticket&&intent.desired_outcome==="REPAIR")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPAIR_REQUIRED")??null;
     if(!ticket&&intent.desired_outcome==="REVIEW")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REVIEW_REQUIRED")??null;
-    if(legalRequested(intent.requested_workflow,ticket,state,a))return{type:"ROUTE",workflow:intent.requested_workflow,ticket};
+    if(legalRequested(intent.requested_workflow,ticket,state,a,repo))return{type:"ROUTE",workflow:intent.requested_workflow,ticket};
     return{type:"BLOCKED",reason:`PRECONDITION_UNSATISFIED:${intent.requested_workflow}`,ticket};
   }
   return{type:"ROUTE",...baseRoute(state,a,repo)};

@@ -30,3 +30,6 @@ Delete `.yaaw-core/runtime/` and invoke YAAW again: the safe next semantic actio
 Never modify `.yaaw-core/system/**` during semantic work. Framework integrity failures stop and require installer repair/update.
 
 A later verification FAIL at the current exact repository basis supersedes current readiness (not the immutable original PASS). Route to fresh verification and independent review rather than relying solely on stale accepted history. Git change checks must disable rename detection so the removed old path and the added new path are both considered for overlap.
+
+## Recovery of false replanning
+A historically PASS ticket stranded as REPLAN_REQUIRED with current contract applicability is restored to PASS only when repository applicability is provably CURRENT. If the original repository basis is missing, dirty, or uncomparable but current repository identity is READY, adopt REPLAN_REQUIRED -> REVIEW_REQUIRED with REVERIFY_UNCERTAIN and dispatch fresh verification followed by independent review. An UNKNOWN engineering source revision must first go through `planning.audit-revision-impact`; the Orchestrator does not declare it unchanged itself. Current-review REPLAN, explicit contract invalidation, and missing historical PASS are not eligible for automatic acceptance recovery.

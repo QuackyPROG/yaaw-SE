@@ -19,3 +19,6 @@ Require ticket status REPAIR_REQUIRED and the latest current review result REPAI
 
 ## Boundary
 A lost worker response is not permission to restart implementation. Missing material decisions return through Orchestrator to Planner/PRD. Package-managed `.yaaw-core/system/**` is never writable semantic output.
+
+## Historical acceptance re-verification
+`implementation.verify-ticket` also supports a ticket in REVIEW_REQUIRED entered from a historical-PASS recovery whose current repository basis is unverified. Use the existing, unchanged ticket/spec as the verification contract. Do not create implementation_start evidence or mutate application code merely because it is a re-verification. Run current ticket checks and write a *new immutable* PASS/FAIL/BLOCKED verification record tied to current repository identity. If a prior verification at an old repository digest exists, it does not substitute for current evidence. Return to Orchestrator for independent `review.review-ticket`. A verification failure may require bounded repair or a material planner decision; never fabricate a new PASS.

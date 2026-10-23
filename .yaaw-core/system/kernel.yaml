@@ -442,6 +442,13 @@
       "repository_requirement": "IDENTITY",
       "external_research": "forbidden",
       "execution_context": "ROOT_ONLY"
+    },
+    "planning.audit-revision-impact": {
+      "role": "planner",
+      "operation": "audit-revision-impact",
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
     }
   },
   "handoffs": {
@@ -683,6 +690,30 @@
         "PASS",
         "REPAIR",
         "REPLAN",
+        "BLOCKED"
+      ]
+    },
+    "planning.audit-revision-impact": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "spec",
+        "ticket",
+        "evidence",
+        "review",
+        "repository"
+      ],
+      "writes": [
+        "engineering"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Audited source revision impact metadata without changing original ticket/spec or immutable evidence; or typed human/provenance stop.",
+      "result_vocabulary": [
+        "AUDITED",
+        "HUMAN_INPUT_REQUIRED",
+        "INSUFFICIENT_PROVENANCE",
         "BLOCKED"
       ]
     }
@@ -993,7 +1024,8 @@
         "writer": "orchestrator",
         "workflow": "orchestration.reconcile-state",
         "causes": [
-          "REVERIFY_REQUIRED"
+          "REVERIFY_REQUIRED",
+          "REVERIFY_UNCERTAIN"
         ]
       }
     ],
@@ -1064,6 +1096,7 @@
     },
     "reconciliation_priority": [
       "RECOVER_ACCEPTED_HISTORY",
+      "REVERIFY_UNCERTAIN",
       "CONTRACT_INVALIDATED",
       "REVERIFY_REQUIRED",
       "ACCEPTANCE_UNPROVEN",
