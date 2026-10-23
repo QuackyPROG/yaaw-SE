@@ -2,16 +2,64 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "yaaw.review/v2",
   "type": "object",
-  "required": ["schema","ticket","round","result","ticket_revision","spec_revision","repository","evidence"],
+  "required": [
+    "schema",
+    "ticket",
+    "round",
+    "result",
+    "ticket_revision",
+    "spec_revision",
+    "repository",
+    "evidence"
+  ],
   "properties": {
-    "schema": {"const": "yaaw.review/v2"},
-    "ticket": {"type": "string", "pattern": "^TASK-[0-9]+$"},
-    "round": {"type": "integer", "minimum": 1},
-    "result": {"enum": ["PASS","REPAIR","REPLAN","BLOCKED"]},
-    "ticket_revision": {"type": "integer", "minimum": 0},
-    "spec_revision": {"type": "integer", "minimum": 0},
-    "repository": {"$ref": "repository-identity.schema.json"},
-    "evidence": {"type": "array", "items": {"type": "string"}}
+    "schema": {
+      "const": "yaaw.review/v2"
+    },
+    "ticket": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]+$"
+    },
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "result": {
+      "enum": [
+        "PASS",
+        "REPAIR",
+        "REPLAN",
+        "BLOCKED"
+      ]
+    },
+    "ticket_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "spec_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "repository": {
+      "$ref": "repository-identity.schema.json"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "affected_paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "scope_verified": {
+      "type": "boolean"
+    }
   },
   "additionalProperties": false
 }

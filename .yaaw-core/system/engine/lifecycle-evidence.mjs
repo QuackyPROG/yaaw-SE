@@ -40,6 +40,9 @@ export function repositoryImpact(ticket,pass,a,repo){
   const delta=a.repository_changes?.[old?.head_commit??""],scopes=a.tickets?.[ticket]?.meta?.affected_paths;
   if(old?.dirty!==false||old?.status!=="READY"||repo?.status!=="READY"||delta?.status!=="KNOWN")return {kind:"UNKNOWN",reason:"historical worktree difference cannot be proven unrelated"};
   if(!Array.isArray(scopes)||!scopes.length||!scopes.every(p=>typeof p==="string"&&p.length>0&&!p.includes("*")&&!p.startsWith("/")))return {kind:"UNKNOWN",reason:"missing safe affected_paths provenance"};
+  const reviewed=pass.review.meta.affected_paths;
+  if(pass.review.meta.scope_verified!==true||!Array.isArray(reviewed)||JSON.stringify([...reviewed].sort())!==JSON.stringify([...scopes].sort()))
+    return {kind:"UNKNOWN",reason:"affected_paths were not independently certified at the original review"};
   const affected=delta.paths.some(p=>scopes.some(scope=>scope.endsWith("/")?p.startsWith(scope):p===scope));
   return affected?{kind:"REVERIFY",reason:"changed repository path affects accepted ticket"}:{kind:"CURRENT",reason:"all changed paths proven outside declared scope"};
 }

@@ -34,4 +34,35 @@ describe("compact orchestration runtime",()=>{
   it("does not promote failed verification",async()=>{const root=await fixture();run(root);const repo=(await handoff(root)).repository;await writeStart(root,repo);run(root,"--reconcile-one");await writeVerification(root,repo,"FAIL");const next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("implementation.verify-ticket");expect(await ticketStatus(root)).toBe("IN_PROGRESS")});
   it("adopts current independent review PASS",async()=>{const root=await fixture("REVIEW_REQUIRED");run(root);const inspected=run(root,"--inspect-only");const repo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;await writeVerification(root,repo);await writeReview(root,repo);const next=run(root);expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.id).toBe("REVIEW_RESULT_UNAPPLIED");expect(next.reconciliation.to).toBe("PASS");expect(run(root,"--reconcile-one").type).toBe("RECONCILED");expect(await ticketStatus(root)).toBe("PASS");void inspected});
   it("routes DRAFT tickets to Planner admission",async()=>{const root=await fixture("DRAFT");const next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("planning.create-tickets");expect(next.role).toBe("planner")});
+  it("recovers a stale PASS then autonomously advances to the next spec, ticket, and implementation",async()=>{
+    const root=await fixture("REPLAN_REQUIRED");
+    const ticket=join(root,".yaaw-core/project/tickets/TASK-001.md");
+    await writeFile(ticket,(await readFile(ticket,"utf8")).replace("expertise: []","expertise: []\\naffected_paths: [src/task1/]"));
+    run(root,"--inspect-only");
+    const repository=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+    await writeVerification(root,repository);
+    await writeReview(root,repository);
+    const reviewPath=join(root,".yaaw-core/project/reviews/TASK-001-R1.md");
+    await writeFile(reviewPath,(await readFile(reviewPath,"utf8")).replace("---\\n# Review","affected_paths: [src/task1/]\\nscope_verified: true\\n---\\n# Review"));
+    let next=run(root);
+    expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.id).toBe("RECOVER_ACCEPTED_HISTORY");
+    expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
+    expect(await ticketStatus(root)).toBe("PASS");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    await writeFile(join(root,".yaaw-core/project/engineering.md"),`---\\nschema: yaaw.engineering/v2\\nrevision: 2\\nstatus: ready\\nproduct_revision: 1\\ncurrent_frontier: FRONTIER-002\\nreadiness: PASS\\nscope_status: OPEN\\nrevision_changes: [{ "revision": 2, "impact": "NONE", "reason": "Independent feature planning, no existing ENG decision changed" }]\\n---\\n# Engineering\\n`);
+    next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("planning.create-spec");
+    await writeFile(join(root,".yaaw-core/project/specs/SPEC-002.md"),`---\\nschema: yaaw.spec/v1\\nid: SPEC-002\\nrevision: 1\\nstatus: ACCEPTED\\nproduct_revision: 1\\nengineering_revision: 2\\nfrontier_id: FRONTIER-002\\ndecision_ids: [ENG-002]\\n---\\n# Specification 2\\n`);
+    next=run(root);expect(next.workflow).toBe("planning.create-tickets");
+    await writeFile(join(root,".yaaw-core/project/tickets/TASK-002.md"),`---\\nschema: yaaw.ticket/v1\\nid: TASK-002\\nrevision: 1\\nspec: SPEC-002\\nspec_revision: 1\\nproduct_revision: 1\\nengineering_revision: 2\\nstatus: READY\\ndependencies: [TASK-001]\\ndecision_ids: [ENG-002]\\nexpertise: []\\naffected_paths: [src/task2/]\\n---\\n# Ticket 2\\n`);
+    next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("implementation.implement-ticket");expect(next.ticket).toBe("TASK-002");
+  });
+  it("bounds repeated identical handoffs only after a marked dispatch",async()=>{
+    const root=await fixture();expect(run(root).type).toBe("DISPATCH_READY");
+    expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");
+    expect(run(root,"--dispatch-start").type).toBe("DISPATCH_STARTED");
+    const repeat=run(root);expect(repeat.type).toBe("BLOCKED");expect(repeat.reason).toBe("NO_PROGRESS_REPEATED_HANDOFF");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    expect(run(root).type).toBe("DISPATCH_READY");
+  });
+
 });

@@ -16,7 +16,7 @@ function fixture(status="PASS"){
 }
 function accepted(a:any,r=repository(),result="PASS",round=2){
  a.evidence["V1"]={schema:"yaaw.evidence/v3",id:"V1",ticket:"TASK-001",ticket_revision:1,spec_revision:1,kind:"implementation_verification",result:"PASS",repository:r};
- a.reviews["TASK-001-R"+round+".md"]=doc({schema:"yaaw.review/v2",ticket:"TASK-001",round,result,ticket_revision:1,spec_revision:1,repository:r,evidence:["V1"]},"review"+round);
+ a.reviews["TASK-001-R"+round+".md"]=doc({schema:"yaaw.review/v2",ticket:"TASK-001",round,result,ticket_revision:1,spec_revision:1,repository:r,evidence:["V1"],affected_paths:[...(a.tickets["TASK-001"].meta.affected_paths??[])],scope_verified:true},"review"+round);
  return a;
 }
 const next=(a:any,r=repository())=>planNext(kernel,deriveState(a),a,r,null);

@@ -19,3 +19,6 @@ Create the next immutable `.yaaw-core/project/reviews/TASK-NNN-RK.md`. Bind it t
 
 ## Boundary
 Reviewer does not author implementation while acting as Reviewer. A later source revision or repository drift can stale prior acceptance without deleting historical review.
+
+## Independent path-scope certification
+When recording PASS, validate whether ticket `affected_paths` conservatively covers the implemented feature and its affected shared interfaces. Only when independently supportable, copy the exact scope into immutable review frontmatter as `affected_paths` and set `scope_verified: true`. Do not retroactively edit old review rounds. If the scope cannot be substantiated, omit certification; downstream repository drift remains UNKNOWN rather than falsely safe. Repository identity and evidence linkage remain mandatory.

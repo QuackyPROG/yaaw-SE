@@ -18,6 +18,8 @@ repository:
   changed_paths: []
   error: null
 evidence: []
+affected_paths: []
+scope_verified: false
 ---
 # REVIEW-TASK-000-R1
 

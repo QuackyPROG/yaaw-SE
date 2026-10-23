@@ -18,7 +18,7 @@ const latestStart=(ticket,a)=>evidenceFor(ticket,a).filter(x=>x.kind==="implemen
 const latestVerification=(ticket,a)=>evidenceFor(ticket,a).filter(x=>x.kind==="implementation_verification").sort((x,y)=>idNum(x.id)-idNum(y.id)).at(-1)??null;
 const latestReview=(ticket,a)=>reviewFor(ticket,a).at(-1)??null;
 const verificationCurrent=(v,ticket,a,repo)=>Boolean(v&&v.result==="PASS"&&Number(v.ticket_revision??0)===Number(a.tickets?.[ticket]?.meta?.revision??0)&&Number(v.spec_revision??0)===Number(a.specs?.[a.tickets?.[ticket]?.meta?.spec]?.meta?.revision??0)&&repoEq(v.repository,repo));
-const reviewCurrent=(r,ticket,a,repo,v)=>Boolean(r&&REVIEW_RESULT[r.meta?.result]&&Number(r.meta.ticket_revision??0)===Number(a.tickets?.[ticket]?.meta?.revision??0)&&Number(r.meta.spec_revision??0)===Number(a.specs?.[a.tickets?.[ticket]?.meta?.spec]?.revision??0)&&repoEq(r.meta.repository,repo)&&Array.isArray(r.meta.evidence)&&r.meta.evidence.includes(v?.id));
+const reviewCurrent=(r,ticket,a,repo,v)=>Boolean(r&&REVIEW_RESULT[r.meta?.result]&&Number(r.meta.ticket_revision??0)===Number(a.tickets?.[ticket]?.meta?.revision??0)&&Number(r.meta.spec_revision??0)===Number(a.specs?.[a.tickets?.[ticket]?.meta?.spec]?.meta?.revision??0)&&repoEq(r.meta.repository,repo)&&Array.isArray(r.meta.evidence)&&r.meta.evidence.includes(v?.id));
 
 export function deriveState(a){
   const p=a.product?.meta??{},e=a.engineering?.meta??{};
