@@ -68,7 +68,7 @@ describe("compact orchestration runtime",()=>{
     let next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("planning.audit-revision-impact");expect(next.ticket).toBe("TASK-001");
     await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
     next=run(root);expect(next.workflow).toBe("planning.audit-revision-impact");
-    await writeFile(oldEngineer,(await readFile(oldEngineer,"utf8")).replace("scope_status: OPEN","scope_status: OPEN\nrevision_changes: [{"revision":2,"impact":"NONE","reason":"Repository discovery only; accepted foundation unchanged"}]"));
+    await writeFile(oldEngineer,(await readFile(oldEngineer,"utf8")).replace("scope_status: OPEN",`scope_status: OPEN\nrevision_changes: [{"revision":2,"impact":"NONE","reason":"Repository discovery only; accepted foundation unchanged"}]`));
     next=run(root);expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.id).toBe("REVERIFY_UNCERTAIN");
     expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
     expect(await ticketStatus(root)).toBe("REVIEW_REQUIRED");

@@ -25,7 +25,7 @@ class CoreContractsTest(unittest.TestCase):
             role=KERNEL['roles'][wf['role']]
             text=(ROOT/role['document']).read_text()
             self.assertIn(f"Operation: {wf['operation']}",text,workflow_id)
-        self.assertEqual(KERNEL['roles']['orchestrator']['writes'],['ticket_status','observed_state','handoff','intent','dispatch_failures'])
+        self.assertEqual(KERNEL['roles']['orchestrator']['writes'],['ticket_status','observed_state','handoff','intent','dispatch_failures','dispatch_attempt'])
         self.assertNotIn('ticket',KERNEL['roles']['orchestrator']['writes'])
 
     def test_public_skills_are_thin_intent_entrypoints(self):
