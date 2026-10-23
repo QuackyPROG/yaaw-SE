@@ -1,4 +1,4 @@
-import { contractImpact, acceptedHistory, repositoryImpact, lastReview } from "./lifecycle-evidence.mjs";
+import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revisionImpact } from "./lifecycle-evidence.mjs";
 const ACTIVE = new Set(["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","PASS"]);
 const TERMINAL = new Set(["PASS","CANCELLED"]);
 const REVIEW_RESULT = { PASS:"PASS", REPAIR:"REPAIR_REQUIRED", REPLAN:"REPLAN_REQUIRED", BLOCKED:"BLOCKED" };
@@ -114,12 +114,17 @@ function baseRoute(state,a,repo){
   if(state.product.status!=="ready")return{workflow:"prd.route",ticket:null};
   // Before opening a new frontier, resolve older accepted work's unknown source lineage.
   // This is a read/metadata audit, not permission to rewrite the completed contract.
-  const audit=Object.keys(state.tickets).sort(byId).find(id=>{
-    const t=state.tickets[id],pass=acceptedHistory(id,a),impact=contractImpact(id,state,a);
-    return (t==="REPLAN_REQUIRED"||t==="PASS")&&pass&&impact.kind==="UNKNOWN"&&
-      /revision|lineage|scoped/i.test(impact.reason);
-  });
-  if(audit)return{workflow:"planning.audit-revision-impact",ticket:audit};
+  const audit=Object.keys(state.tickets).sort(byId).map(id=>{
+    if(!["REPLAN_REQUIRED","PASS"].includes(state.tickets[id])||!acceptedHistory(id,a)||contractImpact(id,state,a).kind!=="UNKNOWN")return null;
+    const t=a.tickets[id]?.meta,s=a.specs?.[t?.spec]?.meta;
+    if(!t||!s)return null;
+    const product=revisionImpact(Number(t.product_revision),Number(state.product.revision),a.product?.meta?.revision_changes,t.requirement_ids??s.requirement_ids??[]);
+    const engineering=revisionImpact(Number(t.engineering_revision),Number(state.planning.revision),a.engineering?.meta?.revision_changes,t.decision_ids??s.decision_ids??[]);
+    if(product.kind==="UNKNOWN")return{workflow:"prd.audit-revision-impact",ticket:id};
+    if(engineering.kind==="UNKNOWN")return{workflow:"planning.audit-revision-impact",ticket:id};
+    return null;
+  }).find(Boolean);
+  if(audit)return audit;
   const invalid=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED"&&(contractImpact(id,state,a).kind==="INVALIDATED"||lastReview(id,a)?.meta?.result==="REPLAN"));
   if(invalid)return{workflow:"planning.replan",ticket:invalid};
   if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")return{workflow:"planning.route",ticket:null};
@@ -151,6 +156,7 @@ function baseRoute(state,a,repo){
 }
 function legalRequested(workflow,ticket,state,a,repo){
   if(workflow==="prd.route"||workflow==="prd.revise"||workflow==="prd.refine")return true;
+  if(workflow==="prd.audit-revision-impact")return Boolean(ticket&&acceptedHistory(ticket,a)&&contractImpact(ticket,state,a).kind==="UNKNOWN");
   if(workflow==="planning.route"||workflow==="planning.readiness-review")return state.product.status==="ready";
   if(workflow==="planning.audit-revision-impact")return state.product.status==="ready"&&Boolean(ticket&&acceptedHistory(ticket,a)&&contractImpact(ticket,state,a).kind==="UNKNOWN");
   if(workflow==="planning.create-spec")return planningReady(state)&&!currentSpecId(state);

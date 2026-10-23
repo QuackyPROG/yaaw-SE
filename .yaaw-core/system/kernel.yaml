@@ -125,7 +125,12 @@
     "prd": {
       "document": ".yaaw-core/system/roles/prd.md",
       "reads": [
-        "product"
+        "product",
+        "spec",
+        "ticket",
+        "evidence",
+        "review",
+        "repository"
       ],
       "writes": [
         "product"
@@ -449,6 +454,13 @@
       "repository_requirement": "INSPECT",
       "external_research": "forbidden",
       "execution_context": "ISOLATED_PREFERRED"
+    },
+    "prd.audit-revision-impact": {
+      "role": "prd",
+      "operation": "audit-revision-impact",
+      "repository_requirement": "INSPECT",
+      "external_research": "forbidden",
+      "execution_context": "ISOLATED_PREFERRED"
     }
   },
   "handoffs": {
@@ -710,6 +722,29 @@
       "required_modules": [],
       "ticket_modules": false,
       "expected_output": "Audited source revision impact metadata without changing original ticket/spec or immutable evidence; or typed human/provenance stop.",
+      "result_vocabulary": [
+        "AUDITED",
+        "HUMAN_INPUT_REQUIRED",
+        "INSUFFICIENT_PROVENANCE",
+        "BLOCKED"
+      ]
+    },
+    "prd.audit-revision-impact": {
+      "active_artifact": "product",
+      "reads": [
+        "product",
+        "spec",
+        "ticket",
+        "evidence",
+        "review",
+        "repository"
+      ],
+      "writes": [
+        "product"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Audited REQ-scoped product revision-impact records or typed evidence/human stop without editing historic tickets or reviews.",
       "result_vocabulary": [
         "AUDITED",
         "HUMAN_INPUT_REQUIRED",

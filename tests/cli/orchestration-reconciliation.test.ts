@@ -151,6 +151,15 @@ describe("scoped lifecycle regression matrix",()=>{
    expect(p.reconciliation?.to).not.toBe("REVIEW_REQUIRED");
    expect(p.workflow).not.toBe("planning.replan");
  });
+ it("M2: product revision provenance is audited by PRD, not engineering Planner",()=>{
+   const a=accepted(fixture("REPLAN_REQUIRED"));
+   a.product.meta.revision=2;
+   let p:any=next(a);expect(p.workflow).toBe("prd.audit-revision-impact");expect(p.ticket).toBe("TASK-001");
+   a.product.meta.revision_changes=[{revision:2,impact:"NONE",reason:"Audited extra product documentation, no accepted foundation requirement changed"}];
+   p=next(a);expect(p.reconciliation?.id).toBe("RECOVER_ACCEPTED_HISTORY");
+   a.product.meta.revision_changes=[{revision:2,impact:"SCOPED",ids:["REQ-001"],reason:"Changed foundation acceptance requirement"}];
+   p=next(a);expect(p.workflow).toBe("planning.replan");
+ });
  it("N: audited material revision never triggers historical PASS recovery",()=>{
    const a=accepted(fixture("REPLAN_REQUIRED"));
    a.engineering.meta.revision=2;
