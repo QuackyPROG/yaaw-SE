@@ -125,3 +125,7 @@ Product and engineering frontmatter may contain append-only scoped `revision_cha
 The orchestrator can recover a false REPLAN_REQUIRED to PASS **only** with validated historical acceptance, still-applicable source contract, and repository change proof. No review or verification record is fabricated. Explicit independent REPLAN stays authoritative. After any safe recovery, re-inspect and continue planning the next PRD frontier.
 
 Before executing a worker, call `--check-handoff` then `--dispatch-start`. An unchanged previously attempted handoff produces `NO_PROGRESS_REPEATED_HANDOFF` rather than retrying indefinitely. The attempt marker is replaceable coordination, not evidence of completed semantic work.
+
+## Upgrading legacy consumer projects
+
+New provenance frontmatter (`revision_changes`, `requirement_ids`, `affected_paths`, `scope_verified`) is optional for existing artifacts. There is no forced rewrite of previously signed-off tickets or review history and no project-state migration for this lifecycle correction. When older artifacts lack sufficient provenance, reconciliation returns UNKNOWN and blocks only the unsafe acceptance/recovery path; it must not fabricate an unrelated-change attestation. Update the installer-managed system via the YAAW CLI; semantic roles must not patch framework bytes in a consumer workspace.

@@ -142,3 +142,16 @@ Provider configuration freshness is intentionally separate from package, adapter
 Interactive Quick Update records that a displayed capability notice has been seen only when the framework transaction succeeds. Headless updates report pending provider configuration updates without acknowledging them automatically.
 
 Configuration-only changes use `yaaw config [integration]` and do not refresh package-managed system files or unrelated integration surfaces.
+
+## V2 scoped acceptance lifecycle upgrade
+
+The V2 lifecycle correction lives in installer-managed `.yaaw-core/system/**`. The supported Quick Update replaces package-owned runtime and schema files while preserving all canonical `.yaaw-core/project/**` files, including historical immutable reviews and implementation evidence. The new requirement-ID, revision-impact, affected-path, and reviewed-scope fields are optional on legacy artifacts; **project schema migration is not required** for this release. Missing legacy provenance is an explicit UNKNOWN rather than automatic PASS or automatic REPLAN.
+
+The `yaaw-SEv2` branch is published through the npm prerelease `next` channel. To upgrade an already installed V2 consumer using that channel after successful CI publication, use:
+
+```bash
+npx yaaw-se@next install --directory /path/to/consumer --action quick-update --yes
+npx yaaw-se@next doctor --directory /path/to/consumer --json
+```
+
+Use `--dry-run` first for an important production workspace; create a repository commit/backup first. Do not assume the stable `latest` channel already includes V2. If an installer-managed framework file is locally modified, review the conflict, then choose a documented conflict policy such as `backup-replace` rather than patching `.yaaw-core/system` manually. The installer preserves project-owned bytes; it does **not** prove an old ticket's historical acceptance after a relevant changed requirement or code path without fresh evidence.
