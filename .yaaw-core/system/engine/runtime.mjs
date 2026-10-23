@@ -66,7 +66,7 @@ async function main(){
     if(!old){console.log(JSON.stringify({type:"BLOCKED",reason:"MISSING_DISPATCH_HANDOFF"}));return}
     const candidate=handoff(kernel,integrity,state,a,repo,old.workflow,old.ticket,intent);
     if(!same(old,candidate)){console.log(JSON.stringify({type:"HANDOFF_STALE",reason:"durable basis changed"}));return}
-    await writeFile(join(runtime,"dispatch-attempt.json"),JSON.stringify({schema:"yaaw.dispatch-attempt/v1",handoff:old})+"\\n");
+    await writeFile(join(runtime,"dispatch-attempt.json"),JSON.stringify({schema:"yaaw.dispatch-attempt/v1",handoff:old})+"\n");
     console.log(JSON.stringify({type:"DISPATCH_STARTED"}));return
   }
   if(opt.check){const old=await json(join(runtime,"handoff.json"));if(!old){console.log(JSON.stringify({type:"HANDOFF_STALE",reason:"missing handoff"}));return}const candidate=handoff(kernel,integrity,state,a,repo,old.workflow,old.ticket,intent);console.log(JSON.stringify(same(old,candidate)?{type:"HANDOFF_FRESH"}:{type:"HANDOFF_STALE",reason:"durable basis changed"}));return}
