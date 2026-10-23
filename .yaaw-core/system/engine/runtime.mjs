@@ -5,6 +5,7 @@ import { join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseFrontmatter } from "./frontmatter.mjs";
 import { deriveState, planNext, chooseIntentTarget } from "./routing.mjs";
+import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revisionImpact } from "./lifecycle-evidence.mjs";
 
 const hash=v=>"sha256:"+createHash("sha256").update(v).digest("hex");
 const stable=value=>Array.isArray(value)?value.map(stable):(value&&typeof value==="object"?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value);
@@ -28,7 +29,7 @@ function repositoryChanges(root,a,repository){
   }
   return result;
 }
-function argsOf(argv){const out={workspace:process.cwd(),invoke:null,inspect:false,reconcile:false,check:false,dispatchStart:false};for(let i=0;i<argv.length;i+=1){const x=argv[i];if(x==="--workspace"&&argv[i+1]){out.workspace=argv[++i]}else if(x==="--invoke-skill"&&argv[i+1]){out.invoke=argv[++i]}else if(x==="--inspect-only")out.inspect=true;else if(x==="--reconcile-one")out.reconcile=true;else if(x==="--check-handoff")out.check=true;else if(x==="--dispatch-start")out.dispatchStart=true;else throw new Error(`unknown argument: ${x}`)}return out}
+function argsOf(argv){const out={workspace:process.cwd(),invoke:null,inspect:false,reconcile:false,check:false,dispatchStart:false,diagnose:false};for(let i=0;i<argv.length;i+=1){const x=argv[i];if(x==="--workspace"&&argv[i+1]){out.workspace=argv[++i]}else if(x==="--invoke-skill"&&argv[i+1]){out.invoke=argv[++i]}else if(x==="--inspect-only")out.inspect=true;else if(x==="--reconcile-one")out.reconcile=true;else if(x==="--check-handoff")out.check=true;else if(x==="--diagnose")out.diagnose=true;else if(x==="--dispatch-start")out.dispatchStart=true;else throw new Error(`unknown argument: ${x}`)}return out}
 
 async function inspectArtifacts(root){
   const p=join(root,".yaaw-core","project"),product=await meta(root,join(p,"product.md")),engineering=await meta(root,join(p,"engineering.md")),specs={},tickets={},reviews={},evidence={},research={},rules={};
@@ -60,6 +61,18 @@ async function main(){
   let intent=await json(join(runtime,"intent.json"));if(opt.invoke)intent=await seedIntent(root,kernel,opt.invoke,state,a,repo);
   const planned=planNext(kernel,state,a,repo,intent),reconciliation=planned.type==="RECONCILE_REQUIRED"?planned.reconciliation:null;await observed(root,integrity,repo,state,a,reconciliation);
   if(opt.inspect){console.log(JSON.stringify({type:"INSPECTED",state,reconciliation}));return}
+  if(opt.diagnose){
+    const tickets=Object.keys(state.tickets).sort().map(id=>{
+      const t=a.tickets[id]?.meta??{},s=a.specs?.[t.spec]?.meta??{},pass=acceptedHistory(id,a),impact=contractImpact(id,state,a),review=lastReview(id,a);
+      const product=revisionImpact(Number(t.product_revision??0),state.product.revision,a.product?.meta?.revision_changes,t.requirement_ids??s.requirement_ids??[]);
+      const engineering=revisionImpact(Number(t.engineering_revision??0),state.planning.revision,a.engineering?.meta?.revision_changes,t.decision_ids??s.decision_ids??[]);
+      return {ticket:id,status:state.tickets[id],ticket_revision:t.revision??null,spec:t.spec??null,spec_revision:t.spec_revision??null,
+        invalidated_by:t.invalidated_by??null,contract:impact,product_revision_impact:product,engineering_revision_impact:engineering,
+        historical_pass_linked:Boolean(pass),last_review_result:review?.meta?.result??null,
+        repository:repositoryImpact(id,pass,a,repo)};
+    });
+    console.log(JSON.stringify({type:"DIAGNOSTIC",framework:frameworkBasis(integrity),planning:state.planning,repository_status:repo?.status??"UNKNOWN",tickets,next:planned}));return
+  }
   if(opt.reconcile){if(!reconciliation){console.log(JSON.stringify({type:"NO_RECONCILIATION"}));return}if(reconciliation.kind==="BLOCKED"){console.log(JSON.stringify({type:"BLOCKED",reason:reconciliation.reason}));return}const ticket=a.tickets?.[reconciliation.subject];if(!ticket)throw new Error(`reconciliation ticket missing: ${reconciliation.subject}`);const ticketPath=join(root,ticket.path),raw=await readFile(ticketPath,"utf8");await writeFile(ticketPath,patchStatus(raw,reconciliation.to),"utf8");for(const file of ["observed-state.json","handoff.json"])try{await writeFile(join(runtime,file),"")}catch{}console.log(JSON.stringify({type:"RECONCILED",reconciliation}));return}
   if(opt.dispatchStart){
     const old=await json(join(runtime,"handoff.json"));

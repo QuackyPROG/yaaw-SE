@@ -17,13 +17,19 @@ export function revisionImpact(from,to,changes,ids){
 export function contractImpact(ticket,state,a){
   const t=a.tickets?.[ticket]?.meta,s=a.specs?.[t?.spec]?.meta;
   if(!t||!s)return {kind:"UNKNOWN",reason:"missing governing contract"};
-  if(t.invalidated_by)return {kind:"INVALIDATED",reason:`explicit invalidation: ${t.invalidated_by}`};
   if(["STALE","SUPERSEDED"].includes(s.status))return {kind:"INVALIDATED",reason:"specification explicitly superseded"};
   if(s.status!=="ACCEPTED")return {kind:"UNKNOWN",reason:"specification not accepted"};
   if(n(t.spec_revision)!==n(s.revision)||n(t.product_revision)!==n(s.product_revision)||n(t.engineering_revision)!==n(s.engineering_revision))return {kind:"INVALIDATED",reason:"governing specification source basis changed"};
   const p=revisionImpact(n(t.product_revision),n(state.product.revision),a.product?.meta?.revision_changes,t.requirement_ids??s.requirement_ids??[]);
   const e=revisionImpact(n(t.engineering_revision),n(state.planning.revision),a.engineering?.meta?.revision_changes,t.decision_ids??s.decision_ids??[]);
-  return [p,e].find(x=>x.kind==="INVALIDATED")??[p,e].find(x=>x.kind==="UNKNOWN")??{kind:"CURRENT",reason:"source lineage proves contract applicable"};
+  const proved=[p,e].find(x=>x.kind==="INVALIDATED");
+  if(proved)return proved;
+  // Legacy runtimes wrote invalidated_by on equality-only revision drift. Its presence
+  // is an unresolved assertion, not independent proof of a contract defect. Do NOT
+  // silently clear it or restore PASS: require an authorized Planner audit instead.
+  if(typeof t.invalidated_by==="string"&&t.invalidated_by.trim())
+    return {kind:"UNKNOWN",reason:`unaudited invalidated_by marker: ${t.invalidated_by}`};
+  return [p,e].find(x=>x.kind==="UNKNOWN")??{kind:"CURRENT",reason:"source lineage proves contract applicable"};
 }
 const evidence=(ticket,a)=>Object.values(a.evidence??{}).filter(v=>v?.schema==="yaaw.evidence/v3"&&v.ticket===ticket);
 export function lastReview(ticket,a){return Object.values(a.reviews??{}).filter(r=>r?.meta?.schema==="yaaw.review/v2"&&r.meta.ticket===ticket).sort((x,y)=>n(x.meta.round)-n(y.meta.round)).at(-1)??null}

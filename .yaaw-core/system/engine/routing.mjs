@@ -122,6 +122,10 @@ function baseRoute(state,a,repo){
     const engineering=revisionImpact(Number(t.engineering_revision),Number(state.planning.revision),a.engineering?.meta?.revision_changes,t.decision_ids??s.decision_ids??[]);
     if(product.kind==="UNKNOWN")return{workflow:"prd.audit-revision-impact",ticket:id};
     if(engineering.kind==="UNKNOWN")return{workflow:"planning.audit-revision-impact",ticket:id};
+    // Even with fully proved revision lineage, an opaque historic invalidation
+    // marker must be examined by the contract owner before any acceptance recovery.
+    if(typeof t.invalidated_by==="string"&&t.invalidated_by.trim())
+      return{workflow:"planning.audit-revision-impact",ticket:id};
     return null;
   }).find(Boolean);
   if(audit)return audit;

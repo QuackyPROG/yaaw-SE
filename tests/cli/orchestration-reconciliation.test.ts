@@ -166,6 +166,29 @@ describe("scoped lifecycle regression matrix",()=>{
    a.engineering.meta.revision_changes=[{revision:2,impact:"SCOPED",ids:["ENG-001"],reason:"Changed accepted foundation decision"}];
    const p:any=next(a);expect(p.workflow).toBe("planning.replan");expect(p.reconciliation?.to).not.toBe("PASS");
  });
+ it("O: prior equality-only invalidated_by marker is investigated, not repeated as material replan",()=>{
+   const a=accepted(fixture("REPLAN_REQUIRED"));
+   a.engineering.meta.revision=2;
+   a.engineering.meta.revision_changes=[{revision:2,impact:"NONE",reason:"Only repository understanding and frontier changed"}];
+   a.tickets["TASK-001"].meta.invalidated_by="Engineering revision 2 differs from original 1";
+   const p:any=next(a);expect(p.workflow).toBe("planning.audit-revision-impact");expect(p.ticket).toBe("TASK-001");
+   expect(p.reconciliation?.to).not.toBe("PASS");
+   // An authorized, evidence-backed Planner correction removes only the false marker.
+   delete a.tickets["TASK-001"].meta.invalidated_by;
+   const q:any=next(a);expect(q.reconciliation?.id).toBe("RECOVER_ACCEPTED_HISTORY");expect(q.reconciliation?.to).toBe("PASS");
+ });
+ it("P: material change wins even when an equality-only marker is also present",()=>{
+   const a=accepted(fixture("REPLAN_REQUIRED"));
+   a.engineering.meta.revision=2;
+   a.engineering.meta.revision_changes=[{revision:2,impact:"SCOPED",ids:["ENG-001"],reason:"Actual foundation decision changed"}];
+   a.tickets["TASK-001"].meta.invalidated_by="Engineering revision 2 differs";
+   const p:any=next(a);expect(p.workflow).toBe("planning.replan");
+ });
+ it("Q: missing immutable linked PASS cannot be converted to acceptance by marker cleanup",()=>{
+   const a=fixture("REPLAN_REQUIRED");
+   a.tickets["TASK-001"].meta.invalidated_by="revision drift";
+   const p:any=next(a);expect(p.workflow).not.toBe("planning.audit-revision-impact");expect(p.reconciliation?.to).not.toBe("PASS");
+ });
  it("legacy unscoped history is UNKNOWN and not silently accepted or falsely replanned",()=>{
   const a=accepted(fixture("REPLAN_REQUIRED"));engRevision(a);delete a.engineering.meta.revision_changes;
   const p:any=next(a);expect(p.reconciliation?.to).not.toBe("PASS");expect(p.reconciliation?.to).not.toBe("REPLAN_REQUIRED");
