@@ -257,6 +257,38 @@ describe("compact orchestration runtime",()=>{
     expect(result.reconciliation.id).toBe("REVERIFY_REQUIRED");
     expect(result.reconciliation.subject).toBe("TASK-001");
   });
+
+  it("PRD durable selection dispatches a question-round once and reconstructs after runtime deletion",async()=>{
+    const root=await fixture("READY"),product=join(root,".yaaw-core/project/product.md");
+    await writeFile(product,(await readFile(product,"utf8")).replace("status: ready","status: draft"));
+    let next=run(root);expect(next.workflow).toBe("prd.route");
+    expect(run(root,"--dispatch-start").type).toBe("DISPATCH_STARTED");
+    const directive=[
+      "product_next:",
+      "  workflow: prd.question-round",
+      "  product_revision: 1",
+      "  status: draft",
+      "  reason: Material account ownership requirements need human input."
+    ].join("\n");
+    await writeFile(product,(await readFile(product,"utf8")).replace("status: draft","status: draft\n"+directive));
+    next=run(root);expect(next.workflow).toBe("prd.question-round");expect(next.role).toBe("prd");
+    expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");
+    expect(run(root,"--dispatch-start").type).toBe("DISPATCH_STARTED");
+    await writeFile(product,(await readFile(product,"utf8"))+"\nUnrelated formatting, directive not consumed.\n");
+    const repeat=run(root);expect(repeat.reason).toBe("NO_PROGRESS_REPEATED_HANDOFF");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    next=run(root);expect(next.workflow).toBe("prd.question-round");
+    await writeFile(product,(await readFile(product,"utf8")).replace("status: draft\n"+directive,"status: ready"));
+    next=run(root);expect(next.workflow).not.toBe("prd.question-round");
+  });
+  it("a missing product routes directly to PRD create, not an endless selection",async()=>{
+    const root=await fixture("READY");
+    await rm(join(root,".yaaw-core/project/product.md"));
+    const next=run(root);
+    expect(next.type).toBe("DISPATCH_READY");
+    expect(next.workflow).toBe("prd.create");
+    expect(next.role).toBe("prd");
+  });
   it("bounds repeated identical handoffs only after a marked dispatch",async()=>{
     const root=await fixture();expect(run(root).type).toBe("DISPATCH_READY");
     expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");

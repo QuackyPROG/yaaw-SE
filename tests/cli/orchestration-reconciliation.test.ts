@@ -64,6 +64,35 @@ describe("scoped lifecycle regression matrix",()=>{
    expect(mismatched.reconciliation?.id).toBe("REVERIFY_UNCERTAIN");
    expect(mismatched.reconciliation?.to).not.toBe("PASS");
  });
+
+ it("V: after all accepted frontier tickets PASS, a current planning_next continues rather than looping planning.route",()=>{
+   const a=accepted(fixture("PASS"));
+   expect(next(a).workflow).toBe("planning.route");
+   a.engineering.meta.planning_next={
+     workflow:"planning.decision-frontier",product_revision:1,engineering_revision:1,status:"ready",
+     current_frontier:null,readiness:"PASS",reason:"Next accepted PRD frontier remains open."
+   };
+   const p:any=next(a);
+   expect(p.workflow).toBe("planning.decision-frontier");
+   a.engineering.meta.planning_next.engineering_revision=0;
+   expect(next(a).workflow).toBe("planning.route");
+ });
+ it("W: PRD routing honors a durable product_next and rejects unsafe/stale selections",()=>{
+   const a=fixture("READY");
+   a.product.meta.status="draft";
+   expect(next(a).workflow).toBe("prd.route");
+   a.product.meta.product_next={
+     workflow:"prd.question-round",product_revision:1,status:"draft",reason:"Unresolved user-facing registration."
+   };
+   expect(next(a).workflow).toBe("prd.question-round");
+   a.product.meta.product_next.workflow="implementation.implement-ticket";
+   expect(next(a).workflow).toBe("prd.route");
+   a.product.meta.product_next.workflow="prd.question-round";
+   a.product.meta.revision=2;
+   expect(next(a).workflow).toBe("prd.route");
+   a.product=null;
+   expect(next(a).workflow).toBe("prd.create");
+ });
  it("A: historical PASS survives an unrelated engineering revision",()=>{
   const a=accepted(fixture());engRevision(a);
   const p:any=next(a);expect(a.tickets["TASK-001"].meta.status).toBe("PASS");expect(p.reconciliation?.to).not.toBe("REPLAN_REQUIRED");expect(p.workflow).toBe("planning.create-spec");
