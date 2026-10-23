@@ -15,6 +15,19 @@ async function json(path,fallback=null){try{return JSON.parse(await readFile(pat
 async function meta(root,path){try{const raw=await readFile(path,"utf8");return{path:rel(root,path),meta:parseFrontmatter(raw),digest:hash(Buffer.from(raw,"utf8"))}}catch{return null}}
 async function list(dir,ext){try{return(await readdir(dir)).filter(x=>x.endsWith(ext)).sort()}catch{return[]}}
 function execJson(file,workspace){const r=spawnSync(process.execPath,[file,"--workspace",workspace],{encoding:"utf8",windowsHide:true});let value=null;try{value=JSON.parse(r.stdout)}catch{}return value??{status:"UNKNOWN",error:r.stderr||`exit ${r.status}`}}
+// Git ancestry and dirty paths distinguish later unrelated edits from reviewed code.
+function repositoryChanges(root,a,repository){
+  const heads=[...new Set(Object.values(a.reviews??{}).map(r=>r?.meta?.repository?.head_commit).filter(Boolean))],result={};
+  for(const head of heads){
+    const base=spawnSync("git",["-C",root,"merge-base","--is-ancestor",head,"HEAD"],{encoding:"utf8",windowsHide:true});
+    if(base.status!==0||repository?.status!=="READY"){result[head]={status:"UNKNOWN",paths:[]};continue}
+    const diff=spawnSync("git",["-C",root,"diff","--name-only","-z",head,"HEAD","--","."],{encoding:"utf8",windowsHide:true});
+    if(diff.status!==0){result[head]={status:"UNKNOWN",paths:[]};continue}
+    const paths=new Set([...diff.stdout.split(String.fromCharCode(0)).filter(Boolean),...(repository.changed_paths??[]).map(p=>p.path)]);
+    result[head]={status:"KNOWN",paths:[...paths].sort()};
+  }
+  return result;
+}
 function argsOf(argv){const out={workspace:process.cwd(),invoke:null,inspect:false,reconcile:false,check:false,dispatchStart:false};for(let i=0;i<argv.length;i+=1){const x=argv[i];if(x==="--workspace"&&argv[i+1]){out.workspace=argv[++i]}else if(x==="--invoke-skill"&&argv[i+1]){out.invoke=argv[++i]}else if(x==="--inspect-only")out.inspect=true;else if(x==="--reconcile-one")out.reconcile=true;else if(x==="--check-handoff")out.check=true;else if(x==="--dispatch-start")out.dispatchStart=true;else throw new Error(`unknown argument: ${x}`)}return out}
 
 async function inspectArtifacts(root){
