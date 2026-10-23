@@ -9,12 +9,15 @@ import { parseFrontmatter } from "./frontmatter.mjs";
 
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
 const UNKNOWN = reason => ({schema:"yaaw.scope-identity/v1",algorithm:"yaaw-scope-v1",status:"UNKNOWN",paths:[],digest:null,files:0,reason});
-const valid = value => typeof value==="string" && value.length>0 && value.length<=1024 &&
-  !value.includes("\\") && !value.includes("\0") && !value.includes("*") &&
-  !value.includes(":") && !value.startsWith("/") && !value.includes("//") &&
-  !value.endsWith("/.") && !value.endsWith("/..") &&
-  value.split("/").every(s=>s!==""&&s!=="."&&s!=="..") &&
-  ![".yaaw-core",".git"].includes(value.split("/")[0]);
+const valid = value => {
+  if(typeof value!=="string"||!value.length||value.length>1024||value.includes("\\")||
+     value.includes("\0")||value.includes("*")||value.includes(":")||
+     value.startsWith("/")||value.includes("//"))return false;
+  const path=value.endsWith("/")?value.slice(0,-1):value;
+  const segments=path.split("/");
+  return segments.every(s=>s!==""&&s!=="."&&s!=="..") &&
+    ![".yaaw-core",".git"].includes(segments[0]);
+};
 const within=(root,path)=>path===root||path.startsWith(root+sep);
 export function scopeIdentity(workspace, scopes) {
   const root=resolve(workspace);
