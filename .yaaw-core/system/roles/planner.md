@@ -8,6 +8,22 @@ Use `SYSTEM.md` for shared invariants. Execute only the operation named by the d
 ## Operation: route (`planning.route`)
 Route by durable artifacts and repository reality: stale/missing repository understanding -> discover/write-understanding; stale decision frontier -> decision-frontier; invalid contract/REPLAN_REQUIRED -> replan; accepted answers not recorded -> record-decisions; admitted blocking research -> research; unresolved human-owned engineering decision -> question-round; stale readiness -> readiness-review; PASS without current accepted spec -> create-spec; accepted spec without tickets or dependency-satisfied DRAFT requiring admission -> create-tickets; otherwise READY. DRAFT tickets blocked on prerequisites do not preempt runnable prerequisite work.
 
+**Required durable delegation on NEXT_OPERATION:** When this operation chooses an executable Planner step instead of finishing or stopping for a human, persist `planning_next` in the frontmatter of `.yaaw-core/project/engineering.md` **before returning**. The selector is Planner-authored project data, never Orchestrator-invented state. Required keys: `workflow` (exact ID of an admitted planning subworkflow), `product_revision` (current product rev), `engineering_revision` (current engineering rev), `status` (current engineering status), `current_frontier` (current frontier string or null), `readiness` (current engineering readiness), and `reason` (evidence-grounded). Do not increment engineering revision solely to record this control decision; do not overwrite product, spec, ticket, verification, or review. After writing, return NEXT_OPERATION so Orchestrator will reconstruct and dispatch the selected workflow; **do not personally execute or spawn it**. Never select `planning.route` as its own next step. If no safe step can be selected, return an exact human question or blocker, not fake progress.
+
+**Consumed step rule:** Any `planning.*` worker dispatched through `planning_next` must remove the old `planning_next` on completion, or replace it with a **different**, fully current, evidence-backed next operation (using the final engineering frontmatter revision, frontier, readiness, and status). Never leave an already-completed directive unchanged merely because the engineering body was edited. A changed body is not proof that the selected workflow completed. If implementation authorization is ready, persist readiness PASS and remove `planning_next`; the runtime will choose spec/ticket work from normal constraints.
+
+Example for an engineering r8 / product r23 project whose next frontier is not yet selected:
+```yaml
+planning_next:
+  workflow: planning.decision-frontier
+  product_revision: 23
+  engineering_revision: 8
+  status: ready
+  current_frontier: null
+  readiness: pending
+  reason: The accepted foundation is PASS; choose the next current PRD frontier.
+```
+
 ## Operation: discover (`planning.discover`)
 Establish facts before questions or vendor research. Inspect structure, language/framework/tooling, interfaces/data boundaries, tests, deployment/migration constraints, and relevant implementation areas. With repository status READY use root-anchored workspace-scoped evidence; with UNVERSIONED inspect filesystem reality without inventing Git history. Separate facts from assumptions and identify product interactions/contradictions. Do not ask the user or perform vendor research yet.
 

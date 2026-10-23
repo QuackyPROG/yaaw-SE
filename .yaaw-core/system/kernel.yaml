@@ -501,8 +501,9 @@
       ],
       "required_modules": [],
       "ticket_modules": false,
-      "expected_output": "Current engineering frontier readiness or one typed planning result.",
+      "expected_output": "One validated, durable engineering.planning_next selection for the next planning operation, or a concrete HUMAN_INPUT_REQUIRED/BLOCKED result. Selection is not completion.",
       "result_vocabulary": [
+        "NEXT_OPERATION",
         "READY",
         "HUMAN_INPUT_REQUIRED",
         "REPLAN",
@@ -750,6 +751,165 @@
         "HUMAN_INPUT_REQUIRED",
         "INSUFFICIENT_PROVENANCE",
         "BLOCKED"
+      ]
+    },
+    "planning.discover": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "repository"
+      ],
+      "writes": [
+        "engineering"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "A grounded, bounded repository discovery recorded in engineering.md, with the next planning step identified.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "planning.write-understanding": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "repository"
+      ],
+      "writes": [
+        "engineering"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Persisted repository understanding, explicit revision impact, and next planning operation.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "planning.decision-frontier": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "engineering_research",
+        "spec",
+        "ticket",
+        "project_rule",
+        "repository"
+      ],
+      "writes": [
+        "engineering",
+        "engineering_research"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Durable current frontier and its actionable next step or a real question/blocker.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "planning.research": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "engineering_research",
+        "repository"
+      ],
+      "writes": [
+        "engineering_research",
+        "engineering"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "One bounded research result and its effect on the next engineering step.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "planning.question-round": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "engineering_research",
+        "repository"
+      ],
+      "writes": [
+        "engineering"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Material human-owned question batch or evidence-backed no-questions continuation.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "planning.record-decisions": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "engineering_research",
+        "repository"
+      ],
+      "writes": [
+        "engineering"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Persisted accepted engineering decisions and next frontier planning step.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "planning.readiness-review": {
+      "active_artifact": "engineering",
+      "reads": [
+        "product",
+        "engineering",
+        "engineering_research",
+        "spec",
+        "ticket",
+        "repository"
+      ],
+      "writes": [
+        "engineering"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Durable readiness verdict with source basis and evidence; next operation if not PASS.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
       ]
     }
   },

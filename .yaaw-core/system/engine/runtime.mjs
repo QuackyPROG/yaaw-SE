@@ -50,6 +50,11 @@ function revisions(state,a,ticket){const spec=selectedSpec(state,a,ticket);retur
 function basis(state,a,ticket){const spec=selectedSpec(state,a,ticket);return{product_digest:a.product?.digest??null,engineering_digest:a.engineering?.digest??null,spec_digest:spec?.digest??null,ticket_digest:ticket?a.tickets?.[ticket]?.digest??null:null,ticket_status:ticket?state.tickets?.[ticket]??null:null}}
 function modulesFor(kernel,role,policy,a,ticket){const names=[...(policy.required_modules??[])];if(policy.ticket_modules&&ticket)for(const x of a.tickets?.[ticket]?.meta?.expertise??[])names.push(x);return[...new Set(names)].filter(name=>kernel.modules[name]?.usable_by?.includes(role)).map(name=>kernel.modules[name].path)}
 function handoff(kernel,framework,state,a,repo,workflow,ticket,intent){const wf=kernel.workflows[workflow],policy=kernel.handoffs[workflow],role=kernel.roles[wf?.role];if(!wf||!policy||!role)throw new Error(`no handoff contract for ${workflow}`);for(const w of policy.writes??[])if(!role.writes.includes(w))throw new Error(`workflow ${workflow} writes unauthorized artifact ${w}`);return{schema:"yaaw.handoff/v4",framework:frameworkBasis(framework),role:wf.role,workflow,operation:wf.operation,instruction:{document:role.document,operation:wf.operation},desired_intent:intent?.desired_outcome??null,active_artifact:policy.active_artifact??null,ticket:ticket??null,references:refsFor(policy.reads,state,a,ticket),reads:policy.reads,writes:policy.writes,forbidden_writes:Object.keys(kernel.artifacts).filter(x=>!role.writes.includes(x)),revisions:revisions(state,a,ticket),basis:basis(state,a,ticket),expertise:modulesFor(kernel,wf.role,policy,a,ticket),host_expertise:[],expected_output:policy.expected_output,result_vocabulary:policy.result_vocabulary,repository_requirement:wf.repository_requirement,repository:repo}}
+function planningStepKey(a,workflow){
+  const next=a.engineering?.meta?.planning_next;
+  if(!next||next.workflow!==workflow||!workflow.startsWith("planning.")||workflow==="planning.route")return null;
+  return JSON.stringify(stable(next));
+}
 function repoAllowed(requirement,repo){if(requirement==="NONE")return true;if(requirement==="INSPECT")return repo?.status==="READY"||repo?.status==="UNVERSIONED";return repo?.status==="READY"}
 function patchStatus(text,status){const lines=String(text).split(/\r?\n/);if(lines[0]?.trim()!=="---")throw new Error("ticket missing frontmatter");const end=lines.slice(1).findIndex(x=>x.trim()==="---");if(end<0)throw new Error("ticket missing closing frontmatter");const idx=lines.slice(1,end+1).findIndex(x=>/^status:\s*/.test(x));if(idx<0)throw new Error("ticket missing status");lines[idx+1]=`status: ${status}`;return lines.join("\n")}
 async function observed(root,framework,repo,state,a,reconciliation){const value={schema:"yaaw.observed-state/v4",framework:{...frameworkBasis(framework),modified:framework.modified??[],missing:framework.missing??[],local_overrides:framework.local_overrides??[],repair_required:Boolean(framework.repair_required)},repository:repo,derived:state,reconstructable:true,artifacts:{product:a.product,engineering:a.engineering,specs:a.specs,tickets:a.tickets,reviews:a.reviews,evidence:a.evidence,research:a.research,rules:a.rules},inconsistencies:[],candidate_actions:[],reconciliation};await mkdir(join(root,".yaaw-core","runtime"),{recursive:true});await writeFile(join(root,".yaaw-core","runtime","observed-state.json"),JSON.stringify(value,null,2)+"\n");return value}
@@ -79,7 +84,7 @@ async function main(){
     if(!old){console.log(JSON.stringify({type:"BLOCKED",reason:"MISSING_DISPATCH_HANDOFF"}));return}
     const candidate=handoff(kernel,integrity,state,a,repo,old.workflow,old.ticket,intent);
     if(!same(old,candidate)){console.log(JSON.stringify({type:"HANDOFF_STALE",reason:"durable basis changed"}));return}
-    await writeFile(join(runtime,"dispatch-attempt.json"),JSON.stringify({schema:"yaaw.dispatch-attempt/v1",handoff:old})+"\n");
+    await writeFile(join(runtime,"dispatch-attempt.json"),JSON.stringify({schema:"yaaw.dispatch-attempt/v1",handoff:old,planning_step:planningStepKey(a,old.workflow)})+"\n");
     console.log(JSON.stringify({type:"DISPATCH_STARTED"}));return
   }
   if(opt.check){const old=await json(join(runtime,"handoff.json"));if(!old){console.log(JSON.stringify({type:"HANDOFF_STALE",reason:"missing handoff"}));return}const candidate=handoff(kernel,integrity,state,a,repo,old.workflow,old.ticket,intent);console.log(JSON.stringify(same(old,candidate)?{type:"HANDOFF_FRESH"}:{type:"HANDOFF_STALE",reason:"durable basis changed"}));return}
@@ -88,7 +93,10 @@ async function main(){
   const wf=kernel.workflows[planned.workflow];if(!wf)throw new Error(`unknown workflow ${planned.workflow}`);if(wf.role==="orchestrator"){console.log(JSON.stringify({type:"ROOT_ACTION",workflow:planned.workflow,ticket:planned.ticket??null}));return}if(!repoAllowed(wf.repository_requirement,repo)){console.log(JSON.stringify({type:"BLOCKED",reason:"PRECONDITION_UNSATISFIED:REPOSITORY_IDENTITY_UNAVAILABLE",workflow:planned.workflow}));return}
   const h=handoff(kernel,integrity,state,a,repo,planned.workflow,planned.ticket??null,intent);
   const attempted=await json(join(runtime,"dispatch-attempt.json"));
-  if(attempted?.handoff&&same(attempted.handoff,h)){console.log(JSON.stringify({type:"BLOCKED",reason:"NO_PROGRESS_REPEATED_HANDOFF",workflow:h.workflow,ticket:h.ticket}));return}
+  if((attempted?.handoff&&same(attempted.handoff,h))||
+     (attempted?.planning_step&&attempted.planning_step===planningStepKey(a,h.workflow))){
+    console.log(JSON.stringify({type:"BLOCKED",reason:"NO_PROGRESS_REPEATED_HANDOFF",workflow:h.workflow,ticket:h.ticket}));return
+  }
   await mkdir(runtime,{recursive:true});await writeFile(join(runtime,"handoff.json"),JSON.stringify(h,null,2)+"\n");console.log(JSON.stringify({type:"DISPATCH_READY",workflow:planned.workflow,role:h.role,operation:h.operation,ticket:h.ticket,handoff:rel(root,join(runtime,"handoff.json"))}));
 }
 main().catch(error=>{process.stdout.write(JSON.stringify({type:"FRAMEWORK_STOP",reason:"FRAMEWORK_CONTRACT_INCONSISTENCY",error:String(error?.stack??error)})+"\n");process.exitCode=2});

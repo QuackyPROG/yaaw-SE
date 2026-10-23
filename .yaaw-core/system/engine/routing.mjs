@@ -2,6 +2,20 @@ import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revision
 const ACTIVE = new Set(["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","PASS"]);
 const TERMINAL = new Set(["PASS","CANCELLED"]);
 const REVIEW_RESULT = { PASS:"PASS", REPAIR:"REPAIR_REQUIRED", REPLAN:"REPLAN_REQUIRED", BLOCKED:"BLOCKED" };
+const DELEGABLE_PLANNING = new Set([
+  "planning.discover","planning.write-understanding","planning.decision-frontier",
+  "planning.research","planning.question-round","planning.record-decisions",
+  "planning.readiness-review"
+]);
+function selectedPlanningOperation(state,a){
+  const next=a.engineering?.meta?.planning_next;
+  if(!next||typeof next!=="object"||!DELEGABLE_PLANNING.has(next.workflow))return null;
+  if(next.product_revision!==state.product.revision||next.engineering_revision!==state.planning.revision||
+     next.current_frontier!==state.planning.current_frontier||next.readiness!==state.planning.readiness||
+     next.status!==state.planning.status||typeof next.reason!=="string"||!next.reason.trim())return null;
+  return next.workflow;
+}
+
 const idNum = value => Number(String(value??"").match(/(\d+)(?!.*\d)/)?.[1]??0);
 const byId=(a,b)=>idNum(a)-idNum(b)||String(a).localeCompare(String(b));
 const repoEq=(a,b)=>Boolean(a&&b&&a.status==="READY"&&b.status==="READY"&&a.algorithm===b.algorithm&&a.head_commit===b.head_commit&&a.worktree_digest===b.worktree_digest);
@@ -138,7 +152,8 @@ function baseRoute(state,a,repo){
     state.tickets[id]==="REVIEW_REQUIRED"&&Boolean(acceptedHistory(id,a))&&sourceCurrent(id,state,a));
   if(recovering)return{workflow:verificationCurrent(latestVerification(recovering,a),recovering,a,repo)?
     "review.review-ticket":"implementation.verify-ticket",ticket:recovering};
-  if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")return{workflow:"planning.route",ticket:null};
+  if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")
+    return{workflow:selectedPlanningOperation(state,a)??"planning.route",ticket:null};
   const ids=currentTicketIds(state,a);
   for(const [status,workflow] of [["REPAIR_REQUIRED","implementation.repair-ticket"],["IN_PROGRESS","implementation.verify-ticket"]]){
     const id=ids.find(id=>state.tickets[id]===status);if(id)return{workflow,ticket:id};

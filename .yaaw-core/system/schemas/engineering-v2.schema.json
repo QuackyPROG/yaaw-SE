@@ -90,6 +90,68 @@
         },
         "additionalProperties": false
       }
+    },
+    "planning_next": {
+      "type": "object",
+      "required": [
+        "workflow",
+        "product_revision",
+        "engineering_revision",
+        "status",
+        "current_frontier",
+        "readiness",
+        "reason"
+      ],
+      "properties": {
+        "workflow": {
+          "enum": [
+            "planning.discover",
+            "planning.write-understanding",
+            "planning.decision-frontier",
+            "planning.research",
+            "planning.question-round",
+            "planning.record-decisions",
+            "planning.readiness-review"
+          ]
+        },
+        "product_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "engineering_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": [
+            "discovery",
+            "questions",
+            "ready",
+            "blocked"
+          ]
+        },
+        "current_frontier": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "readiness": {
+          "enum": [
+            "pending",
+            "PASS",
+            "MISSING_DECISIONS",
+            "PRODUCT_GAP",
+            "REPLAN",
+            "BLOCKED"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
