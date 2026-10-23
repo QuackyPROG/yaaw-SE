@@ -115,3 +115,13 @@ Reviewer evaluates actual repository work, not Implementer summaries. Every revi
 ## Recovery
 
 Evidence beats claims. Use current artifact revisions/content, repository identity, implementation evidence, and reviews to identify the last trustworthy boundary. Never rerun full implementation merely because a response disappeared. If the boundary cannot be proven, preserve evidence and return an exact blocker rather than destructive re-execution.
+
+## Historical acceptance and scoped current applicability
+
+Immutable Reviewer PASS linked to immutable PASS verification, matching ticket/spec revisions, and matching *historical* repository identities establishes acceptance at a point in time. It does not imply permanent applicability, and an unrelated future commit does not erase it. Ticket status is only coordination: dependency admission also requires authentic acceptance and current source/repository applicability.
+
+Product and engineering frontmatter may contain append-only scoped `revision_changes` metadata. Each intervening revision must have exactly one impact record (NONE/SCOPED/ALL) and a meaningful reason. SCOPED identifies changed REQ- or ENG- IDs; tickets/specs identify referenced IDs. Unknown legacy history fails closed when applicability matters. A ticket may additionally declare `invalidated_by` and conservative `affected_paths` file/directory scopes. For clean historical reviews, runtime compares commits with Git ancestry plus current dirty path observations: unrelated paths preserve applicability; overlapping paths require verification and review; unknown ancestry/baseline/scope fails closed. These are derived facts, not duplicated mutable state.
+
+The orchestrator can recover a false REPLAN_REQUIRED to PASS **only** with validated historical acceptance, still-applicable source contract, and repository change proof. No review or verification record is fabricated. Explicit independent REPLAN stays authoritative. After any safe recovery, re-inspect and continue planning the next PRD frontier.
+
+Before executing a worker, call `--check-handoff` then `--dispatch-start`. An unchanged previously attempted handoff produces `NO_PROGRESS_REPEATED_HANDOFF` rather than retrying indefinitely. The attempt marker is replaceable coordination, not evidence of completed semantic work.

@@ -6,6 +6,7 @@ product_revision: 1
 current_frontier: FRONTIER-001
 readiness: pending
 scope_status: UNKNOWN
+revision_changes: []
 ---
 # Engineering
 

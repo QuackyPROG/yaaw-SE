@@ -2,11 +2,63 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "yaaw.product/v1",
   "type": "object",
-  "required": ["schema", "revision", "status"],
+  "required": [
+    "schema",
+    "revision",
+    "status"
+  ],
   "properties": {
-    "schema": {"const": "yaaw.product/v1"},
-    "revision": {"type": "integer", "minimum": 1},
-    "status": {"enum": ["draft", "ready", "blocked"]}
+    "schema": {
+      "const": "yaaw.product/v1"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "ready",
+        "blocked"
+      ]
+    },
+    "revision_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "revision",
+          "impact",
+          "reason"
+        ],
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 2
+          },
+          "impact": {
+            "enum": [
+              "NONE",
+              "SCOPED",
+              "ALL"
+            ]
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^REQ-[0-9]+$"
+            },
+            "uniqueItems": true
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
   },
   "additionalProperties": false
 }

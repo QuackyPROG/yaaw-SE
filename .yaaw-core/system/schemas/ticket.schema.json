@@ -2,19 +2,104 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "yaaw.ticket/v1",
   "type": "object",
-  "required": ["schema", "id", "revision", "spec", "spec_revision", "product_revision", "engineering_revision", "status", "dependencies", "decision_ids", "expertise"],
+  "required": [
+    "schema",
+    "id",
+    "revision",
+    "spec",
+    "spec_revision",
+    "product_revision",
+    "engineering_revision",
+    "status",
+    "dependencies",
+    "decision_ids",
+    "expertise"
+  ],
   "properties": {
-    "schema": {"const": "yaaw.ticket/v1"},
-    "id": {"type": "string", "pattern": "^TASK-[0-9]+$"},
-    "revision": {"type": "integer", "minimum": 1},
-    "spec": {"type": "string", "pattern": "^SPEC-[0-9]+$"},
-    "spec_revision": {"type": "integer", "minimum": 1},
-    "product_revision": {"type": "integer", "minimum": 1},
-    "engineering_revision": {"type": "integer", "minimum": 1},
-    "status": {"enum": ["DRAFT", "READY", "IN_PROGRESS", "REVIEW_REQUIRED", "REPAIR_REQUIRED", "REPLAN_REQUIRED", "BLOCKED", "PASS", "CANCELLED"]},
-    "dependencies": {"type": "array", "items": {"type": "string", "pattern": "^TASK-[0-9]+$"}, "uniqueItems": true},
-    "decision_ids": {"type": "array", "items": {"type": "string", "pattern": "^ENG-[0-9]+$"}, "uniqueItems": true},
-    "expertise": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+    "schema": {
+      "const": "yaaw.ticket/v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]+$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "spec": {
+      "type": "string",
+      "pattern": "^SPEC-[0-9]+$"
+    },
+    "spec_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "product_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "engineering_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "READY",
+        "IN_PROGRESS",
+        "REVIEW_REQUIRED",
+        "REPAIR_REQUIRED",
+        "REPLAN_REQUIRED",
+        "BLOCKED",
+        "PASS",
+        "CANCELLED"
+      ]
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^TASK-[0-9]+$"
+      },
+      "uniqueItems": true
+    },
+    "decision_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^ENG-[0-9]+$"
+      },
+      "uniqueItems": true
+    },
+    "expertise": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^REQ-[0-9]+$"
+      },
+      "uniqueItems": true
+    },
+    "affected_paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*\\\\*).+$"
+      },
+      "uniqueItems": true
+    },
+    "invalidated_by": {
+      "type": "string",
+      "minLength": 1
+    }
   },
   "additionalProperties": false
 }

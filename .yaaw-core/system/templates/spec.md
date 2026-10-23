@@ -7,6 +7,7 @@ product_revision: 1
 engineering_revision: 1
 frontier_id: FRONTIER-001
 decision_ids: []
+requirement_ids: []
 ---
 # SPEC-000
 

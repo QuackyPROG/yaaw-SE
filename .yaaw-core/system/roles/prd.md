@@ -28,3 +28,6 @@ Ask whether a fresh Planner can understand goal, users, expected behavior, scope
 
 ## Boundary
 Never repair engineering artifacts yourself. Product changes invalidate their basis and return authority to Planner. Package-managed `.yaaw-core/system/**` is never a semantic write surface.
+
+## Source lineage
+Assign stable REQ-NNN identifiers to independently changeable accepted requirements. For every increment of the product revision, append one `revision_changes` record with the new revision, impact (NONE, SCOPED with REQ IDs, or ALL), and a nonempty grounded reason. Unknown historical impact stays UNKNOWN; never mark an impact NONE merely to unblock work.

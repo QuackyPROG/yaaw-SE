@@ -53,6 +53,43 @@
         "OPEN",
         "COMPLETE"
       ]
+    },
+    "revision_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "revision",
+          "impact",
+          "reason"
+        ],
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 2
+          },
+          "impact": {
+            "enum": [
+              "NONE",
+              "SCOPED",
+              "ALL"
+            ]
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^ENG-[0-9]+$"
+            },
+            "uniqueItems": true
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "additionalProperties": false

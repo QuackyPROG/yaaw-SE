@@ -9,6 +9,8 @@ engineering_revision: 1
 status: DRAFT
 dependencies: []
 decision_ids: []
+requirement_ids: []
+affected_paths: []
 expertise: []
 ---
 # TASK-000
