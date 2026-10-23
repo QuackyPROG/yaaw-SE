@@ -962,7 +962,8 @@
           "ENGINEERING_SOURCE_STALE",
           "SPEC_SOURCE_STALE",
           "TICKET_SOURCE_STALE",
-          "CONTRACT_INVALIDATED"
+          "CONTRACT_INVALIDATED",
+          "REVIEW_RESULT_UNAPPLIED"
         ],
         "writer": "orchestrator"
       },

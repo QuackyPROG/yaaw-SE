@@ -55,6 +55,13 @@ export function selectReconciliation(kernel,state,a,repo){
     }
     if(contract.kind==="INVALIDATED"&&status!=="REPLAN_REQUIRED"&&status!=="CANCELLED"&&(ACTIVE.has(status)))
       return transition(kernel,ticket,status,"REPLAN_REQUIRED","CONTRACT_INVALIDATED",contract.reason,[a.tickets[ticket].path],"planning.replan");
+    // An independently recorded current REPLAN defeats an obsolete PASS status.
+    // Never auto-restore a previous PASS over a newer, linked reviewer judgment.
+    if(status==="PASS" && last?.meta?.result==="REPLAN") {
+      const verification=latestVerification(ticket,a);
+      if(verificationCurrent(verification,ticket,a,repo)&&reviewCurrent(last,ticket,a,repo,verification))
+        return transition(kernel,ticket,status,"REPLAN_REQUIRED","REVIEW_RESULT_UNAPPLIED","independent current REPLAN requires Planner revision",[last.path,verification.id],"review.record-review");
+    }
     if(status==="PASS"){
       if(!pass)return transition(kernel,ticket,status,"REVIEW_REQUIRED","ACCEPTANCE_UNPROVEN","claimed PASS lacks matching independent review and verification",[]);
       if(contract.kind==="CURRENT"&&repository.kind==="REVERIFY")return transition(kernel,ticket,status,"REVIEW_REQUIRED","REVERIFY_REQUIRED",repository.reason,[pass.review.path,pass.verification.id]);

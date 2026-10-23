@@ -48,6 +48,12 @@ describe("scoped lifecycle regression matrix",()=>{
   const a=accepted(fixture("REPLAN_REQUIRED"),repository(),"REPLAN");
   const p:any=next(a);expect(p.reconciliation?.to).not.toBe("PASS");expect(p.workflow).toBe("planning.replan");
  });
+ it("D2: stale PASS status does not override a newer independent REPLAN verdict",()=>{
+  const a=accepted(fixture("PASS"),repository(),"REPLAN");
+  const p:any=next(a);expect(p.type).toBe("RECONCILE_REQUIRED");
+  expect(p.reconciliation.id).toBe("REVIEW_RESULT_UNAPPLIED");
+  expect(p.reconciliation.to).toBe("REPLAN_REQUIRED");
+ });
  it("E: stale REPLAN_REQUIRED metadata recovers only when historical acceptance is provable",()=>{
   const a=accepted(fixture("REPLAN_REQUIRED"));
   const p:any=next(a);expect(p.type).toBe("RECONCILE_REQUIRED");expect(p.reconciliation.id).toBe("RECOVER_ACCEPTED_HISTORY");expect(p.reconciliation.to).toBe("PASS");
