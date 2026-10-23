@@ -96,7 +96,6 @@ function baseRoute(state,a,repo){
   const invalid=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED"&&(contractImpact(id,state,a).kind==="INVALIDATED"||lastReview(id,a)?.meta?.result==="REPLAN"));
   if(invalid)return{workflow:"planning.replan",ticket:invalid};
   if(state.planning.status!=="ready"||state.planning.readiness!=="PASS")return{workflow:"planning.route",ticket:null};
-  if(!currentSpecId(state))return{workflow:"planning.create-spec",ticket:null};
   const ids=currentTicketIds(state,a);
   for(const [status,workflow] of [["REPAIR_REQUIRED","implementation.repair-ticket"],["IN_PROGRESS","implementation.verify-ticket"]]){
     const id=ids.find(id=>state.tickets[id]===status);if(id)return{workflow,ticket:id};
@@ -105,6 +104,13 @@ function baseRoute(state,a,repo){
   if(reviewing)return{workflow:verificationCurrent(latestVerification(reviewing,a),reviewing,a,repo)?"review.review-ticket":"implementation.verify-ticket",ticket:reviewing};
   const ready=ids.find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a,repo));if(ready)return{workflow:"implementation.implement-ticket",ticket:ready};
   const draft=ids.find(id=>state.tickets[id]==="DRAFT"&&dependenciesPass(id,state,a,repo));if(draft)return{workflow:"planning.create-tickets",ticket:draft};
+  // Completion requires current applicability, not just ticket status labels.
+  if(state.planning.scope_status==="COMPLETE"&&Object.keys(state.tickets).length>0&&Object.values(state.tickets).every(status=>TERMINAL.has(status))){
+    const uncertain=Object.keys(state.tickets).find(id=>state.tickets[id]==="PASS"&&(!acceptedHistory(id,a)||contractImpact(id,state,a).kind!=="CURRENT"||repositoryImpact(id,acceptedHistory(id,a),a,repo).kind!=="CURRENT"));
+    if(uncertain)return{blocked:`ACCEPTANCE_NOT_CURRENT:${uncertain}`,ticket:uncertain};
+    return{terminal:"COMPLETE"};
+  }
+  if(!currentSpecId(state))return{workflow:"planning.create-spec",ticket:null};
   const activeSpec=currentSpecId(state);
   if(ids.length===0||!ids.some(id=>a.tickets?.[id]?.meta?.spec===activeSpec))return{workflow:"planning.create-tickets",ticket:null};
   if(ids.every(id=>TERMINAL.has(state.tickets[id]))){
@@ -130,7 +136,6 @@ function legalRequested(workflow,ticket,state,a){
 export function planNext(kernel,state,a,repo,intent){
   const reconciliation=selectReconciliation(kernel,state,a,repo);if(reconciliation)return{type:"RECONCILE_REQUIRED",reconciliation};
   if(intentComplete(intent,state,a))return{type:"INTENT_COMPLETE",completion_kind:intent.completion_kind};
-  if(state.phase==="complete")return{type:"TERMINAL",terminal:"COMPLETE"};
   if(intent&&intent.requested_workflow&&intent.requested_workflow!=="orchestration.route"){
     let ticket=requestedTicket(intent,state);
     if(!ticket&&intent.desired_outcome==="IMPLEMENT")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a,repo))??null;

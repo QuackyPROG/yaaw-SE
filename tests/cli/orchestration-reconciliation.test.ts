@@ -8,7 +8,7 @@ function fixture(status="PASS"){
  const a:any={
  product:doc({schema:"yaaw.product/v1",status:"ready",revision:1},"product"),
  engineering:doc({schema:"yaaw.engineering/v2",status:"ready",revision:1,readiness:"PASS",scope_status:"OPEN"},"engineering"),
- specs:{"SPEC-001":doc({id:"SPEC-001",schema:"yaaw.spec/v1",status:"ACCEPTED",revision:1,product_revision:1,engineering_revision:1,decision_ids:["ENG-001"],requirement_ids:["REQ-001"]},"spec1")},
+ specs:{"SPEC-001":doc({id:"SPEC-001",schema:"yaaw.spec/v1",status:"ACCEPTED",revision:1,product_revision:1,engineering_revision:1,decision_ids:["ENG-001"],requirement_ids:["REQ-001"]},".yaaw-core/project/specs/SPEC-001.md")},
  tickets:{"TASK-001":doc({id:"TASK-001",schema:"yaaw.ticket/v1",revision:1,status,spec:"SPEC-001",spec_revision:1,product_revision:1,engineering_revision:1,decision_ids:["ENG-001"],requirement_ids:["REQ-001"],affected_paths:["src/feature1/"],dependencies:[],expertise:[]},"ticket1")},
  reviews:{},evidence:{},repository_changes:{},research:{},rules:{}
  };
@@ -25,7 +25,7 @@ const engRevision=(a:any,impact="NONE",ids:string[]=[])=>{
  a.engineering.meta.revision_changes=[{revision:2,impact,ids,reason:"Audited engineering revision 2"}];
 };
 function frontier2(a:any){
- a.specs["SPEC-002"]=doc({id:"SPEC-002",schema:"yaaw.spec/v1",status:"ACCEPTED",revision:1,product_revision:1,engineering_revision:2,decision_ids:["ENG-002"],requirement_ids:["REQ-002"]},"spec2");
+ a.specs["SPEC-002"]=doc({id:"SPEC-002",schema:"yaaw.spec/v1",status:"ACCEPTED",revision:1,product_revision:1,engineering_revision:2,decision_ids:["ENG-002"],requirement_ids:["REQ-002"]},".yaaw-core/project/specs/SPEC-002.md");
 }
 describe("scoped lifecycle regression matrix",()=>{
  it("A: historical PASS survives an unrelated engineering revision",()=>{
@@ -87,6 +87,12 @@ describe("scoped lifecycle regression matrix",()=>{
   expect(next(a).ticket).toBe("TASK-002");
   a.engineering.meta.revision_changes=[{revision:2,impact:"SCOPED",ids:["ENG-001"],reason:"Invalidates TASK-001's decision"}];
   expect(next(a).reconciliation.to).toBe("REPLAN_REQUIRED");
+ });
+ it("completion never relies on unaudited repository drift",()=>{
+   const a=accepted(fixture());a.engineering.meta.scope_status="COMPLETE";
+   a.repository_changes.A={status:"UNKNOWN",paths:[]};
+   const p:any=next(a,repository("B"));
+   expect(p.terminal).not.toBe("COMPLETE");expect(p.blocked).toContain("ACCEPTANCE_NOT_CURRENT");
  });
  it("legacy unscoped history is UNKNOWN and not silently accepted or falsely replanned",()=>{
   const a=accepted(fixture("REPLAN_REQUIRED"));engRevision(a);delete a.engineering.meta.revision_changes;
