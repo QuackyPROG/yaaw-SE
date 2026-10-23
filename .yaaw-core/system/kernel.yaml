@@ -474,8 +474,9 @@
       ],
       "required_modules": [],
       "ticket_modules": false,
-      "expected_output": "Current product intent or a typed stop.",
+      "expected_output": "Record a durable product_next selection for one executable product operation, or human input/blocker; selecting is not completion.",
       "result_vocabulary": [
+        "NEXT_OPERATION",
         "READY",
         "HUMAN_INPUT_REQUIRED",
         "BLOCKED"
@@ -904,6 +905,120 @@
       "required_modules": [],
       "ticket_modules": false,
       "expected_output": "Durable readiness verdict with source basis and evidence; next operation if not PASS.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "prd.create": {
+      "active_artifact": "product",
+      "reads": [
+        "product"
+      ],
+      "writes": [
+        "product"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Initialize missing product or establish the first usable product definition.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "prd.question-round": {
+      "active_artifact": "product",
+      "reads": [
+        "product"
+      ],
+      "writes": [
+        "product"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Evidence-backed material product questions for the human, or a concrete stop.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "prd.record-decisions": {
+      "active_artifact": "product",
+      "reads": [
+        "product"
+      ],
+      "writes": [
+        "product"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Persist accepted user-owned product meaning, preserve revision provenance, and consume or replace the directive.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "prd.revise": {
+      "active_artifact": "product",
+      "reads": [
+        "product"
+      ],
+      "writes": [
+        "product"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "A bounded, explicitly authorized semantic product revision and required downstream invalidation.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "prd.refine": {
+      "active_artifact": "product",
+      "reads": [
+        "product"
+      ],
+      "writes": [
+        "product"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Clarity-only product refinement without silently changing accepted meaning.",
+      "result_vocabulary": [
+        "READY",
+        "NEXT_OPERATION",
+        "HUMAN_INPUT_REQUIRED",
+        "BLOCKED",
+        "PRECONDITION_UNSATISFIED"
+      ]
+    },
+    "prd.readiness": {
+      "active_artifact": "product",
+      "reads": [
+        "product"
+      ],
+      "writes": [
+        "product"
+      ],
+      "required_modules": [],
+      "ticket_modules": false,
+      "expected_output": "Product READY/NEEDS_QUESTIONS/BLOCKED assessment tied to accepted scope.",
       "result_vocabulary": [
         "READY",
         "NEXT_OPERATION",

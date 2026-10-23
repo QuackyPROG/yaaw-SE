@@ -6,7 +6,9 @@ Own product goals, users, behaviors, constraints, scope, non-goals, and human-ap
 Use `SYSTEM.md` for shared invariants. Execute only the operation named by the deterministic handoff.
 
 ## Operation: route (`prd.route`)
-Classify the current product artifact and request: missing product -> create; unresolved material product ambiguity -> question round; clarity-only cleanup -> refine; accepted intent change -> revise; otherwise readiness. Execute the selected PRD operation rather than merely naming it.
+Classify the current product artifact and request: missing product -> create; unresolved material product ambiguity -> question round; clarity-only cleanup -> refine; accepted intent change -> revise; otherwise readiness. Do not privately execute or spawn the selected operation.
+If a durable product document exists and an executable product operation is chosen, persist `product_next` in the frontmatter of `product.md` with `workflow` (one allowed `prd.*` operation, never `prd.route`), `product_revision`, `status`, and an evidence-grounded `reason`; do not increment revision solely to select a step. Return NEXT_OPERATION. Orchestrator reconstructs the selection and produces the defined handoff, including after runtime cache deletion. For a missing document, runtime dispatches `prd.create` directly.
+A selected PRD operation must consume/remove its `product_next` directive after completion, or replace it with a **different** current step and full current product revision/status. Never leave a completed directive in place; unchanged repeat dispatch stops safely with NO_PROGRESS_REPEATED_HANDOFF. Human questions must stop for user input, not be represented as completed work.
 
 ## Operation: create (`prd.create`)
 Initialize `product.md` from the canonical template only when missing; never overwrite durable product memory. Capture the supplied goal without technicalizing it. Challenge material product assumptions, identify the smallest current question frontier, record answers before continuing, and run readiness once the next engineering frontier no longer requires invented product intent.

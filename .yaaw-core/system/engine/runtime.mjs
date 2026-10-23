@@ -51,9 +51,10 @@ function revisions(state,a,ticket){const spec=selectedSpec(state,a,ticket);retur
 function basis(state,a,ticket){const spec=selectedSpec(state,a,ticket);return{product_digest:a.product?.digest??null,engineering_digest:a.engineering?.digest??null,spec_digest:spec?.digest??null,ticket_digest:ticket?a.tickets?.[ticket]?.digest??null:null,ticket_status:ticket?state.tickets?.[ticket]??null:null}}
 function modulesFor(kernel,role,policy,a,ticket){const names=[...(policy.required_modules??[])];if(policy.ticket_modules&&ticket)for(const x of a.tickets?.[ticket]?.meta?.expertise??[])names.push(x);return[...new Set(names)].filter(name=>kernel.modules[name]?.usable_by?.includes(role)).map(name=>kernel.modules[name].path)}
 function handoff(kernel,framework,state,a,repo,workflow,ticket,intent){const wf=kernel.workflows[workflow],policy=kernel.handoffs[workflow],role=kernel.roles[wf?.role];if(!wf||!policy||!role)throw new Error(`no handoff contract for ${workflow}`);for(const w of policy.writes??[])if(!role.writes.includes(w))throw new Error(`workflow ${workflow} writes unauthorized artifact ${w}`);return{schema:"yaaw.handoff/v4",framework:frameworkBasis(framework),role:wf.role,workflow,operation:wf.operation,instruction:{document:role.document,operation:wf.operation},desired_intent:intent?.desired_outcome??null,active_artifact:policy.active_artifact??null,ticket:ticket??null,references:refsFor(policy.reads,state,a,ticket),reads:policy.reads,writes:policy.writes,forbidden_writes:Object.keys(kernel.artifacts).filter(x=>!role.writes.includes(x)),revisions:revisions(state,a,ticket),basis:basis(state,a,ticket),expertise:modulesFor(kernel,wf.role,policy,a,ticket),host_expertise:[],expected_output:policy.expected_output,result_vocabulary:policy.result_vocabulary,repository_requirement:wf.repository_requirement,repository:repo}}
-function planningStepKey(a,workflow){
-  const next=a.engineering?.meta?.planning_next;
-  if(!next||next.workflow!==workflow||!workflow.startsWith("planning.")||workflow==="planning.route")return null;
+function delegatedStepKey(a,workflow){
+  const next=workflow.startsWith("planning.")&&workflow!=="planning.route" ? a.engineering?.meta?.planning_next :
+    workflow.startsWith("prd.")&&workflow!=="prd.route" ? a.product?.meta?.product_next : null;
+  if(!next||next.workflow!==workflow)return null;
   return JSON.stringify(stable(next));
 }
 function repoAllowed(requirement,repo){if(requirement==="NONE")return true;if(requirement==="INSPECT")return repo?.status==="READY"||repo?.status==="UNVERSIONED";return repo?.status==="READY"}
@@ -81,7 +82,7 @@ async function main(){
         historical_pass_linked:Boolean(pass),last_review_result:review?.meta?.result??null,
         repository:repositoryImpact(id,pass,a,repo),scope_identity:a.scope_identities?.[id]??null};
     });
-    console.log(JSON.stringify({type:"DIAGNOSTIC",framework:frameworkBasis(integrity),planning:state.planning,planning_next:a.engineering?.meta?.planning_next??null,repository_status:repo?.status??"UNKNOWN",tickets,next:planned}));return
+    console.log(JSON.stringify({type:"DIAGNOSTIC",framework:frameworkBasis(integrity),planning:state.planning,planning_next:a.engineering?.meta?.planning_next??null,product_next:a.product?.meta?.product_next??null,repository_status:repo?.status??"UNKNOWN",tickets,next:planned}));return
   }
   if(opt.reconcile){if(!reconciliation){console.log(JSON.stringify({type:"NO_RECONCILIATION"}));return}if(reconciliation.kind==="BLOCKED"){console.log(JSON.stringify({type:"BLOCKED",reason:reconciliation.reason}));return}const ticket=a.tickets?.[reconciliation.subject];if(!ticket)throw new Error(`reconciliation ticket missing: ${reconciliation.subject}`);const ticketPath=join(root,ticket.path),raw=await readFile(ticketPath,"utf8");await writeFile(ticketPath,patchStatus(raw,reconciliation.to),"utf8");for(const file of ["observed-state.json","handoff.json"])try{await writeFile(join(runtime,file),"")}catch{}console.log(JSON.stringify({type:"RECONCILED",reconciliation}));return}
   if(opt.dispatchStart){
@@ -89,7 +90,7 @@ async function main(){
     if(!old){console.log(JSON.stringify({type:"BLOCKED",reason:"MISSING_DISPATCH_HANDOFF"}));return}
     const candidate=handoff(kernel,integrity,state,a,repo,old.workflow,old.ticket,intent);
     if(!same(old,candidate)){console.log(JSON.stringify({type:"HANDOFF_STALE",reason:"durable basis changed"}));return}
-    await writeFile(join(runtime,"dispatch-attempt.json"),JSON.stringify({schema:"yaaw.dispatch-attempt/v1",handoff:old,planning_step:planningStepKey(a,old.workflow)})+"\n");
+    await writeFile(join(runtime,"dispatch-attempt.json"),JSON.stringify({schema:"yaaw.dispatch-attempt/v1",handoff:old,delegated_step:delegatedStepKey(a,old.workflow)})+"\n");
     console.log(JSON.stringify({type:"DISPATCH_STARTED"}));return
   }
   if(opt.check){const old=await json(join(runtime,"handoff.json"));if(!old){console.log(JSON.stringify({type:"HANDOFF_STALE",reason:"missing handoff"}));return}const candidate=handoff(kernel,integrity,state,a,repo,old.workflow,old.ticket,intent);console.log(JSON.stringify(same(old,candidate)?{type:"HANDOFF_FRESH"}:{type:"HANDOFF_STALE",reason:"durable basis changed"}));return}
@@ -99,7 +100,7 @@ async function main(){
   const h=handoff(kernel,integrity,state,a,repo,planned.workflow,planned.ticket??null,intent);
   const attempted=await json(join(runtime,"dispatch-attempt.json"));
   if((attempted?.handoff&&same(attempted.handoff,h))||
-     (attempted?.planning_step&&attempted.planning_step===planningStepKey(a,h.workflow))){
+     (attempted?.delegated_step&&attempted.delegated_step===delegatedStepKey(a,h.workflow))){
     console.log(JSON.stringify({type:"BLOCKED",reason:"NO_PROGRESS_REPEATED_HANDOFF",workflow:h.workflow,ticket:h.ticket}));return
   }
   await mkdir(runtime,{recursive:true});await writeFile(join(runtime,"handoff.json"),JSON.stringify(h,null,2)+"\n");console.log(JSON.stringify({type:"DISPATCH_READY",workflow:planned.workflow,role:h.role,operation:h.operation,ticket:h.ticket,handoff:rel(root,join(runtime,"handoff.json"))}));

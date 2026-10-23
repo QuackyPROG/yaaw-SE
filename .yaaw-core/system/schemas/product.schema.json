@@ -58,6 +58,43 @@
         },
         "additionalProperties": false
       }
+    },
+    "product_next": {
+      "type": "object",
+      "required": [
+        "workflow",
+        "product_revision",
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "workflow": {
+          "enum": [
+            "prd.create",
+            "prd.question-round",
+            "prd.record-decisions",
+            "prd.revise",
+            "prd.refine",
+            "prd.readiness"
+          ]
+        },
+        "product_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "blocked"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

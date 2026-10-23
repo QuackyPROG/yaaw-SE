@@ -2,6 +2,17 @@ import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revision
 const ACTIVE = new Set(["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","PASS"]);
 const TERMINAL = new Set(["PASS","CANCELLED"]);
 const REVIEW_RESULT = { PASS:"PASS", REPAIR:"REPAIR_REQUIRED", REPLAN:"REPLAN_REQUIRED", BLOCKED:"BLOCKED" };
+const DELEGABLE_PRODUCT = new Set([
+  "prd.create","prd.question-round","prd.record-decisions",
+  "prd.revise","prd.refine","prd.readiness"
+]);
+function selectedProductOperation(state,a){
+  const next=a.product?.meta?.product_next;
+  if(!next||typeof next!=="object"||!DELEGABLE_PRODUCT.has(next.workflow))return null;
+  if(next.product_revision!==state.product.revision||next.status!==state.product.status||
+     typeof next.reason!=="string"||!next.reason.trim())return null;
+  return next.workflow;
+}
 const DELEGABLE_PLANNING = new Set([
   "planning.discover","planning.write-understanding","planning.decision-frontier",
   "planning.research","planning.question-round","planning.record-decisions",
@@ -126,7 +137,7 @@ export function intentComplete(intent,state,a){
 }
 
 function baseRoute(state,a,repo){
-  if(state.product.status!=="ready")return{workflow:"prd.route",ticket:null};
+  if(state.product.status!=="ready")return{workflow:state.product.status==="missing"?"prd.create":selectedProductOperation(state,a)??"prd.route",ticket:null};
   // Before opening a new frontier, resolve older accepted work's unknown source lineage.
   // This is a read/metadata audit, not permission to rewrite the completed contract.
   const audit=Object.keys(state.tickets).sort(byId).map(id=>{
@@ -175,7 +186,7 @@ function baseRoute(state,a,repo){
   if(ids.every(id=>TERMINAL.has(state.tickets[id]))){
     const dubious=Object.keys(state.tickets).find(id=>state.tickets[id]==="PASS"&&(contractImpact(id,state,a).kind!=="CURRENT"||repositoryImpact(id,acceptedHistory(id,a),a,repo).kind!=="CURRENT"));
     if(state.planning.scope_status==="COMPLETE"&&!dubious)return{terminal:"COMPLETE"};
-    if(state.planning.scope_status!=="COMPLETE")return{workflow:"planning.route",ticket:null};
+    if(state.planning.scope_status!=="COMPLETE")return{workflow:selectedPlanningOperation(state,a)??"planning.route",ticket:null};
   }
   const blocked=ids.find(id=>state.tickets[id]==="BLOCKED");if(blocked)return{blocked:`ticket ${blocked} BLOCKED`,ticket:blocked};
   for(const id of ids.filter(id=>["READY","DRAFT"].includes(state.tickets[id]))){
@@ -211,6 +222,8 @@ export function planNext(kernel,state,a,repo,intent){
     if(!ticket&&intent.desired_outcome==="IMPLEMENT")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a,repo))??null;
     if(!ticket&&intent.desired_outcome==="REPAIR")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPAIR_REQUIRED")??null;
     if(!ticket&&intent.desired_outcome==="REVIEW")ticket=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REVIEW_REQUIRED")??null;
+    if(intent.requested_workflow==="prd.route"&&selectedProductOperation(state,a))
+      return{type:"ROUTE",workflow:selectedProductOperation(state,a),ticket:null};
     if(legalRequested(intent.requested_workflow,ticket,state,a,repo))return{type:"ROUTE",workflow:intent.requested_workflow,ticket};
     return{type:"BLOCKED",reason:`PRECONDITION_UNSATISFIED:${intent.requested_workflow}`,ticket};
   }
