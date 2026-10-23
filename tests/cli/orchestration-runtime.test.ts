@@ -194,6 +194,69 @@ describe("compact orchestration runtime",()=>{
     await writeFile(eng,(await readFile(eng,"utf8")).replace("  product_revision: 9","  product_revision: 1").replace("workflow: planning.decision-frontier","workflow: implementation.implement-ticket"));
     p=run(root);expect(p.workflow).toBe("planning.route");
   });
+
+  it("SPEC-002 dependent tickets recover a dirty PASS once and remain runnable across planning churn",async()=>{
+    const root=await fixture("PASS"),project=join(root,".yaaw-core/project");
+    await mkdir(join(root,"lib"),{recursive:true});
+    await writeFile(join(root,"lib/foundation.dart"),"void foundation() {}\n");
+    const ticket=join(project,"tickets/TASK-001.md");
+    await writeFile(ticket,(await readFile(ticket,"utf8")).replace("expertise: []","expertise: []\naffected_paths: [lib/]"));
+    run(root,"--inspect-only");
+    const original=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+    expect(original.dirty).toBe(true);
+    await writeVerification(root,original,"PASS","V1");
+    await writeReview(root,original);
+    const r1=join(project,"reviews/TASK-001-R1.md");
+    await writeFile(r1,(await readFile(r1,"utf8")).replace("---\n# Review","affected_paths: [lib/]\nscope_verified: true\n---\n# Review"));
+    const eng=join(project,"engineering.md");
+    await writeFile(eng,(await readFile(eng,"utf8")).replace("revision: 1","revision: 2")
+      .replace("current_frontier: FRONTIER-001","current_frontier: FRONTIER-002")
+      .replace("scope_status: OPEN",'scope_status: OPEN\nrevision_changes: [{"revision":2,"impact":"NONE","reason":"Next frontier only; foundation unchanged"}]'));
+    await writeFile(join(project,"specs/SPEC-002.md"),
+      "---\nschema: yaaw.spec/v1\nid: SPEC-002\nrevision: 1\nstatus: ACCEPTED\nproduct_revision: 1\nengineering_revision: 2\nfrontier_id: FRONTIER-002\ndecision_ids: [ENG-002]\n---\n# Identity\n");
+    await writeFile(join(project,"tickets/TASK-002.md"),
+      "---\nschema: yaaw.ticket/v1\nid: TASK-002\nrevision: 1\nspec: SPEC-002\nspec_revision: 1\nproduct_revision: 1\nengineering_revision: 2\nstatus: READY\ndependencies: [TASK-001]\ndecision_ids: [ENG-002]\nexpertise: []\naffected_paths: [src/identity/]\n---\n# Identity ticket\n");
+    let result=run(root);
+    expect(result.type).toBe("RECONCILE_REQUIRED");expect(result.reconciliation.id).toBe("REVERIFY_UNCERTAIN");
+    expect(result.reconciliation.subject).toBe("TASK-001");
+    expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
+    result=run(root);expect(result.workflow).toBe("implementation.verify-ticket");
+    const latest=(await handoff(root)).repository;
+    const scopeTool=join(root,".yaaw-core/system/engine/scope-identity.mjs");
+    const scope=JSON.parse(execFileSync(process.execPath,[scopeTool,"--workspace",root,"--ticket","TASK-001"],{encoding:"utf8"}));
+    expect(scope.status).toBe("READY");expect(scope.files).toBe(1);
+    await writeVerification(root,latest,"PASS","V2");
+    const v2=join(project,"evidence/EVIDENCE-TASK-001-V2.json");
+    const record=JSON.parse(await readFile(v2,"utf8"));
+    record.scope_identity=scope;await writeFile(v2,JSON.stringify(record,null,2)+"\n");
+    result=run(root);expect(result.workflow).toBe("review.review-ticket");
+    const block=(await readFile(r1,"utf8")).match(/repository:\n(?:  .*\n)+/);
+    expect(block).not.toBeNull();
+    const updated=[
+      "repository:","  schema: "+latest.schema,"  algorithm: "+latest.algorithm,
+      "  status: "+latest.status,"  workspace_scope: "+latest.workspace_scope,
+      "  git_root_relation: "+latest.git_root_relation,"  head_commit: "+latest.head_commit,
+      "  dirty: "+latest.dirty,"  worktree_digest: "+latest.worktree_digest,
+      "  components: null","  changed_paths: []","  error: null",""
+    ].join("\n");
+    let review=(await readFile(r1,"utf8")).replace(block![0],updated)
+      .replace("round: 1","round: 2")
+      .replace("  - EVIDENCE-TASK-001-V1","  - EVIDENCE-TASK-001-V2")
+      .replace("scope_verified: true","scope_verified: true\nscope_identity: "+JSON.stringify(scope));
+    await writeFile(join(project,"reviews/TASK-001-R2.md"),review);
+    result=run(root);expect(result.type).toBe("RECONCILE_REQUIRED");
+    expect(result.reconciliation.to).toBe("PASS");
+    expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    result=run(root);
+    expect(result.workflow).toBe("implementation.implement-ticket");expect(result.ticket).toBe("TASK-002");
+    await writeFile(eng,(await readFile(eng,"utf8"))+"\n### Future planning\nUnrelated information.\n");
+    result=run(root);expect(result.workflow).toBe("implementation.implement-ticket");
+    await writeFile(join(root,"lib/foundation.dart"),"void changedFoundation() {}\n");
+    result=run(root);expect(result.type).toBe("RECONCILE_REQUIRED");
+    expect(result.reconciliation.id).toBe("REVERIFY_REQUIRED");
+    expect(result.reconciliation.subject).toBe("TASK-001");
+  });
   it("bounds repeated identical handoffs only after a marked dispatch",async()=>{
     const root=await fixture();expect(run(root).type).toBe("DISPATCH_READY");
     expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");
