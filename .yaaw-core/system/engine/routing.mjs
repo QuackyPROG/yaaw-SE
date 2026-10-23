@@ -1,4 +1,4 @@
-import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revisionImpact } from "./lifecycle-evidence.mjs";
+import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revisionImpact, completedAudit, revisionRecordsComplete } from "./lifecycle-evidence.mjs";
 const ACTIVE = new Set(["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED","PASS"]);
 const TERMINAL = new Set(["PASS","CANCELLED"]);
 const REVIEW_RESULT = { PASS:"PASS", REPAIR:"REPAIR_REQUIRED", REPLAN:"REPLAN_REQUIRED", BLOCKED:"BLOCKED" };
@@ -146,15 +146,41 @@ function baseRoute(state,a,repo){
     if(!t||!s)return null;
     const product=revisionImpact(Number(t.product_revision),Number(state.product.revision),a.product?.meta?.revision_changes,t.requirement_ids??s.requirement_ids??[]);
     const engineering=revisionImpact(Number(t.engineering_revision),Number(state.planning.revision),a.engineering?.meta?.revision_changes,t.decision_ids??s.decision_ids??[]);
-    if(product.kind==="UNKNOWN")return{workflow:"prd.audit-revision-impact",ticket:id};
-    if(engineering.kind==="UNKNOWN")return{workflow:"planning.audit-revision-impact",ticket:id};
+    const productAudit=completedAudit("product",id,state,a),plannerAudit=completedAudit("engineering",id,state,a);
+    const stop=(owner,r)=>({blocked:`AUDIT_INSUFFICIENT_PROVENANCE:${id}:${owner}:${r.missing_evidence.join("; ")}`,ticket:id});
+    if(product.kind==="UNKNOWN"){
+      if(!productAudit)return{workflow:"prd.audit-revision-impact",ticket:id};
+      if(!revisionRecordsComplete(Number(t.product_revision),Number(state.product.revision),a.product?.meta?.revision_changes))
+        return stop("product",productAudit.result==="INSUFFICIENT_PROVENANCE"?productAudit:{missing_evidence:["PRD classification of missing or conflicting product revision-impact records"]});
+      // Product history is classified; only the engineering contract's legacy lineage remains.
+      if(plannerAudit?.result==="INSUFFICIENT_PROVENANCE")return stop("planner",plannerAudit);
+      return{workflow:"planning.audit-revision-impact",ticket:id};
+    }
+    if(engineering.kind==="UNKNOWN"){
+      if(plannerAudit?.result==="INSUFFICIENT_PROVENANCE")return stop("planner",plannerAudit);
+      return{workflow:"planning.audit-revision-impact",ticket:id};
+    }
     // Even with fully proved revision lineage, an opaque historic invalidation
     // marker must be examined by the contract owner before any acceptance recovery.
-    if(typeof t.invalidated_by==="string"&&t.invalidated_by.trim())
+    if(typeof t.invalidated_by==="string"&&t.invalidated_by.trim()){
+      if(plannerAudit?.result==="INSUFFICIENT_PROVENANCE")return stop("planner",plannerAudit);
       return{workflow:"planning.audit-revision-impact",ticket:id};
+    }
     return null;
   }).find(Boolean);
-  if(audit)return audit;
+  if(audit){
+    if(audit.blocked){
+      const independent=currentTicketIds(state,a).find(id=>
+        ["READY","IN_PROGRESS","REVIEW_REQUIRED","REPAIR_REQUIRED"].includes(state.tickets[id])&&dependenciesPass(id,state,a,repo));
+      if(independent){
+        const status=state.tickets[independent];
+        const workflow=status==="READY"?"implementation.implement-ticket":status==="REPAIR_REQUIRED"?"implementation.repair-ticket":
+          status==="REVIEW_REQUIRED"&&verificationCurrent(latestVerification(independent,a),independent,a,repo)?"review.review-ticket":"implementation.verify-ticket";
+        if(status!=="READY"||planningReady(state))return{workflow,ticket:independent};
+      }
+    }
+    return audit;
+  }
   const invalid=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED"&&(contractImpact(id,state,a).kind==="INVALIDATED"||lastReview(id,a)?.meta?.result==="REPLAN"));
   if(invalid)return{workflow:"planning.replan",ticket:invalid};
   // A previously accepted ticket undergoing repository re-verification is already

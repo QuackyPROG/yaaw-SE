@@ -5,7 +5,7 @@ import { join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseFrontmatter } from "./frontmatter.mjs";
 import { deriveState, planNext, chooseIntentTarget } from "./routing.mjs";
-import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revisionImpact } from "./lifecycle-evidence.mjs";
+import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revisionImpact, auditBasis, completedAudit } from "./lifecycle-evidence.mjs";
 import { scopeIdentity } from "./scope-identity.mjs";
 
 const hash=v=>"sha256:"+createHash("sha256").update(v).digest("hex");
@@ -14,7 +14,7 @@ const same=(a,b)=>JSON.stringify(stable(a))===JSON.stringify(stable(b));
 const rel=(root,path)=>relative(root,path).replaceAll("\\","/");
 async function exists(path){try{await access(path);return true}catch{return false}}
 async function json(path,fallback=null){try{return JSON.parse(await readFile(path,"utf8"))}catch{return fallback}}
-async function meta(root,path){try{const raw=await readFile(path,"utf8");return{path:rel(root,path),meta:parseFrontmatter(raw),digest:hash(Buffer.from(raw,"utf8"))}}catch{return null}}
+async function meta(root,path){try{const raw=await readFile(path,"utf8");return{path:rel(root,path),meta:parseFrontmatter(raw),digest:hash(Buffer.from(raw,"utf8")),contract_digest:hash(Buffer.from(raw.replace(/^status:.*$/m,"status: <lifecycle>"),"utf8"))}}catch{return null}}
 async function list(dir,ext){try{return(await readdir(dir)).filter(x=>x.endsWith(ext)).sort()}catch{return[]}}
 function execJson(file,workspace){const r=spawnSync(process.execPath,[file,"--workspace",workspace],{encoding:"utf8",windowsHide:true});let value=null;try{value=JSON.parse(r.stdout)}catch{}return value??{status:"UNKNOWN",error:r.stderr||`exit ${r.status}`}}
 // Git ancestry and dirty paths distinguish later unrelated edits from reviewed code.
@@ -79,7 +79,7 @@ async function main(){
       const engineering=revisionImpact(Number(t.engineering_revision??0),state.planning.revision,a.engineering?.meta?.revision_changes,t.decision_ids??s.decision_ids??[]);
       return {ticket:id,status:state.tickets[id],ticket_revision:t.revision??null,spec:t.spec??null,spec_revision:t.spec_revision??null,
         invalidated_by:t.invalidated_by??null,contract:impact,product_revision_impact:product,engineering_revision_impact:engineering,
-        historical_pass_linked:Boolean(pass),last_review_result:review?.meta?.result??null,
+        audit_basis:auditBasis(id,state,a),product_audit:completedAudit("product",id,state,a),planner_audit:completedAudit("engineering",id,state,a),historical_pass_linked:Boolean(pass),last_review_result:review?.meta?.result??null,
         repository:repositoryImpact(id,pass,a,repo),scope_identity:a.scope_identities?.[id]??null};
     });
     console.log(JSON.stringify({type:"DIAGNOSTIC",framework:frameworkBasis(integrity),planning:state.planning,planning_next:a.engineering?.meta?.planning_next??null,product_next:a.product?.meta?.product_next??null,repository_status:repo?.status??"UNKNOWN",tickets,next:planned}));return
