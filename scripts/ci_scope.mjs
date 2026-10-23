@@ -7,7 +7,7 @@ const clean=value=>String(value??"").trim().replaceAll("\\","/").replace(/^\.\/+
 const docsOnlyPath=path=>path==="README.md"||path==="AGENTS.md"||path.startsWith("docs/");
 const ciPath=path=>path===".github/workflows/validate.yml"||path==="scripts/ci_scope.mjs"||path==="tests/cli/ci-scope.test.ts";
 const orchestrationPath=path=>
-  /^\.yaaw-core\/system\/engine\/(routing|runtime|frontmatter|repository-identity|lifecycle-evidence)\.mjs$/.test(path)||
+  /^\.yaaw-core\/system\/engine\/(routing|runtime|frontmatter|repository-identity|lifecycle-evidence|scope-identity)\.mjs$/.test(path)||
   path===".yaaw-core/system/kernel.yaml"||path===".yaaw-core/system/SYSTEM.md"||
   path===".yaaw-core/system/roles/orchestrator.md"||
   /^\.yaaw-core\/system\/roles\/(implementer|reviewer)\.md$/.test(path)||

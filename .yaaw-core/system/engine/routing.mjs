@@ -90,7 +90,8 @@ export function selectReconciliation(kernel,state,a,repo){
     }
     if(status==="PASS"){
       if(!pass)return transition(kernel,ticket,status,"REVIEW_REQUIRED","ACCEPTANCE_UNPROVEN","claimed PASS lacks matching independent review and verification",[]);
-      if(contract.kind==="CURRENT"&&repository.kind==="REVERIFY")return transition(kernel,ticket,status,"REVIEW_REQUIRED","REVERIFY_REQUIRED",repository.reason,[pass.review.path,pass.verification.id]);
+      if(contract.kind==="CURRENT"&&(repository.kind==="REVERIFY"||repository.kind==="UNKNOWN")&&repo?.status==="READY")
+        return transition(kernel,ticket,status,"REVIEW_REQUIRED",repository.kind==="UNKNOWN"?"REVERIFY_UNCERTAIN":"REVERIFY_REQUIRED",repository.reason,[pass.review.path,pass.verification.id]);
       continue; // Preserve historical PASS under irrelevant revision/commit changes.
     }
     if(contract.kind!=="CURRENT"||status==="REPLAN_REQUIRED")continue;
@@ -177,6 +178,15 @@ function baseRoute(state,a,repo){
     if(state.planning.scope_status!=="COMPLETE")return{workflow:"planning.route",ticket:null};
   }
   const blocked=ids.find(id=>state.tickets[id]==="BLOCKED");if(blocked)return{blocked:`ticket ${blocked} BLOCKED`,ticket:blocked};
+  for(const id of ids.filter(id=>["READY","DRAFT"].includes(state.tickets[id]))){
+    for(const dep of a.tickets[id]?.meta?.dependencies??[]){
+      if(!state.tickets?.[dep])return{blocked:`DEPENDENCY_NOT_FOUND:${id}->${dep}`,ticket:id};
+      const accepted=acceptedHistory(dep,a),impact=contractImpact(dep,state,a),
+        code=repositoryImpact(dep,accepted,a,repo);
+      if(state.tickets[dep]!=="PASS"||!accepted||impact.kind!=="CURRENT"||code.kind!=="CURRENT")
+        return{blocked:`DEPENDENCY_NOT_CURRENT:${id}->${dep}:status=${state.tickets[dep]}:contract=${impact.kind}:repository=${code.kind}`,ticket:id};
+    }
+  }
   const uncertain=Object.keys(state.tickets).sort(byId).find(id=>state.tickets[id]==="REPLAN_REQUIRED"||(["READY","DRAFT","PASS"].includes(state.tickets[id])&&contractImpact(id,state,a).kind!=="CURRENT")||(state.tickets[id]==="PASS"&&repositoryImpact(id,acceptedHistory(id,a),a,repo).kind!=="CURRENT"));
   return{blocked:uncertain?`INSUFFICIENT_PROVENANCE:${uncertain}`:"no legal next workflow from durable artifacts",ticket:uncertain??null};
 }

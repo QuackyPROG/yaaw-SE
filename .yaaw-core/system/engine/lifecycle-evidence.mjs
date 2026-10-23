@@ -42,6 +42,27 @@ export function acceptedHistory(ticket,a){
 export function repositoryImpact(ticket,pass,a,repo){
   if(!pass)return {kind:"UNKNOWN",reason:"missing linked historical acceptance"};
   const old=pass.review.meta.repository;
+  // Scoped proof is accepted only if independent Reviewer and linked Implementer
+  // verification captured the SAME nonempty, certified application fingerprint.
+  // Full repository identity still guards verification/review and every handoff.
+  const reviewScope=pass.review.meta.scope_identity,verificationScope=pass.verification.scope_identity;
+  const current=a.scope_identities?.[ticket],declared=a.tickets?.[ticket]?.meta?.affected_paths;
+  if(reviewScope||verificationScope){
+    const certified=pass.review.meta.scope_verified===true &&
+      Array.isArray(declared)&&declared.length>0&&Array.isArray(pass.review.meta.affected_paths)&&
+      JSON.stringify([...declared].sort())===JSON.stringify([...pass.review.meta.affected_paths].sort()) &&
+      reviewScope?.schema==="yaaw.scope-identity/v1"&&reviewScope?.algorithm==="yaaw-scope-v1" &&
+      reviewScope?.status==="READY"&&verificationScope?.status==="READY"&&
+      Number.isInteger(reviewScope?.files)&&reviewScope.files>0&&
+      /^sha256:[a-f0-9]{64}$/.test(reviewScope?.digest??"") &&
+      JSON.stringify(reviewScope)===JSON.stringify(verificationScope) &&
+      JSON.stringify(reviewScope.paths)===JSON.stringify([...declared].sort());
+    if(!certified)return {kind:"UNKNOWN",reason:"scope attestation not independently corroborated"};
+    if(repo?.status!=="READY"||current?.status!=="READY")
+      return {kind:"UNKNOWN",reason:"current application scope unavailable for comparison"};
+    return current.digest===reviewScope.digest?{kind:"CURRENT",reason:"independently certified application scope unchanged"}:
+      {kind:"REVERIFY",reason:"reviewed application scope content changed"};
+  }
   if(eq(old,repo))return {kind:"CURRENT",reason:"repository matches reviewed identity"};
   const delta=a.repository_changes?.[old?.head_commit??""],scopes=a.tickets?.[ticket]?.meta?.affected_paths;
   if(old?.dirty!==false||old?.status!=="READY"||repo?.status!=="READY"||delta?.status!=="KNOWN")return {kind:"UNKNOWN",reason:"historical worktree difference cannot be proven unrelated"};

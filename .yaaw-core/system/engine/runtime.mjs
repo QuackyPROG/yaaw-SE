@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { parseFrontmatter } from "./frontmatter.mjs";
 import { deriveState, planNext, chooseIntentTarget } from "./routing.mjs";
 import { contractImpact, acceptedHistory, repositoryImpact, lastReview, revisionImpact } from "./lifecycle-evidence.mjs";
+import { scopeIdentity } from "./scope-identity.mjs";
 
 const hash=v=>"sha256:"+createHash("sha256").update(v).digest("hex");
 const stable=value=>Array.isArray(value)?value.map(stable):(value&&typeof value==="object"?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value);
@@ -62,7 +63,11 @@ async function observed(root,framework,repo,state,a,reconciliation){const value=
 async function main(){
   const opt=argsOf(process.argv.slice(2)),root=resolve(opt.workspace),system=join(root,".yaaw-core","system"),runtime=join(root,".yaaw-core","runtime"),kernel=JSON.parse(await readFile(join(system,"kernel.yaml"),"utf8"));
   const integrity=execJson(join(system,"engine","integrity.mjs"),root);if(integrity.status!=="HEALTHY"){console.log(JSON.stringify({type:"FRAMEWORK_STOP",reason:`FRAMEWORK_${integrity.status}`,framework:integrity}));return}
-  const repo=execJson(join(system,"engine","repository-identity.mjs"),root),a=await inspectArtifacts(root);a.repository_changes=repositoryChanges(root,a,repo);const state=deriveState(a);
+  const repo=execJson(join(system,"engine","repository-identity.mjs"),root),a=await inspectArtifacts(root);a.repository_changes=repositoryChanges(root,a,repo);
+  a.scope_identities={};
+  for(const [id,ticket] of Object.entries(a.tickets))if(ticket.meta?.status==="PASS"||ticket.meta?.status==="REPLAN_REQUIRED"||ticket.meta?.status==="REVIEW_REQUIRED")
+    a.scope_identities[id]=scopeIdentity(root,ticket.meta.affected_paths);
+  const state=deriveState(a);
   let intent=await json(join(runtime,"intent.json"));if(opt.invoke)intent=await seedIntent(root,kernel,opt.invoke,state,a,repo);
   const planned=planNext(kernel,state,a,repo,intent),reconciliation=planned.type==="RECONCILE_REQUIRED"?planned.reconciliation:null;await observed(root,integrity,repo,state,a,reconciliation);
   if(opt.inspect){console.log(JSON.stringify({type:"INSPECTED",state,reconciliation}));return}
@@ -74,7 +79,7 @@ async function main(){
       return {ticket:id,status:state.tickets[id],ticket_revision:t.revision??null,spec:t.spec??null,spec_revision:t.spec_revision??null,
         invalidated_by:t.invalidated_by??null,contract:impact,product_revision_impact:product,engineering_revision_impact:engineering,
         historical_pass_linked:Boolean(pass),last_review_result:review?.meta?.result??null,
-        repository:repositoryImpact(id,pass,a,repo)};
+        repository:repositoryImpact(id,pass,a,repo),scope_identity:a.scope_identities?.[id]??null};
     });
     console.log(JSON.stringify({type:"DIAGNOSTIC",framework:frameworkBasis(integrity),planning:state.planning,planning_next:a.engineering?.meta?.planning_next??null,repository_status:repo?.status??"UNKNOWN",tickets,next:planned}));return
   }

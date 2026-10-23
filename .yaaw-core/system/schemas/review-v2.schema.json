@@ -63,3 +63,8 @@
   },
   "additionalProperties": false
 }
+
+## Canonical ticket-scoped proof on every PASS verification
+When verifying a ticket with nonempty, safe `affected_paths`, run:
+`node .yaaw-core/system/engine/scope-identity.mjs --workspace <WORKSPACE_ROOT> --ticket TASK-NNN`
+after all verification checks and after capturing exact canonical repository identity. If the tool returns READY, include its JSON verbatim in new immutable `yaaw.evidence/v3` verification under `scope_identity`. If UNKNOWN, do **not** invent or reconstruct a scope digest; report the missing scope/error and leave the verified application and original evidence unchanged. Scope identity is additional assurance, not a substitute for the full repository identity and ticket/spec revisions. Reviewer must independently recompute the same scope and confirm that it sufficiently covers implemented application code and shared interfaces.
