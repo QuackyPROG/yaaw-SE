@@ -105,7 +105,8 @@ function baseRoute(state,a,repo){
   if(reviewing)return{workflow:verificationCurrent(latestVerification(reviewing,a),reviewing,a,repo)?"review.review-ticket":"implementation.verify-ticket",ticket:reviewing};
   const ready=ids.find(id=>state.tickets[id]==="READY"&&dependenciesPass(id,state,a,repo));if(ready)return{workflow:"implementation.implement-ticket",ticket:ready};
   const draft=ids.find(id=>state.tickets[id]==="DRAFT"&&dependenciesPass(id,state,a,repo));if(draft)return{workflow:"planning.create-tickets",ticket:draft};
-  if(ids.length===0)return{workflow:"planning.create-tickets",ticket:null};
+  const activeSpec=currentSpecId(state);
+  if(ids.length===0||!ids.some(id=>a.tickets?.[id]?.meta?.spec===activeSpec))return{workflow:"planning.create-tickets",ticket:null};
   if(ids.every(id=>TERMINAL.has(state.tickets[id]))){
     const dubious=Object.keys(state.tickets).find(id=>state.tickets[id]==="PASS"&&(contractImpact(id,state,a).kind!=="CURRENT"||repositoryImpact(id,acceptedHistory(id,a),a,repo).kind!=="CURRENT"));
     if(state.planning.scope_status==="COMPLETE"&&!dubious)return{terminal:"COMPLETE"};

@@ -80,7 +80,7 @@ jobs:
       - name: Test orchestration recovery and lifecycle
         if: needs.changes.outputs.orchestration == 'true' && needs.changes.outputs.full != 'true'
         run: |
-          npx vitest run tests/cli/orchestration-frontmatter.test.ts tests/cli/orchestration-engine.test.ts tests/cli/orchestration-runtime.test.ts
+          npx vitest run tests/cli/orchestration-frontmatter.test.ts tests/cli/orchestration-engine.test.ts tests/cli/orchestration-runtime.test.ts tests/cli/orchestration-reconciliation.test.ts
           node scripts/run_lifecycle_cases.mjs
           npm run validate:schemas
 
