@@ -115,6 +115,77 @@ describe("compact orchestration runtime",()=>{
     expect(next.workflow).toBe("implementation.verify-ticket");
     expect(next.ticket).toBe("TASK-001");
   });
+
+  it("after TASK-001 PASS, persists route selection and executes decision-frontier then next PRD spec",async()=>{
+    const root=await fixture("PASS");
+    run(root,"--inspect-only");
+    const repo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+    await writeVerification(root,repo);await writeReview(root,repo);
+    const eng=join(root,".yaaw-core/project/engineering.md");
+    await writeFile(eng,(await readFile(eng,"utf8")).replace("readiness: PASS","readiness: pending"));
+    let p=run(root);
+    expect(p.type).toBe("DISPATCH_READY");expect(p.workflow).toBe("planning.route");
+    expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");
+    expect(run(root,"--dispatch-start").type).toBe("DISPATCH_STARTED");
+    const directive=[
+      "planning_next:",
+      "  workflow: planning.decision-frontier",
+      "  product_revision: 1",
+      "  engineering_revision: 1",
+      "  status: ready",
+      "  current_frontier: FRONTIER-001",
+      "  readiness: pending",
+      "  reason: Existing foundation accepted; plan the next unmet PRD frontier."
+    ].join("\n");
+    await writeFile(eng,(await readFile(eng,"utf8")).replace("scope_status: OPEN","scope_status: OPEN\n"+directive));
+    p=run(root);
+    expect(p.type).toBe("DISPATCH_READY");expect(p.workflow).toBe("planning.decision-frontier");
+    expect(p.role).toBe("planner");expect(p.operation).toBe("decision-frontier");
+    expect((await handoff(root)).references).toContain(".yaaw-core/project/engineering.md");
+    expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");
+    expect(run(root,"--dispatch-start").type).toBe("DISPATCH_STARTED");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    p=run(root);expect(p.workflow).toBe("planning.decision-frontier");
+    // The worker executes the selected operation and consumes the old directive.
+    let text=await readFile(eng,"utf8");
+    text=text.replace("revision: 1","revision: 2").replace("current_frontier: FRONTIER-001","current_frontier: FRONTIER-002")
+      .replace("readiness: pending","readiness: PASS")
+      .replace("\n"+directive,"")
+      .replace("scope_status: OPEN","scope_status: OPEN\nrevision_changes: [{\"revision\":2,\"impact\":\"NONE\",\"reason\":\"Next frontier planning does not alter accepted foundation\"}]");
+    await writeFile(eng,text);
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    p=run(root);expect(p.type).toBe("DISPATCH_READY");expect(p.workflow).toBe("planning.create-spec");
+    await writeFile(join(root,".yaaw-core/project/specs/SPEC-002.md"),
+      "---\nschema: yaaw.spec/v1\nid: SPEC-002\nrevision: 1\nstatus: ACCEPTED\nproduct_revision: 1\nengineering_revision: 2\nfrontier_id: FRONTIER-002\ndecision_ids: [ENG-002]\n---\n# New scope\n");
+    p=run(root);expect(p.workflow).toBe("planning.create-tickets");
+    await writeFile(join(root,".yaaw-core/project/tickets/TASK-002.md"),
+      "---\nschema: yaaw.ticket/v1\nid: TASK-002\nrevision: 1\nspec: SPEC-002\nspec_revision: 1\nproduct_revision: 1\nengineering_revision: 2\nstatus: READY\ndependencies: [TASK-001]\ndecision_ids: [ENG-002]\nexpertise: []\naffected_paths: [src/task2/]\n---\n# New ticket\n");
+    p=run(root);expect(p.workflow).toBe("implementation.implement-ticket");expect(p.ticket).toBe("TASK-002");
+  });
+  it("ignores stale or unauthorized planner selectors and refuses repeated unchanged subworkflow",async()=>{
+    const root=await fixture("READY");
+    const eng=join(root,".yaaw-core/project/engineering.md");
+    const directive=[
+      "planning_next:",
+      "  workflow: planning.decision-frontier",
+      "  product_revision: 1",
+      "  engineering_revision: 1",
+      "  status: ready",
+      "  current_frontier: FRONTIER-001",
+      "  readiness: pending",
+      "  reason: Determine a bounded next feature."
+    ].join("\n");
+    await writeFile(eng,(await readFile(eng,"utf8")).replace("readiness: PASS","readiness: pending")
+      .replace("scope_status: OPEN","scope_status: OPEN\n"+directive));
+    let p=run(root);expect(p.workflow).toBe("planning.decision-frontier");
+    expect(run(root,"--dispatch-start").type).toBe("DISPATCH_STARTED");
+    await writeFile(eng,(await readFile(eng,"utf8"))+"\n# Planner note with no completed step\n");
+    p=run(root);expect(p.type).toBe("BLOCKED");expect(p.reason).toBe("NO_PROGRESS_REPEATED_HANDOFF");
+    await writeFile(eng,(await readFile(eng,"utf8")).replace("  product_revision: 1","  product_revision: 9"));
+    p=run(root);expect(p.workflow).toBe("planning.route");
+    await writeFile(eng,(await readFile(eng,"utf8")).replace("  product_revision: 9","  product_revision: 1").replace("workflow: planning.decision-frontier","workflow: implementation.implement-ticket"));
+    p=run(root);expect(p.workflow).toBe("planning.route");
+  });
   it("bounds repeated identical handoffs only after a marked dispatch",async()=>{
     const root=await fixture();expect(run(root).type).toBe("DISPATCH_READY");
     expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");

@@ -190,6 +190,27 @@ describe("scoped lifecycle regression matrix",()=>{
    const p:any=next(a);expect(p.workflow).not.toBe("planning.audit-revision-impact");expect(p.reconciliation?.to).not.toBe("PASS");
  });
 
+ it("S: planning.route dispatches only a Planner-owned current planning_next decision",()=>{
+   const a=accepted(fixture("PASS"));
+   a.engineering.meta.readiness="pending";
+   expect(next(a).workflow).toBe("planning.route");
+   a.engineering.meta.planning_next={
+     workflow:"planning.decision-frontier",product_revision:1,engineering_revision:1,status:"ready",
+     current_frontier:null,readiness:"pending",reason:"Prior foundation is PASS; plan the next frontier."
+   };
+   expect(next(a).workflow).toBe("planning.decision-frontier");
+   a.engineering.meta.planning_next.product_revision=9;
+   expect(next(a).workflow).toBe("planning.route");
+   a.engineering.meta.planning_next.product_revision=1;
+   a.engineering.meta.planning_next.workflow="implementation.implement-ticket";
+   expect(next(a).workflow).toBe("planning.route");
+   a.engineering.meta.planning_next.workflow="planning.decision-frontier";
+   a.engineering.meta.planning_next.current_frontier="FRONTIER-OLD";
+   expect(next(a).workflow).toBe("planning.route");
+   delete a.engineering.meta.planning_next;
+   a.engineering.meta.readiness="PASS";
+   expect(next(a).workflow).toBe("planning.create-spec");
+ });
  it("R: reviewed work re-verifies before new frontier readiness but new tickets do not",()=>{
    const a=accepted(fixture("REVIEW_REQUIRED"),repository("foundation",true));
    a.engineering.meta.readiness="pending";
