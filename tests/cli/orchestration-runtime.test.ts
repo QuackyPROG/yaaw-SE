@@ -56,6 +56,35 @@ describe("compact orchestration runtime",()=>{
     await writeFile(join(root,".yaaw-core/project/tickets/TASK-002.md"),`---\nschema: yaaw.ticket/v1\nid: TASK-002\nrevision: 1\nspec: SPEC-002\nspec_revision: 1\nproduct_revision: 1\nengineering_revision: 2\nstatus: READY\ndependencies: [TASK-001]\ndecision_ids: [ENG-002]\nexpertise: []\naffected_paths: [src/task2/]\n---\n# Ticket 2\n`);
     next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("implementation.implement-ticket");expect(next.ticket).toBe("TASK-002");
   });
+  it("reconstructs comsoc-style pending audit and routes re-verification after runtime deletion",async()=>{
+    const root=await fixture("REPLAN_REQUIRED");
+    const original=run(root,"--inspect-only");
+    expect(original.type).toBe("INSPECTED");
+    const oldRepo=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+    await writeVerification(root,oldRepo);
+    await writeReview(root,oldRepo);
+    const oldEngineer=join(root,".yaaw-core/project/engineering.md");
+    await writeFile(oldEngineer,(await readFile(oldEngineer,"utf8")).replace("revision: 1","revision: 2"));
+    let next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("planning.audit-revision-impact");expect(next.ticket).toBe("TASK-001");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    next=run(root);expect(next.workflow).toBe("planning.audit-revision-impact");
+    await writeFile(oldEngineer,(await readFile(oldEngineer,"utf8")).replace("scope_status: OPEN","scope_status: OPEN\nrevision_changes: [{"revision":2,"impact":"NONE","reason":"Repository discovery only; accepted foundation unchanged"}]"));
+    next=run(root);expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.id).toBe("REVERIFY_UNCERTAIN");
+    expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
+    expect(await ticketStatus(root)).toBe("REVIEW_REQUIRED");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    next=run(root);expect(next.type).toBe("DISPATCH_READY");expect(next.workflow).toBe("implementation.verify-ticket");
+    const now=JSON.parse(await readFile(join(root,".yaaw-core/runtime/observed-state.json"),"utf8")).repository;
+    await writeVerification(root,now,"PASS","V2");
+    next=run(root);expect(next.workflow).toBe("review.review-ticket");
+    const freshReview=join(root,".yaaw-core/project/reviews/TASK-001-R2.md");
+    await writeFile(freshReview,(await readFile(join(root,".yaaw-core/project/reviews/TASK-001-R1.md"),"utf8")).replace("round: 1","round: 2").replace("  - EVIDENCE-TASK-001-V1","  - EVIDENCE-TASK-001-V2").replace(oldRepo.worktree_digest,now.worktree_digest).replace(oldRepo.head_commit,now.head_commit));
+    next=run(root);expect(next.type).toBe("RECONCILE_REQUIRED");expect(next.reconciliation.to).toBe("PASS");
+    expect(run(root,"--reconcile-one").type).toBe("RECONCILED");
+    await rm(join(root,".yaaw-core/runtime"),{recursive:true,force:true});
+    next=run(root);expect(next.workflow).toBe("planning.create-spec");
+    expect(await ticketStatus(root)).toBe("PASS");
+  });
   it("bounds repeated identical handoffs only after a marked dispatch",async()=>{
     const root=await fixture();expect(run(root).type).toBe("DISPATCH_READY");
     expect(run(root,"--check-handoff").type).toBe("HANDOFF_FRESH");
