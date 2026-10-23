@@ -62,6 +62,13 @@ describe("scoped lifecycle regression matrix",()=>{
  it("F: PASS without matching review evidence is not accepted",()=>{
   const a=fixture("PASS");const p:any=next(a);expect(p.reconciliation.id).toBe("ACCEPTANCE_UNPROVEN");expect(p.reconciliation.to).toBe("REVIEW_REQUIRED");
  });
+ it("F2: newer failed verification invalidates current readiness without erasing historical PASS",()=>{
+   const a=accepted(fixture("PASS"));
+   a.evidence["V2"]={schema:"yaaw.evidence/v3",id:"V2",ticket:"TASK-001",ticket_revision:1,spec_revision:1,kind:"implementation_verification",result:"FAIL",repository:repository()};
+   const p:any=next(a);expect(p.reconciliation?.id).toBe("LATEST_VERIFICATION_FAILED");
+   expect(p.reconciliation?.to).toBe("REVIEW_REQUIRED");
+   expect(a.reviews["TASK-001-R2.md"].meta.result).toBe("PASS");
+ });
  it("G: unexplained REPLAN_REQUIRED cannot dispatch planner.replan forever",()=>{
   const a=fixture("REPLAN_REQUIRED");const p:any=next(a);expect(p.workflow).not.toBe("planning.replan");expect(p.blocked).toMatch(/INSUFFICIENT_PROVENANCE/);
  });

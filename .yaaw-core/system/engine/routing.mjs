@@ -62,6 +62,16 @@ export function selectReconciliation(kernel,state,a,repo){
       if(verificationCurrent(verification,ticket,a,repo)&&reviewCurrent(last,ticket,a,repo,verification))
         return transition(kernel,ticket,status,"REPLAN_REQUIRED","REVIEW_RESULT_UNAPPLIED","independent current REPLAN requires Planner revision",[last.path,verification.id],"review.record-review");
     }
+    if(status==="PASS"&&pass&&contract.kind==="CURRENT"){
+      const latest=latestVerification(ticket,a),verified=pass.verification;
+      // Newer failed verification at today's exact repository basis is a regression signal,
+      // even though the original PASS is still part of immutable history.
+      if(latest?.result!=="PASS" && latest && latest.id!==verified.id &&
+         Number(latest.ticket_revision??0)===Number(a.tickets?.[ticket]?.meta?.revision??0)&&
+         Number(latest.spec_revision??0)===Number(a.specs?.[a.tickets?.[ticket]?.meta?.spec]?.meta?.revision??0)&&
+         repoEq(latest.repository,repo))
+        return transition(kernel,ticket,status,"REVIEW_REQUIRED","LATEST_VERIFICATION_FAILED","newer current verification failed; re-establish validity",[latest.id,pass.review.path]);
+    }
     if(status==="PASS"){
       if(!pass)return transition(kernel,ticket,status,"REVIEW_REQUIRED","ACCEPTANCE_UNPROVEN","claimed PASS lacks matching independent review and verification",[]);
       if(contract.kind==="CURRENT"&&repository.kind==="REVERIFY")return transition(kernel,ticket,status,"REVIEW_REQUIRED","REVERIFY_REQUIRED",repository.reason,[pass.review.path,pass.verification.id]);

@@ -948,7 +948,8 @@
           "VERIFICATION_REPOSITORY_STALE",
           "LEGACY_IDENTITY_UNVERIFIABLE",
           "REVERIFY_REQUIRED",
-          "ACCEPTANCE_UNPROVEN"
+          "ACCEPTANCE_UNPROVEN",
+          "LATEST_VERIFICATION_FAILED"
         ],
         "writer": "orchestrator"
       },

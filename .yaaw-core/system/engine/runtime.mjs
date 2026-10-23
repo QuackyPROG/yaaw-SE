@@ -21,7 +21,7 @@ function repositoryChanges(root,a,repository){
   for(const head of heads){
     const base=spawnSync("git",["-C",root,"merge-base","--is-ancestor",head,"HEAD"],{encoding:"utf8",windowsHide:true});
     if(base.status!==0||repository?.status!=="READY"){result[head]={status:"UNKNOWN",paths:[]};continue}
-    const diff=spawnSync("git",["-C",root,"diff","--name-only","-z",head,"HEAD","--","."],{encoding:"utf8",windowsHide:true});
+    const diff=spawnSync("git",["-C",root,"diff","--no-renames","--name-only","-z",head,"HEAD","--","."],{encoding:"utf8",windowsHide:true});
     if(diff.status!==0){result[head]={status:"UNKNOWN",paths:[]};continue}
     const paths=new Set([...diff.stdout.split(String.fromCharCode(0)).filter(Boolean),...(repository.changed_paths??[]).map(p=>p.path)]);
     result[head]={status:"KNOWN",paths:[...paths].sort()};

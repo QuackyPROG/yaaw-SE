@@ -28,3 +28,5 @@ Delete `.yaaw-core/runtime/` and invoke YAAW again: the safe next semantic actio
 
 ## Framework boundary
 Never modify `.yaaw-core/system/**` during semantic work. Framework integrity failures stop and require installer repair/update.
+
+A later verification FAIL at the current exact repository basis supersedes current readiness (not the immutable original PASS). Route to fresh verification and independent review rather than relying solely on stale accepted history. Git change checks must disable rename detection so the removed old path and the added new path are both considered for overlap.
