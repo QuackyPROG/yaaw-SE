@@ -143,6 +143,9 @@ describe("compact orchestration runtime",()=>{
       "  reason: Existing foundation accepted; plan the next unmet PRD frontier."
     ].join("\n");
     await writeFile(eng,(await readFile(eng,"utf8")).replace("scope_status: OPEN","scope_status: OPEN\n"+directive));
+    const diagnosis=run(root,"--diagnose");
+    expect(diagnosis.planning_next?.workflow).toBe("planning.decision-frontier");
+    expect(diagnosis.next.workflow).toBe("planning.decision-frontier");
     p=run(root);
     expect(p.type).toBe("DISPATCH_READY");expect(p.workflow).toBe("planning.decision-frontier");
     expect(p.role).toBe("planner");expect(p.operation).toBe("decision-frontier");

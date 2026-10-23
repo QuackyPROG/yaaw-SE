@@ -76,7 +76,7 @@ async function main(){
         historical_pass_linked:Boolean(pass),last_review_result:review?.meta?.result??null,
         repository:repositoryImpact(id,pass,a,repo)};
     });
-    console.log(JSON.stringify({type:"DIAGNOSTIC",framework:frameworkBasis(integrity),planning:state.planning,repository_status:repo?.status??"UNKNOWN",tickets,next:planned}));return
+    console.log(JSON.stringify({type:"DIAGNOSTIC",framework:frameworkBasis(integrity),planning:state.planning,planning_next:a.engineering?.meta?.planning_next??null,repository_status:repo?.status??"UNKNOWN",tickets,next:planned}));return
   }
   if(opt.reconcile){if(!reconciliation){console.log(JSON.stringify({type:"NO_RECONCILIATION"}));return}if(reconciliation.kind==="BLOCKED"){console.log(JSON.stringify({type:"BLOCKED",reason:reconciliation.reason}));return}const ticket=a.tickets?.[reconciliation.subject];if(!ticket)throw new Error(`reconciliation ticket missing: ${reconciliation.subject}`);const ticketPath=join(root,ticket.path),raw=await readFile(ticketPath,"utf8");await writeFile(ticketPath,patchStatus(raw,reconciliation.to),"utf8");for(const file of ["observed-state.json","handoff.json"])try{await writeFile(join(runtime,file),"")}catch{}console.log(JSON.stringify({type:"RECONCILED",reconciliation}));return}
   if(opt.dispatchStart){
