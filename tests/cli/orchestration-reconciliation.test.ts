@@ -28,6 +28,42 @@ function frontier2(a:any){
  a.specs["SPEC-002"]=doc({id:"SPEC-002",schema:"yaaw.spec/v1",status:"ACCEPTED",revision:1,product_revision:1,engineering_revision:2,decision_ids:["ENG-002"],requirement_ids:["REQ-002"]},".yaaw-core/project/specs/SPEC-002.md");
 }
 describe("scoped lifecycle regression matrix",()=>{
+
+ it("T: a dirty historical foundation PASS is automatically routed to verification after SPEC-002",()=>{
+   const original=repository("foundation",true),current=repository("spec2",true);
+   const a=accepted(fixture("PASS"),original);engRevision(a);frontier2(a);
+   a.tickets["TASK-002"]=doc({id:"TASK-002",schema:"yaaw.ticket/v1",revision:1,status:"READY",
+     spec:"SPEC-002",spec_revision:1,product_revision:1,engineering_revision:2,
+     decision_ids:["ENG-002"],affected_paths:["src/feature2/"],dependencies:["TASK-001"]},"task2");
+   let p:any=next(a,current);
+   expect(p.reconciliation?.id).toBe("REVERIFY_UNCERTAIN");
+   expect(p.reconciliation?.subject).toBe("TASK-001");
+   expect(p.reconciliation?.to).toBe("REVIEW_REQUIRED");
+   a.tickets["TASK-001"].meta.status="REVIEW_REQUIRED";
+   p=next(a,current);expect(p.workflow).toBe("implementation.verify-ticket");
+ });
+ it("U: independent matching scoped proof permits dependency despite unrelated dirty planning edits",()=>{
+   const old=repository("foundation",true),now=repository("new planning",true);
+   const a=accepted(fixture("PASS"),old);engRevision(a);frontier2(a);
+   const scope={schema:"yaaw.scope-identity/v1",algorithm:"yaaw-scope-v1",status:"READY",
+      paths:["src/feature1/"],digest:"sha256:"+("a".repeat(64)),files:2};
+   a.evidence.V1.scope_identity=structuredClone(scope);
+   a.reviews["TASK-001-R2.md"].meta.scope_identity=structuredClone(scope);
+   a.scope_identities={"TASK-001":structuredClone(scope)};
+   a.tickets["TASK-002"]=doc({id:"TASK-002",schema:"yaaw.ticket/v1",revision:1,status:"READY",
+      spec:"SPEC-002",spec_revision:1,product_revision:1,engineering_revision:2,
+      decision_ids:["ENG-002"],affected_paths:["src/feature2/"],dependencies:["TASK-001"]},"task2");
+   const p:any=next(a,now);expect(p.workflow).toBe("implementation.implement-ticket");expect(p.ticket).toBe("TASK-002");
+   expect(next(structuredClone(a),now)).toEqual(p);
+   a.scope_identities["TASK-001"].digest="sha256:"+("b".repeat(64));
+   const changed:any=next(a,now);
+   expect(changed.reconciliation?.id).toBe("REVERIFY_REQUIRED");
+   a.scope_identities["TASK-001"]=structuredClone(scope);
+   a.evidence.V1.scope_identity.digest="sha256:"+("c".repeat(64));
+   const mismatched:any=next(a,now);
+   expect(mismatched.reconciliation?.id).toBe("REVERIFY_UNCERTAIN");
+   expect(mismatched.reconciliation?.to).not.toBe("PASS");
+ });
  it("A: historical PASS survives an unrelated engineering revision",()=>{
   const a=accepted(fixture());engRevision(a);
   const p:any=next(a);expect(a.tickets["TASK-001"].meta.status).toBe("PASS");expect(p.reconciliation?.to).not.toBe("REPLAN_REQUIRED");expect(p.workflow).toBe("planning.create-spec");
@@ -105,7 +141,7 @@ describe("scoped lifecycle regression matrix",()=>{
    const a=accepted(fixture());a.engineering.meta.scope_status="COMPLETE";
    a.repository_changes.A={status:"UNKNOWN",paths:[]};
    const p:any=next(a,repository("B"));
-   expect(p.terminal).not.toBe("COMPLETE");expect(p.blocked).toContain("ACCEPTANCE_NOT_CURRENT");
+   expect(p.terminal).not.toBe("COMPLETE");expect(p.reconciliation?.id).toBe("REVERIFY_UNCERTAIN");
  });
  it("L: comsoc revision 23/7 to engineering 8 takes impact audit, uncertain-repo reverification, then next spec",()=>{
    const old=repository("foundation",true),current=repository("planning8",true);
@@ -222,7 +258,7 @@ describe("scoped lifecycle regression matrix",()=>{
    const p:any=next(a,repository("after",true));
    expect(p.workflow).toBe("implementation.verify-ticket");expect(p.ticket).toBe("TASK-001");
    a.tickets["TASK-001"].meta.status="PASS";
-   expect(next(a,repository("after",true)).workflow).toBe("planning.route");
+   expect(next(a,repository("after",true)).reconciliation?.id).toBe("REVERIFY_UNCERTAIN");
    const b=fixture("REVIEW_REQUIRED");b.engineering.meta.readiness="pending";
    expect(next(b).workflow).toBe("planning.route");
  });
