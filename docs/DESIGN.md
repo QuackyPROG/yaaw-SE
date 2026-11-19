@@ -42,7 +42,7 @@ The main session is the orchestrator. The `/yaaw-se` skill is the entry point.
 1. **Probe.** `yaaw-probe` runs in the main session, as only the main session can ask the user questions. Every decision the feature needs is settled here.
 2. **Plan.** The `yaaw-planner` subagent researches the codebase and the docs, then writes the spec and the tickets. Each ticket names its test seams, what to reuse first and its acceptance criteria.
 3. **Approve.** The user approves the tickets once.
-4. **Build.** For each ticket, `yaaw-dev` builds it test-first, then `yaaw-reviewer` checks it. There are at most 2 fix loops, then one commit per ticket. UI tickets go to `yaaw-designer`.
+4. **Build.** For each ticket, `yaaw-dev` builds it test-first, then `yaaw-reviewer` checks it. There are at most 2 fix loops, then one commit per ticket. UI tickets go to `yaaw-designer`, which builds to the design direction settled in the probe.
 5. **Report.** The run stops only to report or when it is stuck.
 
 Every question is asked before the build starts. This is what lets `yaaw-dev` work without stopping: it has nothing left to ask.
@@ -65,7 +65,7 @@ The skills are customised copies of 3 upstream sets. The hub's own `qd-*` versio
 
 - **mattpocock/skills** (how a feature is planned and built): probe, to-spec, to-tickets, tdd, diagnose, code-review, codebase-design, domain-modeling, research, handoff, writing-for-agents, prototype, improve-codebase-architecture, triage and pr.
 - **DietrichGebert/ponytail** (how code is written): ponytail, ponytail-review and ponytail-debt.
-- **pbakaus/impeccable** (UI and UX): checked separately before `yaaw-designer` is written.
+- **pbakaus/impeccable** (UI and UX): distilled into `yaaw-design`. See below.
 
 Left out: `ask-matt`, `setup-matt-pocock-skills`, the misc and in-progress skills, and `retro` (its name clashes with yaaw).
 
@@ -80,5 +80,18 @@ Left out: `ask-matt`, `setup-matt-pocock-skills`, the misc and in-progress skill
 | 5 | `to-tickets` forbids file paths, but ponytail's reuse rung needs them. | Each ticket has a "Reuse first" line that names existing modules and dependencies. |
 | 6 | `codebase-design` favours deep modules and injected dependencies, while ponytail cuts abstraction nobody asked for. | Both agree that one adapter is a hypothetical seam. A new seam is added only when a ticket names a second adapter. |
 | 7 | `ponytail-review` and mattpocock `code-review` overlap. | Merged into `yaaw-review`. |
+
+### yaaw-designer and impeccable
+
+Settled in a probe on 2026-11-19, against impeccable 4.10.0 (commit `b49177d`).
+
+impeccable is 1 skill with around 5,500 lines of reference, 24 interactive commands and a launcher that downloads a binary on first run. `yaaw-design` is a distilled copy: the craft floor, the modes, the Operate rules and the checks from polish and audit, rewritten for a subagent. The commands, the launcher and the detector are left out, as a subagent cannot ask questions and the installer does not install tools. impeccable is Apache-2.0, so its license is kept in the skill folder and the skill names its source.
+
+| # | Clash | Fix in yaaw-se |
+|---|---|---|
+| 1 | impeccable asks product and look questions before it builds, but `yaaw-designer` cannot ask. | `yaaw-probe` asks the design questions for UI features. The planner writes the answers into each UI ticket's **Design direction**. |
+| 2 | impeccable says "finish the job" and commit to the look, while `yaaw-lean` builds the smallest change. | `yaaw-designer` preloads `yaaw-design`, `yaaw-tdd` and `yaaw-diagnose`, not `yaaw-lean`. Behaviour is still built red test first at the ticket's seams. |
+| 3 | impeccable verifies with its own screenshot tool. | `yaaw-designer` uses the project's own tools to render the page. A new tool is a new dependency and goes under Flags. |
+| 4 | The design floor would only be checked by the agent that wrote the code. | `yaaw-reviewer` preloads `yaaw-design` and checks designer tickets against the craft floor. |
 
 Ponytail's published numbers are its own. An independent JetBrains test measured around 15% less code and 10% less cost, with gains only where there was room to over-build.

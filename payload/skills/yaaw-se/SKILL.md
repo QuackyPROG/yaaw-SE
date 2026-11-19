@@ -54,7 +54,7 @@ Show the tickets as `NN: title (blocked by …) [agent]` with each ticket's seam
 
 Work the **frontier**: the open tickets whose blockers are all done, lowest number first. For each ticket:
 
-1. **Dispatch** the ticket's agent (`yaaw-dev` or `yaaw-designer`) with the ticket path, the spec path and the commit to diff from (`git rev-parse HEAD`). While `yaaw-designer` is not installed, UI tickets go to `yaaw-dev`.
+1. **Dispatch** the ticket's agent (`yaaw-dev` or `yaaw-designer`) with the ticket path, the spec path and the commit to diff from (`git rev-parse HEAD`).
 2. **Review.** Dispatch `yaaw-reviewer` with the ticket path and the diff range.
 3. **Fix loop.** When the verdict is not `Ship`, send the Must fix and Should fix findings back to the same build agent, then review again. Allow at most 2 fix loops per ticket.
 4. **Commit** once the verdict is `Ship`: one commit per ticket with a Conventional Commits subject, such as `feat: <what the ticket delivers>`. Tick the ticket in `STATE.md`.

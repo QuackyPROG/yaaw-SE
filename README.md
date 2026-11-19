@@ -2,7 +2,7 @@
 
 yaaw-se is a software engineering workflow for Claude Code. A feature is probed with the user first, then planned into tickets by a planner agent. Each ticket is built test-first by a dev agent and checked by a read-only reviewer agent, with one commit per ticket.
 
-The skills are customised from mattpocock/skills (how a feature is planned and built), ponytail (how code is written) and impeccable (UI and UX). The decisions behind the design are in [docs/DESIGN.md](docs/DESIGN.md).
+The skills are customised from mattpocock/skills (how a feature is planned and built), ponytail (how code is written) and impeccable (UI and UX). `yaaw-design` is derived from impeccable and keeps its Apache-2.0 license. The decisions behind the design are in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Install
 
@@ -26,7 +26,8 @@ Run `/yaaw-se <feature>` to start a feature, or `/yaaw-se <slug>` to resume one.
 |---|---|---|
 | `yaaw-planner` | Researches and writes the spec and tickets | `yaaw-to-spec`, `yaaw-to-ticket`, `yaaw-architecture`, `yaaw-domain` |
 | `yaaw-dev` | Builds one ticket test-first | `yaaw-lean`, `yaaw-tdd`, `yaaw-diagnose` |
-| `yaaw-reviewer` | Reviews one ticket, read-only | `yaaw-review` |
+| `yaaw-designer` | Builds one UI ticket to its design direction | `yaaw-design`, `yaaw-tdd`, `yaaw-diagnose` |
+| `yaaw-reviewer` | Reviews one ticket, read-only | `yaaw-review`, `yaaw-design` |
 
 Skills that can also be run on their own: `yaaw-probe`, `yaaw-probe-docs`, `yaaw-research`, `yaaw-prototype`, `yaaw-architecture-audit`, `yaaw-triage`, `yaaw-pr`, `yaaw-debt`, `yaaw-handoff` and `yaaw-agent-writing`.
 

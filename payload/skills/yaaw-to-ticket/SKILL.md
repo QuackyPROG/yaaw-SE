@@ -35,6 +35,9 @@ A **wide refactor** is one mechanical change (rename a column, retype a shared s
 ## What to build
 The end-to-end behaviour this ticket makes work, from the user's point of view.
 
+## Design direction
+Mode, look (inherit, extend or new, with the details), what must not change and what success looks like, from DECISIONS.md. None for a yaaw-dev ticket.
+
 ## Seams
 - <seam>: the behaviour each test proves there.
 
@@ -48,7 +51,7 @@ The end-to-end behaviour this ticket makes work, from the user's point of view.
 <nearby work that belongs to another ticket or is out of scope>
 ```
 
-`Agent` is `yaaw-designer` when the ticket's main work is UI or UX, and `yaaw-dev` otherwise.
+`Agent` is `yaaw-designer` when the ticket's main work is UI or UX, and `yaaw-dev` otherwise. A `yaaw-designer` ticket's **Design direction** comes from DECISIONS.md only. When the decisions do not settle it, add it to the spec's **Open questions**.
 
 ## Done
 

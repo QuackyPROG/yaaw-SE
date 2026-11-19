@@ -22,6 +22,16 @@ Ask only **load-bearing** questions: ones whose answer changes what gets built.
 - **Cut scope here.** For every part of the feature, ask whether it needs to exist. Features, options and flexibility nobody asked for are named and cut now, as the build agents will not question scope later.
 - **Defaults become assumptions.** When a decision has an obvious conventional answer, list it under "Assuming" instead of asking. The user can overturn any of them.
 
+## UI features
+
+`yaaw-designer` builds UI tickets and cannot ask about the look, so a feature with UI settles its design here. Read the project's `DESIGN.md`, tokens and existing screens first, and ask only what they do not answer:
+
+- **Mode** of each new surface: Operate (a task), Read (understanding), Persuade (deciding and acting) or Experience (the work itself).
+- **Look**: inherit the existing one, extend it, or create a new one. For a new look, the audience, where and how the screen is used, and the feel it should have.
+- **Untouchable**: what must not change, such as copy, brand assets or existing flows.
+- **Success**: what a good result looks like, and what would make a polished result feel wrong.
+- **Assets**: images, fonts or icons the user will provide, and any new font or UI package (each one is a new dependency).
+
 ## Format
 
 Number every question, give a recommended answer, and word each question so that "yes" accepts the recommendation.
