@@ -1,0 +1,25 @@
+{
+  "name": "yaaw-se",
+  "version": "0.1.0",
+  "description": "Software engineering workflow for Claude Code: planner, dev, reviewer and designer agents with their skills.",
+  "private": true,
+  "license": "MIT",
+  "bin": {
+    "yaaw-se": "bin/install.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "payload"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuackyPROG/yaaw-SE.git"
+  }
+}
