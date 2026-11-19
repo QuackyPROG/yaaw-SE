@@ -1,0 +1,84 @@
+# yaaw-se design
+
+yaaw-se is a software engineering workflow for Claude Code. It is a new workflow and is not related to yaaw. Versions 1 and 2 of this repository are retired and are kept only in the git history.
+
+All decisions below were settled in a probe on 2026-11-19.
+
+## Install and update
+
+yaaw-se is installed with one command:
+
+```
+npx github:QuackyPROG/yaaw-SE
+```
+
+The installer copies the `yaaw-*` skills and agents into `~/.claude/skills/` and `~/.claude/agents/`. It does not use the Claude Code plugin system, so it can own its files and archive them on update. No hooks are installed.
+
+The installer writes `~/.claude/yaaw-se/manifest.json` with the installed version and a SHA-256 hash for every file. Running the same command again updates yaaw-se:
+
+1. Every file that will be changed or removed is copied to `~/.claude/yaaw-se/archive/<old-version>/` first.
+2. A file whose hash differs from the manifest was edited by hand. It is archived like any other file and named in the output, so the edit is never lost silently.
+3. New files are written through a temporary file and a rename. The manifest is written last, so an interrupted update is repaired by running the command again.
+4. Only the newest 3 archives are kept.
+
+`--dry-run` prints the plan without writing anything. `--target <dir>` installs into another folder, which is used by the tests.
+
+### Why not the plugin system
+
+A plugin is a cached copy that Claude Code swaps as a whole on update. The installer never sees which files changed, so it cannot archive them. The plugin system also gives namespacing and auto-update, which were not needed.
+
+## Repository and releases
+
+- `v3` is the working branch. `main` is the release channel, so the plain npx command installs the latest release.
+- Releases are made by release-please. Merging `v3` into `main` opens a release PR, and merging that PR tags the version and writes the changelog. Commits follow Conventional Commits so that release-please can pick the version bump.
+- Versions start at `0.1.0`. Nothing is published to npm, and `package.json` is marked private so that it cannot be published by accident.
+- The repository is public for now and will be made private later.
+- The dev loop is to test locally first (`node bin/install.js` from this folder), then push to `v3`, then reinstall with npx and test again.
+
+## How a feature runs
+
+The main session is the orchestrator. The `/yaaw-se` skill is the entry point.
+
+1. **Probe.** `yaaw-probe` runs in the main session, as only the main session can ask the user questions. Every decision the feature needs is settled here.
+2. **Plan.** The `yaaw-planner` subagent researches the codebase and the docs, then writes the spec and the tickets. Each ticket names its test seams, what to reuse first and its acceptance criteria.
+3. **Approve.** The user approves the tickets once.
+4. **Build.** For each ticket, `yaaw-dev` builds it test-first, then `yaaw-reviewer` checks it. There are at most 2 fix loops, then one commit per ticket. UI tickets go to `yaaw-designer`.
+5. **Report.** The run stops only to report or when it is stuck.
+
+Every question is asked before the build starts. This is what lets `yaaw-dev` work without stopping: it has nothing left to ask.
+
+Feature files live in each project under `docs/yaaw-se/<slug>/`. `STATE.md` carries a `format:` line so that a newer yaaw-se can notice an older layout.
+
+## Delegation research
+
+Checked against the Claude Code docs (sub-agents, agent-teams and costs pages) on 2026-11-19.
+
+- **Subagents** have their own context and return one result to the caller. They can preload skills through the `skills:` frontmatter field, run in a worktree with `isolation: worktree`, nest up to 3 levels deep and be limited to spawning certain agents with `tools: Agent(name, ...)`.
+- **Agent teams** are experimental and off by default. Each teammate is a separate Claude Code instance with a shared task list and a mailbox. The docs put the cost at around 7 times a single session in plan mode, and say a single session or subagents do better for sequential tasks, same-file edits and work with many dependencies.
+- **Practitioner reports** (vendor blogs, so anecdotal) agree that most multi-agent failures are coordination failures, that gaps in a plan carry downstream, that reviewers should be read-only and independent, and that retry loops need a cap.
+
+yaaw-se uses subagents. Building one feature is mostly sequential and touches shared files, which is where agent teams do worse. Agent teams can be revisited for parallel research once they are no longer experimental.
+
+## Sources of the skills
+
+The skills are customised copies of 3 upstream sets. The hub's own `qd-*` versions were used as the starting point where they exist.
+
+- **mattpocock/skills** (how a feature is planned and built): probe, to-spec, to-tickets, tdd, diagnose, code-review, codebase-design, domain-modeling, research, handoff, writing-for-agents, prototype, improve-codebase-architecture, triage and pr.
+- **DietrichGebert/ponytail** (how code is written): ponytail, ponytail-review and ponytail-debt.
+- **pbakaus/impeccable** (UI and UX): checked separately before `yaaw-designer` is written.
+
+Left out: `ask-matt`, `setup-matt-pocock-skills`, the misc and in-progress skills, and `retro` (its name clashes with yaaw).
+
+### Ponytail and mattpocock clashes
+
+| # | Clash | Fix in yaaw-se |
+|---|---|---|
+| 1 | Ponytail's SubagentStart hook injects its rules into every subagent, including planners and designers. | No hooks. `yaaw-lean` is preloaded only into `yaaw-dev`. |
+| 2 | mattpocock `tdd` confirms seams with the user before any test, which stops a subagent. | The planner settles seams in each ticket. `yaaw-dev` never asks. |
+| 3 | `tdd` runs red to green on every slice, while ponytail keeps one small test for non-trivial logic. | One rule: a red test first at each agreed seam, and nothing beyond it. |
+| 4 | Ponytail's first rung ("does it need to exist?") and its ultra level push back on scope in the middle of a build. | Scope is cut in planning. `yaaw-dev` builds the ticket and flags doubts in its report. |
+| 5 | `to-tickets` forbids file paths, but ponytail's reuse rung needs them. | Each ticket has a "Reuse first" line that names existing modules and dependencies. |
+| 6 | `codebase-design` favours deep modules and injected dependencies, while ponytail cuts abstraction nobody asked for. | Both agree that one adapter is a hypothetical seam. A new seam is added only when a ticket names a second adapter. |
+| 7 | `ponytail-review` and mattpocock `code-review` overlap. | Merged into `yaaw-review`. |
+
+Ponytail's published numbers are its own. An independent JetBrains test measured around 15% less code and 10% less cost, with gains only where there was room to over-build.
