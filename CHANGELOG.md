@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/QuackyPROG/yaaw-SE/compare/yaaw-se-v0.1.0...yaaw-se-v0.2.0) (2026-11-20)
+
+
+### Features
+
+* add a Kiro install target ([135cc25](https://github.com/QuackyPROG/yaaw-SE/commit/135cc25531cfdd3ce85386876bea2affc53c55ed))
+* add yaaw-designer and the yaaw-design skill ([7173275](https://github.com/QuackyPROG/yaaw-SE/commit/7173275fef2a3cf2b165d46ca330053d348fe717))
+
 ## 0.1.0 (2026-11-19)
 
 
