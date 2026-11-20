@@ -49,6 +49,17 @@ Every question is asked before the build starts. This is what lets `yaaw-dev` wo
 
 Feature files live in each project under `docs/yaaw-se/<slug>/`. `STATE.md` carries a `format:` line so that a newer yaaw-se can notice an older layout.
 
+### Checks and the quick lane
+
+Settled on 2026-11-21, after a project with 365 tests (an iOS app built with xtool in WSL, so the tests run only in GitHub CI) spent about 12 minutes per ticket and fix loop waiting for the full suite. The tests themselves took 20 seconds; the rest was CI setup and a fresh compile.
+
+- **The full suite runs once per feature**, in a new Full check stage after the build. Build agents run only a `fast` check (build, type check, lint) and single test files.
+- **Each project's commands live in `docs/yaaw-se/CHECKS.md`**: `fast`, `test`, `full`, where the full suite runs (`local` or `ci`) and the CI workflow. The orchestrator finds them itself and asks the user to confirm on first run. It does not touch the project's `CLAUDE.md`.
+- **When tests run only in CI** (`test: none`), the build agents still write each seam test before its code and compile both. The one CI run at the end is the red and green proof. This is weaker per ticket, and the report says so.
+- **Approve covers one push.** When the full suite runs in CI, approving the tickets also approves pushing the feature branch to run it. Fix rounds on the same branch need no new approval. A failing full check is traced to its ticket and sent back to that ticket's agent, with at most 2 rounds.
+- **Test evidence is a summary**: the command and its result line, never the full output.
+- **The quick lane** takes a small fix with no open decision past the probe and the planner: the orchestrator writes one ticket, the user approves it, and it is built and reviewed as usual. When unsure, the full lane is used.
+
 ## Delegation research
 
 Checked against the Claude Code docs (sub-agents, agent-teams and costs pages) on 2026-11-19.

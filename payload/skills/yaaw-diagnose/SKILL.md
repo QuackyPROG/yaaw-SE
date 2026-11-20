@@ -42,7 +42,7 @@ Each probe tests one prediction and changes one thing. Check the current docs be
 
 ## Phase 5: Fix
 
-Grep every caller of the code at fault, then fix the root cause once in the shared code, following `yaaw-lean`. Keep the red check as a regression test when it is a test. Rerun it and show it green, then run the full suite.
+Grep every caller of the code at fault, then fix the root cause once in the shared code, following `yaaw-lean`. Keep the red check as a regression test when it is a test. Rerun it and show it green, then run the full suite. Under `/yaaw-se`, run the `fast` check from `docs/yaaw-se/CHECKS.md` instead, as the orchestrator runs the full suite.
 
 ## Phase 6: Clean up
 

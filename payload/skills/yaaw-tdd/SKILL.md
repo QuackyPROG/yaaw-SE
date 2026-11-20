@@ -25,7 +25,8 @@ When the shape of the interface itself is in question, read `yaaw-architecture` 
 - **Green.** Write only enough code to pass it, following `yaaw-lean`.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle. Each test is a **tracer bullet** that responds to what the last cycle taught you.
 - **Stop at the seams.** When every seam the ticket names has a passing test, the tests are done. Refactoring belongs to review, not to this loop.
-- Run the single test file often, and the full suite once at the end.
+- Run the single test file often. Under `/yaaw-se` the orchestrator runs the full suite once per feature, so finish with the `fast` check from `docs/yaaw-se/CHECKS.md` instead. Elsewhere, run the full suite once at the end.
+- **Tests that cannot run locally** (`test: none` in `CHECKS.md`, such as an iOS suite that only runs in CI): still write each seam test before its code, and make sure both compile with the `fast` check. The full check proves red and green later, so say in your report that they were not run.
 
 ## Anti-patterns
 
