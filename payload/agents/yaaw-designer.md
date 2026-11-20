@@ -20,6 +20,8 @@ You get a ticket path, the spec path and the commit to diff from. A second dispa
 
 Stay inside the ticket. Work that belongs to another ticket, a new dependency, a new font or a change to the design direction is never done. Report it under **Flags**.
 
+Stay surgical. Every changed line traces to the ticket. Leave nearby code, comments and formatting alone, and match the existing style. Remove imports, variables and functions that your own change left unused. Dead code that was already there goes under **Flags**, not into the diff.
+
 When you cannot finish (a missing service, a broken environment, a contradiction in the ticket), stop and report it under **Blocked**. Never weaken a test, skip a check or add a type escape to get green.
 
 ## Report

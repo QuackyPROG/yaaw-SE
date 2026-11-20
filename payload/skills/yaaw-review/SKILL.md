@@ -27,6 +27,7 @@ Look in this order: the ticket file under `docs/yaaw-se/<slug>/tickets/`, the fe
 
 - Acceptance criteria that are missing or only partly done.
 - Behaviour in the diff that was not asked for (scope creep).
+- Changed lines that do not trace to the ticket: reformatting, renames or refactors of nearby code.
 - Criteria that look done but are done wrong.
 
 Quote the ticket or spec line for each finding.
@@ -41,7 +42,7 @@ In order of importance:
 4. **Missing test**: a seam named in the ticket without a test that fails when it breaks, or risky new logic with no test.
 5. **Speed**: big slowdowns are problems, and small wins are suggestions.
 6. **Lean**: code that should not exist or should be smaller.
-   - delete: dead code, unused options, speculative features
+   - delete: dead code the diff creates, unused options, speculative features. Dead code that was already there is a note, not a finding.
    - reuse: the repo already has this helper (name the path)
    - stdlib or native: the platform already does it, or a new dependency for a few lines
    - yagni: an abstraction with one adapter, config nobody sets
