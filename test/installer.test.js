@@ -5,11 +5,12 @@ const os = require('node:os');
 const path = require('node:path');
 const { install } = require('../lib/installer');
 
-// Builds a fake release folder: package.json version plus payload files.
-function release(version, files) {
+// Builds a fake release folder: package.json version, payload files and Kiro-only files.
+function release(version, files, kiroFiles = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'yaaw-se-src-'));
   fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version }));
   for (const [rel, body] of Object.entries(files)) write(path.join(dir, 'payload', rel), body);
+  for (const [rel, body] of Object.entries(kiroFiles)) write(path.join(dir, 'kiro', rel), body);
   return dir;
 }
 
@@ -101,4 +102,67 @@ test('only the newest 3 archives are kept', () => {
 
   const kept = fs.readdirSync(path.join(home, 'yaaw-se/archive')).sort();
   assert.deepEqual(kept, ['0.10.0', '0.11.0', '0.2.0']);
+});
+
+const claudeAgent = [
+  '---',
+  'name: yaaw-dev',
+  'description: yaaw-se developer. Dispatched by /yaaw-se.',
+  'tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch',
+  'skills:',
+  '  - yaaw-lean',
+  '  - yaaw-tdd',
+  '---',
+  '',
+  'You are the developer.',
+  '',
+].join('\n');
+
+test('kiro install converts agents, copies skills and adds the steering file', () => {
+  const home = target();
+  const src = release(
+    '0.1.0',
+    { 'skills/yaaw-lean/SKILL.md': 'lean', 'agents/yaaw-dev.md': claudeAgent },
+    { 'steering/yaaw-core.md': 'rules' },
+  );
+
+  install({ source: src, target: home, flavor: 'kiro', ...quiet });
+
+  const root = home.split(path.sep).join('/');
+  assert.equal(read(path.join(home, 'skills/yaaw-lean/SKILL.md')), 'lean');
+  assert.equal(read(path.join(home, 'steering/yaaw-core.md')), 'rules');
+  assert.equal(
+    read(path.join(home, 'agents/yaaw-dev.md')),
+    [
+      '---',
+      'name: yaaw-dev',
+      'description: "yaaw-se developer. Dispatched by /yaaw-se."',
+      'tools: ["read","write","shell","web"]',
+      'resources:',
+      `  - file://${root}/steering/yaaw-core.md`,
+      `  - skill://${root}/skills/yaaw-lean/SKILL.md`,
+      `  - skill://${root}/skills/yaaw-tdd/SKILL.md`,
+      '---',
+      '',
+      'You are the developer.',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('claude install leaves agents untouched and skips the Kiro-only files', () => {
+  const home = target();
+  const src = release('0.1.0', { 'agents/yaaw-dev.md': claudeAgent }, { 'steering/yaaw-core.md': 'rules' });
+
+  install({ source: src, target: home, ...quiet });
+
+  assert.equal(read(path.join(home, 'agents/yaaw-dev.md')), claudeAgent);
+  assert.equal(fs.existsSync(path.join(home, 'steering')), false);
+});
+
+test('kiro install refuses an agent tool it cannot map', () => {
+  const home = target();
+  const src = release('0.1.0', { 'agents/yaaw-dev.md': claudeAgent.replace('WebFetch', 'NotebookEdit') });
+
+  assert.throws(() => install({ source: src, target: home, flavor: 'kiro', ...quiet }), /NotebookEdit/);
 });

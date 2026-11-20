@@ -14,6 +14,16 @@ npx github:QuackyPROG/yaaw-SE
 
 The skills and agents are copied into `~/.claude/skills/` and `~/.claude/agents/`. Start a new Claude Code session to load them.
 
+### Kiro
+
+Add `--kiro` to install into `~/.kiro` for the Kiro IDE instead:
+
+```
+npx github:QuackyPROG/yaaw-SE --kiro
+```
+
+The agents are rewritten in Kiro's format: tools become Kiro selectors (`read`, `write`, `shell`, `web`), and each agent lists the core rules and its skills as resources, since Kiro custom agents load neither by default. The skills are copied as they are. The yaaw core rules go into `~/.kiro/steering/yaaw-core.md`, which Kiro loads in every session. Restart Kiro to load them. The agent and skill bodies still name Claude Code tools, which Kiro maps to its own.
+
 ## Update
 
 Run the same command again. Files that the update changes or removes are archived in `~/.claude/yaaw-se/archive/<old-version>/` first, and files edited by hand are listed in the output. Only the newest 3 archives are kept. Add `--dry-run` to see the changes without writing anything.

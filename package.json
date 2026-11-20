@@ -10,7 +10,8 @@
   "files": [
     "bin",
     "lib",
-    "payload"
+    "payload",
+    "kiro"
   ],
   "engines": {
     "node": ">=18"
