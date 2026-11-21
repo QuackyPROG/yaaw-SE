@@ -1,7 +1,6 @@
 ---
 name: yaaw-probe-docs
-description: Probe a plan grounded in the project's own records (glossary, ADRs, earlier specs), recording the decisions that matter as ADRs while they settle.
-disable-model-invocation: true
+description: Probe a plan grounded in the project's own records (glossary, ADRs, earlier specs), recording the decisions that matter as ADRs while they settle. Use when /yaaw-se starts a probe in a project that has a glossary, ADRs or earlier specs, or the user wants a plan probed against the project's docs.
 argument-hint: "The plan, feature or design to probe"
 ---
 

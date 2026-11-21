@@ -70,6 +70,15 @@ Settled on 2026-11-22. `yaaw-prototype` was in the payload, but nothing in `/yaa
 - **It stays inside the probe stage.** A prototype question usually comes up in the middle of the probe, so it is not a stage of its own. The Log records when it starts and its verdict, so that a resume can find one that is under way.
 - **The code goes to a local branch** named `prototype/<slug>-<question>`, which is never pushed. The feature's branch keeps only the verdict in `DECISIONS.md`.
 
+### Probe records and pauses
+
+Settled on 2026-11-22. `yaaw-probe-docs` and `yaaw-handoff` were in the payload, but nothing in `/yaaw-se` called them.
+
+- **The probe uses `yaaw-probe-docs`** when the project has a glossary, ADRs or earlier specs, so that answers are checked against the record and hard decisions become ADRs as they settle. Otherwise it uses `yaaw-probe`.
+- **`disable-model-invocation` was dropped** from `yaaw-probe-docs` and `yaaw-handoff`. The Claude Code skills docs say a skill with this flag cannot be invoked by Claude on its own, so `/yaaw-se` could not call them. They can still be typed as commands.
+- **`DECISIONS.md` is written after every round**, marked `status: draft` until the user confirms it. The probe was the only stage whose progress lived only in the conversation.
+- **A paused probe gets a handoff note** for what is not in a file yet. Its path is logged in `STATE.md`. The note stays in the OS temp folder, so the draft `DECISIONS.md` is what a resume relies on when the note is gone.
+
 ### Improve stage
 
 Settled on 2026-11-22, after a comparison with Matt Pocock's loop, which ends with `/code-review` and `/improve-codebase-architecture` to make the next run easier. yaaw-se ended at the report, so nothing it learned reached the next feature.

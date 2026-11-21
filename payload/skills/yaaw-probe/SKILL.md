@@ -52,4 +52,4 @@ Number every question, give a recommended answer, and word each question so that
 
 The probe is done when the frontier is empty: every branch visited and nothing silently assumed. List the settled decisions in a few lines and act on them only after the user confirms.
 
-When /yaaw-se started the probe, write the settled decisions to `docs/yaaw-se/<slug>/DECISIONS.md`: one line per decision, grouped by topic, with the reason when it is not obvious.
+When /yaaw-se started the probe, keep the settled decisions in `docs/yaaw-se/<slug>/DECISIONS.md`: one line per decision, grouped by topic, with the reason when it is not obvious. /yaaw-se says when to write it.

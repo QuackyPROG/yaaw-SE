@@ -1,7 +1,6 @@
 ---
 name: yaaw-handoff
-description: Compact this conversation into a handoff note for a fresh session to pick up.
-disable-model-invocation: true
+description: Compact this conversation into a handoff note for a fresh session to pick up. Use when the user wants to stop and continue in a fresh session, or /yaaw-se pauses a probe half-way.
 argument-hint: "What the next session will be used for"
 ---
 

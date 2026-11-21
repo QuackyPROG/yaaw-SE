@@ -58,7 +58,15 @@ Append one line to the Log at every stage change, every ticket result, every ful
 
 ## 1. Probe (full lane)
 
-When `docs/yaaw-se/LESSONS.md` exists, read it first, so that the probe does not repeat a past mistake. Run `yaaw-probe` in this session. Every question is asked here, as the agents that follow cannot ask the user anything. The stage is done when the user confirms the summary and `DECISIONS.md` is written. Set `stage: plan`.
+When `docs/yaaw-se/LESSONS.md` exists, read it first, so that the probe does not repeat a past mistake. Every question is asked here, as the agents that follow cannot ask the user anything.
+
+Run `yaaw-probe-docs` in this session when the project has a `GLOSSARY.md`, ADRs in `docs/adr/` or earlier specs under `docs/yaaw-se/`. Otherwise run `yaaw-probe`.
+
+**Checkpoint every round.** After each answered round, write the decisions settled so far to `DECISIONS.md`, with `status: draft` as its first line. On resume, a draft `DECISIONS.md` is where the probe continues from.
+
+**Pausing.** When the user stops part-way through the probe or a prototype, run `yaaw-handoff` for whatever is not in a file yet, such as the open questions and the next round. Log `handoff: <path>`. On resume, read the newest handoff note in the Log when it still exists.
+
+The stage is done when the user confirms the summary. Change the first line of `DECISIONS.md` to `status: confirmed`, then set `stage: plan`.
 
 **Prototype.** When a decision is about how something feels, such as whether a state model holds up or what a screen should look like, and talking has not settled it after one round, offer a prototype. Build it only when the user says yes.
 
