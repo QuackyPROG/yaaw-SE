@@ -43,7 +43,8 @@ The main session is the orchestrator. The `/yaaw-se` skill is the entry point.
 2. **Plan.** The `yaaw-planner` subagent researches the codebase and the docs, then writes the spec and the tickets. Each ticket names its test seams, what to reuse first and its acceptance criteria.
 3. **Approve.** The user approves the tickets once.
 4. **Build.** For each ticket, `yaaw-dev` builds it test-first, then `yaaw-reviewer` checks it. There are at most 2 fix loops, then one commit per ticket. UI tickets go to `yaaw-designer`, which builds to the design direction settled in the probe.
-5. **Report.** The run stops only to report or when it is stuck.
+5. **Improve.** In the full lane, `yaaw-planner` looks for deepening opportunities in the code the feature changed, and the orchestrator drafts lessons from the `STATE.md` Log. The user approves which to keep.
+6. **Report.** The run stops only to report or when it is stuck.
 
 Every question is asked before the build starts. This is what lets `yaaw-dev` work without stopping: it has nothing left to ask.
 
@@ -59,6 +60,16 @@ Settled on 2026-11-21, after a project with 365 tests (an iOS app built with xto
 - **Approve covers one push.** When the full suite runs in CI, approving the tickets also approves pushing the feature branch to run it. Fix rounds on the same branch need no new approval. A failing full check is traced to its ticket and sent back to that ticket's agent, with at most 2 rounds.
 - **Test evidence is a summary**: the command and its result line, never the full output.
 - **The quick lane** takes a small fix with no open decision past the probe and the planner: the orchestrator writes one ticket, the user approves it, and it is built and reviewed as usual. When unsure, the full lane is used.
+
+### Improve stage
+
+Settled on 2026-11-22, after a comparison with Matt Pocock's loop, which ends with `/code-review` and `/improve-codebase-architecture` to make the next run easier. yaaw-se ended at the report, so nothing it learned reached the next feature.
+
+- **The full lane runs an Improve stage after the full check.** A quick fix is one ticket with no decisions, so there is little to learn from it.
+- **Architecture findings are proposals only.** `yaaw-planner` in improve mode writes `IMPROVE.md` for the changed code. Each candidate the user keeps becomes a new feature at `stage: probe`. No code changes after the full check, so the feature does not need a second one.
+- **The planner runs the pass, not `yaaw-architecture-audit`.** The audit skill is user-invoked and interactive (an HTML report, then a probe). The planner already preloads `yaaw-architecture` and `yaaw-domain` and may write in the feature folder.
+- **Lessons live in `docs/yaaw-se/LESSONS.md`**, next to `CHECKS.md`. The probe and the planner read it at the start of a feature. yaaw-se still does not touch the project's `CLAUDE.md`.
+- **`STATE.md` gains a `base:` line** at approval, so that the Improve stage knows the feature's commit range. `format:` stays `1`, as older files without it still resume.
 
 ## Delegation research
 

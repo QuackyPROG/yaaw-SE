@@ -15,10 +15,11 @@ Each feature lives in `docs/yaaw-se/<slug>/`:
 DECISIONS.md   settled decisions from the probe (full lane only)
 SPEC.md        written by yaaw-planner (full lane only)
 tickets/       one file per ticket
+IMPROVE.md     architecture candidates from the Improve stage (full lane only)
 STATE.md       lane, stage, ticket status and log, kept by the orchestrator
 ```
 
-The project's checks live in `docs/yaaw-se/CHECKS.md`, shared by every feature.
+The project's checks live in `docs/yaaw-se/CHECKS.md`, and its approved lessons live in `docs/yaaw-se/LESSONS.md`. Both are shared by every feature.
 
 ## 0. Start or resume
 
@@ -57,11 +58,11 @@ Append one line to the Log at every stage change, every ticket result, every ful
 
 ## 1. Probe (full lane)
 
-Run `yaaw-probe` in this session. Every question is asked here, as the agents that follow cannot ask the user anything. The stage is done when the user confirms the summary and `DECISIONS.md` is written. Set `stage: plan`.
+When `docs/yaaw-se/LESSONS.md` exists, read it first, so that the probe does not repeat a past mistake. Run `yaaw-probe` in this session. Every question is asked here, as the agents that follow cannot ask the user anything. The stage is done when the user confirms the summary and `DECISIONS.md` is written. Set `stage: plan`.
 
 ## 2. Plan (full lane)
 
-Dispatch `yaaw-planner` with the slug and the path to `DECISIONS.md`. When its report lists open questions, put them to the user in a `yaaw-probe` round, append the answers to `DECISIONS.md` and dispatch the planner again.
+Dispatch `yaaw-planner` with the slug, the path to `DECISIONS.md` and the path to `LESSONS.md` when it exists. When its report lists open questions, put them to the user in a `yaaw-probe` round, append the answers to `DECISIONS.md` and dispatch the planner again.
 
 The stage is done when `SPEC.md` has no open questions and the tickets are written. Set `stage: approve`.
 
@@ -75,7 +76,7 @@ Show the tickets as `NN: title (blocked by …) [agent]` with each ticket's seam
 
 When `CHECKS.md` says `full runs in: ci`, say in the same question that approving also allows one push of the current branch at the end of the build, to run CI. When the current branch is the repository's default branch, ask for a feature branch name first and create it.
 
-Once they are approved, list the tickets under `## Tickets` in `STATE.md` as `- [ ] NN: title`, then set `stage: build`.
+Once they are approved, list the tickets under `## Tickets` in `STATE.md` as `- [ ] NN: title`, add a `base: <sha>` line with the output of `git rev-parse HEAD`, then set `stage: build`.
 
 ## 4. Build
 
@@ -107,8 +108,19 @@ Read only the totals and the failures, never the full log.
 
 When it fails, trace each failure to the ticket whose change caused it (`git log` on the failing files and the code they test). Dispatch that ticket's agent with the failure and the instruction to use `yaaw-diagnose`, review the fix as in stage 4, and commit it as `fix: <what broke>`. Then run the full check again. Each new CI run needs no new approval when it is the same branch. Allow at most 2 full check rounds, then stop and report.
 
-The stage is done when the full check passes. Set `stage: done`.
+The stage is done when the full check passes. Set `stage: improve` in the full lane, or `stage: done` in the quick lane.
 
-## 6. Report
+## 6. Improve (full lane)
 
-Show the full check as its command, totals and any failures. Report each ticket with its commit, the flags the agents raised and anything not checked. When tests could not run locally (`test: none`), say that each ticket's red and green were proven only by the full check.
+This stage makes the next feature easier. It changes no code, as the full check has already passed.
+
+1. **Architecture.** Dispatch `yaaw-planner` in improve mode with the slug and the commit range `<base>..HEAD`. When `STATE.md` has no `base:` line, use the commits made since the Log's `started` line. The planner writes `IMPROVE.md`.
+2. **Lessons.** Read the `STATE.md` Log yourself and look for corrections from the user, tickets that needed fix loops, review findings that came up more than once and full check failures. Draft one lesson for each pattern, as a rule for the next feature with a short reason.
+3. **Approve.** Show the `IMPROVE.md` candidates as `NN: title [strength]` and the draft lessons, numbered, in one question. Ask the user which candidates to keep and which lessons to save.
+4. **Save.** Append each approved lesson to `docs/yaaw-se/LESSONS.md` as `- <rule>. <reason>. (from <slug>)`. For each approved candidate, create `docs/yaaw-se/<new-slug>/STATE.md` in the full lane at `stage: probe`, with the candidate's title as `feature:` and a Log line that names this feature and `IMPROVE.md`. It is picked up later with `/yaaw-se <new-slug>`.
+
+When the planner finds no candidates and the Log shows no pattern, say so and move on. The stage is done when the approved items are saved. Set `stage: done`.
+
+## 7. Report
+
+Show the full check as its command, totals and any failures. Report each ticket with its commit, the flags the agents raised and anything not checked. In the full lane, list the lessons saved and the new slugs created in the Improve stage. When tests could not run locally (`test: none`), say that each ticket's red and green were proven only by the full check.
