@@ -39,7 +39,7 @@ A plugin is a cached copy that Claude Code swaps as a whole on update. The insta
 
 The main session is the orchestrator. The `/yaaw-se` skill is the entry point.
 
-1. **Probe.** `yaaw-probe` runs in the main session, as only the main session can ask the user questions. Every decision the feature needs is settled here.
+1. **Probe.** `yaaw-probe` runs in the main session, as only the main session can ask the user questions. Every decision the feature needs is settled here. When talking does not settle a decision about feel, the probe can offer a throwaway prototype.
 2. **Plan.** The `yaaw-planner` subagent researches the codebase and the docs, then writes the spec and the tickets. Each ticket names its test seams, what to reuse first and its acceptance criteria.
 3. **Approve.** The user approves the tickets once.
 4. **Build.** For each ticket, `yaaw-dev` builds it test-first, then `yaaw-reviewer` checks it. There are at most 2 fix loops, then one commit per ticket. UI tickets go to `yaaw-designer`, which builds to the design direction settled in the probe.
@@ -60,6 +60,15 @@ Settled on 2026-11-21, after a project with 365 tests (an iOS app built with xto
 - **Approve covers one push.** When the full suite runs in CI, approving the tickets also approves pushing the feature branch to run it. Fix rounds on the same branch need no new approval. A failing full check is traced to its ticket and sent back to that ticket's agent, with at most 2 rounds.
 - **Test evidence is a summary**: the command and its result line, never the full output.
 - **The quick lane** takes a small fix with no open decision past the probe and the planner: the orchestrator writes one ticket, the user approves it, and it is built and reviewed as usual. When unsure, the full lane is used.
+
+### Prototype in the probe
+
+Settled on 2026-11-22. `yaaw-prototype` was in the payload, but nothing in `/yaaw-se` called it.
+
+- **The probe offers a prototype** when a decision is about feel (a state model or a look) and one round of talking has not settled it. The user decides whether to build it.
+- **The main session builds it.** It is throwaway code, and the user has to drive it and react to it in the same conversation. `yaaw-dev` and `yaaw-designer` were not used, as they preload `yaaw-tdd` and `yaaw-lean`, which clash with the prototype's "no tests, no polish" rule. This is the only code the orchestrator writes.
+- **It stays inside the probe stage.** A prototype question usually comes up in the middle of the probe, so it is not a stage of its own. The Log records when it starts and its verdict, so that a resume can find one that is under way.
+- **The code goes to a local branch** named `prototype/<slug>-<question>`, which is never pushed. The feature's branch keeps only the verdict in `DECISIONS.md`.
 
 ### Improve stage
 

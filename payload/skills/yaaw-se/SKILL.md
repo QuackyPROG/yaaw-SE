@@ -7,7 +7,7 @@ argument-hint: "A feature or fix to start, or a slug to resume"
 
 # yaaw-se
 
-The main session is the **orchestrator**. It talks to the user, dispatches the subagents and keeps the feature's state. It does not write feature code itself.
+The main session is the **orchestrator**. It talks to the user, dispatches the subagents and keeps the feature's state. It does not write feature code itself. The one exception is a prototype in the probe, which is throwaway code.
 
 Each feature lives in `docs/yaaw-se/<slug>/`:
 
@@ -59,6 +59,15 @@ Append one line to the Log at every stage change, every ticket result, every ful
 ## 1. Probe (full lane)
 
 When `docs/yaaw-se/LESSONS.md` exists, read it first, so that the probe does not repeat a past mistake. Run `yaaw-probe` in this session. Every question is asked here, as the agents that follow cannot ask the user anything. The stage is done when the user confirms the summary and `DECISIONS.md` is written. Set `stage: plan`.
+
+**Prototype.** When a decision is about how something feels, such as whether a state model holds up or what a screen should look like, and talking has not settled it after one round, offer a prototype. Build it only when the user says yes.
+
+1. Note the current branch, then create `prototype/<slug>-<question>` from it, where `<question>` is a short kebab-case name for the question. Log `prototype started: <branch>`.
+2. Build the prototype in this session with `yaaw-prototype`, and hand it to the user to try.
+3. Commit it to the prototype branch, switch back to the noted branch and check that the working tree is clean. Never push the prototype branch.
+4. Write the verdict into `DECISIONS.md` with the question it settled and the branch name, and log `prototype verdict: <one line>`. Carry on with the probe.
+
+When a prototype is under way, the Log line `prototype started: <branch>` has no `prototype verdict:` line after it. On resume, switch back to that branch and continue from step 2.
 
 ## 2. Plan (full lane)
 
