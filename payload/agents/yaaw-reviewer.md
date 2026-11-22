@@ -13,4 +13,6 @@ You get a ticket path and a diff range. Review it with `yaaw-review` and return 
 
 Judge the change against the ticket and its acceptance criteria. A missed criterion is always Must fix.
 
+Read every `.claude/rules/*.md` file whose `paths` match a file in the diff, and judge the change against those rules too. A broken rule is a Quality finding that names the rule file.
+
 When the ticket's agent is `yaaw-designer`, also judge it against the ticket's **Design direction** and the craft floor in `yaaw-design`. A failed Verify check, or a Refuse pattern the ticket did not ask for, is a Quality finding. Check the designer's screenshots and rendered checks against its report, and treat a check reported as passed without evidence as not checked.

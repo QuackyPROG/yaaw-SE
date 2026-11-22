@@ -19,7 +19,20 @@ IMPROVE.md     architecture candidates from the Improve stage (full lane only)
 STATE.md       lane, stage, ticket status and log, kept by the orchestrator
 ```
 
-The project's checks live in `docs/yaaw-se/CHECKS.md`, and its approved lessons live in `docs/yaaw-se/LESSONS.md`. Both are shared by every feature.
+The project's checks live in `docs/yaaw-se/CHECKS.md`, and its approved process lessons live in `docs/yaaw-se/LESSONS.md`. Approved code rules live in `.claude/rules/yaaw-<area>.md`. All of them are shared by every feature.
+
+A **rule file** belongs to yaaw-se when its name starts with `yaaw-`. Write only those. It holds at most 8 rules:
+
+```markdown
+---
+paths:
+  - '<glob>'
+---
+
+# <Area>
+
+- <rule>. <reason>. (from <slug>)
+```
 
 ## 0. Start or resume
 
@@ -41,6 +54,8 @@ ci: <workflow file> | none
 - **Full lane**: everything else. Set `stage: probe`.
 
 When unsure, use the full lane. A quick fix that turns out to need a decision moves to the full lane at the probe: change `lane:` and log it.
+
+4. **References.** For a new feature, check that every backticked path in `LESSONS.md` and the `yaaw-` rule files still exists, and that each rule file's `paths` match at least one file. Show each dead reference with a suggested fix: its new path when `git log --follow` shows a rename, otherwise retiring the rule. Apply only the fixes the user approves.
 
 ```markdown
 format: 1
@@ -132,12 +147,15 @@ The stage is done when the full check passes. Set `stage: improve` in the full l
 This stage makes the next feature easier. It changes no code, as the full check has already passed.
 
 1. **Architecture.** Dispatch `yaaw-planner` in improve mode with the slug and the commit range `<base>..HEAD`. When `STATE.md` has no `base:` line, use the commits made since the Log's `started` line. The planner writes `IMPROVE.md`.
-2. **Lessons.** Read the `STATE.md` Log yourself and look for corrections from the user, tickets that needed fix loops, review findings that came up more than once and full check failures. Draft one lesson for each pattern, as a rule for the next feature with a short reason.
-3. **Approve.** Show the `IMPROVE.md` candidates as `NN: title [strength]` and the draft lessons, numbered, in one question. Ask the user which candidates to keep and which lessons to save.
-4. **Save.** Append each approved lesson to `docs/yaaw-se/LESSONS.md` as `- <rule>. <reason>. (from <slug>)`. For each approved candidate, create `docs/yaaw-se/<new-slug>/STATE.md` in the full lane at `stage: probe`, with the candidate's title as `feature:` and a Log line that names this feature and `IMPROVE.md`. It is picked up later with `/yaaw-se <new-slug>`.
+2. **Lessons.** Read the `STATE.md` Log yourself and look for corrections from the user, tickets that needed fix loops, review findings that came up more than once and full check failures. Draft one lesson for each pattern, as a rule for the next feature with a short reason. Keep a lesson only when it names something specific to this project (a path, an invariant, a quirk) that Claude would get wrong without it. Tag each one:
+   - `[process]`: how the workflow should run for this project, such as a question the probe should ask. It goes to `LESSONS.md`.
+   - `[code: <globs>]`: an invariant of the code under those globs. It goes to a rule file.
+   - `[check]`: a code lesson that a lint rule or a test could enforce. It becomes a candidate feature, like an `IMPROVE.md` candidate.
+3. **Approve.** Show the `IMPROVE.md` candidates as `NN: title [strength]` and the draft lessons with their tags, numbered, in one question. Ask the user which candidates to keep, which lessons to save and whether any tag should change. When a `[code]` lesson would take a rule file past 8 rules, show a merge or a retirement of one of its rules in the same question. When its globs overlap a rule file that is not a `yaaw-` file, show the rule as a suggested change for the user to make there.
+4. **Save.** Append each approved `[process]` lesson to `docs/yaaw-se/LESSONS.md` as `- <rule>. <reason>. (from <slug>)`. Add each approved `[code]` lesson to `.claude/rules/yaaw-<area>.md`, where `<area>` is the kebab-case name of the folder its globs cover: create the file when it is missing, and add any new globs to its `paths`. For each approved candidate and `[check]` lesson, create `docs/yaaw-se/<new-slug>/STATE.md` in the full lane at `stage: probe`, with its title as `feature:` and a Log line that names this feature. It is picked up later with `/yaaw-se <new-slug>`.
 
 When the planner finds no candidates and the Log shows no pattern, say so and move on. The stage is done when the approved items are saved. Set `stage: done`.
 
 ## 7. Report
 
-Show the full check as its command, totals and any failures. Report each ticket with its commit, the flags the agents raised and anything not checked. In the full lane, list the lessons saved and the new slugs created in the Improve stage. When tests could not run locally (`test: none`), say that each ticket's red and green were proven only by the full check.
+Show the full check as its command, totals and any failures. Report each ticket with its commit, the flags the agents raised and anything not checked. In the full lane, list the lessons and rules saved and the new slugs created in the Improve stage. When tests could not run locally (`test: none`), say that each ticket's red and green were proven only by the full check.

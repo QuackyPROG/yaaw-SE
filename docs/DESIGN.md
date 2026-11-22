@@ -43,7 +43,7 @@ The main session is the orchestrator. The `/yaaw-se` skill is the entry point.
 2. **Plan.** The `yaaw-planner` subagent researches the codebase and the docs, then writes the spec and the tickets. Each ticket names its test seams, what to reuse first and its acceptance criteria.
 3. **Approve.** The user approves the tickets once.
 4. **Build.** For each ticket, `yaaw-dev` builds it test-first, then `yaaw-reviewer` checks it. There are at most 2 fix loops, then one commit per ticket. UI tickets go to `yaaw-designer`, which builds to the design direction settled in the probe.
-5. **Improve.** In the full lane, `yaaw-planner` looks for deepening opportunities in the code the feature changed, and the orchestrator drafts lessons from the `STATE.md` Log. The user approves which to keep.
+5. **Improve.** In the full lane, `yaaw-planner` looks for deepening opportunities in the code the feature changed, and the orchestrator drafts lessons and code rules from the `STATE.md` Log. The user approves which to keep.
 6. **Report.** The run stops only to report or when it is stuck.
 
 Every question is asked before the build starts. This is what lets `yaaw-dev` work without stopping: it has nothing left to ask.
@@ -86,8 +86,19 @@ Settled on 2026-11-22, after a comparison with Matt Pocock's loop, which ends wi
 - **The full lane runs an Improve stage after the full check.** A quick fix is one ticket with no decisions, so there is little to learn from it.
 - **Architecture findings are proposals only.** `yaaw-planner` in improve mode writes `IMPROVE.md` for the changed code. Each candidate the user keeps becomes a new feature at `stage: probe`. No code changes after the full check, so the feature does not need a second one.
 - **The planner runs the pass, not `yaaw-architecture-audit`.** The audit skill is user-invoked and interactive (an HTML report, then a probe). The planner already preloads `yaaw-architecture` and `yaaw-domain` and may write in the feature folder.
-- **Lessons live in `docs/yaaw-se/LESSONS.md`**, next to `CHECKS.md`. The probe and the planner read it at the start of a feature. yaaw-se still does not touch the project's `CLAUDE.md`.
+- **Process lessons live in `docs/yaaw-se/LESSONS.md`**, next to `CHECKS.md`. The probe and the planner read it at the start of a feature. Code lessons go to rule files (see Code rules). yaaw-se still does not touch the project's `CLAUDE.md`.
 - **`STATE.md` gains a `base:` line** at approval, so that the Improve stage knows the feature's commit range. `format:` stays `1`, as older files without it still resume.
+
+### Code rules
+
+Settled on 2026-11-22, after a look at Wand-Enhancer (`k1tbyte/Wand-Enhancer`), which keeps its invariants in path-scoped `.claude/rules/` files and fails its build when a rule names a missing path. Only the probe and the planner read `LESSONS.md`, so a code lesson reached `yaaw-dev`, `yaaw-designer` and `yaaw-reviewer` only when the planner copied it into a ticket.
+
+- **Code lessons become path-scoped rules** in the project's `.claude/rules/yaaw-<area>.md`, with `paths:` frontmatter. yaaw-se writes only its own `yaaw-` files. An overlap with a project's own rule file is shown to the user as a suggested change.
+- **The build agents and the reviewer read the rules themselves.** Each reads every rule file whose `paths` match the files of its ticket or diff, and the reviewer judges the diff against them. This works whether or not a subagent loads path-scoped rules on its own (not checked) and on Kiro.
+- **The Improve stage tags each lesson** `[process]`, `[code: <globs>]` or `[check]`, and the user can change the tag at approval. A `[check]` lesson could be a lint rule or a test, so it becomes a candidate feature instead of a rule, as a check enforces itself.
+- **A lesson needs evidence and must be specific.** It comes from the Log (a correction, a fix loop, a repeated review finding or a full check failure) and names something specific to the project that Claude would get wrong without it. Generic advice is dropped, as it costs context in every ticket and changes nothing.
+- **A rule file holds at most 8 rules.** A rule that would go past the cap comes with a merge or a retirement of an existing one in the same approval question, so that rules do not pile up.
+- **Dead references are checked at the start of every new feature.** The orchestrator checks that every path named in `LESSONS.md` and the `yaaw-` rule files still exists, and that each rule file's `paths` match a file. A dead one is shown with a suggested fix and changed only on approval. No test file is added to the project, as it would fail other people's builds.
 
 ## Delegation research
 

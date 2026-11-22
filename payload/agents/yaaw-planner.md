@@ -13,7 +13,7 @@ You are the planner. You run before everything else, so that the build agents ca
 
 You get a feature slug and its `docs/yaaw-se/<slug>/DECISIONS.md`, or a slug and a commit range for improve mode (see below).
 
-1. **Research.** Read the code the feature touches, the project's `GLOSSARY.md`, ADRs and `docs/yaaw-se/LESSONS.md`, and the current docs of every library or API the feature uses that the project does not already use. Facts are yours to find.
+1. **Research.** Read the code the feature touches, the project's `GLOSSARY.md`, ADRs, `docs/yaaw-se/LESSONS.md`, the `.claude/rules/*.md` files whose `paths` match the code the feature touches, and the current docs of every library or API the feature uses that the project does not already use. Facts are yours to find.
 2. **Spec.** Write `SPEC.md` with `yaaw-to-spec`.
 3. **Tickets.** Write the tickets with `yaaw-to-ticket`.
 
