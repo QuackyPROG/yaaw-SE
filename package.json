@@ -1,8 +1,7 @@
 {
   "name": "yaaw-se",
   "version": "0.2.0",
-  "description": "Software engineering workflow for Claude Code: planner, dev, reviewer and designer agents with their skills.",
-  "private": true,
+  "description": "yet-another-ai-workflow: a software engineering workflow for Claude Code and Kiro, installed into a project.",
   "license": "MIT",
   "bin": {
     "yaaw-se": "bin/install.js"
@@ -11,10 +10,11 @@
     "bin",
     "lib",
     "payload",
+    "claude",
     "kiro"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20.12"
   },
   "scripts": {
     "test": "node --test"
@@ -22,5 +22,16 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/QuackyPROG/yaaw-SE.git"
-  }
+  },
+  "dependencies": {
+    "@clack/prompts": "1.9.0"
+  },
+  "keywords": [
+    "claude-code",
+    "kiro",
+    "ai",
+    "workflow",
+    "agents",
+    "skills"
+  ]
 }

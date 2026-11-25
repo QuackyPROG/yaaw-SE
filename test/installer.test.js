@@ -128,7 +128,7 @@ test('kiro install converts agents, copies skills and adds the steering file', (
 
   install({ source: src, target: home, flavor: 'kiro', ...quiet });
 
-  const root = home.split(path.sep).join('/');
+  const root = '.kiro';
   assert.equal(read(path.join(home, 'skills/yaaw-lean/SKILL.md')), 'lean');
   assert.equal(read(path.join(home, 'steering/yaaw-core.md')), 'rules');
   assert.equal(

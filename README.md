@@ -1,32 +1,34 @@
 # yaaw-se
 
-yaaw-se is a software engineering workflow for Claude Code. A feature is probed with the user first, then planned into tickets by a planner agent. Each ticket is built test-first by a dev agent and checked by a read-only reviewer agent, with one commit per ticket.
+yaaw-se (yet-another-ai-workflow) is a software engineering workflow for Claude Code and Kiro. A feature is probed with the user first, then planned into tickets by a planner agent. Each ticket is built test-first by a dev agent and checked by a read-only reviewer agent, with one commit per ticket.
 
 The skills are customised from mattpocock/skills (how a feature is planned and built), ponytail (how code is written) and impeccable (UI and UX). `yaaw-design` is derived from impeccable and keeps its Apache-2.0 license. The decisions behind the design are in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Install
 
-Node.js 18 or later and Claude Code must be installed. Run:
+Node.js 20.12 or later must be installed. In the project folder, run:
 
 ```
-npx github:QuackyPROG/yaaw-SE
+npx yaaw-se install
 ```
 
-The skills and agents are copied into `~/.claude/skills/` and `~/.claude/agents/`. Start a new Claude Code session to load them.
+The installer asks for the project directory (the current folder by default) and the setups to install: Claude Code, Kiro or both. It then shows the plan and installs once it is confirmed. yaaw-se is installed into one project only, never globally. Commit the new files so that the rest of the team gets yaaw-se from git.
 
-### Kiro
+The Claude Code setup goes into `.claude/`. It adds the skills, the agents and `.claude/rules/yaaw-se.md`, which holds the yaaw-se core rules and loads in every session. The project's own `CLAUDE.md` is not changed. Start a new Claude Code session to load them.
 
-Add `--kiro` to install into `~/.kiro` for the Kiro IDE instead:
+The Kiro setup goes into `.kiro/`. The agents are rewritten in Kiro's format: tools become Kiro selectors (`read`, `write`, `shell`, `web`), and each agent lists the core rules and its skills as resources, since Kiro custom agents load neither by default. The core rules go into `.kiro/steering/yaaw-core.md`, which Kiro loads in every session. Restart Kiro to load them.
+
+The questions can be skipped with flags, for example in CI:
 
 ```
-npx github:QuackyPROG/yaaw-SE --kiro
+npx yaaw-se install --dir . --claude --kiro --yes
 ```
 
-The agents are rewritten in Kiro's format: tools become Kiro selectors (`read`, `write`, `shell`, `web`), and each agent lists the core rules and its skills as resources, since Kiro custom agents load neither by default. The skills are copied as they are. The yaaw core rules go into `~/.kiro/steering/yaaw-core.md`, which Kiro loads in every session. Restart Kiro to load them. The agent and skill bodies still name Claude Code tools, which Kiro maps to its own.
+If an earlier version of yaaw-se was installed globally into `~/.claude` or `~/.kiro`, the installer offers to archive and remove it, so that the skills are not loaded twice.
 
 ## Update
 
-Run the same command again. Files that the update changes or removes are archived in `~/.claude/yaaw-se/archive/<old-version>/` first, and files edited by hand are listed in the output. Only the newest 3 archives are kept. Add `--dry-run` to see the changes without writing anything.
+Run `npx yaaw-se install` again. Files that the update changes or removes are archived in `.claude/yaaw-se/archive/<old-version>/` (or `.kiro/...`) first, and files edited by hand are listed in the plan. Only the newest 3 archives are kept, and the archive folders are added to `.gitignore`. Add `--dry-run` to see the plan without writing anything.
 
 ## Use
 
@@ -43,4 +45,4 @@ Skills that can also be run on their own: `yaaw-probe`, `yaaw-probe-docs`, `yaaw
 
 ## Development
 
-Work happens on the `v3` branch. Run `npm test` to test the installer and check the skills, then `node bin/install.js --target <folder>` to try an install without touching `~/.claude`. Commits follow Conventional Commits. Merging `v3` into `main` lets release-please open a release PR, and merging that PR tags the release.
+Work happens on the `v3` branch. Run `npm install`, then `npm test` to test the installer and check the skills. Run `node bin/install.js install --dir <folder>` to try an install in a scratch project. Commits follow Conventional Commits. Merging `v3` into `main` lets release-please open a release PR. Merging that PR tags the release and publishes it to npm.
