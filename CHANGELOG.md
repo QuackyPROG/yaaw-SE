@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.0](https://github.com/QuackyPROG/yaaw-SE/compare/yaaw-se-v0.2.0...yaaw-se-v0.4.0) (2026-11-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* yaaw-se is no longer installed into ~/.claude or ~/.kiro. The --target flag is removed.
+
+### Features
+
+* install into one project with an interactive CLI ([d26cff4](https://github.com/QuackyPROG/yaaw-SE/commit/d26cff4650ffa35032989bcde28f28b4ed142a40))
+* write code lessons as path-scoped rules ([6c7d0b9](https://github.com/QuackyPROG/yaaw-SE/commit/6c7d0b999e6d9bf98ce3e6e60c8d1a6437e483c6))
+
+
+### Bug Fixes
+
+* point the Kiro core rules at the yaaw-se feature folder ([9a23bdf](https://github.com/QuackyPROG/yaaw-SE/commit/9a23bdf44815e42a6583ca1374eac64db147059e))
+
 ## [0.2.0](https://github.com/QuackyPROG/yaaw-SE/compare/yaaw-se-v0.1.0...yaaw-se-v0.2.0) (2026-11-21)
 
 
