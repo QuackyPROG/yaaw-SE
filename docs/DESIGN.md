@@ -6,22 +6,44 @@ All decisions below were settled in a probe on 2026-11-19.
 
 ## Install and update
 
-yaaw-se is installed with one command:
+yaaw-se is installed into a project with one command:
 
 ```
-npx github:QuackyPROG/yaaw-SE
+npx yaaw-se install
 ```
 
-The installer copies the `yaaw-*` skills and agents into `~/.claude/skills/` and `~/.claude/agents/`. It does not use the Claude Code plugin system, so it can own its files and archive them on update. No hooks are installed.
+The installer copies the `yaaw-*` skills and agents into the project's `.claude/` (or `.kiro/`). It does not use the Claude Code plugin system, so it can own its files and archive them on update. No hooks are installed.
 
-The installer writes `~/.claude/yaaw-se/manifest.json` with the installed version and a SHA-256 hash for every file. Running the same command again updates yaaw-se:
+The installer writes `<setup>/yaaw-se/manifest.json` with the installed version and a SHA-256 hash for every file. Running the same command again updates yaaw-se:
 
-1. Every file that will be changed or removed is copied to `~/.claude/yaaw-se/archive/<old-version>/` first.
+1. Every file that will be changed or removed is copied to `<setup>/yaaw-se/archive/<old-version>/` first.
 2. A file whose hash differs from the manifest was edited by hand. It is archived like any other file and named in the output, so the edit is never lost silently.
 3. New files are written through a temporary file and a rename. The manifest is written last, so an interrupted update is repaired by running the command again.
 4. Only the newest 3 archives are kept.
 
-`--dry-run` prints the plan without writing anything. `--target <dir>` installs into another folder, which is used by the tests.
+### Project install and the CLI
+
+Settled in a probe on 2026-11-26. yaaw-se was installed into `~/.claude`, so it could not ship its own rules and every project got the same copy.
+
+- **yaaw-se installs into one project only.** There is no global install. yaaw-se is a whole AI workflow package, and a project may later need its own settings, `CLAUDE.md` setup, skills or MCP servers (see Later).
+- **`npx yaaw-se install` asks 2 questions.** The first is `Project directory`, with the current folder shown as the default. Enter accepts it, or another path can be pasted. A folder that does not exist is an error. The second is a multi-select of setups: Claude Code (`.claude/`) and Kiro (`.kiro/`), with Claude checked. The plan is then shown, and nothing is written until it is confirmed.
+- **The CLI uses `@clack/prompts` with its own look**, not a copy of BMAD or Spec Kit. It shows a `yaaw-se` wordmark, the tagline `yet-another-ai-workflow` and an amber accent.
+- **Flags skip the prompts** for tests and CI: `--dir <path>`, `--claude`, `--kiro`, `--yes` and `--dry-run`.
+- **Claude projects get `.claude/rules/yaaw-se.md`** with the yaaw-se core rules. A rule file with no `paths:` frontmatter is loaded at session start, with the same priority as `.claude/CLAUDE.md` (checked in the Claude Code memory docs). It is the Claude counterpart of Kiro's `steering/yaaw-core.md`. The project's own `CLAUDE.md` and `AGENTS.md` are never touched. These rules are separate to the ones in the old `yaaw` plugin.
+- **Kiro agents name their resources relative to the project** (`file://.kiro/steering/yaaw-core.md`), so that the files work from any clone. Kiro's docs show relative `file://` paths, but not what they are relative to. This should be checked in Kiro.
+- **A global install from an earlier version is archived and removed.** When `~/.claude/yaaw-se/manifest.json` or `~/.kiro/yaaw-se/manifest.json` exists, the CLI offers to remove it. Its files are archived in `~/.claude/yaaw-se/archive/global-<version>/` first. Otherwise Claude would see every skill twice.
+- **The project commits everything except the archives.** The installer adds `.claude/yaaw-se/archive/` and `.kiro/yaaw-se/archive/` to `.gitignore`, so that teammates get yaaw-se from git with no install step. It is the only file outside its own folders that the installer changes.
+- **Running it again in a project is an update.** The CLI shows the installed version and checks the installed setups. Unchecking a setup does not uninstall it.
+
+### Later
+
+These are planned, so that yaaw-se grows into a workflow factory. None of them are built yet.
+
+- Install a project's Claude settings, a `CLAUDE.md` setup, more skills or MCP servers.
+- A prompt to pick which of these pieces to install.
+- Merging into files the project already owns, such as `settings.json` and `.mcp.json`.
+- Per-setup source folders (`setups/claude/`, `setups/kiro/`), once a setup has more than a rules file of its own.
+- An `uninstall` command.
 
 ### Why not the plugin system
 
@@ -29,11 +51,12 @@ A plugin is a cached copy that Claude Code swaps as a whole on update. The insta
 
 ## Repository and releases
 
-- `v3` is the working branch. `main` is the release channel, so the plain npx command installs the latest release.
+- `v3` is the working branch. `main` is the release channel.
 - Releases are made by release-please. Merging `v3` into `main` opens a release PR, and merging that PR tags the version and writes the changelog. Commits follow Conventional Commits so that release-please can pick the version bump.
-- Versions start at `0.1.0`. Nothing is published to npm, and `package.json` is marked private so that it cannot be published by accident.
-- The repository is public for now and will be made private later.
-- The dev loop is to test locally first (`node bin/install.js` from this folder), then push to `v3`, then reinstall with npx and test again.
+- **Each release is published to npm as `yaaw-se`.** The publish job runs after release-please creates a release and uses npm trusted publishing, so no npm token is stored. The trusted publisher must be set up once in the package settings on npmjs.com.
+- **The first npm release is `0.4.0`.** The name `yaaw-se` already held versions up to `0.3.13` from the retired v1 and v2, and npm does not accept a lower version. Those versions are deprecated with `npm deprecate`. The bump is set with a `Release-As: 0.4.0` commit footer, as the `release-as` config option is deprecated.
+- The repository and the npm package stay public.
+- The dev loop is to test locally first (`node bin/install.js install --dir <folder>` from this folder), then push to `v3`, then install with npx and test again.
 
 ## How a feature runs
 
