@@ -44,6 +44,6 @@ Never say "done", "works", "fixed" or "passes" without showing the evidence: tes
 ## Workflow
 For building work (features, apps, refactors), the `/yaaw-se` skill is the entry point to the yaaw workflow.
 
-**Log corrections.** While working on a yaaw feature (a `docs/plans/<slug>/STATE.md` exists for it), whenever the user corrects you, rejects your output, or asks you to recheck or redo something, append one line to that STATE.md's Log right away:
+**Log corrections.** While working on a yaaw feature (a `docs/yaaw-se/<slug>/STATE.md` exists for it), whenever the user corrects you, rejects your output, or asks you to recheck or redo something, append one line to that STATE.md's Log right away:
 `- YYYY-MM-DD HH:MM: correction: <what you did> → <what the user wanted>`
-Retro turns these into lessons, so record them even when the fix is small.
+The Improve stage turns these into lessons, so record them even when the fix is small.
